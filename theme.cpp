@@ -4,7 +4,6 @@
 #include <iostream> // XXX
 // TODO: current -> 0,1,2? 0,8,256?
 // TODO: test
-using namespace Ektoplayer;
 
 // For better readability ...
 #define default    -2

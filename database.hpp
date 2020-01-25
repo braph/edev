@@ -52,34 +52,18 @@ class Database {
     }
     */
 
-    void insert(const std::string &table, const std::map<std::string, std::string> &hash, const char* mode = "INSERT");
+    //void insert(const std::string &table, const std::map<std::string, std::string> &hash, const char* mode = "INSERT");
     unsigned int track_count();
     unsigned int album_count();
     std::string get_description(const char *album_url);
     void select
       (
-       std::string columns = "number,artist,album,title,styles,date,year,rating,votes,download_count,bpm,album_url,url",
-       std::vector<DatabaseFilter> * filters = NULL,
-       std::string group_by = "url",
-       std::string order_by = "album,number",
-       signed int limit = -1
+       const std::string &columns = "number,artist,album,title,styles,date,year,rating,votes,download_count,bpm,album_url,url",
+       const std::vector<DatabaseFilter> &filters = {},
+       const std::string &group_by = "url",
+       const std::string &order_by = "album,number",
+       int limit = 0
       );
-
-#ifdef LOL
-    def select(
-        filters: [],
-        group_by: 'url',
-        order_by: 'album,number',
-        limit: nil
-        )
-      where_clauses, where_params = [], []
-
-      filters.each do |filter|
-      where_clauses << "AND #{filter[:tag]} #{filter[:operator]} ?"
-      where_params  << filter[:value]
-      end
-      end
-#endif
 };
 
 class Statement {

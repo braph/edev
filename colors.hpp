@@ -17,11 +17,12 @@ namespace UI {
   };
 
   class Attribute {
-    private:
-      static std::map<std::string, int> attributes;
     public:
+      struct mapping { const char* name; unsigned int value; };
+      static mapping attributes[];
+
       static void init();
-      static const std::string& to_string(int);
+      static std::string to_string(int);
       static int parse(const std::string&);
   };
 

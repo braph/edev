@@ -1,0 +1,14 @@
+log_file = Filesystem::expand(CONFIG_DIR + PATH_SEP "ektoplayer.log");
+cache_dir = Filesystem::expand(HOME + PATH_SEP ".cache" PATH_SEP "ektoplayer");
+archive_dir = Filesystem::expand(CONFIG_DIR + PATH_SEP "archives");
+database_file = Filesystem::expand(CONFIG_DIR + PATH_SEP "meta.db");
+browser_format = opt_parse_playlist_format(DEFAULT_PLAYLIST_FORMAT);
+playlist_format = opt_parse_playlist_format(DEFAULT_PLAYLIST_FORMAT);
+browser_format_256 = opt_parse_playlist_format(DEFAULT_PLAYLIST_FORMAT_256);
+playlist_format_256 = opt_parse_playlist_format(DEFAULT_PLAYLIST_FORMAT_256);
+playinginfo_format_top = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_TOP);
+playinginfo_format_bottom = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_BOTTOM);
+playinginfo_format_top_256 = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_TOP_256);
+playinginfo_format_bottom_256 = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256);
+main_widgets = opt_parse_main_widgets("playinginfo,tabbar,mainwindow,progressbar");
+tabs_widgets = opt_parse_tabs_widgets("splash,playlist,browser,info,help");

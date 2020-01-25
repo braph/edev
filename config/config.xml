@@ -1,23 +1,31 @@
 <config>
-  <opt name="database_file" type="std::string" parse="Filesystem::expand" default="CONFIG_DIR + PATH_SEP &quot;meta.db&quot;">
-    <description>Database file for storing ektoplazm metadata</description>
+  <opt name="database_file" type="std::string" parse="Filesystem::expand" default="CONFIG_DIR + PATH_SEP &quot;meta.db&quot;" lateinit="yes">
+    <description>
+      Database file for storing ektoplazm metadata
+    </description>
   </opt>
 
-  <opt name="log_file" type="std::string" parse="Filesystem::expand" default="CONFIG_DIR + PATH_SEP &quot;ektoplayer.log&quot;">
-    <description>File used for logging</description>
+  <opt name="log_file" type="std::string" parse="Filesystem::expand" default="CONFIG_DIR + PATH_SEP &quot;ektoplayer.log&quot;" lateinit="yes">
+    <description>
+      File used for logging
+    </description>
   </opt>
 
   <opt name="temp_dir" type="std::string" parse="Filesystem::expand" default="&quot;/tmp/.ektoplazm&quot;">
-    <description>Temporary dir for downloading mp3 files.
+    <description>
+      Temporary dir for downloading mp3 files.
       They will be moved to `cache_dir` after the download completed and was successful.
-      Directory will be created if it does not exist, parent directories will not be created.</description>
+      Directory will be created if it does not exist, parent directories will not be created.
+    </description>
   </opt>
 
-  <opt name="cache_dir" type="std::string" parse="Filesystem::expand" default="HOME + PATH_SEP &quot;.cache&quot; PATH_SEP &quot;ektoplayer&quot;">
-    <description>Directory for storing cached mp3 files</description>
+  <opt name="cache_dir" type="std::string" parse="Filesystem::expand" default="HOME + PATH_SEP &quot;.cache&quot; PATH_SEP &quot;ektoplayer&quot;" lateinit="yes">
+    <description>
+      Directory for storing cached mp3 files
+    </description>
   </opt>
 
-  <opt name="archive_dir" type="std::string" parse="Filesystem::expand" default="CONFIG_DIR + PATH_SEP &quot;archives&quot;">
+  <opt name="archive_dir" type="std::string" parse="Filesystem::expand" default="CONFIG_DIR + PATH_SEP &quot;archives&quot;" lateinit="yes">
     <description>Where to search for downloaded MP3 archives</description>
   </opt>
 
@@ -57,7 +65,7 @@
     <description>Choose color capabilities. auto|mono|8|256</description>
   </opt>
 
-  <opt name="audio_system" type="std::string" parse="opt_parse_string" default="&quot;pulse,alsa,jack,oss&quot;">
+  <opt name="audio_system" type="std::string" parse="std::string" default="&quot;pulse,alsa,jack,oss&quot;">
     <description>Set output audio system. See option `-o` in mpg123(1)</description>
   </opt>
 
@@ -65,19 +73,19 @@
     <description>Number of download threads during database update</description>
   </opt>
 
-  <opt name="playlist.format" type="PlaylistColumns" parse="parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT">
+  <opt name="playlist.format" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT" lateinit="yes">
     <description>Format of playlist columns</description>
   </opt>
 
-  <opt name="playlist.format_256" type="PlaylistColumns" parse="parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT_256">
+  <opt name="playlist.format_256" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT_256" lateinit="yes">
     <description>Format of playlist columns (256 colors)</description>
   </opt>
 
-  <opt name="browser.format" type="PlaylistColumns" parse="parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT">
+  <opt name="browser.format" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT" lateinit="yes">
     <description>Format of browser columns</description>
   </opt>
 
-  <opt name="browser.format_256" type="PlaylistColumns" parse="parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT_256">
+  <opt name="browser.format_256" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT_256" lateinit="yes">
     <description>Format of browser columns (256 colors)</description>
   </opt>
 
@@ -97,19 +105,19 @@
     <description>Enable/display playinginfo</description>
   </opt>
 
-  <opt name="playinginfo.format_top" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_TOP">
+  <opt name="playinginfo.format_top" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_TOP" lateinit="yes">
     <description>Format of first line in playinginfo</description>
   </opt>
 
-  <opt name="playinginfo.format_top_256" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_TOP_256">
+  <opt name="playinginfo.format_top_256" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_TOP_256" lateinit="yes">
     <description>Format of first line in playinginfo (256 colors)</description>
   </opt>
 
-  <opt name="playinginfo.format_bottom" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_BOTTOM">
+  <opt name="playinginfo.format_bottom" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_BOTTOM" lateinit="yes">
     <description>Format of second line in playinginfo</description>
   </opt>
 
-  <opt name="playinginfo.format_bottom_256" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256">
+  <opt name="playinginfo.format_bottom_256" type="PlayingInfoFormat" parse="opt_parse_playinginfo_format" default="DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256" lateinit="yes">
     <description>Format of second line in playinginfo (256 colors)</description>
   </opt>
 
@@ -117,11 +125,11 @@
     <description>Enable/disable tabbar TODO: do we need this?</description>
   </opt>
 
-  <opt name="tabs.widgets" type="std::vector&lt;std::string&gt;" parse="opt_parse_tabs_widgets" default="&quot;splash,playlist,browser,info,help&quot;">
+  <opt name="tabs.widgets" type="std::vector&lt;std::string&gt;" parse="opt_parse_tabs_widgets" default="&quot;splash,playlist,browser,info,help&quot;" lateinit="yes">
     <description>Specify widget order of tabbar (left to right)</description>
   </opt>
 
-  <opt name="main.widgets" type="std::vector&lt;std::string&gt;" parse="opt_parse_main_widgets" default="&quot;playinginfo,tabbar,windows,progressbar&quot;">
+  <opt name="main.widgets" type="std::vector&lt;std::string&gt;" parse="opt_parse_main_widgets" default="&quot;playinginfo,tabbar,mainwindow,progressbar&quot;" lateinit="yes">
     <description>Specify widgets to show (up to down)</description>
   </opt>
 </config>

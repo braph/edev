@@ -3,7 +3,7 @@
 
 #include <cstddef>
 #include <sstream>
-#include <iostream>
+#include <iostream> //XXX
 
 // TODO: Compress these statements?
 static const char * const SELECT = 
@@ -28,27 +28,27 @@ static const char * const SELECT =
       "a.votes"          " AS votes,"
       "a.download_count" " AS download_count,"
 
-      "strftime('%Y', date) AS year,"
-      "strftime('%m', date) AS month,"
-      "strftime('%d', date) AS day,"
+      "strftime('%Y',date) AS year,"
+      "strftime('%m',date) AS month,"
+      "strftime('%d',date) AS day,"
 
       "a_s.style"       " AS style,"
 
       "("
-        "SELECT GROUP_CONCAT(style)"
-        "FROM   albums_styles"
+        "SELECT GROUP_CONCAT(style) "
+        "FROM  albums_styles "
         "WHERE albums_styles.album_url = t.album_url"
-      ") AS styles"
-    "FROM"
+      ") AS styles "
+    "FROM "
       "tracks AS t "
     "JOIN albums        AS a   ON a.url = t.album_url "
     "JOIN albums_styles AS a_s ON a.url = a_s.album_url "
   ")"
 
-  "WHERE 1 $WHERE "
+  "WHERE 1 $WHERE"
   "GROUP BY $GROUP_BY "
   "ORDER BY $ORDER_BY "
-  "$LIMIT;";
+  "$LIMIT";
 
 static const char * const CREATE_TABLES =
   "CREATE TABLE IF NOT EXISTS albums"
@@ -117,7 +117,7 @@ void Database :: end_transaction() {
 Database :: Database(const char *database_file) {
   sqlite3_open(database_file, &db); // TODO: ERR / throw
   sqlite3_extended_result_codes(db, 1);
-  sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL); // TODO: combine
   sqlite3_exec(db, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
   create_tables();
 }
@@ -141,8 +141,8 @@ inline void bind_text(sqlite3_stmt *stmt, int col, const char *text, int n) {
 }
 */
 
-void Database :: insert(const std::string &table, const std::map<std::string, std::string> &hash, const char* mode) {
   /*
+void Database :: insert(const std::string &table, const std::map<std::string, std::string> &hash, const char* mode) {
   std::stringstream sql;
   sql << mode << " INTO " << table << '(';
 
@@ -173,8 +173,8 @@ void Database :: insert(const std::string &table, const std::map<std::string, st
   //std::string ret = (s ? s : "");
   sqlite3_finalize(stmt);
   //return ret;
-  */
 }
+  */
 
 unsigned int Database :: track_count() {
   sqlite3_stmt *stmt;
@@ -207,28 +207,27 @@ std::string Database :: get_description(const char *album_url) {
 
 void Database :: select
  (
-  std::string columns,// = "number,artist,album,title,styles,date,year,rating,votes,download_count,bpm,album_url,url",
-  std::vector<DatabaseFilter> * filters,// = NULL,
-  std::string group_by,// = "url",
-  std::string order_by,// = "album,number",
-  signed int limit// = -1
+  const std::string &columns,
+  const std::vector<DatabaseFilter> &filters,
+  const std::string &group_by,
+  const std::string &order_by,
+  int limit
  )
 {
   std::string sql = SELECT;
-  std::string where = "";
 
-  if (filters)
-    for (std::vector<DatabaseFilter>::iterator it = filters->begin(); it != filters->end(); ++it) {
-      where += " AND ";
-      where += it->column;
-      where += it->op;
-      where += " ?";
-    }
+  std::string where;
+  for (const auto &filter : filters) {
+    where += " AND ";
+    where += filter.column;
+    where += filter.op;
+    where += '?';
+  }
 
-  std::string _limit = "";
+  std::string _limit;
   if (limit) {
     _limit = "LIMIT ";
-    _limit += limit;
+    _limit += std::to_string(limit);
   }
 
   sql.replace(sql.find("$SELECT_COLUMNS"), STRLEN("$SELECT_COLUMNS"), columns);
@@ -237,14 +236,34 @@ void Database :: select
   sql.replace(sql.find("$ORDER_BY"),       STRLEN("$ORDER_BY"),       order_by);
   sql.replace(sql.find("$LIMIT"),          STRLEN("$LIMIT"),          _limit);
 
+  std::cout << sql << std::endl;
+
   sqlite3_stmt *stmt;
   sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL);
   int i = 0;
-  if (filters)
-    for (std::vector<DatabaseFilter>::iterator it = filters->begin(); it != filters->end(); ++it) {
-      sqlite3_bind_text(stmt, ++i, it->value.c_str(), -1, NULL);
+  for (const auto &filter : filters) {
+    sqlite3_bind_text(stmt, ++i, filter.value.c_str(), -1, NULL);
+  }
+
+  int ncolumns = sqlite3_column_count(stmt);
+
+  for (;;) {
+    int ret = sqlite3_step(stmt);
+    if (ret == SQLITE_ROW) {
+      std::cout << "having row" << std::endl;
+      for (int i = 1; i < ncolumns; ++i) {
+        const char *r = (const char*) sqlite3_column_text(stmt, i);
+        if (!r)
+          r = "";
+        std::cout << r << std::endl;
+      }
     }
-  sqlite3_step(stmt);
+    else {
+      std::cout << "done: " << ret << std::endl;
+      break;
+    }
+  }
+
   //const char *s = (const char*) sqlite3_column_text(stmt, 0);
   //std::string ret = (s ? s : "");
   sqlite3_finalize(stmt);
@@ -254,35 +273,27 @@ void Database :: select
   // TODO: LOG ERR
 }
 
-#ifdef LOL
-      def select(
-         filters: [],
-         group_by: 'url',
-         order_by: 'album,number',
-         limit: nil
-      )
-         where_clauses, where_params = [], []
-              
-         filters.each do |filter|
-            where_clauses << "AND #{filter[:tag]} #{filter[:operator]} ?"
-            where_params  << filter[:value]
-         end
-      end
-#endif
-
 #if TEST_DATABASE
-#include <cstdio>
+#include <iostream>
 
 int main() {
   Database db("/home/braph/.config/ektoplayer/meta.db");
+  db.select("*", {}, "url", "album,number", 10);
 
+  /*
   std::map<std::string,std::string> data = {{"style","TEST"}, {"url","PENIS"}};
   db.insert("styles", data);
+  */
 
-  printf("Having %u tracks and %u albums\n", db.track_count(), db.album_count());
+  std::cout << "Track count: " << db.track_count() << std::endl;
+  std::cout << "Album count: " << db.album_count() << std::endl;
+
+  /*
   printf("Found foo %s", db.get_description("sdfdsf").c_str());
   printf("Found foo %s", db.get_description("globular-entangled-everything").c_str());
   db.select();
+  */
+
   return 0;
 }
 #endif

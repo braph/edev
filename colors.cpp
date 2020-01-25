@@ -1,5 +1,6 @@
 #include "colors.hpp"
 #include <cctype>
+#define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 using namespace UI;
 
 // === UI::Color ==============================================================
@@ -40,29 +41,32 @@ std::string Color :: to_string(short color) {
 
 // === UI::Attribute ==========================================================
 
-std::map<std::string, int> Attribute :: attributes;
+Attribute :: mapping Attribute :: attributes[] = {
+  {"bold",      A_BOLD},
+  {"dim",       A_DIM},
+  {"blink",     A_BLINK},
+  {"italic",    A_ITALIC},
+  {"normal",    A_NORMAL},
+  {"standout",  A_STANDOUT},
+  {"underline", A_UNDERLINE}
+};
 
 void Attribute :: init() {
-  attributes = {
-    {"bold",      A_BOLD},
-    {"blink",     A_BLINK},
-    {"standout",  A_STANDOUT},
-    {"underline", A_UNDERLINE}
-  };
+  // TODO: This method is obsolete
 }
 
 int Attribute :: parse(const std::string& attribute) {
-  try {
-    return attributes.at(attribute);
-  } catch (...) {
-    throw std::invalid_argument(attribute + ": invalid attribute"); // TODO
-  }
+  for (int i = 0; i < ARRAY_SIZE(attributes); ++i)
+    if (attribute == attributes[i].name)
+      return attributes[i].value;
+
+  throw std::invalid_argument(attribute + ": invalid attribute");
 }
 
-const std::string& Attribute :: to_string(int attribute) {
-  for (const auto &it : attributes)
-    if (it.second == attribute)
-      return it.first;
+std::string Attribute :: to_string(int attribute) {
+  for (int i = 0; i < ARRAY_SIZE(attributes); ++i)
+    if (attribute == attributes[i].value)
+      return attributes[i].name;
 
   throw std::invalid_argument("invalid attribute value"); // TODO
 }

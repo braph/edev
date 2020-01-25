@@ -9,10 +9,27 @@
 namespace fs = boost::filesystem;
 using namespace Ektoplayer;
 
+void sighandler(int sig) {
+  switch (sig) {
+    case SIGWINCH: want_resize = 1; break;
+  }
+}
+
 // TODO: keep playlist state
 static void app() {
   // Set terminal title
   std::cout << "\033]0;ektoplayer\007" << std::endl;
+
+  // Initialize curses
+  initscr();
+  cbreak(); // XXX
+  noecho();
+  start_color();
+  use_default_colors();
+  mousemask(ALL_MOUSE_EVENTS|REPORT_MOUSE_POSITION);
+
+  // Sighandler
+  signal(SIGWINCH, sighandler);
 
   // Lots of singleton stuff that has to be initialized
   UI::Color::init();
@@ -46,10 +63,10 @@ static void app() {
   std::cerr.rdbuf(logfile.rdbuf());
 
   // Application.log(self, "using '#{$USING_CURSES}' with #{ICurses.colors} colors available")
-  if (Config.use_colors == "auto")
+  if (Config.use_colors == -1)
     Theme::loadTheme(COLORS);
   else
-    Theme::loadTheme(std::stoi(Config.use_colors));
+    Theme::loadTheme(Config.use_colors);
 
   // models...
   //player      = Models::Player.new(client, Config[:audio_system])
@@ -134,7 +151,12 @@ static void setupUI() {
 
     v_ProgressBar.setPercent(player.getPosition());
 
-    if (Config::getBool("prefetch")) {
+    time_t now = time(NULL);
+
+    if (Config::prefetch && now % 5 == 0) {
+      if (player.state != PLAYING)
+        continue;
+
        current_download_track = nil
 
        loop do

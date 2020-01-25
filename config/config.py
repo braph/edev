@@ -4,7 +4,6 @@ import sys, os
 from lxml import etree
 
 os.chdir(os.path.dirname(sys.argv[0]))
-cmd = sys.argv[1]
 
 doc  = etree.parse('config.xml')
 root = doc.getroot()
@@ -15,26 +14,27 @@ for o in root:
         type=o.attrib['type'],
         name=o.attrib['name'],
         default=o.attrib['default'],
-        parse=o.attrib['parse']
+        parse=o.attrib['parse'],
+        lateinit=o.attrib.get('lateinit', '')
     ))
 
-if cmd == 'hpp':
+with open('config.members.hpp', 'w') as fh:
     options.sort(key=lambda o: o['name'])
     options.sort(key=lambda o: len(o['name']))
     options.sort(key=lambda o: o['type'])
     options.sort(key=lambda o: len(o['type']))
     for o in options:
-        print(o['type'], o['name'].replace('.', '_'), end=';\n')
+        print('static', o['type'], o['name'].replace('.', '_'), end=';\n', file=fh)
 
-elif cmd == 'cpp-set':
+with open('config.members.set.cpp', 'w') as fh:
     options.sort(key=lambda o: o['name'])
     options.sort(key=lambda o: len(o['name']))
     for o in options:
         print('else if (option == \"%s\") %s = %s(value);' % (
             o['name'], o['name'].replace('.', '_'), o['parse']
-        ))
+        ), file=fh)
 
-elif cmd == 'cpp-decl':
+with open('config.members.declare.cpp', 'w') as fh:
     options.sort(key=lambda o: o['name'])
     options.sort(key=lambda o: len(o['name']))
     options.sort(key=lambda o: o['type'])
@@ -44,16 +44,23 @@ elif cmd == 'cpp-decl':
     fmt = '%%-%ds Config :: %%s' % pad
 
     for o in options:
-        print(fmt % (o['type'], o['name'].replace('.', '_')))
+        print(fmt % (o['type'], o['name'].replace('.', '_')), end='', file=fh)
 
-elif cmd == 'cpp-init':
+        if o['lateinit'] != 'yes':
+            print(' =', o['default'], end='', file=fh);
+        else:
+            print(' /* will be initialized later */', end='', file=fh)
+
+        print(';', file=fh)
+
+with open('config.members.initialize.cpp', 'w') as fh:
     options.sort(key=lambda o: o['name'])
     options.sort(key=lambda o: len(o['name']))
     options.sort(key=lambda o: o['type'])
     options.sort(key=lambda o: len(o['type']))
     for o in options:
-        print('%s = %s;' % (
-            o['name'].replace('.', '_'), o['default']
-        ))
-else:
-    print('Invalid command. Choose one of hpp, cpp-set')
+        if o['lateinit'] != 'yes':
+            continue
+        print('%s = %s(%s);' % (
+            o['name'].replace('.', '_'), o['parse'], o['default']
+        ), file=fh)

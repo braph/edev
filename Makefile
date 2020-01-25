@@ -10,6 +10,18 @@ SQLITE := -lsqlite3
 test: test_filesystem test_ektoplayer test_config
 	echo foo
 
+test_strpool:
+	g++ -DTEST_STRPOOL $(OPTS) strpool.cpp
+	./a.out
+
+test_playlist:
+	g++ -DTEST_PLAYLIST $(OPTS) $(CURSES) $(XML) views/playlist.cpp colors.cpp theme.cpp config.cpp colorfader.cpp filesystem.cpp shellsplit.cpp
+	echo "Widgets cannot be tested in Make"
+
+test_listwidget:
+	g++ -DTEST_LISTWIDGET $(OPTS) $(CURSES) $(XML) widgets/listwidget.hpp colors.cpp theme.cpp config.cpp colorfader.cpp filesystem.cpp shellsplit.cpp
+	echo "Widgets cannot be tested in Make"
+
 test_progressbar:
 	g++ -DTEST_PROGRESSBAR $(OPTS) $(CURSES) $(XML) views/progressbar.cpp colors.cpp theme.cpp config.cpp colorfader.cpp filesystem.cpp shellsplit.cpp
 	echo "Widgets cannot be tested in Make"

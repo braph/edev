@@ -8,6 +8,12 @@
 #define STRLEN(S)     (sizeof(S)-1)
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
+inline int clamp(int value, int lower, int upper) {
+  if (value < lower) return lower;
+  if (value > upper) return upper;
+  return value;
+}
+
 inline std::string secondsToTime(unsigned int seconds) {
   char buf[8] = "00:00";
   if (seconds)
