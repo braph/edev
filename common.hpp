@@ -17,7 +17,7 @@ inline int clamp(int value, int lower, int upper) {
 inline std::string secondsToTime(unsigned int seconds) {
   char buf[8] = "00:00";
   if (seconds)
-    sprintf(buf, "%0.2d:%0.2d", seconds/60, seconds%60);
+    sprintf(buf, "%02d:%02d", seconds/60, seconds%60);
   return buf;
 }
 

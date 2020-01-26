@@ -110,7 +110,7 @@ void PlayingInfo :: print_formatted_strings(PlayingInfoFormat *format) {
 void PlayingInfo :: draw_position_and_length() {
   int pos = 33, len = 333;
   wattrset(win, UI::Colors::get("playinginfo.position"));
-  mvwprintw(win, 0, 0, "[%0.2d:%0.2d/%0.2d:%0.2d]", pos/60, pos%60, len/60, len%60);
+  mvwprintw(win, 0, 0, "[%02d:%02d/%02d:%02d]", pos/60, pos%60, len/60, len%60);
 }
 
 #if TEST_PLAYINGINFO
