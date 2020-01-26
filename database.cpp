@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream> //XXX
 
-// TODO: Compress these statements?
+// TODO: Compress these statements? + FIX SELECT
 static const char * const SELECT = 
   "SELECT "
     "$SELECT_COLUMNS "
@@ -36,13 +36,13 @@ static const char * const SELECT =
 
       "("
         "SELECT GROUP_CONCAT(style) "
-        "FROM  albums_styles "
-        "WHERE albums_styles.album_url = t.album_url"
+        "FROM  album_style "
+        "WHERE album_style.album_id = t.album_id"
       ") AS styles "
     "FROM "
-      "tracks AS t "
-    "JOIN albums        AS a   ON a.url = t.album_url "
-    "JOIN albums_styles AS a_s ON a.url = a_s.album_url "
+      "track AS t "
+    "JOIN album       AS a   ON a.id = t.album_id "
+    "JOIN album_style AS a_s ON a.id = a_s.album_id "
   ")"
 
   "WHERE 1 $WHERE"
@@ -51,53 +51,55 @@ static const char * const SELECT =
   "$LIMIT";
 
 static const char * const CREATE_TABLES =
-  "CREATE TABLE IF NOT EXISTS albums"
-    "(url"               " TEXT NOT NULL"
-    ",title"             " TEXT NOT NULL"
+  "CREATE TABLE IF NOT EXISTS album"
+    "(id"                " INTEGER PRIMARY KEY" // RowID, AutoIncrement
+    ",url"               " TEXT NOT NULL UNIQUE"
+    ",title"             " TEXT"
     ",artist"            " TEXT"
     ",cover_url"         " TEXT"
     ",description"       " TEXT"
     ",date"              " DATE"
-    ",rating"            " FLOAT NOT NULL DEFAULT -1"
-    ",votes"             " INT NOT NULL DEFAULT 0"
-    ",download_count"    " INT NOT NULL DEFAULT 0"
-    ",PRIMARY KEY (url));"
+    ",rating"            " FLOAT"
+    ",votes"             " INT"
+    ",download_count"    " INT"
+    ");"
 
-  "CREATE TABLE IF NOT EXISTS tracks"
-    "(url"             " TEXT NOT NULL"
-    ",album_url"       " TEXT NOT NULL REFERENCES albums(url)"
-    ",title"           " TEXT NOT NULL"
-    ",artist"          " TEXT NOT NULL"
+  "CREATE TABLE IF NOT EXISTS track"
+    "(id"              " INTEGER PRIMARY KEY" // RowID, AutoIncrement
+    ",url"             " TEXT NOT NULL UNIQUE"
+    ",album_id"        " INTEGER NOT NULL REFERENCES album(id)"
+    ",title"           " TEXT"
+    ",artist"          " TEXT"
     ",remix"           " TEXT"
-    ",number"          " INT NOT NULL"
+    ",number"          " INT"
     ",bpm"             " INT"
-    ",PRIMARY KEY (url));"
+    ");"
 
-  "CREATE TABLE IF NOT EXISTS styles"
-    "(style"         " TEXT NOT NULL"
-    ",url"           " TEXT NOT NULL"
-    ",PRIMARY KEY (style));"
+  "CREATE TABLE IF NOT EXISTS style"
+    "(id"            " INTEGER PRIMARY KEY" // RowID, AutoIncrement
+    ",url"           " TEXT NOT NULL UNIQUE"
+    ",name"          " TEXT"
+    ");"
 
-  "CREATE TABLE IF NOT EXISTS archive_urls"
-    "(album_url"       " TEXT NOT NULL REFERENCES albums(url)"
-    ",archive_url"     " TEXT NOT NULL"
-    ",archive_type"    " TEXT NOT NULL"
-    ",PRIMARY KEY (album_url, archive_url));"
+  "CREATE TABLE IF NOT EXISTS archive_url"
+    "(album_id"        " INTEGER NOT NULL REFERENCES album(id)"
+    ",url"             " TEXT NOT NULL UNIQUE"
+    ",PRIMARY KEY (album_id, url));"
 
-  "CREATE TABLE IF NOT EXISTS albums_styles"
-    "(album_url"     " TEXT NOT NULL REFERENCES albums(url)"
-    ",style"         " TEXT NOT NULL REFERENCES styles(style)"
-    ",PRIMARY KEY (album_url, style))";
+  "CREATE TABLE IF NOT EXISTS album_style"
+    "(album_id"      " INTEGER NOT NULL REFERENCES album(id)"
+    ",style_id"      " INTEGER NOT NULL REFERENCES style(id)"
+    ",PRIMARY KEY (album_id, style_id))";
 
 static const char * const SELECT_DESCRIPTION = 
   "SELECT description "
-  "FROM   albums "
+  "FROM   album "
   "WHERE  url = ?";
 
 static const char * const SELECT_ARCHIVES = 
   "SELECT archive_url, archive_type "
   "FROM   archive_urls "
-  "JOIN   tracks AS t ON t.album_url = archive_urls.album_url "
+  "JOIN   track AS t ON t.album_url = archive_urls.album_url "
   "WHERE  t.url = ?";
 
 void Database :: create_tables() {
@@ -117,7 +119,7 @@ void Database :: end_transaction() {
 Database :: Database(const char *database_file) {
   sqlite3_open(database_file, &db); // TODO: ERR / throw
   sqlite3_extended_result_codes(db, 1);
-  sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL); // TODO: combine
+  sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
   sqlite3_exec(db, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
   create_tables();
 }
@@ -125,21 +127,6 @@ Database :: Database(const char *database_file) {
 Database :: ~Database() {
   sqlite3_close(db);
 }
-
-/*
-inline void prepare_v2(const char *sql, int nByte, sqlite3_stmt **stmt, const char **pzTail) {
-  int ret = sqlite3_prepare_v2(db, sql, nByte, stmt, pzTail);
-  if (ret != SQLITE_OK)
-    //throw std::runtime_error(sqlite3_errstr(ret));
-    throw std::runtime_error(sqlite3_errmsg(db));
-}
-
-inline void bind_text(sqlite3_stmt *stmt, int col, const char *text, int n) {
-  int ret = sqlite3_bind_text(stmt, col, text, n, NULL);
-  if (ret != SQLITE_OK)
-    throw std::runtime_error(sqlite3_errmsg(db));
-}
-*/
 
   /*
 void Database :: insert(const std::string &table, const std::map<std::string, std::string> &hash, const char* mode) {
@@ -178,7 +165,7 @@ void Database :: insert(const std::string &table, const std::map<std::string, st
 
 unsigned int Database :: track_count() {
   sqlite3_stmt *stmt;
-  sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM tracks", -1, &stmt, NULL);
+  sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM track", -1, &stmt, NULL);
   sqlite3_step(stmt);
   int ret = sqlite3_column_int(stmt, 0);
   sqlite3_finalize(stmt);
@@ -187,7 +174,7 @@ unsigned int Database :: track_count() {
 
 unsigned int Database :: album_count() {
   sqlite3_stmt *stmt;
-  sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM albums", -1, &stmt, NULL);
+  sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM album", -1, &stmt, NULL);
   sqlite3_step(stmt);
   int ret = sqlite3_column_int(stmt, 0);
   sqlite3_finalize(stmt);

@@ -7,73 +7,76 @@
 #include <string>
 #include <sstream>
 
-class Track {
-  public:
-    std::string    url;
-    std::string    title;
-    std::string    artist;
-    std::string    remix;
-    unsigned short bpm;
-    unsigned short number;
+struct Track {
+  std::string    url;
+  std::string    title;
+  std::string    artist;
+  std::string    remix;
+  unsigned short bpm;
+  unsigned short number;
 
-    inline Track()
-    : bpm(0)
-    , number(0)
-    {}
+  inline Track()
+  : bpm(0)
+  , number(0)
+  {}
 
-    inline std::string to_string() const {
-      std::stringstream ss; ss
-        << number << '|' << artist << '|' << title << '|' << remix << '|' << bpm << '|' << url;
-      return ss.str();
-    }
+  inline std::string to_string() const {
+    std::stringstream ss; ss
+      << number << '|'
+      << artist << '|'
+      << title  << '|'
+      << remix  << '|'
+      << bpm    << '|'
+      << url;
+    return ss.str();
+  }
 };
 
-class Album {
-  public:
-    std::string  url;
-    std::string  title;
-    std::string  artist;
-    std::string  description;
-    std::string  cover_url;
-    time_t       date;
-    unsigned int download_count;
-    unsigned int votes;
-    float        rating;
-    std::vector<std::string> styles;
-    std::vector<std::string> archive_urls;
-    std::vector<Track> tracks;
+struct Album {
+  std::string  url;
+  std::string  title;
+  std::string  artist;
+  std::string  description;
+  std::string  cover_url;
+  time_t       date;
+  unsigned int download_count;
+  unsigned int votes;
+  float        rating;
+  std::vector<std::string> styles;
+  std::vector<std::string> archive_urls;
+  std::vector<Track> tracks;
 
-    inline Album()
-    : date(0)
-    , download_count(0)
-    , votes(0)
-    , rating(0)
-    {
-      styles.reserve(3);
-      tracks.reserve(10);
-      archive_urls.reserve(3);
-    }
+  inline Album()
+  : date(0)
+  , download_count(0)
+  , votes(0)
+  , rating(0)
+  {
+    styles.reserve(3);
+    tracks.reserve(10);
+    archive_urls.reserve(3);
+  }
 
-    inline std::string to_string() const {
-      struct tm tm = {0};
-      char   sdate[20];
-      localtime_r(&date, &tm);
-      ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", &tm);
+  inline std::string to_string() const {
+    struct tm tm = {0};
+    char   sdate[20];
+    localtime_r(&date, &tm);
+    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", &tm);
 
-      std::stringstream o;
-      o <<   "Title:       " << title
-        << "\nArtist:      " << artist
-        << "\nDate:        " << sdate
-        << "\nDescription: " << description
-        << "\nCover URL:   " << cover_url
-        << "\nDownloads:   " << download_count
-        << "\nRated:       " << rating << " (" << votes << " votes)"
-        << "\nURL:         " << url
-        << "\nStyles:      "; for (auto &i : styles)       { o << i << ','; }
-      o << "\nArchives:    "; for (auto &i : archive_urls) { o << i << ','; }
-      o << "\nTracks:      "; for (auto &t : tracks)       { o << '\n' << t.to_string(); }
-      return o.str();
-    }
+    std::stringstream o;
+    o <<   "Title:       " << title
+      << "\nArtist:      " << artist
+      << "\nDate:        " << sdate
+      << "\nDescription: " << description
+      << "\nCover URL:   " << cover_url
+      << "\nDownloads:   " << download_count
+      << "\nRated:       " << rating << " (" << votes << " votes)"
+      << "\nURL:         " << url
+      << "\nStyles:      "; for (auto &i : styles)       { o << i << ','; }
+    o << "\nArchives:    "; for (auto &i : archive_urls) { o << i << ','; }
+    o << "\nTracks:      "; for (auto &t : tracks)       { o << '\n' << t.to_string(); }
+    return o.str();
+  }
 };
 
 class BrowsePage {
@@ -82,7 +85,6 @@ class BrowsePage {
     unsigned int current_page;
     std::string base_url;
     std::vector<Album> albums;
-    std::vector<std::string> errors;
 
     BrowsePage()
     : num_pages(0)

@@ -7,25 +7,33 @@
 class Updater {
 private:
   Database *db;
-  Statement insertAlbums;
-  Statement insertAlbums_Styles;
-  Statement insertTracks;
+  Statement insertAlbum;
+  Statement insertTrack;
+  Statement insertAlbum_Style;
+  Statement insertArchive_Url;
 
 public:
   Updater(Database *_db)
   : db(_db)
-  , insertAlbums(_db,
-      "REPLACE INTO albums"
-      " (url, title, date, cover_url, description, download_count, rating, votes)"
-      " VALUES (?,?,?,?,?,?,?,?)")
-  , insertAlbums_Styles(_db,
-      "REPLACE INTO albums_styles"
-      " (album_url,style)"
-      " VALUES (?,?)")
-  , insertTracks(_db,
-      "REPLACE INTO tracks"
-      " (url, album_url, number, title, remix, artist, bpm)"
-      " VALUES (?,?,?,?,?,?,?)")
+  , insertAlbum(_db,
+      "REPLACE INTO album"
+      "(id, url, title, date, cover_url, description, download_count, rating, votes) VALUES"
+      "((SELECT id FROM album WHERE url=?),?,?,?,?,?,?,?,?)")
+  , insertTrack(_db,
+      "REPLACE INTO track"
+      "(id, url, album_id, number, title, remix, artist, bpm) VALUES ("
+      "(SELECT id FROM track WHERE url=?), ?,"
+      "(SELECT id FROM album WHERE url=?),"
+      "?,?,?,?,?)")
+  , insertAlbum_Style(_db,
+      "REPLACE INTO album_style"
+      "(album_id, style_id) VALUES ("
+      "(SELECT id FROM album WHERE url=?),"
+      "(SELECT id FROM style WHERE url=?))")
+  , insertArchive_Url(_db,
+      "REPLACE INTO archive_url"
+      "(album_id, url) VALUES"
+      "((SELECT id FROM album WHERE url=?),?)")
   {
   }
 
@@ -34,7 +42,7 @@ public:
   void insert_browsepage(const BrowsePage&);
 };
 
-#if 1
+#if 0
 #include <fstream>
 #include <streambuf>
 void Updater :: update() {
@@ -54,10 +62,15 @@ void Updater :: update() {
   BrowsePage firstPage(src);
 
   // Insert styles first, as the albums link to them
-  Statement s(db, "REPLACE INTO styles (style,url) VALUES (?,?)");
+  Statement s(db,
+      "REPLACE INTO style"
+      "(id,url,name) VALUES"
+      "((SELECT id FROM style WHERE url=?),?,?)"
+  );
   for (auto &pair : firstPage.getStyles(src)) {
-    s.bind(1, pair.first);
-    s.bind(2, pair.second);
+    s.bind(1, pair.first); // url
+    s.bind(2, pair.first); // url
+    s.bind(3, pair.second);  // name
     s.exec();
     s.reset();
   }
@@ -69,7 +82,7 @@ void Updater :: update() {
   std::string base_url = firstPage.getBaseUrl(src, &num_pages);
 
   // Insert other pages
-  for (unsigned int i = 2; i <= num_pages; ++i) {
+  for (int i = 2; i <= num_pages; ++i) {
     std::string url = base_url + std::to_string(i); //firstPage.getPageUrl(i);
     BrowsePage browserPage(http.get(url));
     insert_browsepage(browserPage);
@@ -77,19 +90,20 @@ void Updater :: update() {
 }
 #endif
 void Updater :: insert_album(const Album& album) {
-  Statement *s = &insertAlbums;
+  Statement *s = &insertAlbum;
   s->bind(1, album.url);
-  s->bind(2, album.title);
-  s->bind(3, album.date);
-  s->bind(4, album.cover_url);
-  s->bind(5, album.description);
-  s->bind(6, (int) album.download_count);
-  s->bind(7, album.rating);
-  s->bind(8, (int) album.votes);
+  s->bind(2, album.url);
+  s->bind(3, album.title);
+  s->bind(4, (int) album.date);
+  s->bind(5, album.cover_url);
+  s->bind(6, album.description);
+  s->bind(7, (int) album.download_count);
+  s->bind(8, album.rating);
+  s->bind(9, (int) album.votes);
   s->exec();
   s->reset();
 
-  s = &insertAlbums_Styles;
+  s = &insertAlbum_Style;
   s->bind(1, album.url);
   for (const auto &style : album.styles) {
     s->bind(2, style);
@@ -97,24 +111,24 @@ void Updater :: insert_album(const Album& album) {
     s->reset();
   }
 
-  const char *sql = "REPLACE INTO archive_urls (album_url, archive_type, archive_url) VALUES (?,?,?)"; /*
-  album[:archive_urls].each do |type, url| {
-      @db.replace_into(:archive_urls, {
-         album_url:    album[:url],
-         archive_type: type,
-         archive_url:  url
-      })
-  } */
+  s = &insertArchive_Url;
+  s->bind(1, album.url);
+  for (const auto &url : album.archive_urls) {
+    s->bind(2, url);
+    s->exec();
+    s->reset();
+  }
 
-  s = &insertTracks;
-  s->bind(2, album.url);
+  s = &insertTrack;
+  s->bind(3, album.url);
   for (const auto &track : album.tracks) {
     s->bind(1, track.url);
-    s->bind(3, track.number);
-    s->bind(4, track.title);
-    s->bind(5, track.remix);
-    s->bind(6, track.artist);
-    s->bind(7, track.bpm);
+    s->bind(2, track.url);
+    s->bind(4, track.number);
+    s->bind(5, track.title);
+    s->bind(6, track.remix);
+    s->bind(7, track.artist);
+    s->bind(8, track.bpm);
     s->exec();
     s->reset();
   }
