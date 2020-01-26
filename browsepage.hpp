@@ -2,6 +2,7 @@
 #define _BROWSEPAGE_HPP
 
 #include <map>
+#include <ctime>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -32,9 +33,9 @@ class Album {
     std::string  url;
     std::string  title;
     std::string  artist;
-    std::string  date;
     std::string  description;
     std::string  cover_url;
+    time_t       date;
     unsigned int download_count;
     unsigned int votes;
     float        rating;
@@ -43,28 +44,35 @@ class Album {
     std::vector<Track> tracks;
 
     inline Album()
-    : download_count(0)
+    : date(0)
+    , download_count(0)
     , votes(0)
     , rating(0)
     {
-      tracks.reserve(10); // Average track count on an album
+      styles.reserve(3);
+      tracks.reserve(10);
+      archive_urls.reserve(3);
     }
 
     inline std::string to_string() const {
-      std::stringstream ss; ss
-        <<   "Title:       " << title
+      struct tm tm = {0};
+      char   sdate[20];
+      localtime_r(&date, &tm);
+      ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", &tm);
+
+      std::stringstream o;
+      o <<   "Title:       " << title
         << "\nArtist:      " << artist
-        << "\nDate:        " << date
+        << "\nDate:        " << sdate
         << "\nDescription: " << description
         << "\nCover URL:   " << cover_url
         << "\nDownloads:   " << download_count
         << "\nRated:       " << rating << " (" << votes << " votes)"
         << "\nURL:         " << url
-        << "\nStyles:      ";
-      for (const auto &style : styles) { ss << style << ',';              }
-      for (const auto &track : tracks) { ss << '\n' << track.to_string(); }
-      //for (const auto &url : archive_urls) { ss << 
-      return ss.str();
+        << "\nStyles:      "; for (auto &i : styles)       { o << i << ','; }
+      o << "\nArchives:    "; for (auto &i : archive_urls) { o << i << ','; }
+      o << "\nTracks:      "; for (auto &t : tracks)       { o << '\n' << t.to_string(); }
+      return o.str();
     }
 };
 
@@ -74,10 +82,17 @@ class BrowsePage {
     unsigned int current_page;
     std::string base_url;
     std::vector<Album> albums;
+    std::vector<std::string> errors;
 
-    BrowsePage() : num_pages(0), current_page(0) {}
-    BrowsePage(const std::string &src) : num_pages(0), current_page(0) {
-      albums.reserve(5); // One page holds 5 albums
+    BrowsePage()
+    : num_pages(0)
+    , current_page(0)
+    {}
+
+    BrowsePage(const std::string &src)
+    : num_pages(0)
+    , current_page(0) {
+      albums.reserve(5);
       parse_src(src);
     }
 

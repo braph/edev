@@ -1,12 +1,9 @@
 #include "browsepage.hpp"
 #include "xml.hpp"
-#include <ctime>
 #include <algorithm>    
-#include <iostream> //XXX
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
-// TODO: vector of errors?!
 
 static inline const char* _basename(const char *s) {
   const char *found = strrchr(s, '/');
@@ -70,13 +67,21 @@ std::map<std::string, std::string> BrowsePage :: getStyles(const std::string &sr
   auto xpath = doc.xpath();
 
   // === List of all available styles ===
-  auto style_side_menu = xpath.query("//div[@id = 'sidemenu']")[0];
-  for (auto a : xpath.query(".//a[contains(@href, '/style/')]", style_side_menu)) {
-    if (!a.text().empty() && a["href"]) {
-      auto link = a["href"];
-      auto style = a.text();
-      style = style.erase(0, style.rfind('/')+1);
-      result[style] = link;
+  auto div = xpath.query("//div[@id = 'sidemenu']")[0];
+  for (auto a : xpath.query(".//a[contains(@href, '/style/')]", div)) {
+    // <a href="http://.../style/progressive/">Progressive</a>
+    const char *href = a["href"];
+    if (href && *href) {
+      std::string url = href;
+      if (url.back() == '/')
+        url.pop_back();
+
+      size_t idx = url.rfind('/');
+      if (idx != std::string::npos)
+        url.erase(0, idx+1);
+
+      if (!url.empty() && !a.text().empty())
+        result[url] = a.text();
     }
   }
 
@@ -91,22 +96,34 @@ void BrowsePage :: parse_src(const std::string &src) {
   for (auto post : xpath.query("//div[starts-with(@id, 'post-')]")) {
     Album album;
 
-    // === Date ===
+    // === Date === //
     const char *date = xpath.query_string("string(.//span[@class = 'd']/text())", post);
     if (date != NULL) {
       struct tm tm = {0};
-      char buf[20];
       ::strptime(date, "%B %d, %Y", &tm);
-      ::strftime(buf, sizeof(buf), "%Y-%m-%d 00:00:00", &tm);
-      album.date = date;
+      album.date = ::mktime(&tm);
     }
 
     // === Styles ===
-    for (auto style : xpath.query(".//span[@class = 'style']//a", post))
-      album.styles.push_back(style.text());
+    for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
+      const char *href = a["href"]; // "http://.../<style>"
+      if (href && *href) {
+        std::string s = href;
+        if (s.back() == '/')
+          s.pop_back();
+        size_t idx = s.rfind('/');
+        if (idx != std::string::npos)
+          s.erase(0, idx+1);
+        if (! s.empty())
+          album.styles.push_back(s);
+      }
+    }
 
     // === Description ===
-    album.description = xpath.query(".//p", post)[0].dump(); // XXX: remove <p>?
+    // First <p> </p> is description
+    album.description = xpath.query(".//p", post)[0].dump();
+    album.description.erase(0, album.description.find('>')+1); // Remove first tag
+    album.description.erase(album.description.rfind('<'));     // Remove last tag
 
     // === Cover URL ===
     const char* cover = xpath.query(".//img[@class = 'cover']", post)[0]["src"];
@@ -115,7 +132,7 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // === Download count ===
     const char *download_count = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
-    if (download_count) {
+    if (download_count != NULL) {
       std::string v = download_count;
       for (size_t pos; (pos = v.find(',')) != std::string::npos;)
         v.erase(pos, 1);
@@ -130,16 +147,21 @@ void BrowsePage :: parse_src(const std::string &src) {
     // === Archive URLs ===
     // <span class="dll"><a href="(...)zip">MP3 Download</a>
     for (auto a : xpath.query(".//span[@class = 'dll']//a", post)) {
-      album.archive_urls.push_back(_basename(a["href"]));
+      if (a["href"]) {
+        std::string url = _basename(a["href"]);
+        for (size_t pos; (pos = url.find("%20")) != std::string::npos;)
+          url.replace(pos, 3, " ");
+        album.archive_urls.push_back(url);
+      }
     }
 
     // === Rating, Voting count ===
     // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong> 
     auto strongs = xpath.query(".//p[@class = 'postmetadata']//span[@class = 'd']//strong", post);
     try { album.rating = std::stof(strongs[0].text()); }
-    catch (...) { std::cout << "album.rating" << std::endl; /* TODO */ }
+    catch (...) { /* XXX: handle_error("album.rating"); */ }
     try { album.votes = std::stoi(strongs[1].text()); }
-    catch (...) { std::cout << "album.votes" << std::endl; /* TODO */ }
+    catch (...) { /* XXX: handle_error("album.votes");  */ }
 
     // === Direct mp3 track URLs ===
     // <script type="text/javascript"> (...) soundFile:"(...)"
@@ -187,7 +209,7 @@ void BrowsePage :: parse_src(const std::string &src) {
                       bpm.erase(0, bpm.find_first_of("0123456789"));
                       track.bpm = std::stoi(bpm);
                     } catch (const std::exception &e) {
-                      //std::cout << e.what() << std::endl;
+                      // XXX handle_error(e);
                     }
                     break;
         }
@@ -195,23 +217,24 @@ void BrowsePage :: parse_src(const std::string &src) {
 
       if (! track.url.empty())
         album.tracks.push_back(track);
-
-      // Extract the artist name from the album title ("artist - album_name")
-      // and set the artist on tracks that dont have it yet.
-      auto idx = album.title.find(" – "/* Unicode dash */);
-      if (idx != std::string::npos) {
-        album.artist = album.title.substr(0, idx);
-        album.title  = album.title.substr(idx + 5);
-        for (auto &track : album.tracks)
-          if (track.artist.empty())
-            track.artist = album.artist;
-      } else {
-        for (auto &track : album.tracks)
-          if (track.artist.empty())
-            track.artist = "Unknown Artist";
-      }
     }
 
+    // Extract the artist name from the album title ("artist - album_name")
+    // and set the artist on tracks that dont have it yet.
+    auto idx = album.title.find(" – "/* Unicode dash */);
+    if (idx != std::string::npos) {
+      album.artist = album.title.substr(0, idx);
+      album.title  = album.title.substr(idx + 5);
+      for (auto &track : album.tracks)
+        if (track.artist.empty())
+          track.artist = album.artist;
+    } else {
+      for (auto &track : album.tracks)
+        if (track.artist.empty())
+          track.artist = "Unknown Artist";
+    }
+
+    // Push back album
     albums.push_back(album);
   }
 }
@@ -223,21 +246,10 @@ int main() {
   SimpleHTTP http;
   std::string src = http.get("https://ektoplazm.com/section/free-music");
   BrowsePage bp(src);
-  std::cout << "Num Pages: " << bp.num_pages << std::endl;
-  std::cout << "Base URL:  " << bp.base_url << std::endl;
-
-  for (unsigned int i = 2; i <= bp.num_pages; ++i) {
-    std::string url = bp.getPageUrl(i);
-    std::cout << "Retrieving ... " << url << " (" << i << ")" << std::endl;
-    src = http.get(url);
-    std::cout << "Processing ..." << std::endl;
-    BrowsePage bp2(src);
-    std::cout << "Done, found " << bp2.albums.size() << " albums" << std::endl;
-
-    /*
-    for (auto &album : bp2.albums)
-      std::cout << "album:\n" << album.to_string() << std::endl;
-    */
-  }
+  std::cout << "Num Pages: "    << bp.num_pages     << std::endl;
+  std::cout << "Base URL:  "    << bp.base_url      << std::endl;
+  std::cout << "getPageUrl(2):" << bp.getPageUrl(2) << std::endl;
+  for (auto &album : bp.albums)
+    std::cout << "album:\n" << album.to_string() << std::endl;
 }
 #endif
