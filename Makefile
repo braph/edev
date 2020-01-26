@@ -4,7 +4,7 @@ CURSES := -lncursesw
 BOOST  := -lboost_system -lboost_filesystem -lpthread
 CURL   := -lcurl
 #OPTS   := -g
-OPTS   := -O2
+OPTS   := -O2 -Wall
 SQLITE := -lsqlite3 
 
 test: test_filesystem test_ektoplayer test_config
