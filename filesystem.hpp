@@ -24,7 +24,7 @@ namespace Filesystem {
   }
 
   static inline void mkdir_p(const std::string& dir, mode_t mode = DEFAULT_PERMS) {
-    auto idx = 0;
+    size_t idx = 0;
     std::string part;
 
     for (;;) {

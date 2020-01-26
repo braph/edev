@@ -151,8 +151,8 @@ class XmlXPath {
   private:
     xmlXPathContextPtr m_xpathcontext;
   public:
-    XmlXPath(xmlDocPtr doc) {
-      m_xpathcontext = ::xmlXPathNewContext(doc);
+    XmlXPath(xmlDocPtr doc)
+    : m_xpathcontext(::xmlXPathNewContext(doc)) {
     }
 
     ~XmlXPath() {
