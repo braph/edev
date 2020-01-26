@@ -13,13 +13,13 @@ class DatabaseFilter {
     std::string value;
 
   DatabaseFilter(
-    std::string _column,
-    std::string _op,
-    std::string _value
-  ) :
-    column(_column),
-    op(_op),
-    value(_value)
+      const std::string &_column,
+      const std::string &_op,
+      const std::string &_value
+  )
+  : column(_column)
+  , op(_op)
+  , value(_value)
   { }
 };
 
