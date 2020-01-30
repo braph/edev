@@ -218,7 +218,6 @@ void Config :: init() {
 }
 
 void Config :: set(const std::string &option, const std::string &value) {
-  const std::string &o = option;
   if (0) {}
 #include "config/config.members.set.cpp"
   else throw std::invalid_argument("unknown option: " + option);
