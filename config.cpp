@@ -69,7 +69,7 @@ char opt_parse_char(const std::string &s) {
 /* === End of primitives === */
 
 /* === Option parsing functions === */
-std::string validate_use_colors(const std::string &s) {
+std::string opt_parse_use_colors(const std::string &s) {
   if (s == "auto" || s == "mono" || s == "8" || s == "256")
     return s;
 #if 0
@@ -81,7 +81,7 @@ std::string validate_use_colors(const std::string &s) {
   throw std::invalid_argument("expected auto|mono|8|256");
 }
 
-int validate_threads(const std::string &s) {
+int opt_parse_threads(const std::string &s) {
   int i = opt_parse_int(s);
   if (i < 1)
     throw std::invalid_argument("integer must be > 1");

@@ -1,10 +1,10 @@
-else if (option == "threads") threads = validate_threads(value);
+else if (option == "threads") threads = opt_parse_threads(value);
 else if (option == "log_file") log_file = Filesystem::expand(value);
 else if (option == "prefetch") prefetch = opt_parse_bool(value);
 else if (option == "temp_dir") temp_dir = Filesystem::expand(value);
 else if (option == "cache_dir") cache_dir = Filesystem::expand(value);
 else if (option == "use_cache") use_cache = opt_parse_bool(value);
-else if (option == "use_colors") use_colors = validate_use_colors(value);
+else if (option == "use_colors") use_colors = opt_parse_use_colors(value);
 else if (option == "archive_dir") archive_dir = Filesystem::expand(value);
 else if (option == "audio_system") audio_system = std::string(value);
 else if (option == "download_dir") download_dir = Filesystem::expand(value);
