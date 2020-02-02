@@ -21,14 +21,14 @@ struct Track {
   {}
 
   inline std::string to_string() const {
-    std::stringstream ss; ss
+    std::stringstream o;o
       << number << '|'
       << artist << '|'
       << title  << '|'
       << remix  << '|'
       << bpm    << '|'
       << url;
-    return ss.str();
+    return o.str();
   }
 };
 
@@ -58,13 +58,12 @@ struct Album {
   }
 
   inline std::string to_string() const {
-    struct tm tm = {0};
-    char   sdate[20];
-    localtime_r(&date, &tm);
-    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", &tm);
+    struct tm* tm = localtime(&date);
+    char sdate[20];
+    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
 
-    std::stringstream o;
-    o <<   "Title:       " << title
+    std::stringstream o;o
+      <<   "Title:       " << title
       << "\nArtist:      " << artist
       << "\nDate:        " << sdate
       << "\nDescription: " << description
