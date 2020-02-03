@@ -59,7 +59,7 @@ read_word:
 
 void dump(const std::string &s) {
   std::vector<std::string> result = shellsplit(s);
-  for (auto it = result.begin(); it != result.end(); ++it)
+  for (auto it = result.cbegin(); it != result.cend(); ++it)
     std::cout << "<<" << *it << ">>" << std::endl;
 }
 
