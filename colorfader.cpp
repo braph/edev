@@ -47,7 +47,7 @@ int ColorFader :: fade2(const std::vector<int> &colors, unsigned int pos, unsign
 #include <iostream>
 
 void dump(std::vector<int> vec) {
-  for (auto it = vec.begin(); it != vec.end(); ++it)
+  for (auto it = vec.cbegin(); it != vec.cend(); ++it)
     std::cout << *it << ',';
   std::cout << std::endl;
 }
