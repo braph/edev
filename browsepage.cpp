@@ -5,9 +5,11 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 
-static inline const char* _basename(const char *s) {
-  const char *found = strrchr(s, '/');
-  return (found? found+1 : s);
+static inline std::string _basename(std::string s) {
+  size_t pos = s.rfind('/');
+  if (pos != std::string::npos)
+    s.erase(0, pos+1);
+  return s;
 }
 
 /* Taken and adapted from:
@@ -35,12 +37,12 @@ std::string base64_decode(std::string input)
 }
 
 std::string BrowsePage :: getBaseUrl(const std::string& src, int*num_pages) {
-  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING);
+  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
 
   // === Find number of pages === (XXX Strange, this query fails with [0] ...)
-  const char *result = xpath.query_string("string(//span[@class = 'pages']/text())");
-  if (result) {
+  std::string result = xpath.query_string("string(//span[@class = 'pages']/text())");
+  if (! result.empty()) {
     // <span class='pages'>Page 1 of 31</span>
     std::string pages = result;
     auto p = pages.find_last_not_of("0123456789");
@@ -51,10 +53,8 @@ std::string BrowsePage :: getBaseUrl(const std::string& src, int*num_pages) {
 
   // === Get base url ===
   // -> https://ektoplazm.com/style/uplifting/page/2 (remove "/2")
-  const char *url = xpath.query_string("string(//div[contains(@class, 'wp-pagenavi')]//a/@href)");
-  std::string base_url = "";
-  if (url) {
-    base_url = url;
+  std::string base_url = xpath.query_string("string(//div[contains(@class, 'wp-pagenavi')]//a/@href)");
+  if (! base_url.empty()) {
     base_url = base_url.substr(0, base_url.find_last_not_of("0123456789") + 1);
   }
 
@@ -63,16 +63,15 @@ std::string BrowsePage :: getBaseUrl(const std::string& src, int*num_pages) {
 
 std::map<std::string, std::string> BrowsePage :: getStyles(const std::string &src) {
   std::map<std::string, std::string> result;
-  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING);
+  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
 
   // === List of all available styles ===
   auto div = xpath.query("//div[@id = 'sidemenu']")[0];
   for (auto a : xpath.query(".//a[contains(@href, '/style/')]", div)) {
     // <a href="http://.../style/progressive/">Progressive</a>
-    const char *href = a["href"];
-    if (href && *href) {
-      std::string url = href;
+    std::string url = a["href"];
+    if (! url.empty()) {
       if (url.back() == '/')
         url.pop_back();
 
@@ -89,7 +88,7 @@ std::map<std::string, std::string> BrowsePage :: getStyles(const std::string &sr
 }
 
 void BrowsePage :: parse_src(const std::string &src) {
-  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING);
+  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
 
   // Collect albums
@@ -97,25 +96,24 @@ void BrowsePage :: parse_src(const std::string &src) {
     Album album;
 
     // === Date === //
-    const char *date = xpath.query_string("string(.//span[@class = 'd']/text())", post);
-    if (date != NULL) {
+    std::string date = xpath.query_string("string(.//span[@class = 'd']/text())", post);
+    if (! date.empty()) {
       struct tm tm = {0};
-      ::strptime(date, "%B %d, %Y", &tm);
+      ::strptime(date.c_str(), "%B %d, %Y", &tm);
       album.date = ::mktime(&tm);
     }
 
     // === Styles ===
     for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
-      const char *href = a["href"]; // "http://.../<style>"
-      if (href && *href) {
-        std::string s = href;
-        if (s.back() == '/')
-          s.pop_back();
-        size_t idx = s.rfind('/');
+      std::string url = a["href"]; // "http://.../<style>"
+      if (! url.empty()) {
+        if (url.back() == '/')
+          url.pop_back();
+        size_t idx = url.rfind('/');
         if (idx != std::string::npos)
-          s.erase(0, idx+1);
-        if (! s.empty())
-          album.styles.push_back(s);
+          url.erase(0, idx+1);
+        if (! url.empty())
+          album.styles.push_back(url);
       }
     }
 
@@ -126,13 +124,13 @@ void BrowsePage :: parse_src(const std::string &src) {
     album.description.erase(album.description.rfind('<'));     // Remove last tag
 
     // === Cover URL ===
-    const char* cover = xpath.query(".//img[@class = 'cover']", post)[0]["src"];
-    if (cover != NULL)
-      album.cover_url = _basename(cover);
+    album.cover_url = xpath.query(".//img[@class = 'cover']", post)[0]["src"];
+    if (! album.cover_url.empty())
+      album.cover_url = _basename(album.cover_url);
 
     // === Download count ===
-    const char *download_count = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
-    if (download_count != NULL) {
+    std::string download_count = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
+    if (! download_count.empty()) { // TODO!
       std::string v = download_count;
       for (size_t pos; (pos = v.find(',')) != std::string::npos;)
         v.erase(pos, 1);
@@ -147,8 +145,9 @@ void BrowsePage :: parse_src(const std::string &src) {
     // === Archive URLs ===
     // <span class="dll"><a href="(...)zip">MP3 Download</a>
     for (auto a : xpath.query(".//span[@class = 'dll']//a", post)) {
-      if (a["href"]) {
-        std::string url = _basename(a["href"]);
+      std::string url = a["href"];
+      if (! url.empty()) {
+        url = _basename(url);
         for (size_t pos; (pos = url.find("%20")) != std::string::npos;)
           url.replace(pos, 3, " ");
         album.archive_urls.push_back(url);

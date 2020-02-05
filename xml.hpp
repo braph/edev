@@ -87,8 +87,14 @@ class XmlNode {
     */
 
     // get Attribute
-    inline const char* get_attribute(const char *name) const {
-      return (const char*) ::xmlGetProp(m_node, (xmlChar*) name);
+    inline std::string get_attribute(const char *name) const {
+      std::string value;
+      xmlChar* v = ::xmlGetProp(m_node, (xmlChar*) name);
+      if (v) {
+        value = (const char*) v;
+        xmlFree(v);
+      }
+      return value;
     }
 
     // set Attribute
@@ -96,8 +102,8 @@ class XmlNode {
       xmlSetProp(m_node, (xmlChar*) name, (xmlChar*) value);
     }
 
-    inline const char* operator[](const char* name) const        { return get_attribute(name); }
-    inline const char* operator[](const std::string &name) const { return get_attribute(name.c_str()); }
+    inline std::string operator[](const char* name) const        { return get_attribute(name); }
+    inline std::string operator[](const std::string &name) const { return get_attribute(name.c_str()); }
 
     // set Attribute
 
@@ -171,23 +177,32 @@ class XmlXPath {
       return XmlXPathResult(_);
     }
 
-    inline const char* query_string(const char *xpath) {
+    inline std::string query_string(const char *xpath) {
+      std::string value;
       xmlXPathObjectPtr _ = ::xmlXPathEvalExpression((xmlChar*) xpath, m_xpathcontext);
       //if (!_) { error; }
-      return (const char*) _->stringval;
+      if (_->stringval)
+        value = (const char*) _->stringval;
+      xmlXPathFreeObject(_);
+      return value;
     }
 
-    inline const char* query_string(const char *xpath, xmlNodePtr node) {
+    inline std::string query_string(const char *xpath, xmlNodePtr node) {
+      std::string value;
       xmlXPathObjectPtr _ = ::xmlXPathNodeEval(node, (xmlChar*) xpath, m_xpathcontext);
       if (! _) {
         xmlErrorPtr e = xmlGetLastError();
         throw std::invalid_argument(e->str1);
         throw std::invalid_argument(e->message);
       }
+      else {
+        //XXX std::cout << _->type << std::endl;
+        if (_->stringval)
+          value = (const char*) _->stringval;
 
-      //XXX std::cout << _->type << std::endl;
-
-      return (const char*) _->stringval;
+        xmlXPathFreeObject(_);
+      }
+      return value;
     }
 
     // === std::string === //

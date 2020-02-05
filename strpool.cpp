@@ -2,50 +2,46 @@
 #define _STRPOOL_HPP
 
 #include <string>
-#include <vector>
 
 class StringPool {
-  private:
-    int m_chunkSize;
-    std::vector<std::string> m_chunks;
-
-  public:
-    StringPool(int chunkSize = 512);
-    const char* add(const char*);
+private:
+  std::string storage;
+public:
+  StringPool() { storage.append("", 1); }
+  size_t              add(const char*);
+  inline const char*  get(size_t id)    { return storage.c_str() + id; }
+  inline void         reserve(size_t n) { storage.reserve(n); }
 };
 #endif
 
 #include <cstring>
 
-StringPool :: StringPool(int chunkSize) : m_chunkSize(chunkSize) { }
+size_t StringPool :: add(const char *s) {
+  if (!*s)
+    return 0;
 
-const char* StringPool :: add(const char *s) {
-  const size_t len = std::strlen(s);
+  const size_t len = std::strlen(s) + 1;
 
-  /* Optimize for inserting sorted strings (with duplicates):
-   * It is more likely to find the last inserted string on an string chunk
-   * thats located at the end. */
-  for (auto chunk = m_chunks.crbegin(); chunk != m_chunks.crend(); ++chunk) {
-    const size_t pos = chunk->find(s, 0, len+1 /* include '\0' */);
-    if (pos != std::string::npos)
-      return chunk->c_str() + pos; // Pool contains (sub)string
+#if 1 || CPP_STRFOO
+  size_t pos = storage.find(s, 1, len);
+  if (pos != std::string::npos)
+    return pos;
+#else
+  size_t pos = 1;
+  const size_t storage_len = storage.size();
+  const char *cstr = storage.c_str();
+  while (pos < storage_len) {
+    const char *found = strstr(cstr+pos, s);
+    if (found)
+      return found - cstr;
+    else
+      pos += strlen(cstr) + 1;
   }
+#endif
 
-  for (auto &chunk : m_chunks) {
-    const size_t size     = chunk.size();
-    const size_t capacity = chunk.capacity();
-    if (len + 1 < capacity - size) {
-      chunk.resize(size + len + 1, '\0'); // Make room for new value
-      chunk.replace(size, len, s, len);
-      return chunk.c_str() + size;
-    }
-  }
-
-  m_chunks.push_back(s);
-  std::string &val = m_chunks.back();
-  val.reserve(m_chunkSize);  // Prevent reallocation
-  val.resize(len + 1, '\0'); // Make string NUL terminated
-  return val.c_str();
+  pos = storage.size();
+  storage.append(s, len);
+  return pos;
 }
 
 #if TEST_STRPOOL
@@ -56,21 +52,20 @@ const char* StringPool :: add(const char *s) {
 #define TEST_DATA \
   {"", "1", "2", "3", "foo", "bar", "baz"}
 
-void test(int chunkSize) {
-  StringPool pool(chunkSize);
-  for (auto s : TEST_DATA)
-    assert( streq(s, pool.add(s)) );
-
-  /* Check if substring deduplication works */
-  const char *s0 = pool.add("0substr");
-  const char *s1 = pool.add("substr");
-  assert( s1-1 == s0 );
-}
-
 int main() {
   try {
-    for (int i = 0; i < 64; ++i)
-      test(i);
+    StringPool pool;
+    assert(streq("", pool.get(0)));
+    size_t id0 = pool.add("0substr");
+    size_t id1 = pool.add("substr");
+    size_t id2 = pool.add("substr");
+    assert(streq("0substr", pool.get(id0)));
+    assert(streq("substr",  pool.get(id1)));
+    assert(streq("substr",  pool.get(id2)));
+    
+    for (auto s : TEST_DATA)
+      assert(streq(s, pool.get(pool.add(s))));
+
   } catch (const std::exception &e) {
     std::cout << "Error: " << e.what() << std::endl;
   }
