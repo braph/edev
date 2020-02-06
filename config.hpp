@@ -9,8 +9,8 @@ class PlaylistColumnFormat {
     enum Justification { Right, Left };
 
     std::string tag;
-    int fg;
-    int bg;
+    short fg;
+    short bg;
     unsigned int rel;
     unsigned int size;
     enum Justification justify;
@@ -23,8 +23,8 @@ class PlaylistColumnFormat {
 
 class PlayingInfoFormatFoo {
   public:
-    int fg;
-    int bg;
+    short fg;
+    short bg;
     unsigned int attributes;
     std::string tag;
     std::string text;

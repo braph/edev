@@ -69,15 +69,11 @@ char opt_parse_char(const std::string &s) {
 /* === End of primitives === */
 
 /* === Option parsing functions === */
-std::string opt_parse_use_colors(const std::string &s) {
-  if (s == "auto" || s == "mono" || s == "8" || s == "256")
-    return s;
-#if 0
-  if /**/ (s == "auto")   return -1;
+int opt_parse_use_colors(const std::string &s) {
+  /**/ if (s == "auto")   return -1;
   else if (s == "mono")   return 0;
   else if (s == "8")      return 8;
   else if (s == "256")    return 256;
-#endif
   throw std::invalid_argument("expected auto|mono|8|256");
 }
 

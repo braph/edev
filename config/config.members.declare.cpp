@@ -1,4 +1,5 @@
 int                           Config :: threads = 20;
+int                           Config :: use_colors /* will be initialized later */;
 int                           Config :: small_update_pages = 5;
 int                           Config :: playlist_load_newest = 1000;
 bool                          Config :: prefetch = true;
@@ -13,7 +14,6 @@ char                          Config :: progressbar_progress_char = '~';
 std::string                   Config :: log_file /* will be initialized later */;
 std::string                   Config :: temp_dir = "/tmp/.ektoplazm";
 std::string                   Config :: cache_dir /* will be initialized later */;
-std::string                   Config :: use_colors = "auto";
 std::string                   Config :: archive_dir /* will be initialized later */;
 std::string                   Config :: audio_system = "pulse,alsa,jack,oss";
 std::string                   Config :: download_dir = "/tmp";

@@ -1,3 +1,4 @@
+use_colors = opt_parse_use_colors("auto");
 log_file = Filesystem::expand(CONFIG_DIR + PATH_SEP "ektoplayer.log");
 cache_dir = Filesystem::expand(HOME + PATH_SEP ".cache" PATH_SEP "ektoplayer");
 archive_dir = Filesystem::expand(CONFIG_DIR + PATH_SEP "archives");

@@ -1,4 +1,5 @@
 static int threads;
+static int use_colors;
 static int small_update_pages;
 static int playlist_load_newest;
 static bool prefetch;
@@ -13,7 +14,6 @@ static char progressbar_progress_char;
 static std::string log_file;
 static std::string temp_dir;
 static std::string cache_dir;
-static std::string use_colors;
 static std::string archive_dir;
 static std::string audio_system;
 static std::string download_dir;
