@@ -19,7 +19,7 @@ public:
 #include <fstream>
 #include <streambuf>
 void Updater :: update() {
-  for (int i = 2; i < 416; ++i) { // XXX-4
+  for (int i = 2; i < 16; ++i) { // XXX-4
     std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
     std::string src((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());
@@ -132,7 +132,17 @@ int main() {
   auto albums = db.getAlbums();
   albums.order_by(Database::ALBUM_URL, Database::ASCENDING);
 
-  return 0;
+  //return 0;
+
+  for (auto a : albums) {
+    time_t date = a.date();
+    struct tm* tm = localtime(&date);
+    char sdate[20];
+    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
+    std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << sdate << std::endl;
+  }
+
+  albums.where(Database::ALBUM_URL, Database::EQUAL, "zis0ky-into-the-abyss");
 
   for (auto a : albums) {
     time_t date = a.date();

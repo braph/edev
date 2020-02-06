@@ -3,13 +3,10 @@
 #include <fstream>
 #include <cstring>
 #include <algorithm>
-#include <cassert> //XXX
-#include <iostream> //XXX
+#include <cstdlib>
 #include "strpool.cpp"
 #define  streq(a,b) (!strcmp(a,b))
 typedef const char* ccstr;
-
-// TODO: long, short pool description
 
 /* ============================================================================
  * Track Database
@@ -19,13 +16,13 @@ typedef const char* ccstr;
  *
  * === Tables ===
  * A table consists of a fixed number of columns.
+ * For retrieving a single row a proxy object is returned.
  * A column is a specialized form of an int vector. If a column shall hold a
  * string value, than it must reference an id to the stringpool.
  *
  * === Columns ===
- * A column is a bitpacked vector. It is only capable of holding integers.
- * If a column should hold a string value, a ID that references it in the
- * string pool should be stored.
+ * A column is a bitpacked vector of integers. If a column should hold a string
+ * it has to reference the string by an ID to a string pool.
  * The bit-width of a column changes.
  *
  * === String Pool ===
@@ -39,11 +36,6 @@ typedef const char* ccstr;
  * machines/architectures this should be fine. A minimal form of data
  * validation is performed.
  *
- * class Database {
- *    StringPool pool;
- *    Styles styles;
- *    Albums albums;
- *    Tracks tracks;
  */
 
 // === Save/Load Functions ====
@@ -59,7 +51,8 @@ void loadVector(std::ifstream &fs, std::vector<T> &v) { }
 template<>
 void loadVector(std::ifstream &fs, std::vector<const char*> &v) { }
 
-// === Iterator ===
+/* === GenericIterator ===
+ * Make anything iterable that provides operator[] */
 template<typename TStore, typename TItem>
 struct GenericIterator
 : public std::iterator<std::random_access_iterator_tag, TItem> {
@@ -89,18 +82,7 @@ public:
   iterator  operator+ (ptrdiff_t n) const { iterator i = *this; return i += n; }
   iterator  operator- (ptrdiff_t n) const { iterator i = *this; return i -= n; }
   iterator& operator= (const iterator&it) { idx=it.idx; return *this; } 
-
-#if 0
-  inline _Bit_iterator
-  operator+(ptrdiff_t __n, const _Bit_iterator& __x)
-  { return __x + __n; }
-#endif
 };
-
-template<typename TStore, typename TItem>
-inline ptrdiff_t
-operator-(const GenericIterator<TStore, TItem> &a, const GenericIterator<TStore, TItem> &b)
-{ return a.idx - b.idx; }
 
 // === Containers ===
 #define str_assign(DEST, STR) \
@@ -199,8 +181,6 @@ struct Database {
       void        votes(int);
       void        download_count(int);
       void        styles(int);
-
-      void swap(Album &rhs) { size_t tmp = id; id = rhs.id; rhs.id = tmp; } // XXX TODO
     };
 
     Album operator[](size_t id);
@@ -326,6 +306,75 @@ struct Database {
     }
   };
 
+  struct Where {
+    ColumnID       column;
+    Operator       op;
+    int            intValue;
+    const char*    strValue;
+
+    Where(ColumnID column, Operator op, int value)
+    : column(column)
+    , op(op)
+    , intValue(value)
+    , strValue("") { /* TODO: check if column is really an int */ }
+
+    Where(ColumnID column, Operator op, const char* value)
+    : column(column)
+    , op(op)
+    , intValue(0)
+    , strValue(value) { /* TODO: check if column is really a string */ }
+
+    int compare(const Tracks::Track &t) {
+      switch (column) {
+        case TRACK_URL:    return strcmp(t.url(),    strValue);
+        case TRACK_TITLE:  return strcmp(t.title(),  strValue);
+        case TRACK_ARTIST: return strcmp(t.artist(), strValue);
+        case TRACK_REMIX:  return strcmp(t.remix(),  strValue);
+        case TRACK_NUMBER: return t.number() -       intValue;
+        case TRACK_BPM:    return t.bpm() -          intValue;
+        default:           return compare(t.album());
+      }
+    }
+
+    int compare(const Albums::Album &a) {
+      switch (column) {
+        case ALBUM_URL:             return strcmp(a.url(),          strValue);
+        case ALBUM_TITLE:           return strcmp(a.title(),        strValue);
+        case ALBUM_ARTIST:          return strcmp(a.artist(),       strValue);
+        case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    strValue);
+        case ALBUM_DESCRIPTION:     return strcmp(a.description(),  strValue);
+        case ALBUM_DATE:            return a.date() -               intValue;
+        case ALBUM_RATING:          return a.rating() -             intValue;
+        case ALBUM_VOTES:           return a.votes() -              intValue;
+        case ALBUM_DOWNLOAD_COUNT:  return a.download_count() -     intValue;
+        default:                    std::abort();
+      }
+    }
+
+    int compare(const Styles::Style &s) {
+      switch (column) {
+        case STYLE_URL:     return strcmp(s.url(),    strValue);
+        case STYLE_NAME:    return strcmp(s.name(),   strValue);
+        default:            std::abort();
+      }
+    }
+
+    bool operator()(const Tracks::Track &t) { return check(compare(t)); }
+    bool operator()(const Albums::Album &a) { return check(compare(a)); }
+    bool operator()(const Styles::Style &s) { return check(compare(s)); }
+    bool check(int rval) {
+      switch (op) {
+        case EQUAL:         return ! (rval == 0);
+        case UNEQUAL:       return ! (rval != 0);
+        case GREATER:       return ! (rval >  0);
+        case GREATER_EQUAL: return ! (rval >= 0);
+        case LESSER:        return ! (rval <  0);
+        case LESSER_EQUAL:  return ! (rval <= 0);
+        default:            std::abort();
+      }
+    }
+  };
+
   template<typename TStore, typename TRecord>
   struct Result {
     TStore &store;
@@ -359,6 +408,28 @@ struct Database {
     void order_by(ColumnID column, SortOrder order) {
       OrderByProxy orderProxy(*this, column, order);
       std::sort(indices.begin(), indices.end(), orderProxy);
+    }
+
+    struct WhereProxy {
+      Result<TStore, TRecord> &result;
+      Where where;
+      WhereProxy(Result<TStore, TRecord> &result, ColumnID column, Operator op, int value)
+      : result(result), where(column, op, value) {}
+      WhereProxy(Result<TStore, TRecord> &result, ColumnID column, Operator op, const char* value)
+      : result(result), where(column, op, value) {}
+      bool operator()(size_t i) {
+        return where(result.store[i]);
+      }
+    };
+
+    void where(ColumnID column, Operator op, int value) {
+      WhereProxy whereProxy(*this, column, op, value);
+      indices.erase(std::remove_if(indices.begin(), indices.end(), whereProxy), indices.end());
+    }
+
+    void where(ColumnID column, Operator op, const char* value) {
+      WhereProxy whereProxy(*this, column, op, value);
+      indices.erase(std::remove_if(indices.begin(), indices.end(), whereProxy), indices.end());
     }
   };
 
@@ -509,6 +580,7 @@ void  TRACK :: album_id(int i)  { db.tracks.album_id[id] =         i;         }
 // ============================================================================
 
 #if TEST_DATABASE
+#include <iostream>
 int main () {
   std::vector<int> v = {1,2,3,4,5};
 
