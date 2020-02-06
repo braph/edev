@@ -7,60 +7,68 @@
 #include <iostream> //XXX
 #include "strpool.cpp"
 #define  streq(a,b) (!strcmp(a,b))
+typedef const char* ccstr;
+
+// TODO: long, short pool description
+
+/* ============================================================================
+ * Track Database
+ * ============================================================================
+ *
+ * The metadata is organized in tables in a classic relational way.
+ *
+ * === Tables ===
+ * A table consists of a fixed number of columns.
+ * A column is a specialized form of an int vector. If a column shall hold a
+ * string value, than it must reference an id to the stringpool.
+ *
+ * === Columns ===
+ * A column is a bitpacked vector. It is only capable of holding integers.
+ * If a column should hold a string value, a ID that references it in the
+ * string pool should be stored.
+ * The bit-width of a column changes.
+ *
+ * === String Pool ===
+ * The stringpool itself is just one big allocated buffer that holds all the
+ * null-terminated strings. The stringID is simply an integer offset to the
+ * starting address of that buffer.
+ *
+ * === Loading and Saving the database ===
+ * Loading and Saving is practally done by reading/writing the raw memory
+ * to disk. Since the database file is not meant to be shared by other
+ * machines/architectures this should be fine. A minimal form of data
+ * validation is performed.
+ *
+ * class Database {
+ *    StringPool pool;
+ *    Styles styles;
+ *    Albums albums;
+ *    Tracks tracks;
+ */
 
 // === Save/Load Functions ====
 template<typename T>
-void saveVector(std::ofstream &fs, const std::vector<T> &v) {
-  size_t size = v.size();
-  fs.write((char*) &size, sizeof(size));     // element count
-  fs.write((char*) &v[0], sizeof(T) * size); // data
-}
+void saveVector(std::ofstream &fs, const std::vector<T> &v) { }
 
 template<>
-void saveVector(std::ofstream &fs, const std::vector<const char*> &v) {
-  size_t size = v.size();
-  fs.write((char*) &size, sizeof(size)); // element count
-
-  size = 0;
-  for (const auto &e : v)
-    size += strlen(e) + 1;
-  fs.write((char*) &size, sizeof(size)); // data size
-
-  for (const auto &e : v)
-    fs.write(e, strlen(e) + 1);          // data
-}
+void saveVector(std::ofstream &fs, const std::vector<const char*> &v) { }
 
 template<typename T>
-void loadVector(std::ifstream &fs, std::vector<T> &v) {
-  size_t size = 0;
-  fs.read((char*) &size, sizeof(size));     // element count
-  v.resize(size);
-  fs.read((char*) &v[0], sizeof(T) * size); // data
-}
+void loadVector(std::ifstream &fs, std::vector<T> &v) { }
 
 template<>
-void loadVector(std::ifstream &fs, std::vector<const char*> &v) {
-  size_t size = 0, data_size = 0;
-  fs.read((char*) &size,      sizeof(size));      // element count
-  fs.read((char*) &data_size, sizeof(data_size)); // data size
-  v.reserve(size);
-  char *data = new char[data_size]; // XXX: This leaks memory
-  fs.read(data, data_size);
-  while (size--) {
-    v.push_back(data);
-    data += strlen(data) + 1;
-  }
-}
+void loadVector(std::ifstream &fs, std::vector<const char*> &v) { }
 
 // === Iterator ===
 template<typename TStore, typename TItem>
-class GenericIterator {
-  size_t idx;
+struct GenericIterator
+: public std::iterator<std::random_access_iterator_tag, TItem> {
   TStore &store;
+  size_t idx;
 public:
-  GenericIterator(TStore &store, size_t idx) : store(store), idx(idx) {}
-
   typedef GenericIterator iterator;
+
+  GenericIterator(TStore &store, size_t idx) : store(store), idx(idx) {}
 
   bool operator==(const iterator&it) const { return idx == it.idx; }
   bool operator!=(const iterator&it) const { return idx != it.idx; }
@@ -80,33 +88,38 @@ public:
   iterator& operator-=(ptrdiff_t n)       { idx -= n; return *this; }
   iterator  operator+ (ptrdiff_t n) const { iterator i = *this; return i += n; }
   iterator  operator- (ptrdiff_t n) const { iterator i = *this; return i -= n; }
+  iterator& operator= (const iterator&it) { idx=it.idx; return *this; } 
 
 #if 0
-  inline ptrdiff_t
-  operator-(const _Bit_iterator_base& __x, const _Bit_iterator_base& __y)
-  {
-    return (int(_S_word_bit) * (__x._M_p - __y._M_p)
-	    + __x._M_offset - __y._M_offset);
-  }
   inline _Bit_iterator
   operator+(ptrdiff_t __n, const _Bit_iterator& __x)
   { return __x + __n; }
 #endif
 };
 
+template<typename TStore, typename TItem>
+inline ptrdiff_t
+operator-(const GenericIterator<TStore, TItem> &a, const GenericIterator<TStore, TItem> &b)
+{ return a.idx - b.idx; }
+
 // === Containers ===
 #define str_assign(DEST, STR) \
-  if (!DEST || !streq(DEST, STR)) DEST = strdup(STR)
+  if (! streq(db.pool.get(DEST), STR)) DEST = db.pool.add(STR)
 
-// ===== FOOO NOW WE ARE DOING THE TABLE STUFF FO FOO BAR
+#define str_assign_long(DEST, STR) \
+  if (! streq(db.pool_long.get(DEST), STR)) DEST = db.pool_long.add(STR)
 
 struct Database {
   struct Table {
-    /* This holds columns and functions to save them to a file */
+    /* Base class for all tables. */
     Database &db;
     std::vector<std::vector<int>*> columns;
     Table(Database &db, std::vector<std::vector<int>*> columns)
       : db(db), columns(columns) { }
+
+    size_t size()           { return columns[0]->size();                }
+    void resize(size_t n)   { for (auto col : columns) col->resize(n);  }
+    void reserve(size_t n)  { for (auto col : columns) col->reserve(n); }
 
     void load(std::ifstream &fs) {
       for (auto col: columns)
@@ -117,20 +130,15 @@ struct Database {
       for (auto col : columns)
         saveVector(fs, *col);
     }
+  };
 
-    void reserve(size_t n) {
-      for (auto col : columns)
-        col->reserve(n);
-    }
-
-    void resize(size_t n) {
-      for (auto col : columns)
-        col->resize(n);
-    }
-
-    size_t size() {
-      return columns[0]->size();
-    }
+  struct Record {
+    Database &db;
+    size_t    id;
+    inline Record(Database &db, size_t id) : db(db), id(id) {}
+    inline bool valid() const { return id != -1; }
+    Record& operator=(const Record &rhs) { id = rhs.id; return *this; }
+    void swap(Record &rhs) { size_t tmp = id; id = rhs.id; rhs.id = tmp; } // XXX TODO
   };
 
   struct Styles : public Table {
@@ -139,11 +147,8 @@ struct Database {
     Styles(Database &db)
     : Table(db, {&url,&name}) {}
 
-    struct Style {
-      Database &db;
-      size_t    id;
-      Style(Database &db, size_t id) : db(db), id(id) {}
-      bool        valid()   const { return id != -1; }
+    struct Style : public Record {
+      Style(Database &db, size_t id) : Record(db, id) {}
 
       const char* url()     const;
       const char* name()    const;
@@ -170,18 +175,15 @@ struct Database {
     Albums(Database &db)
     : Table(db, {&url,&title,&artist,&cover_url,&description,&date,&rating,&votes,&download_count,&styles}) {}
 
-    struct Album {
-      Database &db;
-      size_t id;
-      Album(Database &db, size_t id) : db(db), id(id) {}
-      bool        valid()   const { return id != -1; }
+    struct Album : public Record {
+      Album(Database &db, size_t id) : Record(db, id) {}
 
       const char* url()               const;
       const char* title()             const;
       const char* artist()            const;
       const char* cover_url()         const;
       const char* description()       const;
-      const time_t date()             const;
+      time_t      date()              const;
       float       rating()            const;
       int         votes()             const;
       int         download_count()    const;
@@ -197,6 +199,8 @@ struct Database {
       void        votes(int);
       void        download_count(int);
       void        styles(int);
+
+      void swap(Album &rhs) { size_t tmp = id; id = rhs.id; rhs.id = tmp; } // XXX TODO
     };
 
     Album operator[](size_t id);
@@ -214,11 +218,8 @@ struct Database {
     Tracks(Database &db)
     : Table(db, {&url,&album_id,&title,&artist,&remix,&number,&bpm}) {}
 
-    struct Track {
-      Database &db;
-      size_t id;
-      Track(Database &db, size_t id) : db(db), id(id) {}
-      bool        valid()   const { return id != -1; }
+    struct Track : public Record {
+      Track(Database &db, size_t id) : Record(db, id) {}
 
       const char*   url()         const;
       const char*   title()       const;
@@ -241,39 +242,6 @@ struct Database {
     Track operator[](size_t id);
     Track find(const char *url, bool create);
   };
-
-  template<typename TStore, typename TRecord>
-  struct Result {
-    TStore &store;
-    std::vector<int> indices;
-    Result(TStore &store) : store(store) {
-      indices.reserve(store.size());
-      for (size_t i = 0; i < store.size(); ++i)
-        indices.push_back(i);
-    }
-
-    TRecord operator[](size_t id) {
-      return store[id];
-    }
-    GenericIterator<Result, TRecord> begin() {
-      return GenericIterator<Result, TRecord>(*this, 0);
-    }
-    GenericIterator<Result, TRecord> end() {
-      return GenericIterator<Result, TRecord>(*this, indices.size());
-    }
-  };
-
-  Result<Styles, Styles::Style> getStyles() {
-    return Result<Styles, Styles::Style>(styles);
-  }
-
-  Result<Albums, Albums::Album> getAlbums() {
-    return Result<Albums, Albums::Album>(albums);
-  }
-
-  Result<Tracks, Tracks::Track> getTracks() {
-    return Result<Tracks, Tracks::Track>(tracks);
-  }
 
   enum ColumnID {
     STYLE_URL,
@@ -311,25 +279,21 @@ struct Database {
     LESSER_EQUAL
   };
 
-  struct OrderByStyle {
+  struct OrderBy {
     ColumnID  column;
     SortOrder order;
-    OrderByStyle(ColumnID column, SortOrder order) : column(column), order(order) {}
+    OrderBy(ColumnID column, SortOrder order) : column(column), order(order) {}
+
     bool operator()(const Styles::Style &a, const Styles::Style &b) {
       int c;
       switch (column) {
-        case STYLE_URL:   c = strcmp(a.url(),      b.url());    break;
-        case STYLE_NAME:  c = strcmp(a.name(),     b.name());   break;
+        case STYLE_URL:   c = strcmp(a.url(),  b.url());    break;
+        case STYLE_NAME:  c = strcmp(a.name(), b.name());   break;
         default:          return false;  
       }
       return (order == ASCENDING ? c < 0 : c > 0);
     }
-  };
 
-  struct OrderByAlbum {
-    ColumnID  column;
-    SortOrder order;
-    OrderByAlbum(ColumnID column, SortOrder order) : column(column), order(order) {}
     bool operator()(const Albums::Album &a, const Albums::Album &b) {
       int c;
       switch (column) {
@@ -346,16 +310,7 @@ struct Database {
       }
       return (order == ASCENDING ? c < 0 : c > 0);
     }
-  };
 
-  struct OrderByTrack {
-    ColumnID      column;
-    SortOrder     order;
-    OrderByAlbum  orderByAlbum;
-    OrderByTrack(ColumnID column, SortOrder order)
-    : column(column)
-    , order(order)
-    , orderByAlbum(column, order) {}
     bool operator()(const Tracks::Track &a, const Tracks::Track &b) {
       int c;
       switch (column) {
@@ -365,32 +320,63 @@ struct Database {
         case TRACK_REMIX:  c = strcmp(a.remix(),    b.remix());  break;
         case TRACK_NUMBER: c =        a.number() -  b.number();  break;
         case TRACK_BPM:    c =        a.bpm() -     b.bpm();     break;
-        default:           return orderByAlbum(a.album(), b.album()); break;
+        default:           return (*this)(a.album(), b.album()); break;
       }
       return (order == ASCENDING ? c < 0 : c > 0);
     }
   };
 
-#if sdfsdf
-  // =========================================================================
-
-
-  template<typename TRecord>
+  template<typename TStore, typename TRecord>
   struct Result {
+    TStore &store;
     std::vector<int> indices;
-    TRecord operator[](size_t id);
-    GenericIterator<Result, TRecord> begin();
-    GenericIterator<Result, TRecord> end();
+    Result(TStore &store) : store(store) {
+      indices.reserve(store.size());
+      for (size_t i = 0; i < store.size(); ++i)
+        indices.push_back(i);
+    }
+
+    TRecord operator[](size_t id) {
+      return store[indices[id]];
+    }
+    GenericIterator<Result, TRecord> begin() {
+      return GenericIterator<Result, TRecord>(*this, 0);
+    }
+    GenericIterator<Result, TRecord> end() {
+      return GenericIterator<Result, TRecord>(*this, indices.size());
+    }
+
+    struct OrderByProxy {
+      Result<TStore, TRecord> &result;
+      OrderBy orderBy;
+      OrderByProxy(Result<TStore, TRecord> &result, ColumnID column, SortOrder order)
+      : result(result), orderBy(column, order) {}
+      bool operator()(size_t a, size_t b) {
+        return orderBy(result.store[a], result.store[b]);
+      }
+    };
 
     void order_by(ColumnID column, SortOrder order) {
-      std::sort(begin(), end(), OrderBy(db, column, order));
+      OrderByProxy orderProxy(*this, column, order);
+      std::sort(indices.begin(), indices.end(), orderProxy);
     }
   };
-  // =========================================================================
-#endif
+
+  Result<Styles, Styles::Style> getStyles() {
+    return Result<Styles, Styles::Style>(styles);
+  }
+
+  Result<Albums, Albums::Album> getAlbums() {
+    return Result<Albums, Albums::Album>(albums);
+  }
+
+  Result<Tracks, Tracks::Track> getTracks() {
+    return Result<Tracks, Tracks::Track>(tracks);
+  }
 
   std::string file;
   StringPool  pool;
+  StringPool  pool_long;
   Styles      styles;
   Albums      albums;
   Tracks      tracks;
@@ -425,14 +411,12 @@ Database::Styles::Style Database :: Styles :: find(const char *url, bool create)
   return r;
 }
 
-#define str_assign_2(DEST, STR) \
-  if (/*!DEST ||*/ !streq(db.pool.get(DEST), STR)) DEST = db.pool.add(STR)
+#define STYLE Database :: Styles :: Style
+ccstr   STYLE :: url()  const   { return db.pool.get(db.styles.url[id]);      }
+ccstr   STYLE :: name() const   { return db.pool.get(db.styles.name[id]);     }
 
-#define     STYLE Database :: Styles :: Style ::
-const char* STYLE url()  const { return db.pool.get(db.styles.url[id]);  }
-const char* STYLE name() const { return db.pool.get(db.styles.name[id]); }
-void        STYLE url(const char *s)  { str_assign_2(db.styles.url[id], s); }
-void        STYLE name(const char *s) { str_assign_2(db.styles.name[id], s); }
+void    STYLE :: url(ccstr s)   { str_assign(db.styles.url[id], s);           }
+void    STYLE :: name(ccstr s)  { str_assign(db.styles.name[id], s);          }
 
 /* ============================================================================
  * Albums
@@ -458,28 +442,28 @@ Database::Albums::Album Database::Albums::find(const char *url, bool create) {
   return r;
 }
 
-#define      ALBUM Database :: Albums :: Album ::
-const char*  ALBUM url()            const { return db.pool.get(db.albums.url[id]);         }
-const char*  ALBUM title()          const { return db.pool.get(db.albums.title[id]);       }
-const char*  ALBUM artist()         const { return db.pool.get(db.albums.artist[id]);      }
-const char*  ALBUM cover_url()      const { return db.pool.get(db.albums.cover_url[id]);   }
-const char*  ALBUM description()    const { return db.pool.get(db.albums.description[id]); }
-const time_t ALBUM date()           const { return db.albums.date[id] * 60 * 60 * 24;      }
-float        ALBUM rating()         const { return (float) db.albums.rating[id] / 100;     }
-int          ALBUM votes()          const { return db.albums.votes[id];                    }
-int          ALBUM download_count() const { return db.albums.download_count[id];           }
-int          ALBUM styles()         const { return db.albums.styles[id];                   }
+#define ALBUM Database :: Albums :: Album
+ccstr  ALBUM::url()            const { return db.pool.get(db.albums.url[id]);         }
+ccstr  ALBUM::title()          const { return db.pool.get(db.albums.title[id]);       }
+ccstr  ALBUM::artist()         const { return db.pool.get(db.albums.artist[id]);      }
+ccstr  ALBUM::cover_url()      const { return db.pool.get(db.albums.cover_url[id]);   }
+ccstr  ALBUM::description()    const { return db.pool_long.get(db.albums.description[id]); }
+time_t ALBUM::date()           const { return db.albums.date[id] * 60 * 60 * 24;      }
+float  ALBUM::rating()         const { return (float) db.albums.rating[id] / 100;     }
+int    ALBUM::votes()          const { return db.albums.votes[id];                    }
+int    ALBUM::download_count() const { return db.albums.download_count[id];           }
+int    ALBUM::styles()         const { return db.albums.styles[id];                   }
 
-void         ALBUM url(const char*s)         { str_assign_2(db.albums.url[id], s);         }
-void         ALBUM title(const char*s)       { str_assign_2(db.albums.title[id], s);       }
-void         ALBUM artist(const char*s)      { str_assign_2(db.albums.artist[id], s);      }
-void         ALBUM cover_url(const char*s)   { str_assign_2(db.albums.cover_url[id], s);   }
-void         ALBUM description(const char*s) { str_assign_2(db.albums.description[id], s); }
-void         ALBUM date(time_t t)            { db.albums.date[id] = t / 60 / 60 / 24;    }
-void         ALBUM rating(float i)           { db.albums.rating[id] = i * 100;           }
-void         ALBUM votes(int i)              { db.albums.votes[id] = i;                  }
-void         ALBUM download_count(int i)     { db.albums.download_count[id] = i;         }
-void         ALBUM styles(int i)             { db.albums.styles[id] = i;                 }
+void   ALBUM::url(ccstr s)          { str_assign(db.albums.url[id], s);         }
+void   ALBUM::title(ccstr s)        { str_assign(db.albums.title[id], s);       }
+void   ALBUM::artist(ccstr s)       { str_assign(db.albums.artist[id], s);      }
+void   ALBUM::cover_url(ccstr s)    { str_assign(db.albums.cover_url[id], s);   }
+void   ALBUM::description(ccstr s)  { str_assign_long(db.albums.description[id], s); }
+void   ALBUM::date(time_t t)        { db.albums.date[id] = t / 60 / 60 / 24;    }
+void   ALBUM::rating(float i)       { db.albums.rating[id] = i * 100;           }
+void   ALBUM::votes(int i)          { db.albums.votes[id] = i;                  }
+void   ALBUM::download_count(int i) { db.albums.download_count[id] = i;         }
+void   ALBUM::styles(int i)         { db.albums.styles[id] = i;                 }
 
 /* ============================================================================
  * Tracks
@@ -505,23 +489,23 @@ Database::Tracks::Track Database::Tracks::find(const char* url, bool create) {
   return r;
 }
 
-#define     TRACK Database :: Tracks :: Track ::
-const char* TRACK url()       const { return db.pool.get(db.tracks.url[id]);      }
-const char* TRACK title()     const { return db.pool.get(db.tracks.title[id]);    }
-const char* TRACK artist()    const { return db.pool.get(db.tracks.artist[id]);   }
-const char* TRACK remix()     const { return db.pool.get(db.tracks.remix[id]);    }
-int         TRACK number()    const { return db.tracks.number[id];   }
-int         TRACK bpm()       const { return db.tracks.bpm[id];      }
-int         TRACK album_id()  const { return db.tracks.album_id[id]; }
-Database::Albums::Album TRACK album() const { return db.albums[db.tracks.album_id[id]]; }
+#define TRACK Database :: Tracks :: Track
+ccstr TRACK :: url()      const { return db.pool.get(db.tracks.url[id]);      }
+ccstr TRACK :: title()    const { return db.pool.get(db.tracks.title[id]);    }
+ccstr TRACK :: artist()   const { return db.pool.get(db.tracks.artist[id]);   }
+ccstr TRACK :: remix()    const { return db.pool.get(db.tracks.remix[id]);    }
+int   TRACK :: number()   const { return db.tracks.number[id];                }
+int   TRACK :: bpm()      const { return db.tracks.bpm[id];                   }
+int   TRACK :: album_id() const { return db.tracks.album_id[id];              }
+ALBUM TRACK :: album()    const { return db.albums[db.tracks.album_id[id]];   }
 
-void        TRACK url(const char*s)     { str_assign_2(db.tracks.url[id],    s); }
-void        TRACK title(const char*s)   { str_assign_2(db.tracks.title[id],  s); }
-void        TRACK artist(const char*s)  { str_assign_2(db.tracks.artist[id], s); }
-void        TRACK remix(const char*s)   { str_assign_2(db.tracks.remix[id],  s); }
-void        TRACK number(int i)         { db.tracks.number[id] =           i;  }
-void        TRACK bpm(int i)            { db.tracks.bpm[id] =              i;  }
-void        TRACK album_id(int i)       { db.tracks.album_id[id] =         i;  }
+void  TRACK :: url(ccstr s)     { str_assign(db.tracks.url[id],    s);        }
+void  TRACK :: title(ccstr s)   { str_assign(db.tracks.title[id],  s);        }
+void  TRACK :: artist(ccstr s)  { str_assign(db.tracks.artist[id], s);        }
+void  TRACK :: remix(ccstr s)   { str_assign(db.tracks.remix[id],  s);        }
+void  TRACK :: number(int i)    { db.tracks.number[id] =           i;         }
+void  TRACK :: bpm(int i)       { db.tracks.bpm[id] =              i;         }
+void  TRACK :: album_id(int i)  { db.tracks.album_id[id] =         i;         }
 // ============================================================================
 
 #if TEST_DATABASE
@@ -535,7 +519,7 @@ int main () {
     std::cout << *beg << std::endl;
   }
 
-  Database db;
+  Database db("/tmp/remove.db");
   auto style = db.styles.find("foo", true);
   style.name("Foo-Style");
   auto s1 = db.styles.find("bar", true);

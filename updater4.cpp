@@ -19,7 +19,7 @@ public:
 #include <fstream>
 #include <streambuf>
 void Updater :: update() {
-  for (int i = 2; i < 16; ++i) { // XXX-4
+  for (int i = 2; i < 416; ++i) { // XXX-4
     std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
     std::string src((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());
@@ -115,7 +115,8 @@ void Updater :: insert_browsepage(const BrowsePage& page) {
 int main() {
   unlink(TEST_DB);
   Database db(TEST_DB);
-  db.pool.reserve(3*1024*1024);
+  db.pool.reserve(2*1024*1024);
+  db.pool_long.reserve(2*1024*1024);
   db.styles.reserve(20);
   db.albums.reserve(2000);
   db.tracks.reserve(14000);
@@ -128,13 +129,27 @@ int main() {
   for (auto style : db.getStyles())
     std::cout << style.url() << '|' << style.name() << std::endl;
 
-  for (auto track : db.getAlbums()) {
-    time_t date = track.date();
+  auto albums = db.getAlbums();
+  albums.order_by(Database::ALBUM_URL, Database::ASCENDING);
+
+  return 0;
+
+  for (auto a : albums) {
+    time_t date = a.date();
     struct tm* tm = localtime(&date);
     char sdate[20];
     ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
-    std::cout << track.url() << '|' << track.title() << '|' << track.rating() << '|' << sdate << std::endl;
+    std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << sdate << std::endl;
   }
+  
+  return 0;
+
+  auto a = albums[0];
+  std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << std::endl;
+  a = albums[1];
+  std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << std::endl;
+  a = std::move(albums[3]);
+  std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << std::endl;
 
   /*
   for (auto track : db.getTracks())
