@@ -1,57 +1,32 @@
 #include "ektoplayer.hpp"
 #include "browsepage.hpp"
-#include "database.hpp"
+#include "database.cpp"
 #include "http.hpp"
 // TODO: update, parameter pages (count)
 
 class Updater {
 private:
-  Database *db;
-  Statement insertAlbum;
-  Statement insertTrack;
-  Statement insertAlbum_Style;
-  Statement insertArchive_Url;
-
+  Database &db;
 public:
-  Updater(Database *_db)
-  : db(_db)
-  , insertAlbum(_db,
-      "REPLACE INTO album"
-      "(id, url, title, date, cover_url, description, download_count, rating, votes) VALUES"
-      "((SELECT id FROM album WHERE url=?),?,?,?,?,?,?,?,?)")
-  , insertTrack(_db,
-      "REPLACE INTO track"
-      "(id, url, album_id, number, title, remix, artist, bpm) VALUES ("
-      "(SELECT id FROM track WHERE url=?), ?,"
-      "(SELECT id FROM album WHERE url=?),"
-      "?,?,?,?,?)")
-  , insertAlbum_Style(_db,
-      "REPLACE INTO album_style"
-      "(album_id, style_id) VALUES ("
-      "(SELECT id FROM album WHERE url=?),"
-      "(SELECT id FROM style WHERE url=?))")
-  , insertArchive_Url(_db,
-      "REPLACE INTO archive_url"
-      "(album_id, url) VALUES"
-      "((SELECT id FROM album WHERE url=?),?)")
-  {
-  }
-
+  Updater(Database &db) : db(db) { }
   void update();
   void insert_album(const Album&);
+  void insert_styles(const std::map<std::string, std::string>&);
   void insert_browsepage(const BrowsePage&);
 };
 
-#if 0
+#if 1
 #include <fstream>
 #include <streambuf>
 void Updater :: update() {
-  for (int i = 2; i < 416; ++i) {
+  for (int i = 2; i < 416; ++i) { // XXX-4
     std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
     std::string src((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());
 
     BrowsePage browserPage(src);
+    if (i == 2)
+      insert_styles(browserPage.getStyles(src));
     insert_browsepage(browserPage);
   }
 }
@@ -62,18 +37,7 @@ void Updater :: update() {
   BrowsePage firstPage(src);
 
   // Insert styles first, as the albums link to them
-  Statement s(db,
-      "REPLACE INTO style"
-      "(id,url,name) VALUES"
-      "((SELECT id FROM style WHERE url=?),?,?)"
-  );
-  for (auto &pair : firstPage.getStyles(src)) {
-    s.bind(1, pair.first); // url
-    s.bind(2, pair.first); // url
-    s.bind(3, pair.second);  // name
-    s.exec();
-    s.reset();
-  }
+  insert_styles(firstPage.getStyles(src));
 
   // Insert first page
   insert_browsepage(firstPage);
@@ -86,31 +50,39 @@ void Updater :: update() {
     std::string url = base_url + std::to_string(i); //firstPage.getPageUrl(i);
     BrowsePage browserPage(http.get(url));
     insert_browsepage(browserPage);
+    std::cout << "inserting " << i << " of " << num_pages << std::endl;
   }
 }
-#endif
-void Updater :: insert_album(const Album& album) {
-  Statement *s = &insertAlbum;
-  s->bind(1, album.url);
-  s->bind(2, album.url);
-  s->bind(3, album.title);
-  s->bind(4, (int) album.date);
-  s->bind(5, album.cover_url);
-  s->bind(6, album.description);
-  s->bind(7, (int) album.download_count);
-  s->bind(8, album.rating);
-  s->bind(9, (int) album.votes);
-  s->exec();
-  s->reset();
 
-  s = &insertAlbum_Style;
-  s->bind(1, album.url);
+#endif
+void Updater :: insert_styles(const std::map<std::string, std::string> &styles) {
+  for (auto &pair : styles) {
+    auto style = db.styles.find(pair.first.c_str(), true);
+    style.name(pair.second.c_str());
+  }
+}
+
+void Updater :: insert_album(const Album& album) {
+  int32_t styles = 0;
   for (const auto &style : album.styles) {
-    s->bind(2, style);
-    s->exec();
-    s->reset();
+    auto r = db.styles.find(style.c_str(), false); // TODO: if valid
+    styles <<= 8;
+    styles += r.id;
   }
 
+  auto a = db.albums.find(album.url.c_str(), true);
+  //r.url(album.url.c_str());
+  a.title(album.title.c_str());
+  a.artist(album.artist.c_str());
+  a.cover_url(album.cover_url.c_str());
+  a.description(album.description.c_str());
+  a.date(album.date);
+  a.rating(album.rating);
+  a.votes(album.votes);
+  a.download_count(album.download_count);
+  a.styles(styles);
+
+  /*
   s = &insertArchive_Url;
   s->bind(1, album.url);
   for (const auto &url : album.archive_urls) {
@@ -118,40 +90,103 @@ void Updater :: insert_album(const Album& album) {
     s->exec();
     s->reset();
   }
+  */
 
-  s = &insertTrack;
-  s->bind(3, album.url);
   for (const auto &track : album.tracks) {
-    s->bind(1, track.url);
-    s->bind(2, track.url);
-    s->bind(4, track.number);
-    s->bind(5, track.title);
-    s->bind(6, track.remix);
-    s->bind(7, track.artist);
-    s->bind(8, track.bpm);
-    s->exec();
-    s->reset();
+    auto t = db.tracks.find(track.url.c_str(), true);
+    t.album_id(a.id);
+    t.title(track.title.c_str());
+    t.artist(track.artist.c_str());
+    t.remix(track.remix.c_str());
+    t.number(track.number);
+    t.bpm(track.bpm);
   }
 }
 
 void Updater :: insert_browsepage(const BrowsePage& page) {
-  db->begin_transaction();
   for (const auto &album : page.albums)
     insert_album(album);
-  db->end_transaction();
 }
 
 #if TEST_UPDATER
 #include <unistd.h>
+#include <cassert>
+#include <cstring>
 #include <iostream>
 #define TEST_DB "/tmp/ektoplayer-test.db"
 int main() {
   unlink(TEST_DB);
-  Database db(TEST_DB);
-  Updater u(&db);
-  u.update();
   std::cout << TEST_DB << std::endl;
-  std::cout << "Inserted " << db.track_count() << " tracks." << std::endl;
-  std::cout << "Inserted " << db.album_count() << " albums." << std::endl;
+  size_t tracks_size;
+  size_t albums_size;
+  char*  track_url;
+  char*  album_desc;
+  {
+    Database db(TEST_DB);
+    db.load(); // Loading a non-existend DB should be fine
+    db.pool.reserve(500 * 1024);
+    db.pool_url.reserve(500 * 1024);
+    db.pool_desc.reserve(1500 * 1024);
+    db.styles.reserve(20);
+    db.albums.reserve(2000);
+    db.tracks.reserve(14000);
+    Updater u(db);
+    u.update();
+    tracks_size = db.tracks.size();
+    albums_size = db.albums.size();
+    track_url   = strdup(db.tracks[tracks_size-1].url());
+    album_desc  = strdup(db.albums[albums_size-1].description());
+    std::cout << "Inserted " << tracks_size << " tracks." << std::endl;
+    std::cout << "Inserted " << albums_size << " albums." << std::endl;
+    db.save(); // Write the database!
+  }
+
+  Database db(TEST_DB);
+  db.load(); // This should succeed.
+  assert(tracks_size == db.tracks.size());
+  assert(albums_size == db.albums.size());
+  assert(!strcmp(track_url,  db.tracks[tracks_size-1].url()));
+  assert(!strcmp(album_desc, db.albums[albums_size-1].description()));
+  return 0;
+
+  for (auto style : db.getStyles())
+    std::cout << style.url() << '|' << style.name() << std::endl;
+
+  return 0;
+  auto albums = db.getAlbums();
+  albums.order_by(Database::ALBUM_URL, Database::ASCENDING);
+  return 0;
+
+  for (auto a : albums) {
+    time_t date = a.date();
+    struct tm* tm = localtime(&date);
+    char sdate[20];
+    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
+    std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << sdate << std::endl;
+  }
+
+  albums.where(Database::ALBUM_URL, Database::EQUAL, "zis0ky-into-the-abyss");
+
+  for (auto a : albums) {
+    time_t date = a.date();
+    struct tm* tm = localtime(&date);
+    char sdate[20];
+    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
+    std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << sdate << std::endl;
+  }
+  
+  return 0;
+
+  auto a = albums[0];
+  std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << std::endl;
+  a = albums[1];
+  std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << std::endl;
+  a = std::move(albums[3]);
+  std::cout << a.url() << '|' << a.title() << '|' << a.rating() << '|' << std::endl;
+
+  /*
+  for (auto track : db.getTracks())
+    std::cout << track.url() << '|' << track.title() << track.album().rating() << std::endl;
+  */
 }
 #endif
