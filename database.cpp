@@ -4,6 +4,8 @@
 #define  streq(a,b) (!strcmp(a,b))
 typedef const char* ccstr;
 
+// TODO: find(const char *url, bool create): create is not respected!
+
 /* ============================================================================
  * Dumper / Loader
  * ============================================================================
@@ -54,16 +56,14 @@ struct Loader {
 };
 
 /* ============================================================================
- * Some macros (TODO: remove them?)
+ * A bit ugly, but cleans up the code a lot
  * ==========================================================================*/
-#define str_assign(DEST, STR) \
-  if (! streq(db.pool.get(DEST), STR)) DEST = db.pool.add(STR)
+#define STR_SET(POOL_NAME, ID, S) \
+  if (! streq(db.pool_##POOL_NAME.get(ID), S)) \
+    { ID = db.pool_##POOL_NAME.add(S); }
 
-#define str_assign_url(DEST, STR) \
-  if (! streq(db.pool_url.get(DEST), STR)) DEST = db.pool_url.add(STR)
-
-#define str_assign_desc(DEST, STR) \
-  if (! streq(db.pool_desc.get(DEST), STR)) DEST = db.pool_desc.add(STR)
+#define STR_GET(POOL_NAME, ID) \
+  db.pool_##POOL_NAME.get(ID)
 
 /* ============================================================================
  * Database
@@ -73,7 +73,7 @@ bool Database :: load() {
   std::ifstream fs(file);
   if (fs.good()) {
     Loader l;
-    for (auto p : {&pool, &pool_url, &pool_desc}) {
+    for (auto p : pools) {
       l.readHeader(fs);
       p->reserve(l.elem_count);
       if (! l.readData(fs, p->data()))
@@ -91,7 +91,7 @@ bool Database :: load() {
 bool Database :: save() {
   std::ofstream fs(file);
   if (fs.good()) {
-    for (auto p : {&pool, &pool_url, &pool_desc})
+    for (auto p : pools)
       if (! Saver::write(fs, p->data(), 8, p->size()))
         return false;
     return
@@ -127,9 +127,9 @@ bool Database :: Table :: save(std::ofstream &fs) {
 
 // XXX: description
 template<typename TRecord, typename TTable>
-static TRecord find_or_create(TTable &table, const char *url) {
+static TRecord find_or_create(TTable &table, StringPool &pool, const char *url) {
   bool newly_inserted = false;
-  size_t strId = table.db.pool_url.add(url, &newly_inserted);
+  size_t strId = pool.add(url, &newly_inserted);
   Database::Column::iterator beg;
   Database::Column::iterator end;
   Database::Column::iterator fnd;
@@ -153,50 +153,48 @@ NOT_FOUND:
  * Database :: Styles
  * ==========================================================================*/
 
-Database::Styles::Style Database::Styles::operator[](size_t id) {
-  return Database::Styles::Style(db, id); // XXX huh.
-}
-
 Database::Styles::Style Database :: Styles :: find(const char *url, bool create) {
-  return find_or_create<Database::Styles::Style>(*this, url);
+  return find_or_create<Database::Styles::Style>(*this, db.pool_style_url, url);
 }
 
 #define STYLE Database :: Styles :: Style
-ccstr   STYLE :: url()  const   { return db.pool_url.get(db.styles.url[id]);  }
-ccstr   STYLE :: name() const   { return db.pool.get(db.styles.name[id]);     }
+ccstr   STYLE :: url()  const   { return STR_GET(style_url, db.styles.url[id]);  }
+ccstr   STYLE :: name() const   { return STR_GET(meta,      db.styles.name[id]); }
 
-void    STYLE :: url(ccstr s)   { str_assign_url(db.styles.url[id], s);       }
-void    STYLE :: name(ccstr s)  { str_assign(db.styles.name[id], s);          }
+void    STYLE :: url(ccstr s)   { STR_SET(style_url, db.styles.url[id],  s);  }
+void    STYLE :: name(ccstr s)  { STR_SET(meta,      db.styles.name[id], s);  }
 
 /* ============================================================================
  * Database :: Albums
  * ==========================================================================*/
 
-Database::Albums::Album Database::Albums::operator[](size_t id) {
-  return Database::Albums::Album(db, id); // XXX huh.
-}
-
 Database::Albums::Album Database::Albums::find(const char *url, bool create) {
-  return find_or_create<Database::Albums::Album>(*this, url);
+  return find_or_create<Database::Albums::Album>(*this, db.pool_album_url, url);
 }
 
 #define ALBUM Database :: Albums :: Album
-ccstr  ALBUM::url()            const { return db.pool_url.get(db.albums.url[id]);     }
-ccstr  ALBUM::title()          const { return db.pool.get(db.albums.title[id]);       }
-ccstr  ALBUM::artist()         const { return db.pool.get(db.albums.artist[id]);      }
-ccstr  ALBUM::cover_url()      const { return db.pool.get(db.albums.cover_url[id]);   }
-ccstr  ALBUM::description()    const { return db.pool_desc.get(db.albums.description[id]); }
+ccstr  ALBUM::url()            const { return STR_GET(album_url,  db.albums.url[id]);         }
+ccstr  ALBUM::title()          const { return STR_GET(meta,       db.albums.title[id]);       }
+ccstr  ALBUM::artist()         const { return STR_GET(meta,       db.albums.artist[id]);      }
+ccstr  ALBUM::cover_url()      const { return STR_GET(cover_url,  db.albums.cover_url[id]);   }
+ccstr  ALBUM::description()    const { return STR_GET(desc,       db.albums.description[id]); }
+ccstr  ALBUM::archive_mp3_url() const { return STR_GET(mp3_url,   db.albums.archive_mp3[id]); }
+ccstr  ALBUM::archive_wav_url() const { return STR_GET(wav_url,   db.albums.archive_wav[id]); }
+ccstr  ALBUM::archive_flac_url() const { return STR_GET(flac_url, db.albums.archive_flac[id]); }
 time_t ALBUM::date()           const { return db.albums.date[id] * 60 * 60 * 24;      }
 float  ALBUM::rating()         const { return (float) db.albums.rating[id] / 100;     }
 int    ALBUM::votes()          const { return db.albums.votes[id];                    }
 int    ALBUM::download_count() const { return db.albums.download_count[id];           }
 int    ALBUM::styles()         const { return db.albums.styles[id];                   }
 
-void   ALBUM::url(ccstr s)          { str_assign_url(db.albums.url[id], s);     }
-void   ALBUM::title(ccstr s)        { str_assign(db.albums.title[id], s);       }
-void   ALBUM::artist(ccstr s)       { str_assign(db.albums.artist[id], s);      }
-void   ALBUM::cover_url(ccstr s)    { str_assign(db.albums.cover_url[id], s);   }
-void   ALBUM::description(ccstr s)  { str_assign_desc(db.albums.description[id], s); }
+void   ALBUM::url(ccstr s)          { STR_SET(album_url,    db.albums.url[id],         s); }
+void   ALBUM::title(ccstr s)        { STR_SET(meta,         db.albums.title[id],       s); }
+void   ALBUM::artist(ccstr s)       { STR_SET(meta,         db.albums.artist[id],      s); }
+void   ALBUM::cover_url(ccstr s)    { STR_SET(cover_url,    db.albums.cover_url[id],   s); }
+void   ALBUM::description(ccstr s)  { STR_SET(desc,         db.albums.description[id], s); }
+void   ALBUM::archive_mp3_url(ccstr s) { STR_SET(mp3_url,   db.albums.archive_mp3[id], s); }
+void   ALBUM::archive_wav_url(ccstr s) { STR_SET(wav_url,   db.albums.archive_wav[id], s); }
+void   ALBUM::archive_flac_url(ccstr s) { STR_SET(flac_url, db.albums.archive_flac[id], s); }
 void   ALBUM::date(time_t t)        { db.albums.date[id] = t / 60 / 60 / 24;    }
 void   ALBUM::rating(float i)       { db.albums.rating[id] = i * 100;           }
 void   ALBUM::votes(int i)          { db.albums.votes[id] = i;                  }
@@ -207,28 +205,24 @@ void   ALBUM::styles(int i)         { db.albums.styles[id] = i;                 
  * Database :: Tracks
  * ==========================================================================*/
 
-Database::Tracks::Track Database::Tracks::operator[](size_t id) {
-  return Database::Tracks::Track(db, id); // XXX huh.
-}
-
 Database::Tracks::Track Database::Tracks::find(const char* url, bool create) {
-  return find_or_create<Database::Tracks::Track>(*this, url);
+  return find_or_create<Database::Tracks::Track>(*this, db.pool_track_url, url);
 }
 
 #define TRACK Database :: Tracks :: Track
-ccstr TRACK :: url()      const { return db.pool_url.get(db.tracks.url[id]);  }
-ccstr TRACK :: title()    const { return db.pool.get(db.tracks.title[id]);    }
-ccstr TRACK :: artist()   const { return db.pool.get(db.tracks.artist[id]);   }
-ccstr TRACK :: remix()    const { return db.pool.get(db.tracks.remix[id]);    }
+ccstr TRACK :: url()      const { return STR_GET(track_url, db.tracks.url[id]);      }
+ccstr TRACK :: title()    const { return STR_GET(meta,      db.tracks.title[id]);    }
+ccstr TRACK :: artist()   const { return STR_GET(meta,      db.tracks.artist[id]);   }
+ccstr TRACK :: remix()    const { return STR_GET(meta,      db.tracks.remix[id]);    }
 int   TRACK :: number()   const { return db.tracks.number[id];                }
 int   TRACK :: bpm()      const { return db.tracks.bpm[id];                   }
 int   TRACK :: album_id() const { return db.tracks.album_id[id];              }
 ALBUM TRACK :: album()    const { return db.albums[db.tracks.album_id[id]];   }
 
-void  TRACK :: url(ccstr s)     { str_assign_url(db.tracks.url[id],    s);    }
-void  TRACK :: title(ccstr s)   { str_assign(db.tracks.title[id],  s);        }
-void  TRACK :: artist(ccstr s)  { str_assign(db.tracks.artist[id], s);        }
-void  TRACK :: remix(ccstr s)   { str_assign(db.tracks.remix[id],  s);        }
+void  TRACK :: url(ccstr s)     { STR_SET(track_url, db.tracks.url[id],    s); }
+void  TRACK :: title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s); }
+void  TRACK :: artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s); }
+void  TRACK :: remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s); }
 void  TRACK :: number(int i)    { db.tracks.number[id] =           i;         }
 void  TRACK :: bpm(int i)       { db.tracks.bpm[id] =              i;         }
 void  TRACK :: album_id(int i)  { db.tracks.album_id[id] =         i;         }

@@ -16,6 +16,7 @@
  * === Tables ===
  * A table consists of a fixed number of columns holding all the data.
  * For retrieving a row from a table a proxy object (struct Record) is returned.
+ * The index of a row is also its ID.
  *
  * === Columns ===
  * A column is a vector<int> like container. It stores the integers in a packed
@@ -30,11 +31,9 @@
  *
  * Since inserting into a stringpool is expensive (the whole buffer has to be
  * searched) and the [sub]string-deduplication makes only sense on similar
- * data, there are three different pools:
- * - URLs: lowercase strings like "12-moons-flair.mp3"
- * - Descriptions: long texts containing html tags
- * - Metadata: track and album titles, artist names, style names (this is the
- *   only pool where we might be lucky to find (partial) duplicates.)
+ * data, we use separate pools for each column.
+ * Exception is {track,album}{title,artist,remix,style} - they all share the same
+ * pool ("meta") as there is a chance that we can find duplicates there.
  *
  * Splitting up the stringpool also results in lower string IDs per pool,
  * leading to smaller storage requirements in a bitpacked vector.
@@ -132,7 +131,7 @@ public:
       void  name(ccstr);
     };
 
-    Style operator[](size_t id);
+    Style operator[](size_t id) { return Style(db, id); }
     Style find(const char *url, bool create);
   };
 
@@ -147,8 +146,13 @@ public:
     Column votes;
     Column download_count;
     Column styles;
+    Column archive_mp3;
+    Column archive_wav;
+    Column archive_flac;
     Albums(Database &db)
-    : Table(db, {&url,&title,&artist,&cover_url,&description,&date,&rating,&votes,&download_count,&styles}) {}
+    : Table(db,
+      {&url,&title,&artist,&cover_url,&description,&date,&rating, &votes,
+        &download_count,&styles,&archive_mp3,&archive_wav,&archive_flac}) {}
 
     struct Album : public Record {
       Album(Database &db, size_t id) : Record(db, id) {}
@@ -158,6 +162,9 @@ public:
       ccstr   artist()            const;
       ccstr   cover_url()         const;
       ccstr   description()       const;
+      ccstr   archive_mp3_url()   const;
+      ccstr   archive_wav_url()   const;
+      ccstr   archive_flac_url()  const;
       time_t  date()              const;
       float   rating()            const;
       int     votes()             const;
@@ -169,6 +176,9 @@ public:
       void    artist(ccstr);
       void    cover_url(ccstr);
       void    description(ccstr);
+      void    archive_mp3_url(ccstr);
+      void    archive_wav_url(ccstr);
+      void    archive_flac_url(ccstr);
       void    date(time_t);
       void    rating(float);
       void    votes(int);
@@ -176,7 +186,7 @@ public:
       void    styles(int);
     };
 
-    Album operator[](size_t id);
+    Album operator[](size_t id) { return Album(db, id); }
     Album find(const char *url, bool create);
   };
 
@@ -212,7 +222,7 @@ public:
       void    album_id(int);
     };
 
-    Track operator[](size_t id);
+    Track operator[](size_t id) { return Track(db, id); }
     Track find(const char *url, bool create);
   };
 
@@ -369,19 +379,48 @@ public:
    * ========================================================================*/
 
   std::string file;
-  StringPool  pool;
-  StringPool  pool_url;
+  StringPool  pool_meta;
   StringPool  pool_desc;
+  StringPool  pool_style_url;
+  StringPool  pool_album_url;
+  StringPool  pool_track_url;
+  StringPool  pool_cover_url;
+  StringPool  pool_mp3_url;
+  StringPool  pool_wav_url;
+  StringPool  pool_flac_url;
   Styles      styles;
   Albums      albums;
   Tracks      tracks;
+  std::vector<StringPool*> pools;
   Database(const std::string &file)
   : file(file)
   , styles(*this)
   , albums(*this)
-  , tracks(*this) {
+  , tracks(*this)
+  , pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url, &pool_track_url,
+      &pool_cover_url, &pool_mp3_url, &pool_wav_url, &pool_flac_url})
+  {
     // We need a dummy style on ID 0, see implementation of Album::styles()
     styles.find("NULL", true).name("NULL");
+
+    // We know that the database will *at least* hold this amount of data,
+    // so pre allocate the buffers. (January, 2020)
+#define STYLES 25
+#define ALBUMS 2078
+#define TRACKS 14402
+    styles.reserve(STYLES);
+    albums.reserve(ALBUMS);
+    tracks.reserve(TRACKS);
+    // These are the average string lengths.
+    pool_desc.reserve(ALBUMS * 720);
+    pool_mp3_url.reserve(ALBUMS * 39);
+    pool_wav_url.reserve(ALBUMS * 39);
+    pool_flac_url.reserve(ALBUMS * 39);
+    pool_cover_url.reserve(ALBUMS * 35);
+    pool_album_url.reserve(ALBUMS * 22);
+    pool_track_url.reserve(TRACKS * 30);
+    pool_style_url.reserve(STYLES * 7);
+    pool_meta.reserve(ALBUMS * 15 + TRACKS * 25);
   }
 
   Result<Styles, Styles::Style> getStyles() {

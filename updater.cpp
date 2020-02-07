@@ -83,14 +83,14 @@ void Updater :: insert_album(const Album& album) {
   a.styles(styles);
 
   /*
-  s = &insertArchive_Url;
-  s->bind(1, album.url);
-  for (const auto &url : album.archive_urls) {
-    s->bind(2, url);
-    s->exec();
-    s->reset();
-  }
-  */
+  for (const auto &url : album.archive_urls)
+    if (url.rfind("MP3.zip") != std::string::npos)
+      a.archive_mp3_url(url.c_str());
+    else if (url.rfind("WAV.rar") != std::string::npos)
+      a.archive_wav_url(url.c_str());
+    else if (url.rfind("FLAC.zip") != std::string::npos)
+      a.archive_flac_url(url.c_str());
+      */
 
   for (const auto &track : album.tracks) {
     auto t = db.tracks.find(track.url.c_str(), true);
@@ -124,12 +124,6 @@ int main() {
   {
     Database db(TEST_DB);
     db.load(); // Loading a non-existend DB should be fine
-    db.pool.reserve(500 * 1024);
-    db.pool_url.reserve(500 * 1024);
-    db.pool_desc.reserve(1500 * 1024);
-    db.styles.reserve(20);
-    db.albums.reserve(2000);
-    db.tracks.reserve(14000);
     Updater u(db);
     u.update();
     tracks_size = db.tracks.size();
