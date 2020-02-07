@@ -37,7 +37,7 @@ test_common:
 	./a.out
 
 test_updater:
-	g++ -DTEST_UPDATER $(OPTS) $(BOOST) $(CURL) $(XML) updater.cpp browsepage.cpp #database.cpp 
+	g++ -DTEST_UPDATER $(OPTS) $(BOOST) $(CURL) $(XML) updater.cpp browsepage.cpp database.cpp strpool.cpp
 	perf stat ./a.out
 
 test_player:

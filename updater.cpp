@@ -1,6 +1,6 @@
 #include "ektoplayer.hpp"
 #include "browsepage.hpp"
-#include "database.cpp"
+#include "database.hpp"
 #include "http.hpp"
 // TODO: update, parameter pages (count)
 
