@@ -19,13 +19,13 @@ public:
 #include <fstream>
 #include <streambuf>
 void Updater :: update() {
-  for (int i = 2; i < 416; ++i) { // XXX-4
+  for (int i = 1; i <= 416; ++i) { // XXX-4
     std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
     std::string src((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());
 
     BrowsePage browserPage(src);
-    if (i == 2)
+    if (i == 1)
       insert_styles(browserPage.getStyles(src));
     insert_browsepage(browserPage);
   }

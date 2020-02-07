@@ -1,7 +1,11 @@
 #include "strpool.hpp"
 #include <cstring>
 
-size_t StringPool :: add(const char *s) {
+/* Adds `s` to the stringpool.
+ * If the pool did not contain the string yet and `newly_inserted` is not NULL,
+ * it will be set to `true`.  NB: It's up to the caller to initialize the
+ * variable to `false` before the call. */
+size_t StringPool :: add(const char *s, bool *newly_inserted) {
   if (!*s)
     return 0;
 
@@ -10,6 +14,8 @@ size_t StringPool :: add(const char *s) {
   if (pos != std::string::npos)
     return pos;
 
+  if (newly_inserted)
+    *newly_inserted = true;
   pos = storage.size();
   storage.append(s, len_with_0);
   return pos;

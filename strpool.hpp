@@ -8,7 +8,7 @@ private:
   std::string storage;
 public:
   StringPool() : storage("", 1) {}
-  size_t              add(const char*);
+  size_t              add(const char*, bool *newly_inserted=NULL);
   inline const char*  get(size_t id)    { return storage.c_str() + id;   }
   inline void         reserve(size_t n) { storage.reserve(n);            }
   inline size_t       size()            { return storage.size();         }

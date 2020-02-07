@@ -8,40 +8,47 @@
 #include "strpool.hpp"
 
 /* ============================================================================
- * Track Database
+ * Metadata Database
  * ============================================================================
  *
  * The metadata is organized in tables in a classic relational way.
  *
  * === Tables ===
- * A table consists of a fixed number of columns.
- * For retrieving a single row a proxy object is returned.
- * A column is a specialized form of an int vector. If a column shall hold a
- * string value, than it must reference an ID to the stringpool.
+ * A table consists of a fixed number of columns holding all the data.
+ * For retrieving a row from a table a proxy object (struct Record) is returned.
  *
  * === Columns ===
- * A column is a bitpacked vector of integers. If a column should hold a string
- * it has to reference the string by an ID to a string pool.
- * The bit-width of a column changes.
+ * A column is a vector<int> like container. It stores the integers in a packed
+ * way. The integers only occupy as much bits as the biggest integer contained.
+ * For storing strings inside a column, a reference id to a string pool must be
+ * stored.
  *
- * === String Pool ===
- * The stringpool itself is just one big allocated buffer that holds all the
- * null-terminated strings. The stringID is simply an integer offset to the
- * starting address of that buffer.
+ * === String Pools ===
+ * A stringpool is one big buffer containing all possible strings in the
+ * database. A string is referenced using an ID, which is simply the offset
+ * from the beginning of the buffer.
  *
- * Since searching the stringpool is expensive there are 3 different pools:
- * 1) URLs 2) Descriptions 3) Other Metadata
+ * Since inserting into a stringpool is expensive (the whole buffer has to be
+ * searched) and the [sub]string-deduplication makes only sense on similar
+ * data, there are three different pools:
+ * - URLs: lowercase strings like "12-moons-flair.mp3"
+ * - Descriptions: long texts containing html tags
+ * - Metadata: track and album titles, artist names, style names (this is the
+ *   only pool where we might be lucky to find (partial) duplicates.)
+ *
+ * Splitting up the stringpool also results in lower string IDs per pool,
+ * leading to smaller storage requirements in a bitpacked vector.
  *
  * === Loading and Saving the database ===
- * Loading and Saving is practally done by reading/writing the raw memory
+ * Loading and saving is practically done by reading/writing the raw memory
  * to disk. Since the database file is not meant to be shared by other
  * machines/architectures this should be fine. A minimal form of data
- * validation is performed.
- *
+ * validation is performed, so the database may be rebuilt on errors.
+ * And after all the database is more like a cache.
  */
 
 /* === GenericIterator ===
- * Make anything iterable that provides operator[] */
+ * Make anything iterable that provides an index operator[] */
 template<typename TStore, typename TItem>
 class GenericIterator
 : public std::iterator<std::random_access_iterator_tag, TItem> {
@@ -260,8 +267,8 @@ public:
 
     template<typename T>
     bool operator()(const T& a, const T& b) {
-      int result = compare(a, b);
-      return (order == ASCENDING ? result < 0 : result > 0);
+      int ret = compare(a, b);
+      return (order == ASCENDING ? ret < 0 : ret > 0);
     }
   };
 
@@ -288,15 +295,14 @@ public:
 
     template<typename T>
     bool operator()(const T& t) {
-      int rval = compare(t);
+      int ret = compare(t);
       switch (op) {
-        case EQUAL:         return ! (rval == 0);
-        case UNEQUAL:       return ! (rval != 0);
-        case GREATER:       return ! (rval >  0);
-        case GREATER_EQUAL: return ! (rval >= 0);
-        case LESSER:        return ! (rval <  0);
-        case LESSER_EQUAL:  return ! (rval <= 0);
-        default:            std::abort();
+        case EQUAL:         return ! (ret == 0);
+        case UNEQUAL:       return ! (ret != 0);
+        case GREATER:       return ! (ret >  0);
+        case GREATER_EQUAL: return ! (ret >= 0);
+        case LESSER:        return ! (ret <  0);
+        case LESSER_EQUAL:  return ! (ret <= 0);
       }
     }
   };
@@ -359,7 +365,7 @@ public:
   };
 
   /* ==========================================================================
-   * Database members and methods - finally
+   * Database members and methods - finally!
    * ========================================================================*/
 
   std::string file;

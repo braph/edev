@@ -11,7 +11,7 @@ typedef const char* ccstr;
  * Binary format is:
  *   size_t elem_size  : Size of one element (in bits!)
  *   size_t elem_count : Element count
- *   char   data       : Buffer data, length = bytes_for(elem_size, elem_count)
+ *   char   data[]     : Buffer data, length = bytes_for(elem_size, elem_count)
  *   size_t elem_size  : Size of one element  -. 
  *   size_t elem_count : Element count        -'-> Used for validation
  */
@@ -125,6 +125,29 @@ bool Database :: Table :: save(std::ofstream &fs) {
   return true;
 }
 
+// XXX: description
+template<typename TRecord, typename TTable>
+static TRecord find_or_create(TTable &table, const char *url) {
+  bool newly_inserted = false;
+  size_t strId = table.db.pool_url.add(url, &newly_inserted);
+  Database::Column::iterator beg;
+  Database::Column::iterator end;
+  Database::Column::iterator fnd;
+  if (newly_inserted)
+    goto NOT_FOUND;
+  beg = table.url.begin();
+  end = table.url.end();
+  fnd = std::find(beg, end, strId);
+  if (fnd == end) {
+NOT_FOUND:
+    size_t pos = table.size();
+    table.resize(pos+1);
+    table.url[pos] = strId;
+    return TRecord(table.db, pos);
+  } else {
+    return TRecord(table.db, fnd-beg);
+  }
+}
 
 /* ============================================================================
  * Database :: Styles
@@ -135,35 +158,7 @@ Database::Styles::Style Database::Styles::operator[](size_t id) {
 }
 
 Database::Styles::Style Database :: Styles :: find(const char *url, bool create) {
-#if 0 // XXX this version, db.pool.add() + std::find() may be faster
-  auto beg = std::begin(this->url);
-  auto end = std::end(this->url);
-  auto fnd = std::find(beg, end, db.pool.add(url));
-  size_t pos;
-  if (fnd == end) {
-    pos = this->size();
-    this->resize(pos+1);
-    auto r = Database::Styles::Style(db, pos);
-    r.url(url);
-    return r;
-  } else {
-    return Database::Styles::Style(db, fnd-beg);
-  }
-#else
-  size_t i = this->size();
-  while (i--)
-    if (streq(db.pool.get(this->url[i]), url))
-      return Database::Styles::Style(db, i);
-
-  if (! create)
-    return Database::Styles::Style(db, -1);
-
-  i = this->size();
-  this->resize(i+1);
-  auto r = Database::Styles::Style(db, i);
-  r.url(url);
-  return r;
-#endif
+  return find_or_create<Database::Styles::Style>(*this, url);
 }
 
 #define STYLE Database :: Styles :: Style
@@ -182,19 +177,7 @@ Database::Albums::Album Database::Albums::operator[](size_t id) {
 }
 
 Database::Albums::Album Database::Albums::find(const char *url, bool create) {
-  size_t i = this->size();
-  while (i--)
-    if (streq(db.pool.get(this->url[i]), url))
-      return Database::Albums::Album(db, i);
-
-  if (! create)
-    return Database::Albums::Album(db, -1);
-
-  i = this->size();
-  this->resize(i+1);
-  auto r = Database::Albums::Album(db, i);
-  r.url(url);
-  return r;
+  return find_or_create<Database::Albums::Album>(*this, url);
 }
 
 #define ALBUM Database :: Albums :: Album
@@ -229,19 +212,7 @@ Database::Tracks::Track Database::Tracks::operator[](size_t id) {
 }
 
 Database::Tracks::Track Database::Tracks::find(const char* url, bool create) {
-  size_t i = this->size();
-  while (i--)
-    if (streq(db.pool.get(this->url[i]), url))
-      return Database::Tracks::Track(db, i);
-
-  if (! create)
-    return Database::Tracks::Track(db, -1);
-
-  i = this->size();
-  this->resize(i+1);
-  auto r = Database::Tracks::Track(db, i);
-  r.url(url);
-  return r;
+  return find_or_create<Database::Tracks::Track>(*this, url);
 }
 
 #define TRACK Database :: Tracks :: Track
