@@ -3,12 +3,16 @@ XML    := $(shell xml2-config --cflags --libs)
 CURSES := -lncursesw
 BOOST  := -lboost_system -lboost_filesystem -lpthread
 CURL   := -lcurl
-#OPTS   := -g
+#OPTS   := -g -Wall
 OPTS   := -O2 -Wall
 SQLITE := -lsqlite3 
 
 test: test_filesystem test_ektoplayer test_config
 	echo foo
+
+test_oddvector:
+	g++ -DTEST_ODDVECTOR $(OPTS) oddvector.cpp
+	./a.out
 
 test_strpool:
 	g++ -DTEST_STRPOOL $(OPTS) strpool.cpp
@@ -34,6 +38,14 @@ test_common:
 	g++ -DTEST_COMMON common.cpp
 	./a.out
 
+test_updater4:
+	g++ -DTEST_UPDATER $(OPTS) $(BOOST) $(SQLITE) $(CURL) $(XML) updater4.cpp browsepage.cpp
+	perf stat ./a.out
+
+test_updater2:
+	g++ -DTEST_UPDATER $(OPTS) $(BOOST) $(SQLITE) $(CURL) $(XML) updater2.cpp database.cpp browsepage.cpp
+	perf stat ./a.out
+
 test_updater:
 	g++ -DTEST_UPDATER $(OPTS) $(BOOST) $(SQLITE) $(CURL) $(XML) updater.cpp database.cpp browsepage.cpp
 	perf stat -r 30 ./a.out
@@ -48,6 +60,10 @@ test_filesystem:
 
 test_database:
 	g++ -DTEST_DATABASE $(SQLITE) database.cpp
+	./a.out
+
+test_database4:
+	g++ -DTEST_DATABASE $(SQLITE) database4.cpp
 	./a.out
 
 test_ektoplayer:

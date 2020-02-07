@@ -19,7 +19,7 @@ public:
 #include <fstream>
 #include <streambuf>
 void Updater :: update() {
-  for (int i = 2; i < 16; ++i) { // XXX-4
+  for (int i = 2; i < 416; ++i) { // XXX-4
     std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
     std::string src((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());
@@ -110,29 +110,52 @@ void Updater :: insert_browsepage(const BrowsePage& page) {
 
 #if TEST_UPDATER
 #include <unistd.h>
+#include <cassert>
+#include <cstring>
 #include <iostream>
 #define TEST_DB "/tmp/ektoplayer-test.db"
 int main() {
   unlink(TEST_DB);
-  Database db(TEST_DB);
-  db.pool.reserve(2*1024*1024);
-  db.pool_long.reserve(2*1024*1024);
-  db.styles.reserve(20);
-  db.albums.reserve(2000);
-  db.tracks.reserve(14000);
-  Updater u(db);
-  u.update();
   std::cout << TEST_DB << std::endl;
-  std::cout << "Inserted " << db.tracks.size() << " tracks." << std::endl;
-  std::cout << "Inserted " << db.albums.size() << " albums." << std::endl;
+  size_t tracks_size;
+  size_t albums_size;
+  char*  track_url;
+  char*  album_desc;
+  {
+    Database db(TEST_DB);
+    db.load(); // Loading a non-existend DB should be fine
+    db.pool.reserve(500 * 1024);
+    db.pool_url.reserve(500 * 1024);
+    db.pool_desc.reserve(1500 * 1024);
+    db.styles.reserve(20);
+    db.albums.reserve(2000);
+    db.tracks.reserve(14000);
+    Updater u(db);
+    u.update();
+    tracks_size = db.tracks.size();
+    albums_size = db.albums.size();
+    track_url   = strdup(db.tracks[tracks_size-1].url());
+    album_desc  = strdup(db.albums[albums_size-1].description());
+    std::cout << "Inserted " << tracks_size << " tracks." << std::endl;
+    std::cout << "Inserted " << albums_size << " albums." << std::endl;
+    db.save(); // Write the database!
+  }
+
+  Database db(TEST_DB);
+  db.load(); // This should succeed.
+  assert(tracks_size == db.tracks.size());
+  assert(albums_size == db.albums.size());
+  assert(!strcmp(track_url,  db.tracks[tracks_size-1].url()));
+  assert(!strcmp(album_desc, db.albums[albums_size-1].description()));
+  return 0;
 
   for (auto style : db.getStyles())
     std::cout << style.url() << '|' << style.name() << std::endl;
 
+  return 0;
   auto albums = db.getAlbums();
   albums.order_by(Database::ALBUM_URL, Database::ASCENDING);
-
-  //return 0;
+  return 0;
 
   for (auto a : albums) {
     time_t date = a.date();

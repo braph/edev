@@ -7,10 +7,12 @@ class StringPool {
 private:
   std::string storage;
 public:
-  StringPool() { storage.append("", 1); }
+  StringPool() : storage("", 1) {}
   size_t              add(const char*);
-  inline const char*  get(size_t id)    { return storage.c_str() + id; }
-  inline void         reserve(size_t n) { storage.reserve(n); }
+  inline const char*  get(size_t id)    { return storage.c_str() + id;   }
+  inline void         reserve(size_t n) { storage.reserve(n);            }
+  inline size_t       size()            { return storage.size();         }
+  inline char*        data()            { return (char*) storage.data(); }
 };
 #endif
 
@@ -20,27 +22,13 @@ size_t StringPool :: add(const char *s) {
   if (!*s)
     return 0;
 
-  const size_t len = std::strlen(s) + 1;
-
-#if 1 || CPP_STRFOO
-  size_t pos = storage.find(s, 1, len);
+  size_t len_with_0 = std::strlen(s) + 1;
+  size_t pos = storage.find(s, 1, len_with_0);
   if (pos != std::string::npos)
     return pos;
-#else
-  size_t pos = 1;
-  const size_t storage_len = storage.size();
-  const char *cstr = storage.c_str();
-  while (pos < storage_len) {
-    const char *found = strstr(cstr+pos, s);
-    if (found)
-      return found - cstr;
-    else
-      pos += strlen(cstr) + 1;
-  }
-#endif
 
   pos = storage.size();
-  storage.append(s, len);
+  storage.append(s, len_with_0);
   return pos;
 }
 
