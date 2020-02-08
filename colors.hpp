@@ -34,7 +34,7 @@ namespace UI {
     public:
       static void init();
       static int  create_color_pair(short, short);
-      static int  set(const std::string&, short, short, int);
+      static int  set(const std::string&, short fg, short bg = -1, int attr = 0);
       static int  get(const std::string&);
   };
 }

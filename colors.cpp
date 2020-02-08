@@ -92,7 +92,7 @@ int Colors :: create_color_pair(short fg, short bg) {
   return pair_id;
 }
 
-int Colors :: set(const std::string &name, short fg, short bg, int attributes = 0) {
+int Colors :: set(const std::string &name, short fg, short bg, int attributes) {
   return aliases[name] = COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
 }
 
