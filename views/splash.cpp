@@ -30,7 +30,7 @@ const char EKTOPLAZM_SIGNATURE[EKTOPLAZM_SIGNATURE_HEIGHT][EKTOPLAZM_SIGNATURE_W
 };
 
 #define BUBBLES_SIZE ARRAY_SIZE(BUBBLES)
-const uint8_t BUBBLES[][2] = { {6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9} };
+const uint8_t BUBBLES[][2] = {{6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9}};
 
 std::vector<short> colorFade_0       = {-1};
 
@@ -46,8 +46,6 @@ using namespace UI;
 namespace Views {
 class Splash : public UI::Window {
 public:
-  Splash() { }
-
   void draw() {
     werase(win);
     if (EKTOPLAZM_LOGO_HEIGHT > size.height || EKTOPLAZM_LOGO_WIDTH > size.width)
@@ -111,10 +109,11 @@ public:
 }
 
 #if TEST_SPLASH
-#include <iostream>
-#include <unistd.h>
+#include "../test.hpp"
 #include "../colors.hpp"
 int main() {
+  TEST_BEGIN
+
   initscr();
   start_color();
   use_default_colors();
@@ -123,16 +122,12 @@ int main() {
   UI::Attribute::init();
   Theme::current = 256;
   
-  try {
-    Widget *s = new Views::Splash;
-    s->layout({10,10}, {20,80});
-    s->draw();
-    s->refresh();
-    pause();
-  } catch (const std::exception &e) {
-    std::cout << e.what() << std::endl;
-    return 1;
-  }
-  return 0;
+  Widget *s = new Views::Splash;
+  s->layout({10,10}, {20,80});
+  s->draw();
+  s->refresh();
+  wgetch(s->active_win());
+
+  TEST_END
 }
 #endif
