@@ -70,7 +70,7 @@ struct Loader {
  * ==========================================================================*/
 
 bool Database :: load() {
-  std::ifstream fs(file);
+  std::ifstream fs(file, std::ios::binary);
   if (fs.good()) {
     Loader l;
     for (auto p : pools) {
@@ -89,7 +89,7 @@ bool Database :: load() {
 }
 
 bool Database :: save() {
-  std::ofstream fs(file);
+  std::ofstream fs(file, std::ios::binary);
   if (fs.good()) {
     for (auto p : pools)
       if (! Saver::write(fs, p->data(), 8, p->size()))
