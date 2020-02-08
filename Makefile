@@ -2,8 +2,8 @@ XML    := $(shell xml2-config --cflags --libs)
 CURSES := -lncursesw
 BOOST  := -lboost_system -lboost_filesystem -lpthread
 CURL   := -lcurl
-#OPTS   := -g -Wall
-OPTS   := -O2 -Wall
+OPTS   := -g -Wall
+#OPTS   := -O2 -Wall
 
 test: test_filesystem test_ektoplayer test_config
 	echo foo
@@ -85,7 +85,10 @@ test_ui:
 	./a.out
 
 test_application:
-	g++ -DTEST_APPLICATION $(XML) $(CURSES) $(BOOST) filesystem.cpp application.cpp config.cpp shellsplit.cpp colors.cpp theme.cpp
+	g++ $(OPTS) $(XML) $(CURSES) $(CURL) $(BOOST) \
+		filesystem.cpp application.cpp config.cpp shellsplit.cpp \
+		colors.cpp theme.cpp database.cpp updater.cpp \
+		strpool.cpp browsepage.cpp
 	./a.out
 
 #test_options:

@@ -100,6 +100,10 @@ std::map<std::string, ThemeDefinition> Theme :: themes[3] = {
   }
 };
 
+void Theme :: init() {
+  // TODO: remove
+}
+
 void Theme :: set(unsigned int theme, const std::string &name, short fg, short bg, int attributes) {
   themes[theme][name] = {fg,bg,attributes};
 }
