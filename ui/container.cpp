@@ -1,23 +1,35 @@
+#include "../ui.hpp"
 
-class VerticalContainer : public GenericContainer {
-  void layout() {
-    unsigned int yoff = 0;
+namespace UI {
+  class GenericContainer : public Widget {
+  protected:
+    std::vector<Widget*> widgets;
+  public:
+    void draw()    { for (auto w : widgets) { w->draw();    } }
+    void refresh() { for (auto w : widgets) { w->refresh(); } }
 
-    for (auto widget : getVisibleWidgets()) {
-      widget.with_lock; {
-        widget.width = width;
-
-      }
-
-           widget.size=(widget.size.update(width: @size.width))
-           widget.pos=(@pos.calc(y: yoff))
-           fail WidgetSizeError if widget.size.width > @size.width
-           fail WidgetSizeError if yoff + widget.size.height > @size.height
-           yoff += widget.size.height
-        end
+    void add(Widget* widget) {
+      widgets.push_back(widget);
     }
 
-     super
-  end
-end
+    WINDOW *active_win() { return widgets[0]->active_win(); } // SEL
+  };
+
+  class VerticalContainer : public GenericContainer {
+  public:
+    void layout(Pos pos, Size size) {
+      this->pos  = pos;
+      this->size = size;
+
+      for (auto w : widgets) {
+        if (! w->visible)
+          continue;
+
+        w->layout(pos, size);
+        pos.y       += w->size.height;
+        size.height -= w->size.height;
+      }
+    }
+  };
+}
 

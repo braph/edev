@@ -69,37 +69,37 @@ struct Loader {
  * Database
  * ==========================================================================*/
 
-bool Database :: load() {
-  std::ifstream fs(file, std::ios::binary);
-  if (fs.good()) {
-    Loader l;
-    for (auto p : pools) {
-      l.readHeader(fs);
-      p->reserve(l.elem_count);
-      if (! l.readData(fs, p->data()))
-        return false;
-    }
+bool Database :: load(const std::string &file) {
+  std::ifstream fs;
+  fs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
+  fs.open(file, std::ios::binary);
 
-    return
-      styles.load(fs) &&
-      albums.load(fs) &&
-      tracks.load(fs);
+  Loader l;
+  for (auto p : pools) {
+    l.readHeader(fs);
+    p->reserve(l.elem_count);
+    if (! l.readData(fs, p->data()))
+      return false;
   }
-  return false;
+
+  return
+    styles.load(fs) &&
+    albums.load(fs) &&
+    tracks.load(fs);
 }
 
-bool Database :: save() {
-  std::ofstream fs(file, std::ios::binary);
-  if (fs.good()) {
-    for (auto p : pools)
-      if (! Saver::write(fs, p->data(), 8, p->size()))
-        return false;
-    return
-      styles.save(fs) &&
-      albums.save(fs) &&
-      tracks.save(fs);
-  }
-  return false;
+bool Database :: save(const std::string &file) {
+  std::ofstream fs;
+  fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
+  fs.open(file, std::ios::binary);
+
+  for (auto p : pools)
+    if (! Saver::write(fs, p->data(), 8, p->size()))
+      return false;
+  return
+    styles.save(fs) &&
+    albums.save(fs) &&
+    tracks.save(fs);
 }
 
 /* ============================================================================
@@ -305,21 +305,11 @@ int Database :: Where :: compare(const Styles::Style &s) {
   }
 }
 
-
 // ============================================================================
 #if TEST_DATABASE
 #include <iostream>
 int main () {
-  std::vector<int> v = {1,2,3,4,5};
-
-  GenericIterator<std::vector<int>, int> beg(v, 0);
-  GenericIterator<std::vector<int>, int> end(v, v.size());
-
-  for (; beg != end; ++beg) {
-    std::cout << *beg << std::endl;
-  }
-
-  Database db("/tmp/remove.db");
+  Database db;
   auto style = db.styles.find("foo", true);
   style.name("Foo-Style");
   auto s1 = db.styles.find("bar", true);

@@ -17,7 +17,7 @@
 namespace fs = boost::filesystem;
 using namespace Ektoplayer;
 
-static void init();
+static void init(Database&);
 static void program(Database&);
 static void cleanup();
 static bool hv_SIGWINCH = false;
@@ -28,38 +28,39 @@ int main(int argc, char **argv) {
   std::string err;
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
 
-  Database db("");
+  Database db;
   try {
-    init();
+    init(db);
     program(db);
   }
   catch (const std::exception &e) { err = e.what();                 }
   catch (const char *e)           { err = e;                        }
   catch (...)                     { err = "Unknown exception type"; }
+  endwin();
 
-  if (! err.empty()) {
-    endwin();
+  if (! err.empty())
     std::cout << emsg << ": " << err << std::endl;
+
+  try { db.save(Config::database_file); }
+  catch (const std::exception &e) {
+    std::cout << "Error saving database file: " << e.what() << std::endl;
   }
 
-  db.save();
   return ! err.empty();
 }
 
-static void init() {
+static void init(Database &db) {
   // Set terminal title
   std::cout << "\033]0;ektoplayer\007" << std::endl;
 
   // Initialize curses
   initscr();
-  cbreak(); // XXX
+  cbreak();
   noecho();
   start_color();
   use_default_colors();
+  timeout(100);
   mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
-
-  // Sighandler
-  signal(SIGWINCH, on_SIGWINCH);
 
   // Initialize singleton stuff
   UI::Color::init();
@@ -92,10 +93,6 @@ static void init() {
   if (! fs::is_directory(Config::archive_dir))
     fs::create_directory(Config::archive_dir);
 
-  // Keep this on a line where configuration has already been read.
-  atexit(cleanup);
-
-  // Doing logging the easy way :)
   emsg = "Error opening log file";
   std::ios::sync_with_stdio(false);
   std::ofstream *logfile = new std::ofstream();
@@ -103,34 +100,58 @@ static void init() {
   logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
   std::cerr.rdbuf(logfile->rdbuf());
 
+  // Reset error message
+  emsg = "Error";
+
+  Config::database_file = "/tmp/ekto-test.db"; // XXX TODO!
+
+  if (fs::exists(Config::database_file))
+    try { db.load(Config::database_file); }
+    catch (const std::exception &e) {
+      addstr("Could not load the database file. Press ANY key");
+      getch();
+    }
+
   // All colors are beautiful
   if (Config::use_colors == -1 /* "auto" */)
     Theme::loadTheme(COLORS);
   else
     Theme::loadTheme(Config::use_colors);
 
-  emsg = "Error";
+  atexit(cleanup);
+  signal(SIGWINCH, on_SIGWINCH);
 }
 
-static void program(Database &database) {
-  database.file = "/tmp/ekto-test.db" /*Config::database_file*/; // TODO
-  database.load(); // XXX: Error handling?
-  Updater  updater(database);
+#include "ui/container.cpp"
+#include "views/splash.cpp"
+static void program(Database &db) {
+  std::cerr << "Database track count on start: " << db.tracks.size() << std::endl;
 
-  std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
-
-  if (database.tracks.size() < 42)
+  Updater updater(db);
+  if (db.tracks.size() < 42)
     updater.start(0); // Fetch all pages
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
+  UI::VerticalContainer v_VerticalContainer;
+  Views::Splash         v_Splash;
+  v_VerticalContainer.add(&v_Splash);
+
+  v_VerticalContainer.layout({0,0}, {LINES,COLS});
+  v_VerticalContainer.draw();
+  v_VerticalContainer.refresh();
+
+  int c;
 MAINLOOP:
   updater.write_to_database();
-  if (! updater.write_to_database())
+
+  c = wgetch(v_VerticalContainer.active_win());
+  if (c == 'q')
     goto QUIT;
+
 goto MAINLOOP;
-QUIT:
-  (void)0;
+
+QUIT: (void)0;
 }
 
 static void cleanup() {

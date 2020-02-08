@@ -1,14 +1,13 @@
 #include "../ui.hpp"
 #include "../theme.hpp"
 #include "../config.hpp"
-#include "../colorfader.hpp"
+#include "../common.hpp"
 #include "../colors.hpp"
 #include <vector>
-#include <iostream>//XXX
 
-std::vector<int> fading_256 = {25,26,27,32,39,38,44,44,45,51,87,159,195};
-std::vector<int> fading_8   = {COLOR_BLUE};
-std::vector<int> fading_0   = {-1};
+std::vector<short> fading_256 = {25,26,27,32,39,38,44,44,45,51,87,159,195};
+std::vector<short> fading_8   = {COLOR_BLUE};
+std::vector<short> fading_0   = {-1};
 
 namespace Ektoplayer {
   namespace Views {
@@ -35,23 +34,24 @@ void ProgressBar :: setPercent(float percent) {
 
 /* We draw the progress bar once inside the pad.  Everything else */
 void ProgressBar :: layout() {
-  std::vector<int> *fader = &fading_0;
+  auto *fade = &fading_0;
   if (Theme::current == 256)
-    fader = &fading_256;
+    fade = &fading_256;
   else if (Theme::current == 8)
-    fader = &fading_8;
+    fade = &fading_8;
 
   wresize(win, 1, size.width * 2); // self.pad_size
   wmove(win, 0, 0);
 
+#define FG(COLOR) UI::Colors::set("", COLOR, -1, 0)
   char c = Config::progressbar_progress_char;
   for (unsigned i = 0; i < size.width; ++i) {
-    wattrset(win, UI::ColorFader::fade(*fader, i, size.width));
+    wattrset(win, FG(proportionalGet(*fade, size.width, i)));
     waddch(win, c);
   }
 
   wattrset(win, UI::Colors::get("progressbar.rest")); // XXX: Theme?
-  whline(win, Config::progressbar_rest_char, 999/**/);
+  whline(win, Config::progressbar_rest_char, 1337);
 }
 
 #if foo

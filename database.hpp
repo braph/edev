@@ -378,7 +378,6 @@ public:
    * Database members and methods - finally!
    * ========================================================================*/
 
-  std::string file;
   StringPool  pool_meta;
   StringPool  pool_desc;
   StringPool  pool_style_url;
@@ -392,9 +391,8 @@ public:
   Albums      albums;
   Tracks      tracks;
   std::vector<StringPool*> pools;
-  Database(const std::string &file)
-  : file(file)
-  , styles(*this)
+  Database()
+  : styles(*this)
   , albums(*this)
   , tracks(*this)
   , pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url, &pool_track_url,
@@ -435,8 +433,8 @@ public:
     return Result<Tracks, Tracks::Track>(tracks);
   }
 
-  bool load();
-  bool save();
+  bool load(const std::string&);
+  bool save(const std::string&);
 };
 
 #endif

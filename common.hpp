@@ -28,6 +28,22 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
   return false;
 }
 
+// TODO: better name for proportionalGet 
+
+template<typename TContainer>
+auto proportionalGet(const TContainer &container, unsigned int size, unsigned int pos) {
+  unsigned int i = container.size() * pos / size;
+  return container[i];
+}
+
+template<typename TContainer>
+auto proportionalGet2(const TContainer &container, unsigned int size, unsigned int pos) {
+  unsigned int i = container.size() * pos * 2 / size;
+  if (i >= container.size())
+    i = container.size() - (i - container.size() + 1);
+  return container[i];
+}
+
 #if TODO_BLAH
 #define LOG()
 //def self.log(from, *msgs)

@@ -1,6 +1,6 @@
 #include "../ui.hpp"
 #include "../theme.hpp"
-#include "../colorfader.hpp"
+#include "../colors.hpp"
 #include "../common.hpp"
 #include <cstdint>
 #include <vector>
@@ -32,80 +32,83 @@ const char EKTOPLAZM_SIGNATURE[EKTOPLAZM_SIGNATURE_HEIGHT][EKTOPLAZM_SIGNATURE_W
 #define BUBBLES_SIZE ARRAY_SIZE(BUBBLES)
 const uint8_t BUBBLES[][2] = { {6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9} };
 
-std::vector<int> colorFader_0       = {-1};
+std::vector<short> colorFade_0       = {-1};
 
-std::vector<int> logoFader_8        = {COLOR_BLUE};
-std::vector<int> bubbleFader_8      = {COLOR_RED};
-std::vector<int> signatureFader_8   = {COLOR_MAGENTA};
+std::vector<short> logoFade_8        = {COLOR_BLUE};
+std::vector<short> bubbleFade_8      = {COLOR_RED};
+std::vector<short> signatureFade_8   = {COLOR_MAGENTA};
 
-std::vector<int> logoFader_256      = {23,23,29,36,42,48,42,36,29,23};
-std::vector<int> bubbleFader_256    = {168,167,161,161,161};
-std::vector<int> signatureFader_256 = {99,105,111,117};
+std::vector<short> logoFade_256      = {23,23,29,36,42,48,42,36,29,23};
+std::vector<short> bubbleFade_256    = {168,167,161,161,161};
+std::vector<short> signatureFade_256 = {99,105,111,117};
 
+using namespace UI;
+namespace Views {
 class Splash : public UI::Window {
-  public:
-    Splash() { }
+public:
+  Splash() { }
 
-    void draw() {
-      werase(win);
-      if (EKTOPLAZM_LOGO_HEIGHT >= size.height || EKTOPLAZM_LOGO_WIDTH >= size.width)//>=?TODO
-        return;
+  void draw() {
+    werase(win);
+    if (EKTOPLAZM_LOGO_HEIGHT > size.height || EKTOPLAZM_LOGO_WIDTH > size.width)
+      return;
 
-      // Assume no colors by default
-      std::vector<int> *logoFader      = &colorFader_0;
-      std::vector<int> *bubbleFader    = &colorFader_0;
-      std::vector<int> *signatureFader = &colorFader_0;
+    // Assume no colors by default
+    auto *logoFade      = &colorFade_0;
+    auto *bubbleFade    = &colorFade_0;
+    auto *signatureFade = &colorFade_0;
 
-      if (Ektoplayer::Theme::current == 256) {
-        logoFader       = &logoFader_256;
-        bubbleFader     = &bubbleFader_256;
-        signatureFader  = &signatureFader_256;
-      } else if (Ektoplayer::Theme::current == 8) {
-        logoFader       = &logoFader_8;
-        bubbleFader     = &bubbleFader_8;
-        signatureFader  = &signatureFader_8;
-      }
+    if (Theme::current == 256) {
+      logoFade       = &logoFade_256;
+      bubbleFade     = &bubbleFade_256;
+      signatureFade  = &signatureFade_256;
+    } else if (Theme::current == 8) {
+      logoFade       = &logoFade_8;
+      bubbleFade     = &bubbleFade_8;
+      signatureFade  = &signatureFade_8;
+    }
 
-      int w_center = size.width / 2;
-      int h_center = size.height / 2;
-      int left_pad = w_center - (EKTOPLAZM_LOGO_WIDTH / 2);
-      int top_pad  = h_center - (EKTOPLAZM_LOGO_HEIGHT / 2);
-      bool draw_signature = false;
+    int w_center = size.width / 2;
+    int h_center = size.height / 2;
+    int left_pad = w_center - (EKTOPLAZM_LOGO_WIDTH / 2);
+    int top_pad  = h_center - (EKTOPLAZM_LOGO_HEIGHT / 2);
+    bool draw_signature = false;
 
-      if (EKTOPLAZM_LOGO_HEIGHT + EKTOPLAZM_SIGNATURE_HEIGHT + 3 <= size.height) {
-        top_pad -= 3;
-        draw_signature = true;
-      }
+    if (EKTOPLAZM_LOGO_HEIGHT + EKTOPLAZM_SIGNATURE_HEIGHT + 3 <= size.height) {
+      top_pad -= 3;
+      draw_signature = true;
+    }
 
-      for (unsigned i = 0; i < EKTOPLAZM_LOGO_HEIGHT; ++i) {
-        wattrset(win, UI::ColorFader::fade2(*logoFader, i, EKTOPLAZM_LOGO_HEIGHT));
-        mvwaddstr(win, top_pad + i, left_pad, EKTOPLAZM_LOGO[i]);
-      }
+#define FG(COLOR) UI::Colors::set("", COLOR, -1, 0)
+    for (unsigned i = 0; i < EKTOPLAZM_LOGO_HEIGHT; ++i) {
+      wattrset(win, FG(proportionalGet(*logoFade, EKTOPLAZM_LOGO_HEIGHT, i)));
+      mvwaddstr(win, top_pad + i, left_pad, EKTOPLAZM_LOGO[i]);
+    }
 
-      // @bubble_fade FADE not fade2! on EKTOPLAZM_LOGO_HEIGHT
-      for (unsigned i = 0; i < BUBBLES_SIZE; ++i) {
-        int x = BUBBLES[i][0];
-        int y = BUBBLES[i][1];
-        wattrset(win, UI::ColorFader::fade(*bubbleFader, y - 1, EKTOPLAZM_LOGO_HEIGHT));
-        mvwaddstr(win, top_pad + y - 1, left_pad + x + 1, "_");
-        wattrset(win, UI::ColorFader::fade(*bubbleFader, y, EKTOPLAZM_LOGO_HEIGHT));
-        mvwaddstr(win, top_pad + y, left_pad + x, "(_)");
-      }
+    for (unsigned i = 0; i < BUBBLES_SIZE; ++i) {
+      int x = BUBBLES[i][0];
+      int y = BUBBLES[i][1];
+      wattrset(win, FG(proportionalGet(*bubbleFade, EKTOPLAZM_LOGO_HEIGHT, y - 1)));
+      mvwaddch(win, top_pad + y - 1, left_pad + x + 1, '_');
+      wattrset(win, FG(proportionalGet(*bubbleFade, EKTOPLAZM_LOGO_HEIGHT, y)));
+      mvwaddstr(win, top_pad + y, left_pad + x, "(_)");
+    }
 
-      if (! draw_signature) return;
+    if (! draw_signature) return;
 
-      top_pad += EKTOPLAZM_LOGO_HEIGHT + 2;
-      left_pad = w_center - (EKTOPLAZM_SIGNATURE_WIDTH / 2);
+    top_pad += EKTOPLAZM_LOGO_HEIGHT + 2;
+    left_pad = w_center - (EKTOPLAZM_SIGNATURE_WIDTH / 2);
 
-      for (unsigned i = 0; i < EKTOPLAZM_SIGNATURE_HEIGHT; ++i) {
-        wmove(win, top_pad + i, left_pad);
-        for (unsigned j = 0; j < EKTOPLAZM_SIGNATURE_WIDTH; ++j) {
-          wattrset(win, UI::ColorFader::fade2(*signatureFader, j, EKTOPLAZM_SIGNATURE_WIDTH));
-          waddch(win, EKTOPLAZM_SIGNATURE[i][j]);
-        }
+    for (unsigned i = 0; i < EKTOPLAZM_SIGNATURE_HEIGHT; ++i) {
+      wmove(win, top_pad + i, left_pad);
+      for (unsigned j = 0; j < EKTOPLAZM_SIGNATURE_WIDTH; ++j) {
+        wattrset(win, FG(proportionalGet2(*signatureFade, EKTOPLAZM_SIGNATURE_WIDTH, j)));
+        waddch(win, EKTOPLAZM_SIGNATURE[i][j]);
       }
     }
+  }
 };
+}
 
 #if TEST_SPLASH
 #include <iostream>
@@ -118,12 +121,13 @@ int main() {
   UI::Color::init();
   UI::Colors::init();
   UI::Attribute::init();
-  Ektoplayer::Theme::current = 256;
+  Theme::current = 256;
   
   try {
-    Splash s;
-    s.draw();
-    s.refresh();
+    Widget *s = new Views::Splash;
+    s->layout({10,10}, {20,80});
+    s->draw();
+    s->refresh();
     pause();
   } catch (const std::exception &e) {
     std::cout << e.what() << std::endl;

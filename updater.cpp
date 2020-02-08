@@ -281,8 +281,7 @@ int main() {
   char*  track_url;
   char*  album_desc;
   {
-    Database db(TEST_DB);
-    db.load(); // Loading a non-existend DB should be fine
+    Database db;
     Updater u(db);
     u.start(0);
     while (u.write_to_database()) { sleep(1); }
@@ -292,11 +291,11 @@ int main() {
     album_desc  = strdup(db.albums[albums_size-1].description());
     std::cout << "Inserted " << tracks_size << " tracks." << std::endl;
     std::cout << "Inserted " << albums_size << " albums." << std::endl;
-    db.save(); // Write the database!
+    db.save(TEST_DB); // Write the database!
   }
 
-  Database db(TEST_DB);
-  db.load(); // This should succeed.
+  Database db;
+  db.load(TEST_DB); // This should succeed.
   assert(tracks_size == db.tracks.size());
   assert(albums_size == db.albums.size());
   assert(!strcmp(track_url,  db.tracks[tracks_size-1].url()));
