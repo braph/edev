@@ -92,8 +92,8 @@ void Splash :: draw() {
   for (size_t i = 0; i < BUBBLES_SIZE; ++i) {
     const int x = BUBBLES[i][0];
     const int y = BUBBLES[i][1];
-    wattrset(win, FG(proportionalGet(bubbleFade, bubbleFade_size, LOGO_HEIGHT, y - 1)));
-    mvwaddch(win, top_pad + y - 1, left_pad + x + 1, '_');
+    mvwaddch(win, top_pad + y - 1, left_pad + x + 1, '_'|
+      FG(proportionalGet(bubbleFade, bubbleFade_size, LOGO_HEIGHT, y - 1)));
     wattrset(win, FG(proportionalGet(bubbleFade, bubbleFade_size, LOGO_HEIGHT, y)));
     mvwaddstr(win, top_pad + y, left_pad + x, "(_)");
   }
@@ -106,8 +106,8 @@ void Splash :: draw() {
   for (size_t i = 0; i < SIGNATURE_HEIGHT; ++i) {
     wmove(win, top_pad + i, left_pad);
     for (size_t j = 0; j < SIGNATURE_WIDTH; ++j) {
-      wattrset(win, FG(proportionalGet2(signatureFade, signatureFade_size, SIGNATURE_WIDTH, j)));
-      waddch(win, SIGNATURE[i][j]);
+      waddch(win, SIGNATURE[i][j]|
+        FG(proportionalGet2(signatureFade, signatureFade_size, SIGNATURE_WIDTH, j)));
     }
   }
 }
