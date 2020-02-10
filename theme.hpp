@@ -1,30 +1,61 @@
 #ifndef _THEME_CPP
 #define _THEME_CPP
 
-#include <map>
+#include <string>
 
-// TODO: current as getter?
+struct ThemeDefinition {
+  short fg, bg;
+  unsigned int attributes;
 
-class ThemeDefinition {
-  public:
-    short fg, bg;
-    int   attributes;
-
-    ThemeDefinition(short _fg = -2, short _bg = -2, int _attributes = 0)
-      : fg(_fg), bg(_bg), attributes(_attributes)
-    {
-    }
+  ThemeDefinition(short fg = -2, short bg = -2, unsigned int attributes = 0)
+    : fg(fg), bg(bg), attributes(attributes)
+  {
+  }
 };
 
 class Theme {
-  private:
-    static std::map<std::string, ThemeDefinition> themes[3];
-  public:
-    static unsigned int current; // 0 | 8 | 256
+public:
+  enum ThemeID {
+    DEFAULT,
+    URL,
 
-    static void init();
-    static void set(unsigned int, const std::string&, short, short, int);
-    static void loadTheme(unsigned int);
+    INFO_HEAD,
+    INFO_TAG,
+    INFO_VALUE,
+    INFO_DESCRIPTION,
+    INFO_DOWNLOAD_FILE,
+    INFO_DOWNLOAD_PERCENT,
+    INFO_DOWNLOAD_ERROR,
+
+    PROGRESSBAR_PROGRESS,
+    PROGRESSBAR_REST,
+
+    TABBAR_SELECTED,
+    TABBAR_UNSELECTED,
+
+    LIST_ITEM_EVEN,
+    LIST_ITEM_ODD,
+    LIST_ITEM_SELECTION,
+
+    PLAYINGINFO_POSITION,
+    PLAYINGINFO_STATE,
+
+    HELP_WIDGET_NAME,
+    HELP_KEY_NAME,
+    HELP_COMMAND_NAME,
+    HELP_COMMAND_DESC,
+
+    THEME_ID_COUNT
+  };
+private:
+  static ThemeDefinition themes[3][THEME_ID_COUNT];
+  static int loaded[THEME_ID_COUNT];
+public:
+  static unsigned short current; // 0 | 8 | 256
+
+  static void set(unsigned int, const std::string&, short, short, int);
+  static int  get(ThemeID);
+  static void loadTheme(unsigned int);
 };
 
 #endif

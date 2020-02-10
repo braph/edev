@@ -51,8 +51,10 @@ void TrackRenderer :: render(WINDOW *win, const SSMap &item, int index, bool cur
   // Sum of all relative widths
   int _100Percent = 0;
  for (const auto &column : m_columns) {
-   width -= column.size; // Remove the fixed sizes
-   _100Percent += column.rel; // The sum of all rel's shall be 100, but may be another value
+   if (column.relative)
+     _100Percent += column.size; // The sum of all rel's shall be 100, but may be another value
+   else
+     width -= column.size; // Remove the fixed sizes
  }
 
  for (const auto &column : m_columns) {
@@ -65,14 +67,14 @@ void TrackRenderer :: render(WINDOW *win, const SSMap &item, int index, bool cur
    int len = strlen(value);
    int colwidth;
 
-   if (column.size)
-     colwidth = column.size;
+   if (column.relative)
+     colwidth = width * column.size / _100Percent;
    else
-     colwidth = width * column.rel / _100Percent;
+     colwidth = column.size;
 
-   if (column.justification == Left)
+   if (column.justify == PlaylistColumnFormat::Left)
      mvwaddnstr(win, y, x, value, colwidth);
-   else if (column.justification == Right) {
+   else if (column.justify == PlaylistColumnFormat::Right) {
      if (len < colwidth) {
        mvwhline(win, y, x, colwidth - len, ' '); // TODO
        waddnstr(win, value, len); // TODO
@@ -154,7 +156,7 @@ int main() {
   };
 
   try {
-    testTrackRenderer(testData[0], Config::playlist_format);
+    testTrackRenderer(testData[0], Config::playlist_columns);
 
     /*
     ListItemRenderer<std::string> renderer(COLS);

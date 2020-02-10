@@ -81,20 +81,20 @@
     <description>Number of download threads during database update</description>
   </opt>
 
-  <opt name="playlist.format" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT" lateinit="yes">
-    <description>Format of playlist columns</description>
+  <opt name="playlist.columns" type="PlaylistColumns" parse="opt_parse_playlist_columns" default="DEFAULT_PLAYLIST_COLUMNS" lateinit="yes">
+    <description>Columns of playlist</description>
   </opt>
 
-  <opt name="playlist.format_256" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT_256" lateinit="yes">
-    <description>Format of playlist columns (256 colors)</description>
+  <opt name="playlist.columns_256" type="PlaylistColumns" parse="opt_parse_playlist_columns" default="DEFAULT_PLAYLIST_COLUMNS_256" lateinit="yes">
+    <description>Columns of playlist (256 colors)</description>
   </opt>
 
-  <opt name="browser.format" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT" lateinit="yes">
-    <description>Format of browser columns</description>
+  <opt name="browser.columns" type="PlaylistColumns" parse="opt_parse_playlist_columns" default="DEFAULT_PLAYLIST_COLUMNS" lateinit="yes">
+    <description>Columns of browser</description>
   </opt>
 
-  <opt name="browser.format_256" type="PlaylistColumns" parse="opt_parse_playlist_format" default="DEFAULT_PLAYLIST_FORMAT_256" lateinit="yes">
-    <description>Format of browser columns (256 colors)</description>
+  <opt name="browser.columns_256" type="PlaylistColumns" parse="opt_parse_playlist_columns" default="DEFAULT_PLAYLIST_COLUMNS_256" lateinit="yes">
+    <description>Columns of browser (256 colors)</description>
   </opt>
 
   <opt name="progressbar.display" type="bool" parse="opt_parse_bool" default="true">

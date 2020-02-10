@@ -77,7 +77,7 @@ public:
       draw_signature = true;
     }
 
-#define FG(COLOR) UI::Colors::set("", COLOR, -1, 0)
+#define FG(COLOR) UI::Colors::set(COLOR, -1, 0)
     for (unsigned i = 0; i < EKTOPLAZM_LOGO_HEIGHT; ++i) {
       wattrset(win, FG(proportionalGet(*logoFade, EKTOPLAZM_LOGO_HEIGHT, i)));
       mvwaddstr(win, top_pad + i, left_pad, EKTOPLAZM_LOGO[i]);
@@ -110,23 +110,22 @@ public:
 
 #if TEST_SPLASH
 #include "../test.hpp"
-#include "../colors.hpp"
 int main() {
   TEST_BEGIN
 
   initscr();
   start_color();
   use_default_colors();
-  UI::Color::init();
-  UI::Colors::init();
-  UI::Attribute::init();
-  Theme::current = 256;
-  
+
   Widget *s = new Views::Splash;
   s->layout({10,10}, {20,80});
-  s->draw();
-  s->refresh();
-  wgetch(s->active_win());
+
+  for (auto colors : {0,8,256}) {
+    Theme::current = colors;
+    s->draw();
+    s->refresh();
+    wgetch(s->active_win());
+  }
 
   TEST_END
 }

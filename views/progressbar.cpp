@@ -43,14 +43,14 @@ void ProgressBar :: layout() {
   wresize(win, 1, size.width * 2); // self.pad_size
   wmove(win, 0, 0);
 
-#define FG(COLOR) UI::Colors::set("", COLOR, -1, 0)
+#define FG(COLOR) UI::Colors::set(COLOR, -1, 0)
   char c = Config::progressbar_progress_char;
   for (unsigned i = 0; i < size.width; ++i) {
     wattrset(win, FG(proportionalGet(*fade, size.width, i)));
     waddch(win, c);
   }
 
-  wattrset(win, UI::Colors::get("progressbar.rest")); // XXX: Theme?
+  wattrset(win, Theme::get(Theme::PROGRESSBAR_REST));
   whline(win, Config::progressbar_rest_char, 1337);
 }
 
@@ -68,9 +68,6 @@ int main() {
   initscr();
   start_color();
   use_default_colors();
-  UI::Color::init();
-  UI::Colors::init();
-  UI::Attribute::init();
   Config::init();
   Theme::loadTheme(256);
   

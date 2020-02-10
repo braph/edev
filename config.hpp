@@ -1,51 +1,49 @@
 #ifndef _CONFIG_HPP
 #define _CONFIG_HPP
 
+#include "database.hpp"
 #include <string>
 #include <vector>
 
-class PlaylistColumnFormat {
-  public:
-    enum Justification { Right, Left };
+struct PlaylistColumnFormat {
+  enum Justification { Right, Left };
 
-    std::string tag;
-    short fg;
-    short bg;
-    unsigned int rel;
-    unsigned int size;
-    enum Justification justify;
+  std::string tag;
+  short fg;
+  short bg;
+  short size;
+  bool relative;
+  enum Justification justify;
 
-    PlaylistColumnFormat()
-      : fg(-1), bg(-1), rel(0), size(0), justify(Left)
-    {
-    }
+  PlaylistColumnFormat()
+    : fg(-1), bg(-1), size(0), relative(false), justify(Left)
+  {
+  }
 };
 
-class PlayingInfoFormatFoo {
-  public:
-    short fg;
-    short bg;
-    unsigned int attributes;
-    std::string tag;
-    std::string text;
+struct PlayingInfoFormatFoo {
+  short fg;
+  short bg;
+  unsigned int attributes;
+  Database::ColumnID tag;
+  std::string text;
 
-    PlayingInfoFormatFoo()
-      : fg(-1), bg(-1), attributes(0)
-    {
-    }
+  PlayingInfoFormatFoo()
+    : fg(-1), bg(-1), attributes(0)
+  {
+  }
 };
 
 typedef std::vector<PlaylistColumnFormat> PlaylistColumns;
 typedef std::vector<PlayingInfoFormatFoo> PlayingInfoFormat;
 
 class Config {
-  private:
-    Config(); // Singleton
-  public:
+  Config(); /* Singleton */
+public:
 #include "config/config.members.hpp"
-    static void init();
-    static void set(const std::string&, const std::string&);
-    static void read(const std::string&);
+  static void init();
+  static void set(const std::string&, const std::string&);
+  static void read(const std::string&);
 };
 
 #endif

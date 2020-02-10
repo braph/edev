@@ -18,10 +18,10 @@ std::string                   Config :: archive_dir /* will be initialized later
 std::string                   Config :: audio_system = "pulse,alsa,jack,oss";
 std::string                   Config :: download_dir = "/tmp";
 std::string                   Config :: database_file /* will be initialized later */;
-PlaylistColumns               Config :: browser_format /* will be initialized later */;
-PlaylistColumns               Config :: playlist_format /* will be initialized later */;
-PlaylistColumns               Config :: browser_format_256 /* will be initialized later */;
-PlaylistColumns               Config :: playlist_format_256 /* will be initialized later */;
+PlaylistColumns               Config :: browser_columns /* will be initialized later */;
+PlaylistColumns               Config :: playlist_columns /* will be initialized later */;
+PlaylistColumns               Config :: browser_columns_256 /* will be initialized later */;
+PlaylistColumns               Config :: playlist_columns_256 /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_top /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_bottom /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_top_256 /* will be initialized later */;

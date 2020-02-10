@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cassert>
+#include <cstring>
 
 #define TEST_DB "/tmp/ektoplayer-test.db"
 

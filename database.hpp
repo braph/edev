@@ -106,7 +106,8 @@ public:
     Database &db;
     size_t    id;
     inline Record(Database &db, size_t id) : db(db), id(id) {}
-    inline bool valid() const { return id != -1; }
+    inline bool valid() const     { return !!id; }
+    inline operator bool() const  { return !!id; }
     Record& operator=(const Record &rhs) { id = rhs.id; return *this; }
     void swap(Record &rhs) { size_t tmp = id; id = rhs.id; rhs.id = tmp; } // XXX TODO
   };
@@ -250,7 +251,29 @@ public:
     TRACK_REMIX,
     TRACK_NUMBER,
     TRACK_BPM,
+
+    NPOS
   };
+
+  static ColumnID columnIDFromStr(const std::string &s) {
+    /**/ if (s == "style")        return STYLE_NAME;
+    else if (s == "album")        return ALBUM_TITLE;
+    else if (s == "album_artist") return ALBUM_ARTIST;
+    else if (s == "description")  return ALBUM_DESCRIPTION;
+    else if (s == "date")         return ALBUM_DATE;
+    else if (s == "rating")       return ALBUM_RATING;
+    else if (s == "votes")        return ALBUM_VOTES;
+    else if (s == "downloads")    return ALBUM_DOWNLOAD_COUNT;
+    else if (s == "year")         return TRACK_NUMBER; // TODO
+    else if (s == "month")        return TRACK_NUMBER; // TODO
+    else if (s == "day")          return TRACK_NUMBER; // TODO
+    else if (s == "title")        return TRACK_TITLE;
+    else if (s == "artist")       return TRACK_ARTIST;
+    else if (s == "remix")        return TRACK_REMIX;
+    else if (s == "number")       return TRACK_NUMBER;
+    else if (s == "bpm")          return TRACK_BPM;
+    else                          return NPOS;
+  }
 
   enum SortOrder {
     ASCENDING,
@@ -323,7 +346,7 @@ public:
     std::vector<int> indices;
     Result(TStore &store) : store(store) {
       indices.reserve(store.size());
-      for (size_t i = 0; i < store.size(); ++i)
+      for (size_t i = 1; i < store.size(); ++i)
         indices.push_back(i);
     }
 
@@ -398,8 +421,10 @@ public:
   , pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url, &pool_track_url,
       &pool_cover_url, &pool_mp3_url, &pool_wav_url, &pool_flac_url})
   {
-    // We need a dummy style on ID 0, see implementation of Album::styles()
-    styles.find("NULL", true).name("NULL");
+    // Records with ID 0 are used as NULL records. Create them here.
+    styles.find("", true);
+    albums.find("", true);
+    tracks.find("", true);
 
     // We know that the database will *at least* hold this amount of data,
     // so pre allocate the buffers. (January, 2020)

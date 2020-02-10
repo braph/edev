@@ -4,10 +4,10 @@
 #include "../config.hpp"
 #include "../colors.hpp"
 #include "../common.hpp"
+#include "../database.hpp"
 
 #include <string>
 #include <cstring>
-#include <map>
 
 const char *STOPPED_HEADING = "- Ektoplayer -";
 
@@ -23,15 +23,15 @@ namespace Ektoplayer {
   namespace Views {
     class PlayingInfo : public UI::Window {
       private:
-        std::map<std::string, std::string> track;
+        Database::Tracks::Track track;
         PlayingInfoFormat *fmt_top;
         PlayingInfoFormat *fmt_bottom;
 
       public:
         // Slot: clicked -> player.toggle
 
-        PlayingInfo();
-        void setTrack(const std::map<std::string, std::string>&);
+        PlayingInfo(Database&);
+        void setTrack(Database::Tracks::Track);
         void draw();
         void layout(int, int);
         void draw_position_and_length();
@@ -43,7 +43,9 @@ namespace Ektoplayer {
 using namespace Ektoplayer;
 using namespace Ektoplayer::Views;
 
-PlayingInfo :: PlayingInfo() {
+PlayingInfo :: PlayingInfo(Database &db)
+: track(db, 0)
+{
 }
 
 void PlayingInfo :: layout(int height, int width) {
@@ -52,7 +54,7 @@ void PlayingInfo :: layout(int height, int width) {
   wresize(win, height, width);
 }
 
-void PlayingInfo :: setTrack(const std::map<std::string, std::string> &_track) {
+void PlayingInfo :: setTrack(Database::Tracks::Track _track) {
   //return if @track == t ???
   track = _track;
   //with_lock { @track = t; want_redraw }
@@ -73,11 +75,11 @@ void PlayingInfo :: draw() {
   werase(win);
   draw_position_and_length();
 
-  wattrset(win, UI::Colors::get("playinginfo.state"));
+  wattrset(win, Theme::get(Theme::PLAYINGINFO_STATE));
   const char *state = state_to_string(2 /* TODO */);
   mvwprintw(win, 0, size.width - strlen(state) - 2, "[%s]", state);
 
-  if (track.empty()) {
+  if (! track) {
     wattrset(win, 0);
     mvwaddstr(win, 1, size.width / 2 - STRLEN(STOPPED_HEADING) / 2, STOPPED_HEADING);
   } else {
@@ -88,51 +90,75 @@ void PlayingInfo :: draw() {
   }
 }
 
+static const char* trackField(Database::Tracks::Track track, Database::ColumnID id) {
+#define TOS(INT, FMT) ffff
+#define DB Database
+  static char buf[32];
+  switch (id) {
+    case DB::STYLE_NAME:            return "TODO";
+    case DB::ALBUM_TITLE:           return track.album().title();
+    case DB::ALBUM_ARTIST:          return track.album().artist();
+    case DB::ALBUM_DESCRIPTION:     return track.album().description();
+    case DB::ALBUM_DATE:            return "TODO";
+    case DB::ALBUM_RATING:          return "TODO";
+    case DB::ALBUM_VOTES:           return "TODO";
+    case DB::ALBUM_DOWNLOAD_COUNT:  return "TODO";
+    //case TRACK_NUMBER: // TODO
+    //case TRACK_NUMBER: // TODO
+    //case TRACK_NUMBER: // TODO
+    case DB::TRACK_TITLE:           return track.title();
+    case DB::TRACK_ARTIST:          return track.artist();
+    case DB::TRACK_REMIX:           return track.remix();
+    case DB::TRACK_NUMBER:          return "TODO";
+    case DB::TRACK_BPM:             return "TODO";
+  }
+}
+
 void PlayingInfo :: print_formatted_strings(PlayingInfoFormat *format) {
   unsigned int sum = 0;
   for (const auto &fmt : *format) {
-    if (! fmt.tag.empty())
-      sum += track[fmt.tag].size();
-    else
+    if (! fmt.text.empty())
       sum += fmt.text.size();
+    else
+      sum += strlen(trackField(track, fmt.tag));
   }
 
   wmove(win, getcury(win), size.width/2 - sum/2); // center(win, sum);
   for (const auto &fmt : *format) {
-    wattrset(win, UI::Colors::set("", fmt.fg, fmt.bg, fmt.attributes));
-    if (! fmt.tag.empty())
-      waddstr(win, track[fmt.tag].c_str());
-    else
+    wattrset(win, UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
+    if (! fmt.text.empty())
       waddstr(win, fmt.text.c_str());
+    else
+      waddstr(win, trackField(track, fmt.tag));
   }
 }
 
 void PlayingInfo :: draw_position_and_length() {
   int pos = 33, len = 333;
-  wattrset(win, UI::Colors::get("playinginfo.position"));
+  wattrset(win, Theme::get(Theme::PLAYINGINFO_POSITION));
   mvwprintw(win, 0, 0, "[%02d:%02d/%02d:%02d]", pos/60, pos%60, len/60, len%60);
 }
 
 #if TEST_PLAYINGINFO
-#include <iostream>
-#include <unistd.h>
+#include "../test.hpp"
 int main() {
   initscr();
   start_color();
   use_default_colors();
-  UI::Color::init();
-  UI::Colors::init();
-  UI::Attribute::init();
   Config::init();
   Theme::loadTheme(256);
+  Database db;
+  db.load(TEST_DB);
   
   try {
-    PlayingInfo p;
+    PlayingInfo p(db);
     p.layout(LINES, COLS);
-    p.setTrack({{"title", "Title goes here"}, {"artist", "Artist"}, {"album", "Album"}, {"year", "2020"}});
-    p.draw();
-    p.refresh();
-    pause();
+    for (int i = 0; i < db.tracks.size(); ++i) {
+      p.setTrack(db.tracks[i]);
+      p.draw();
+      p.refresh();
+      sleep(1);
+    }
   } catch (const std::exception &e) {
     std::cout << e.what() << std::endl;
     return 1;

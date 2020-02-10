@@ -269,10 +269,7 @@ void Updater :: insert_browsepage(const BrowsePage& page) {
   }
 #endif
 
-#include <unistd.h>
-#include <cassert>
-#include <cstring>
-#define TEST_DB "/tmp/ektoplayer-test.db"
+#include "test.hpp"
 int main() {
   unlink(TEST_DB);
   std::cout << TEST_DB << std::endl;

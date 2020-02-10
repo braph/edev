@@ -6,7 +6,6 @@
 #include "theme.hpp"
 #include "xml.hpp"
 
-#include <ncurses.h> // TODO: Remove me
 #include <unistd.h>  // TODO: Remove me
 #include <signal.h>
 #include <glob.h>
@@ -17,21 +16,21 @@
 namespace fs = boost::filesystem;
 using namespace Ektoplayer;
 
-static void init(Database&);
-static void program(Database&);
+static Database database;
+static void init();
+static void program();
 static void cleanup();
 static bool hv_SIGWINCH = false;
 static void on_SIGWINCH(int) { hv_SIGWINCH = true; }
-static const char* emsg = "Error"; // Better than extending exception messages!
+static const char* emsg;
 
 int main(int argc, char **argv) {
   std::string err;
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
 
-  Database db;
   try {
-    init(db);
-    program(db);
+    init();
+    program();
   }
   catch (const std::exception &e) { err = e.what();                 }
   catch (const char *e)           { err = e;                        }
@@ -41,7 +40,7 @@ int main(int argc, char **argv) {
   if (! err.empty())
     std::cout << emsg << ": " << err << std::endl;
 
-  try { db.save(Config::database_file); }
+  try { database.save(Config::database_file); }
   catch (const std::exception &e) {
     std::cout << "Error saving database file: " << e.what() << std::endl;
   }
@@ -49,7 +48,7 @@ int main(int argc, char **argv) {
   return ! err.empty();
 }
 
-static void init(Database &db) {
+static void init() {
   // Set terminal title
   std::cout << "\033]0;ektoplayer\007" << std::endl;
 
@@ -60,13 +59,10 @@ static void init(Database &db) {
   start_color();
   use_default_colors();
   timeout(100);
+  curs_set(0);
   mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
 
-  // Initialize singleton stuff
-  UI::Color::init();
-  UI::Colors::init();
-  UI::Attribute::init();
-  Theme::init();
+  emsg = "Initialization error. This is a bug";
   Config::init();
 
   emsg = "Error while reading configuration file";
@@ -100,23 +96,16 @@ static void init(Database &db) {
   logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
   std::cerr.rdbuf(logfile->rdbuf());
 
-  // Reset error message
+  Config::database_file = "/tmp/ekto-test.db"; // XXX TODO!
+  emsg = "Database file corrupted? Try again, then delete it. Sorry!";
+  if (fs::exists(Config::database_file))
+    database.load(Config::database_file);
+
+  // Set the error message to something more generic
   emsg = "Error";
 
-  Config::database_file = "/tmp/ekto-test.db"; // XXX TODO!
-
-  if (fs::exists(Config::database_file))
-    try { db.load(Config::database_file); }
-    catch (const std::exception &e) {
-      addstr("Could not load the database file. Press ANY key");
-      getch();
-    }
-
   // All colors are beautiful
-  if (Config::use_colors == -1 /* "auto" */)
-    Theme::loadTheme(COLORS);
-  else
-    Theme::loadTheme(Config::use_colors);
+  Theme::loadTheme(Config::use_colors != -1 ? Config::use_colors : COLORS);
 
   atexit(cleanup);
   signal(SIGWINCH, on_SIGWINCH);
@@ -124,11 +113,11 @@ static void init(Database &db) {
 
 #include "ui/container.cpp"
 #include "views/splash.cpp"
-static void program(Database &db) {
-  std::cerr << "Database track count on start: " << db.tracks.size() << std::endl;
+static void program() {
+  std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
 
-  Updater updater(db);
-  if (db.tracks.size() < 42)
+  Updater updater(database);
+  if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
@@ -155,7 +144,6 @@ QUIT: (void)0;
 }
 
 static void cleanup() {
-  // TODO: What about our threads?
   glob_t globbuf;
   char pattern[8192];
   sprintf(pattern, "%s" PATH_SEP "~ekto-*", Config::temp_dir.c_str());

@@ -1,7 +1,5 @@
-XML    := $(shell xml2-config --cflags --libs)
-CURSES := -lncursesw
-CXXFLAGS   := -g -Wall
-#CXXFLAGS   := -O2 -Wall
+#CXXFLAGS   := -g -Wall -Wpedantic
+CXXFLAGS   := -O2 -Wall -Wpedantic
 CPPFLAGS := $(shell xml2-config --cflags)
 LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
@@ -18,6 +16,7 @@ application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o th
 # ============================================================================
 # Views
 # ============================================================================
+
 test_splash: colors.o theme.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^
 	echo "Cannot test ncurses based stuff"
@@ -58,10 +57,13 @@ test_shellsplit:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT shellsplit.cpp
 	./a.out
 
-test_theme:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_THEME theme.cpp colors.cpp
+test_theme: colors.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_THEME theme.cpp $^
 	./a.out
 
+test_playinginfo: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/playinginfo.cpp $^
+	echo "Widgets cannot be tested in Make"
 
 test: test_filesystem test_ektoplayer test_config
 	echo foo
@@ -70,20 +72,17 @@ test_oddvector:
 	$(CXX) -DTEST_ODDVECTOR $(CXXFLAGS) oddvector.cpp
 	./a.out
 
-test_playlist:
-	$(CXX) -DTEST_PLAYLIST $(CXXFLAGS) $(CURSES) $(XML) views/playlist.cpp colors.cpp theme.cpp config.cpp colorfader.cpp filesystem.cpp shellsplit.cpp
+# TODO
+test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
 	echo "Widgets cannot be tested in Make"
 
-test_listwidget:
-	$(CXX) -DTEST_LISTWIDGET $(CXXFLAGS) $(CURSES) $(XML) widgets/listwidget.hpp colors.cpp theme.cpp config.cpp colorfader.cpp filesystem.cpp shellsplit.cpp
-	echo "Widgets cannot be tested in Make"
-
-test_playinginfo:
-	$(CXX) -DTEST_PLAYINGINFO $(CXXFLAGS) $(CURSES) $(XML) views/playinginfo.cpp colors.cpp theme.cpp config.cpp filesystem.cpp shellsplit.cpp
+test_listwidget: colors.o theme.o config.o filesystem.o shellsplit.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_LISTWIDGET widgets/listwidget.cpp $^
 	echo "Widgets cannot be tested in Make"
 
 test_player:
-	$(CXX) -DTEST_PLAYER $(BOOST) player.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYER player.cpp
 	./a.out
 
 test_ektoplayer:

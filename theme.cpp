@@ -1,13 +1,7 @@
 #include "theme.hpp"
 #include "colors.hpp"
-#include <set>
-#include <iostream> // XXX
-// TODO: current -> 0,1,2? 0,8,256?
-// TODO: test
 
-// For better readability ...
-#define default    -2
-#define none       -1
+#define defualt    -2
 #define white      COLOR_WHITE
 #define black      COLOR_BLACK
 #define red        COLOR_RED
@@ -17,130 +11,169 @@
 #define yellow     COLOR_YELLOW
 #define magenta    COLOR_MAGENTA
 
-#undef standout
-#define bold       A_BOLD
-#define blink      A_BLINK
-#define standout   A_STANDOUT
-#define underline  A_UNDERLINE
+unsigned short Theme :: current;
+int Theme :: loaded[THEME_ID_COUNT];
 
-#define THEME(N) (N >= 256 ? 2 : (N >= 8 ? 1 : 0))
+#define _ ThemeDefinition
+ThemeDefinition Theme :: themes[3][THEME_ID_COUNT] = {
+  { // ========================= Mono (no colors) ===============
+    /* DEFAULT                */ _(-1, -1                       ),
+    /* URL                    */ _(defualt, defualt, A_UNDERLINE),
 
-unsigned int Theme :: current;
+    /* INFO_HEAD              */ _(                             ),
+    /* INFO_TAG               */ _(                             ),
+    /* INFO_VALUE             */ _(                             ),
+    /* INFO_DESCRIPTION       */ _(                             ),
+    /* INFO_DOWNLOAD_FILE     */ _(                             ),
+    /* INFO_DOWNLOAD_PERCENT  */ _(                             ),
+    /* INFO_DOWNLOAD_ERROR    */ _(                             ),
 
-std::map<std::string, ThemeDefinition> Theme :: themes[3] = {
-  // Mono (no colors)
-  {
-    {"default",                  {-1, -1                      }},
-    {"url",                      {default, default, underline }},
-    {"tabbar.selected",          {default, default, bold      }}
+    /* PROGRESSBAR_PROGRESS   */ _(                             ),
+    /* PROGRESSBAR_REST       */ _(                             ),
+
+    /* TABBAR_SELECTED        */ _(defualt, defualt, A_BOLD     ),
+    /* TABBAR_UNSELECTED      */ _(                             ),
+
+    /* LIST_ITEM_EVEN         */ _(                             ),
+    /* LIST_ITEM_ODD          */ _(                             ),
+    /* LIST_ITEM_SELECTION    */ _(                             ),
+
+    /* PLAYINGINFO_POSITION   */ _(                             ),
+    /* PLAYINGINFO_STATE      */ _(                             ),
+
+    /* HELP_WIDGET_NAME       */ _(                             ),
+    /* HELP_KEY_NAME          */ _(                             ),
+    /* HELP_COMMAND_NAME      */ _(                             ),
+    /* HELP_COMMAND_DESC      */ _(                             )
   },
+  { // ========================= 8 Colors (default) =============
+    /* DEFAULT                */ _(-1, -1                       ),
+    /* URL                    */ _(magenta, defualt, A_UNDERLINE),
 
-  // 8 Colors (default)
-  {
-    {"default"                 , {-1, -1                       }},
-    {"url"                     , {magenta, default, underline  }},
+    /* INFO_HEAD              */ _(blue, defualt, A_BOLD        ),
+    /* INFO_TAG               */ _(blue                         ),
+    /* INFO_VALUE             */ _(magenta                      ),
+    /* INFO_DESCRIPTION       */ _(blue                         ),
+    /* INFO_DOWNLOAD_FILE     */ _(blue                         ),
+    /* INFO_DOWNLOAD_PERCENT  */ _(magenta                      ),
+    /* INFO_DOWNLOAD_ERROR    */ _(red                          ),
 
-    {"info.head"               , {blue, default, bold          }},
-    {"info.tag"                , {blue                         }},
-    {"info.value"              , {magenta                      }},
-    {"info.description"        , {blue                         }},
-    {"info.download.file"      , {blue                         }},
-    {"info.download.percent"   , {magenta                      }},
-    {"info.download.error"     , {red                          }},
+    /* PROGRESSBAR_PROGRESS   */ _(blue                         ),
+    /* PROGRESSBAR_REST       */ _(black                        ),
 
-    {"progressbar.progress"    , {blue                         }},
-    {"progressbar.rest"        , {black                        }},
+    /* TABBAR_SELECTED        */ _(blue                         ),
+    /* TABBAR_UNSELECTED      */ _(white                        ),
 
-    {"tabbar.selected"         , {blue                         }},
-    {"tabbar.unselected"       , {white                        }},
+    /* LIST_ITEM_EVEN         */ _(blue                         ),
+    /* LIST_ITEM_ODD          */ _(blue                         ),
+    /* LIST_ITEM_SELECTION    */ _(magenta                      ),
 
-    {"list.item_even"          , {blue                         }},
-    {"list.item_odd"           , {blue                         }},
-    {"list.item_selection"     , {magenta                      }},
+    /* PLAYINGINFO_POSITION   */ _(magenta                      ),
+    /* PLAYINGINFO_STATE      */ _(cyan                         ),
 
-    {"playinginfo.position"    , {magenta                      }},
-    {"playinginfo.state"       , {cyan                         }},
-
-    {"help.widget_name"        , {blue, default, bold          }},
-    {"help.key_name"           , {blue                         }},
-    {"help.command_name"       , {magenta                      }},
-    {"help.command_desc"       , {yellow                       }}
+    /* HELP_WIDGET_NAME       */ _(blue, defualt, A_BOLD        ),
+    /* HELP_KEY_NAME          */ _(blue                         ),
+    /* HELP_COMMAND_NAME      */ _(magenta                      ),
+    /* HELP_COMMAND_DESC      */ _(yellow                       )
   },
+  { // ========================= 256 Colors =====================
+    /* DEFAULT                */ _(white, 233                   ),
+    /* URL                    */ _(97, defualt, A_UNDERLINE     ),
 
-  // 256 Colors
-  {
-    {"default"                 , {white, 233                   }},
-    {"url"                     , {97, default, underline       }},
+    /* INFO_HEAD              */ _(32, defualt, A_BOLD          ),
+    /* INFO_TAG               */ _(74                           ),
+    /* INFO_VALUE             */ _(67                           ),
+    /* INFO_DESCRIPTION       */ _(67                           ),
+    /* INFO_DOWNLOAD_FILE     */ _(75                           ),
+    /* INFO_DOWNLOAD_PERCENT  */ _(68                           ),
+    /* INFO_DOWNLOAD_ERROR    */ _(red                          ),
 
-    {"info.head"               , {32, default, bold            }},
-    {"info.tag"                , {74                           }},
-    {"info.value"              , {67                           }},
-    {"info.description"        , {67                           }},
-    {"info.download.file"      , {75                           }},
-    {"info.download.percent"   , {68                           }},
-    {"info.download.error"     , {red                          }},
+    /* PROGRESSBAR_PROGRESS   */ _(23                           ),
+    /* PROGRESSBAR_REST       */ _(black                        ),
 
-    {"progressbar.progress"    , {23                           }},
-    {"progressbar.rest"        , {black                        }},
+    /* TABBAR_SELECTED        */ _(75                           ),
+    /* TABBAR_UNSELECTED      */ _(250                          ),
 
-    {"tabbar.selected"         , {75                           }},
-    {"tabbar.unselected"       , {250                          }},
+    /* LIST_ITEM_EVEN         */ _(26                           ),
+    /* LIST_ITEM_ODD          */ _(25                           ),
+    /* LIST_ITEM_SELECTION    */ _(97                           ),
 
-    {"list.item_even"          , {26                           }},
-    {"list.item_odd"           , {25                           }},
-    {"list.item_selection"     , {97                           }},
+    /* PLAYINGINFO_POSITION   */ _(97                           ),
+    /* PLAYINGINFO_STATE      */ _(37                           ),
 
-    {"playinginfo.position"    , {97                           }},
-    {"playinginfo.state"       , {37                           }},
-
-    {"help.widget_name"        , {33                           }},
-    {"help.key_name"           , {75                           }},
-    {"help.command_name"       , {68                           }},
-    {"help.command_desc"       , {29                           }}
+    /* HELP_WIDGET_NAME       */ _(33                           ),
+    /* HELP_KEY_NAME          */ _(75                           ),
+    /* HELP_COMMAND_NAME      */ _(68                           ),
+    /* HELP_COMMAND_DESC      */ _(29                           )
   }
 };
-
-void Theme :: init() {
-  // TODO: remove
-}
+#undef _
 
 void Theme :: set(unsigned int theme, const std::string &name, short fg, short bg, int attributes) {
-  themes[theme][name] = {fg,bg,attributes};
+  const char* names[THEME_ID_COUNT] = {
+    "default",
+    "url",
+
+    "info.head",
+    "info.tag",
+    "info.value",
+    "info.description",
+    "info.file",
+    "info.download_percent",
+    "info.download_error",
+
+    "progressbar.progress",
+    "progressbar.rest",
+
+    "tabbar.selected",
+    "tabbar.unselected",
+
+    "list.item_even",
+    "list.item_odd",
+    "list.item_selection",
+
+    "playinginfo.position",
+    "playinginfo.state",
+
+    "help.widget_name",
+    "help.key_name",
+    "help.command_name",
+    "help.command_desc",
+  };
+
+  for (size_t i = 0; i < THEME_ID_COUNT; ++i)
+    if (name == names[i]) {
+      themes[theme][i] = ThemeDefinition(fg,bg,attributes);
+      return;
+    }
+
+  throw std::invalid_argument(name + ": invalid theme element");
+}
+
+int Theme :: get(ThemeID id) {
+  return loaded[id];
 }
 
 void Theme :: loadTheme(unsigned int theme) {
-  // fail 'unknown theme' unless ....
   current = theme;
-  int theme_idx = THEME(theme);
+  int theme_idx = (theme >= 256 ? 2 : (theme >= 8 ? 1 : 0));
 
-  UI::Colors::init();
+  ThemeDefinition fallback = themes[theme_idx][DEFAULT];
 
-  std::set<std::string> keys;
-  for (unsigned i = 0; i < 3; ++i)
-    for (auto pair = themes[i].cbegin(); pair != themes[i].cend(); ++pair)
-      keys.insert(pair->first);
-  keys.erase(keys.find("default"));
-
-  const ThemeDefinition& deflt = themes[theme_idx].at("default");
-
-  for (auto key = keys.cbegin(); key != keys.cend(); ++key) {
-    for (int i = theme_idx; i >= 0; --i) {
-      try {
-        const ThemeDefinition& def = themes[i].at(*key);
-        UI::Colors::set(*key,
-            (def.fg == -2 ? deflt.fg : def.fg),
-            (def.bg == -2 ? deflt.bg : def.bg),
-            (def.attributes == -2 ? deflt.attributes : def.attributes)
-        );
-        break; // TODO!
-      }
-      catch (...){}
-    }
+  for (size_t i = 0; i < THEME_ID_COUNT; ++i) {
+    ThemeDefinition td = themes[theme_idx][i];
+    loaded[i] = UI::Colors::set(
+      (td.fg == -2 ? fallback.fg : td.fg),
+      (td.bg == -2 ? fallback.bg : td.bg),
+      td.attributes
+    );
   }
 }
 
 #if TEST_THEME
+#include "test.hpp"
 int main() {
+  UI::Colors::init();
 }
 #endif
 

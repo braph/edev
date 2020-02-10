@@ -1,35 +1,52 @@
-#include "../ui.hpp"
+#include "container.hpp"
+using namespace UI;
 
-namespace UI {
-  class GenericContainer : public Widget {
-  protected:
-    std::vector<Widget*> widgets;
-  public:
-    void draw()    { for (auto w : widgets) { w->draw();    } }
-    void refresh() { for (auto w : widgets) { w->refresh(); } }
+/* ============================================================================
+ * GenericContainer
+ * ==========================================================================*/
 
-    void add(Widget* widget) {
-      widgets.push_back(widget);
-    }
-
-    WINDOW *active_win() { return widgets[0]->active_win(); } // SEL
-  };
-
-  class VerticalContainer : public GenericContainer {
-  public:
-    void layout(Pos pos, Size size) {
-      this->pos  = pos;
-      this->size = size;
-
-      for (auto w : widgets) {
-        if (! w->visible)
-          continue;
-
-        w->layout(pos, size);
-        pos.y       += w->size.height;
-        size.height -= w->size.height;
-      }
-    }
-  };
+GenericContainer :: GenericContainer()
+: active(0)
+{
 }
+
+void GenericContainer :: draw() {
+  for (auto w : widgets) {
+    if (w->visible)
+      w->draw();
+  }
+}
+
+void GenericContainer :: refresh() {
+  for (auto w : widgets) {
+    if (w->visible)
+      w->refresh();
+  }
+}
+
+void GenericContainer :: add(Widget* widget) {
+  widgets.push_back(widget);
+}
+
+WINDOW* GenericContainer :: active_win() {
+  return widgets[active]->active_win();
+}
+
+/* ============================================================================
+ * VerticalContainer
+ * ==========================================================================*/
+
+void VerticalContainer :: layout(Pos pos, Size size) {
+  this->pos  = pos;
+  this->size = size;
+
+  for (auto w : widgets) {
+    if (! w->visible)
+      continue;
+
+    w->layout(pos, size);
+    pos.y       += w->size.height;
+    size.height -= w->size.height;
+  }
+};
 

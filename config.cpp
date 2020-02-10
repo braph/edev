@@ -8,7 +8,6 @@
 #include "xml.hpp"
 
 #include <fstream>
-#include <iostream>//XXX
 #include <boost/algorithm/string.hpp>
 
 #define COLUMN_NAMES { "number", "artist", "album", "title", "styles", "bpm", "year" }
@@ -19,35 +18,42 @@ static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP =
 static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
   "<artist bold='on' fg='blue' /><text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
 
-static const char * const DEFAULT_PLAYLIST_FORMAT =
-  "<number size='3' fg='magenta' />"
-  "<artist rel='25' fg='blue'    />"
-  "<album  rel='30' fg='red'     />"
-  "<title  rel='33' fg='yellow'  />"
-  "<styles rel='20' fg='cyan'    />"
-  "<bpm    size='3' fg='green' justify='right' />";
-
-static const char * const DEFAULT_PLAYLIST_FORMAT_256 =
-  "<number size='3' fg='97'  />"
-  "<artist rel='25' fg='24'  />"
-  "<album  rel='30' fg='160' />"
-  "<title  rel='33' fg='178' />"
-  "<styles rel='20' fg='37'  />"
-  "<bpm    size='3' fg='28' justify='right' />";
-
 static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
   "<text fg='236'>&lt;&lt; </text><title bold='on' fg='178' /><text fg='236'> &gt;&gt;</text>";
 
 static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
  "<artist bold='on' fg='24' /><text> - </text><album bold='on' fg='160' /><text> (</text><year fg='37' /><text>)</text>";
 
+#if I_FOUND_A_BETTER_SOLUTION_THAN_XML
+static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP =
+  "{fg=black}<< {fg=yellow,bold}${title} {fg=black}>>"
+
+static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
+  "{fg=blue,bold}${artist} <text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
+  "<artist bold='on' fg='blue' /><text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
+  "{artist fg=blue bold} {text - } ";
+
+static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
+  "<text fg='236'>&lt;&lt; </text><title bold='on' fg='178' /><text fg='236'> &gt;&gt;</text>";
+
+static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
+ "<artist bold='on' fg='24' /><text> - </text><album bold='on' fg='160' /><text> (</text><year fg='37' /><text>)</text>";
+#endif
+
+static const char * const DEFAULT_PLAYLIST_COLUMNS =
+  "number 3 fg=magenta  | artist 25% fg=blue | album 30% fg=red |"
+  "title  33% fg=yellow | styles 20% fg=cyan | bpm   3 fg=green right";
+
+static const char * const DEFAULT_PLAYLIST_COLUMNS_256 =
+  "number 3 fg=97    | artist 25% fg=24 | album 30% fg=160 |"
+  "title  33% fg=178 | styles 20% fg=37 | bpm   3 fg=28 right";
 
 /* === Parsing for primitives === */
 int opt_parse_int(const std::string &s) {
   try { 
     size_t pos = 0; 
     int i = std::stoi(s, &pos); // throws on empty
-    if (pos != s.length())
+    if (pos != s.size())
       throw pos;
     return i;
   } catch (...) {
@@ -62,7 +68,7 @@ bool opt_parse_bool(const std::string &s) {
 }
 
 char opt_parse_char(const std::string &s) {
-  if (s.length() != 1)
+  if (s.size() != 1)
     throw std::invalid_argument("expected a single character");
   return s[0];
 }
@@ -86,7 +92,7 @@ int opt_parse_threads(const std::string &s) {
 
 std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
   std::vector<std::string> widgets;
-  boost::split(widgets, s, boost::is_any_of(",")); // XXX: \s*,\s* ???
+  boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
     if (!in_list<std::string>(w, {"splash", "playlist", "browser", "info", "help"}))
       throw std::invalid_argument(w + ": Invalid widget");
@@ -95,7 +101,7 @@ std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
 
 std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   std::vector<std::string> widgets;
-  boost::split(widgets, s, boost::is_any_of(",")); // XXX: \s*,\s* ???
+  boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
     if (!in_list<std::string>(w, {"playinginfo", "tabbar", "mainwindow", "progressbar"}))
       throw std::invalid_argument(w + ": Invalid widget");
@@ -103,53 +109,42 @@ std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
 }
 /* ========================== */
 
-PlaylistColumns opt_parse_playlist_format(const std::string &_xml) {
+PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
+  std::vector<std::string> opts;
+  std::vector<std::string> columns;
+  boost::split(columns, s, boost::is_any_of("|"));
+
   PlaylistColumns result;
-  std::string xml = "<r>" + _xml + "</r>"; // Add fake root element
-  XmlDoc  doc  = XmlDoc::readDoc(xml, NULL, NULL, XML_PARSE_COMPACT);
-  XmlNode root = doc.getRootElement(); // Safe, we always have a root elem
-
-  for (XmlNode node = root.children(); node; node = node.next()) {
-    //std::cout << "node type is: " << node.type() << std::endl;
-    /*
-    if (node->type == XML_TEXT_NODE)
-      continue;
-    */
-
-    if (node.type() != XML_ELEMENT_NODE)
-      continue;
-      //throw std::invalid_argument("THIS IS NOT A ELEMENT NODE");
-
-    if (node.children())
-      throw std::invalid_argument("THIS NODE HAS CHILDREN");
-
-    std::string column = node.name(); //XXX may be NULL?
-    if (!in_list<std::string>(column, COLUMN_NAMES))
-      throw std::invalid_argument(column + ": No such tag");
-
+  for (auto &column : columns) {
     PlaylistColumnFormat fmt;
-    fmt.tag = column;
 
-    for (XmlAttribute attribute = node.attributes(); attribute; attribute = attribute.next()) {
-      std::string name  = attribute.name();
-      std::string value = attribute.value();
-
-      if /**/ (name == "fg")      fmt.fg   = UI::Color::parse(value);
-      else if (name == "bg")      fmt.bg   = UI::Color::parse(value);
-      else if (name == "rel")     fmt.rel  = std::stoi(value);
-      else if (name == "size")    fmt.size = std::stoi(value);
-      else if (name == "justify") {
-        if /**/ (value == "left")   fmt.justify = PlaylistColumnFormat::Left;
-        else if (value == "right")  fmt.justify = PlaylistColumnFormat::Right;
-        else throw std::invalid_argument("Invalid argument for justify");
+    boost::split(opts, column, boost::is_any_of(" \t"), boost::token_compress_on);
+    for (auto &opt : opts) {
+      if (opt.empty())
+        continue;
+      else if (0 == opt.find("fg="))
+        fmt.fg = UI::Color::parse(opt.substr(3));
+      else if (0 == opt.find("bg="))
+        fmt.bg = UI::Color::parse(opt.substr(3));
+      else if (opt == "right")
+        fmt.justify = PlaylistColumnFormat::Right;
+      else if (opt == "left")
+        fmt.justify = PlaylistColumnFormat::Left;
+      else if (std::isdigit(opt[0])) {
+        fmt.size = std::stoi(opt);
+        fmt.relative = (opt.back() == '%');
       }
-      else throw std::invalid_argument(name + ": Invalid attribute"); // XXX?
+      else {
+        if (!in_list<std::string>(opt, COLUMN_NAMES))
+          throw std::invalid_argument(opt + ": Invalid column name");
+        fmt.tag = opt;
+      }
     }
 
-    if (!fmt.size && !fmt.rel)
-      throw std::invalid_argument("Must specify \"size\" or \"rel\"");
-    if (fmt.size && fmt.rel)
-      throw std::invalid_argument("Specify either \"size\" xor \"rel\""); // XXX?
+    if (! fmt.size)
+      throw std::invalid_argument(column + ": Missing column size");
+    if (fmt.tag.empty())
+      throw std::invalid_argument(column + ": Missing tag name");
 
     result.push_back(fmt);
   }
@@ -185,9 +180,9 @@ PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
       if (node.children())
         throw std::invalid_argument(tag + ": THIS NODE HAS CHILDREN");
 
-      if (!in_list<std::string>(tag, COLUMN_NAMES))
+      fmt.tag = Database::columnIDFromStr(tag);
+      if (fmt.tag == Database::NPOS)
         throw std::invalid_argument(tag + ": No such tag");
-      fmt.tag = tag;
     }
 
     for (XmlAttribute attribute = node.attributes(); attribute; attribute = attribute.next()) {
@@ -214,10 +209,14 @@ void Config :: init() {
 }
 
 void Config :: set(const std::string &option, const std::string &value) {
-  if (0) {}
+  try { if (0) {}
 #include "config/config.members.set.cpp"
-  else throw std::invalid_argument("unknown option: " + option);
-  // TODO: fail "Invalid value '#{value}' for '#{option}': #{$!}"
+    else throw false;
+  } catch (const std::exception &e) {
+    throw std::invalid_argument(option + ": " + e.what());
+  } catch (bool e) {
+    throw std::invalid_argument("unknown option: " + option);
+  }
 }
 
 /*
@@ -227,21 +226,23 @@ void Config :: color(const std::vector<std::string> &vec) {
 */
 
 void Config :: read(const std::string &file) {
-  std::ifstream infile(file);
+  std::ifstream infile;
+  infile.exceptions(std::ifstream::badbit|std::ifstream::failbit);
+  infile.open(file);
   std::string   line;
+  std::string   command;
   unsigned int  no = 0;
 
-  while (getline(infile, line)) {
-    ++no;
+  try {
+    while (getline(infile, line)) {
+      ++no;
 
-    // line.chomp? next if line.empty? or start_with #
-    std::vector<std::string> args = shellsplit(line);
-    if (! args.size() || args[0][0] == '#')
-      continue;
+      std::vector<std::string> args = shellsplit(line);
+      if (! args.size() || args[0][0] == '#')
+        continue;
 
-    std::string command = args[0];
+      command = args[0];
 #define on(STR) else if (command == STR)
-    try {
       if (0) {}
       on("set")        { set(args[1], args[2]);     }
       /*
@@ -252,67 +253,50 @@ void Config :: read(const std::string &file) {
       on("color_256")  { theme.color_256(...);      }
       on("color_mono") { theme.color_mono(...);     }
       */
-      else             { throw std::invalid_argument(command); }
+      else             { throw std::invalid_argument("unknown command"); }
     }
-    catch (const std::exception &e) {
-      char msg[4192];
-      std::sprintf(msg, "%s:%u: %s: %s", file.c_str(), no, command.c_str(), e.what());
-      throw std::invalid_argument(msg);
-      //throw "#{file}:#{$.}: #{command}: #{$!}";
-    }
+  }
+  catch (const std::ifstream::failure &e) {
+    if (! infile.eof())
+      throw;
+  }
+  catch (const std::exception &e) {
+    std::string _= file+':'+std::to_string(no)+": "+command+": "+e.what();
+    throw std::invalid_argument(_);
   }
 }
 
 #if TEST_CONFIG
-#include <cassert>
-#include <iostream>
+#include "test.hpp"
 #include "colors.hpp"
-#define except(...) \
-  try { __VA_ARGS__; throw 0; } \
-  catch (int) { assert(!#__VA_ARGS__); } \
-  catch (...) { /* OK */ }
-
 int main() {
-  //std::vector<PlaylistColumnFormat> r = parse_playlist_format(DEFAULT_PLAYLIST_FORMAT);
-  try {
-    UI::Color::init();
-    UI::Colors::init();
-    UI::Attribute::init();
-    Config::init();
+  TEST_BEGIN
 
-    // === Primitives ===
-    assert(opt_parse_int("1")       == 1);
-    assert(opt_parse_bool("true")   == true);
-    assert(opt_parse_bool("false")  == false);
-    assert(opt_parse_char("c")      == 'c');
+  Config::init();
 
-    except(opt_parse_int("-"));
-    except(opt_parse_bool("-"));
-    except(opt_parse_char("12"));
+  // === Primitives ===
+  assert(opt_parse_int("1")       == 1);
+  assert(opt_parse_bool("true")   == true);
+  assert(opt_parse_bool("false")  == false);
+  assert(opt_parse_char("c")      == 'c');
 
-    // === Objects ===
-    PlaylistColumns c = opt_parse_playlist_format(
-        "<number size='3' fg='blue' bg='magenta' />"
-    );
-    assert(c.size()  == 1);
-    assert(c[0].size == 3);
-    assert(c[0].rel  == 0);
-    assert(c[0].fg   == COLOR_BLUE);
-    assert(c[0].bg   == COLOR_MAGENTA);
+  except(opt_parse_int("-"));
+  except(opt_parse_bool("-"));
+  except(opt_parse_char("12"));
 
-#if 0
-  "<number size='3' fg='magenta' />"
-  "<artist rel='25' fg='blue'    />"
-  "<album  rel='30' fg='red'     />"
-  "<title  rel='33' fg='yellow'  />"
-  "<styles rel='20' fg='cyan'    />"
-  "<bpm    size='3' fg='green' justify='right' />";
-#endif
+  // === Objects ===
+  PlaylistColumns c;
+  c = opt_parse_playlist_columns("number 3 fg=blue bg=magenta | artist 10%");
+  assert(c.size()       == 2);
+  assert(c[0].size      == 3);
+  assert(c[0].relative  == false);
+  assert(c[0].fg        == COLOR_BLUE);
+  assert(c[0].bg        == COLOR_MAGENTA);
+  assert(c[1].size      == 10);
+  assert(c[1].relative  == true);
+  assert(c[1].fg        == -1);
+  assert(c[1].bg        == -1);
 
-    //c.set("foo", "bar");
-  }
-  catch (const std::exception &e) {
-    std::cout << "Error: " << e.what() << std::endl;
-  }
+  TEST_END
 }
 #endif
