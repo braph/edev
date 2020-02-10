@@ -37,10 +37,24 @@ auto proportionalGet(const TContainer &container, unsigned int size, unsigned in
 }
 
 template<typename TContainer>
+auto proportionalGet(const TContainer &container, size_t container_size, unsigned int size, unsigned int pos) {
+  unsigned int i = container_size * pos / size;
+  return container[i];
+}
+
+template<typename TContainer>
 auto proportionalGet2(const TContainer &container, unsigned int size, unsigned int pos) {
   unsigned int i = container.size() * pos * 2 / size;
   if (i >= container.size())
     i = container.size() - (i - container.size() + 1);
+  return container[i];
+}
+
+template<typename TContainer>
+auto proportionalGet2(const TContainer &container, size_t container_size, unsigned int size, unsigned int pos) {
+  unsigned int i = container_size * pos * 2 / size;
+  if (i >= container_size)
+    i = container_size - (i - container_size + 1);
   return container[i];
 }
 
