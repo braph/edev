@@ -77,7 +77,7 @@ namespace UI {
     WINDOW *active_win() { return win; }
   };
 
-  class Pad {
+  class Pad : public Widget {
     protected:
       WINDOW *win;
       Size size;
@@ -104,6 +104,8 @@ namespace UI {
         prefresh(win, pad_minrow, pad_mincol, pos.y, pos.x,
             pos.y + size.height - 1, pos.x + size.width - 1);
       }
+
+      WINDOW *active_win() { return win; }
   };
 }
 

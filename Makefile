@@ -7,11 +7,16 @@ clean:
 	rm *.o
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -c $< -o $@
 
-application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o views/splash.o
+application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
+	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
+
+config.o: shellsplit.o filesystem.o theme.o
+
+theme.o: colors.o
 
 # ============================================================================
 # Views
@@ -32,6 +37,9 @@ test_database: strpool.o
 test_updater: browsepage.o database.o strpool.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
+
+test_tabbar: config.o theme.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TABBAR views/tabbar.cpp $^
 
 test_strpool:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRPOOL strpool.cpp

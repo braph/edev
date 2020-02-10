@@ -6,7 +6,10 @@
 #include "theme.hpp"
 #include "xml.hpp"
 
+#include "ui/container.hpp"
 #include "views/splash.hpp"
+#include "views/progressbar.hpp"
+#include "views/playinginfo.hpp"
 
 #include <unistd.h>  // TODO: Remove me
 #include <signal.h>
@@ -39,7 +42,7 @@ int main(int argc, char **argv) {
   catch (...)                     { err = "Unknown exception type"; }
   endwin();
 
-  if (! err.empty())
+  if (err.size())
     std::cout << emsg << ": " << err << std::endl;
 
   try { database.save(Config::database_file); }
@@ -47,7 +50,7 @@ int main(int argc, char **argv) {
     std::cout << "Error saving database file: " << e.what() << std::endl;
   }
 
-  return ! err.empty();
+  return !! err.size();
 }
 
 static void init() {
@@ -113,7 +116,6 @@ static void init() {
   signal(SIGWINCH, on_SIGWINCH);
 }
 
-#include "ui/container.cpp"
 static void program() {
   std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
 
@@ -123,34 +125,38 @@ static void program() {
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
-  UI::VerticalContainer v_VerticalContainer;
   Views::Splash         v_Splash;
+  Views::PlayingInfo    v_PlayingInfo(database);
+  Views::ProgressBar    v_ProgressBar;
+  UI::VerticalContainer v_VerticalContainer;
+  v_VerticalContainer.add(&v_PlayingInfo);
+  v_VerticalContainer.add(&v_ProgressBar);
   v_VerticalContainer.add(&v_Splash);
-
-  v_VerticalContainer.layout({0,0}, {LINES,COLS});
-  v_VerticalContainer.draw();
-  v_VerticalContainer.refresh();
 
   int c;
 MAINLOOP:
   updater.write_to_database();
 
+  v_VerticalContainer.layout({0,0}, {LINES,COLS});
+  v_VerticalContainer.draw();
+  v_VerticalContainer.refresh();
+
   c = wgetch(v_VerticalContainer.active_win());
   if (c == 'q')
-    goto QUIT;
+    return;
 
 goto MAINLOOP;
-
-QUIT: (void)0;
 }
 
 static void cleanup() {
   glob_t globbuf;
   char pattern[8192];
   sprintf(pattern, "%s" PATH_SEP "~ekto-*", Config::temp_dir.c_str());
-  glob(pattern, 0, NULL, &globbuf);
+  glob(pattern, GLOB_NOSORT|GLOB_NOESCAPE, NULL, &globbuf);
   while (globbuf.gl_pathc--)
     unlink(globbuf.gl_pathv[globbuf.gl_pathc]);
+#if PEDANTIC_FREE
   globfree(&globbuf);
+#endif
 }
 

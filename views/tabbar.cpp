@@ -1,52 +1,42 @@
-#ifndef _TABBAR_CPP
-#define _TABBAR_CPP
+#include "tabbar.hpp"
 
-namespace Ektoplayer {
-  namespace Views {
-    typedef void (*changed)(int);
+#include "../theme.hpp"
 
-    class TabBar : public UI::Window {
-      private;
-        std::vector<std::string> m_tabs;
-      public:
-        void add(const std::string&);
-        void select(unsigned int);
-    };
-  }
+using namespace Views;
+
+TabBar :: TabBar()
+: current(0)
+{
 }
 
-void Tabbar :: add(const std::string &label) {
-  //with_lock...
+void TabBar :: add(const std::string &label) {
   tabs.push_back(label);
-  want_redraw();
+  draw();
 }
 
-void Tabbar :: select(unsigned int index) {
+void TabBar :: select(unsigned int index) {
   index = index % tabs.size();
-  return if index == current;
-
-  //with_lock...
   current = index;
-  want_redraw();
+  draw();
 }
 
-void Tabbar :: draw() {
-    self.pad_size=(@size.update(height: 1));
+void TabBar :: draw() {
     werase(win);
     wmove(win, 0, 0);
 
     unsigned int i = 0;
     for (const auto &label : tabs) {
       if (i == current)
-        wattrset(win, Theme::get("tabbar.selected"));
+        wattrset(win, Theme::get(Theme::TABBAR_SELECTED));
       else
-        wattrset(win, Theme::get("tabbar.unselected"));
+        wattrset(win, Theme::get(Theme::TABBAR_UNSELECTED));
 
       waddstr(win, label.c_str());
-      waddch(' ');
+      waddch(win, ' ');
     }
 }
 
+#if 0
 void clicked(...) {
   int x, y;
 
@@ -64,3 +54,27 @@ void clicked(...) {
     p += label.size() + 1;
   }
 }
+#endif
+
+#if TEST_TABBAR
+#include "../test.hpp"
+int main() {
+  TEST_BEGIN();
+  NCURSES_INIT();
+
+  Theme::loadTheme(256);
+
+  TabBar b;
+  b.layout({0,0}, {LINES,COLS});
+  for (auto s : {"Tab1", "Tab2", "Tab3"})
+    b.add(s);
+
+  for (;;)
+    for (int i = 0; i < 3; ++i) {
+      b.select(i);
+      sleep(1);
+    }
+
+  TEST_END();
+}
+#endif

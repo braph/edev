@@ -48,5 +48,5 @@ void VerticalContainer :: layout(Pos pos, Size size) {
     pos.y       += w->size.height;
     size.height -= w->size.height;
   }
-};
+}
 
