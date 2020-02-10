@@ -6,6 +6,8 @@
 #include "theme.hpp"
 #include "xml.hpp"
 
+#include "views/splash.hpp"
+
 #include <unistd.h>  // TODO: Remove me
 #include <signal.h>
 #include <glob.h>
@@ -112,7 +114,6 @@ static void init() {
 }
 
 #include "ui/container.cpp"
-#include "views/splash.cpp"
 static void program() {
   std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
 

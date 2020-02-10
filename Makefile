@@ -7,9 +7,9 @@ clean:
 	rm *.o
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
-application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o
+application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o views/splash.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
 

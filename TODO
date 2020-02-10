@@ -1,5 +1,9 @@
 in_list() vs strstr!
-themes?
 create a playlist mockup
 models
-optimize database (dont use str as primary key, use views if supported)
+- Database load/save throw on invald data format!!! eof() bit i mean
+- Eh, PlayingInfo depends on teh database because of Track(Database& db,int id)
+  - drop XML from config
+  - browsepage: drop map<std::string, std::string>
+  - browsepage: load DOM only once
+  - drop from config
