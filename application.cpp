@@ -139,6 +139,7 @@ MAINLOOP:
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
+  mainwindow.playingInfo.setState();
 
   mainwindow.draw();
   mainwindow.noutrefresh();
@@ -169,3 +170,31 @@ static void cleanup() {
 #endif
 }
 
+#if 0
+TODO config::audio_system
+TODO database.events.on(:update_finished, &browser.method(:reload))
+TODO preload playlist
+
+        player.events.on(:stop) do |reason|
+         operations.send(:'playlist.play_next') if reason == :track_completed
+        end
+
+    time_t now = time(NULL);
+    if (Config::prefetch && now % 5 == 0) {
+      if (player.state != PLAYING)
+        continue;
+
+       current_download_track = nil
+       loop do
+          sleep 5 // clock() % 5?
+
+          next_track = playlist.get_next_pos
+          next if current_download_track == next_track
+
+          if player.length > 30 and player.position_percent > 0.5
+             trackloader.get_track_file(playlist[next_track]['url'])
+             current_download_track = next_track
+             sleep 5
+          end
+       end
+#endif

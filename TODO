@@ -1,9 +1,8 @@
 in_list() vs strstr!
 create a playlist mockup
 models
-- Database load/save throw on invald data format!!! eof() bit i mean
-- Eh, PlayingInfo depends on teh database because of Track(Database& db,int id)
-  - drop XML from config
-  - browsepage: drop map<std::string, std::string>
-  - browsepage: load DOM only once
-  - drop from config
+- Drop Database::NPOS
+- drop XML from config
+- browsepage: drop map<std::string, std::string>
+- browsepage: load DOM only once
+- check write_to_database() and to an actual flush to disk? ...
