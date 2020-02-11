@@ -1,4 +1,5 @@
 #include "container.hpp"
+#include "../common.hpp"
 using namespace UI;
 
 /* ============================================================================
@@ -17,10 +18,10 @@ void GenericContainer :: draw() {
   }
 }
 
-void GenericContainer :: refresh() {
+void GenericContainer :: noutrefresh() {
   for (auto w : widgets) {
     if (w->visible)
-      w->refresh();
+      w->noutrefresh();
   }
 }
 
@@ -29,12 +30,18 @@ void GenericContainer :: add(Widget* widget) {
 }
 
 WINDOW* GenericContainer :: active_win() {
+  assert(widgets.size());
   return widgets[active]->active_win();
 }
 
 /* ============================================================================
  * VerticalContainer
  * ==========================================================================*/
+
+VerticalContainer :: VerticalContainer()
+: GenericContainer()
+{
+}
 
 void VerticalContainer :: layout(Pos pos, Size size) {
   this->pos  = pos;
@@ -44,9 +51,29 @@ void VerticalContainer :: layout(Pos pos, Size size) {
     if (! w->visible)
       continue;
 
-    w->layout(pos, size);
+    w->layout(pos, w->size.duplicate(UI::Size::KEEP, size.width));
     pos.y       += w->size.height;
-    size.height -= w->size.height;
+  }
+}
+
+/* ============================================================================
+ * StackedContainer
+ * ==========================================================================*/
+
+StackedContainer :: StackedContainer()
+: GenericContainer()
+{
+}
+
+void StackedContainer :: layout(Pos pos, Size size) {
+  this->pos  = pos;
+  this->size = size;
+
+  for (auto w : widgets) {
+    if (! w->visible)
+      continue;
+
+    w->layout(pos, size);
   }
 }
 

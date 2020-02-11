@@ -124,7 +124,8 @@ int main() {
   for (auto colors : {0,8,256}) {
     Theme::current = colors;
     s->draw();
-    s->refresh();
+    s->noutrefresh();
+    doupdate();
     wgetch(s->active_win());
   }
 

@@ -49,15 +49,15 @@ Attribute :: mapping Attribute :: attributes[] = {
 };
 
 int Attribute :: parse(const std::string& attribute) {
-  for (int i = 0; i < ARRAY_SIZE(attributes); ++i)
+  for (size_t i = 0; i < ARRAY_SIZE(attributes); ++i)
     if (attribute == attributes[i].name)
       return attributes[i].value;
 
   throw std::invalid_argument(attribute + ": invalid attribute");
 }
 
-std::string Attribute :: to_string(int attribute) {
-  for (int i = 0; i < ARRAY_SIZE(attributes); ++i)
+std::string Attribute :: to_string(unsigned int attribute) {
+  for (size_t i = 0; i < ARRAY_SIZE(attributes); ++i)
     if (attribute == attributes[i].value)
       return attributes[i].name;
 

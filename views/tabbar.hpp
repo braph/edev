@@ -14,6 +14,7 @@ namespace Views {
     unsigned int current;
   public:
     TabBar();
+    void layout(UI::Pos, UI::Size);
     void add(const std::string&);
     void select(unsigned int);
     void draw();

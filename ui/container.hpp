@@ -12,13 +12,20 @@ protected:
 public:
   GenericContainer();
   void draw();
-  void refresh();
+  void noutrefresh();
   void add(Widget*);
   WINDOW *active_win();
 };
 
 class VerticalContainer : public GenericContainer {
 public:
+  VerticalContainer();
+  void layout(Pos, Size);
+};
+
+class StackedContainer : public GenericContainer {
+public:
+  StackedContainer();
   void layout(Pos, Size);
 };
 

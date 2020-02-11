@@ -1,72 +1,52 @@
+#include "mainwindow.hpp"
+#include "../common.hpp"
+#include "../config.hpp"
 
-// We dont use a main window!
+using namespace UI;
+using namespace Views;
 
-namespace Ektoplayer {
-  namespace Views {
-    class MainWindow : public UI::VerticalContainer {
-      public:
-#if 0
-        ProgressBar progressbar;
-        PlayingInfo playinginfo;
-        TabBar      tabbar;
-        attr_reader :progressbar, :playinginfo, :tabbar
-        attr_reader :windows, :splash, :playlist, :browser, :info, :help
-#endif
-        MainWindow() {
-
-         def initialize(**opts)
-            super(**opts)
-        }
-    }
-  }
-}
-
-MainWindow(unsigned int height, unsigned int width)
-: playingInfo(2, width)
-, progressBar(1, width)
-, tabBar(1, width)
-, windowStack(height - 4, width)
-, help(height - 4, width)
-, info(height - 4, width)
-, splash(height - 4, width)
-, browser(height - 4, width)
-, playlist(height - 4, width)
+MainWindow :: MainWindow(Database &db)
+: splash()
+, playingInfo(db)
+, progressBar()
+, tabBar()
+, windows()
 {
-  help.setVisible(false);
-  info.setVisible(false);
-  splash.setVisible(false);
-  browser.setVisible(false);
-  playlist.setVisible(false);
+  for (auto w : Config::main_widgets) {
+    /**/ if (w == "playinginfo")    add(&playingInfo);
+    else if (w == "progressbar")    add(&progressBar);
+    else if (w == "tabbar")         add(&tabBar);
+    else if (w == "windows")        add(&windows);
+    else assert_not_reached();
+  }
 
-  for (auto widget : Config::getStringList("tabs.widgets")) {
-    tabbar.add(widget);
-    if (widget == "help")
-      windowStack.add(help);
-    // ...
+  for (auto w : Config::tabs_widgets) {
+    tabBar.add(w);
+    /**/ if (w == "splash")   windows.add(&splash);
+    else if (w == "playlist") (void)0; // windows.add(&playlist);
+    else if (w == "browser")  (void)0; // windows.add(&browser);
+    else if (w == "info")     (void)0; // windows.add(&info);
+    else if (w == "help")     (void)0; // windows.add(&help);
+    else assert_not_reached();
   }
 }
 
-            Config[:'main.widgets'].each { |w| add(send(w)) }
+void MainWindow :: layout(Pos pos, Size size) {
+  this->pos = pos;
+  this->size = size;
 
-            self.selected=(@windows)
-            @windows.selected=(@splash)
-         end
+  playingInfo.layout(pos, size);
+  progressBar.layout(pos, size);
+  tabBar.layout(pos, size);
 
-         def layout
-            height = @size.height
+  if (playingInfo.visible)
+    size.height -= playingInfo.size.height;
+  if (progressBar.visible)
+    size.height -= progressBar.size.height;
+  if (tabBar.visible)
+    size.height -= tabBar.size.height;
 
-            @playinginfo.size=(@size.update(height: 2))
-            @progressbar.size=(@size.update(height: 1))
-            @tabbar.size=(@size.update(height: 1))
-
-            height -= 2 if @playinginfo.visible?
-            height -= 1 if @progressbar.visible?
-            height -= 1 if @tabbar.visible?
-
-            @windows.size=(@size.update(height: height))
-
-            super
-         end
-      end
-   end
-end
+  windows.layout(pos, size);
+  
+  VerticalContainer::layout(pos, size);
+}

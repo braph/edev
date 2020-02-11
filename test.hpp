@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <cassert>
 #include <cstring>
+#include "common.hpp"
+
+#undef assert // May be defined in common.hpp
 
 #define TEST_DB "/tmp/ektoplayer-test.db"
 

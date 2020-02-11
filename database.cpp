@@ -11,7 +11,7 @@ typedef const char* ccstr;
  * ============================================================================
  * Helpers for saving and reading buffers to/from disk.
  * Binary format is:
- *   size_t elem_size  : Size of one element (in bits!)
+ *   size_t elem_size  : Size of one element (in bits!!!)
  *   size_t elem_count : Element count
  *   char   data[]     : Buffer data, length = bytes_for(elem_size, elem_count)
  *   size_t elem_size  : Size of one element  -. 
@@ -24,34 +24,33 @@ static inline size_t bytes_for(size_t bits, size_t count) {
 }
 
 struct Saver {
-  static bool write(std::ofstream &fs, const char* buf, size_t elem_size, size_t elem_count) {
+  static void write(std::ofstream &fs, const char* buf, size_t elem_size, size_t elem_count) {
     fs.write((char*) &elem_size,  sizeof(elem_size));
     fs.write((char*) &elem_count, sizeof(elem_count));
     if (elem_count)
       fs.write(buf, bytes_for(elem_size, elem_count));
     fs.write((char*) &elem_size,  sizeof(elem_size));
     fs.write((char*) &elem_count, sizeof(elem_count));
-    return fs.good();
   }
 };
 
 struct Loader {
   size_t elem_size;
   size_t elem_count;
-  bool readHeader(std::ifstream &fs) {
+  void readHeader(std::ifstream &fs) {
     elem_size = elem_count = 0;
     fs.read((char*) &elem_size,  sizeof(elem_size));
     fs.read((char*) &elem_count, sizeof(elem_count));
-    return fs.good();
   }
-  bool readData(std::ifstream &fs, char *buf) {
+  void readData(std::ifstream &fs, char *buf) {
     if (elem_count)
       fs.read(buf, bytes_for(elem_size, elem_count));
     size_t elem_size_check  = 0;
     size_t elem_count_check = 0;
     fs.read((char*) &elem_size_check,   sizeof(elem_size_check));
     fs.read((char*) &elem_count_check,  sizeof(elem_count_check));
-    return (elem_size == elem_size_check && elem_count == elem_count_check);
+    if (elem_size != elem_size_check || elem_count != elem_count_check)
+      throw std::runtime_error("Column size check failed");
   }
 };
 
@@ -69,7 +68,7 @@ struct Loader {
  * Database
  * ==========================================================================*/
 
-bool Database :: load(const std::string &file) {
+void Database :: load(const std::string &file) {
   std::ifstream fs;
   fs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
   fs.open(file, std::ios::binary);
@@ -78,51 +77,42 @@ bool Database :: load(const std::string &file) {
   for (auto p : pools) {
     l.readHeader(fs);
     p->reserve(l.elem_count);
-    if (! l.readData(fs, p->data()))
-      return false;
+    l.readData(fs, p->data());
   }
 
-  return
-    styles.load(fs) &&
-    albums.load(fs) &&
-    tracks.load(fs);
+  styles.load(fs);
+  albums.load(fs);
+  tracks.load(fs);
 }
 
-bool Database :: save(const std::string &file) {
+void Database :: save(const std::string &file) {
   std::ofstream fs;
   fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
   fs.open(file, std::ios::binary);
 
   for (auto p : pools)
-    if (! Saver::write(fs, p->data(), 8, p->size()))
-      return false;
-  return
-    styles.save(fs) &&
-    albums.save(fs) &&
-    tracks.save(fs);
+    Saver::write(fs, p->data(), 8, p->size());
+  styles.save(fs);
+  albums.save(fs);
+  tracks.save(fs);
 }
 
 /* ============================================================================
  * Database :: Table
  * ==========================================================================*/
 
-bool Database :: Table :: load(std::ifstream &fs) {
+void Database :: Table :: load(std::ifstream &fs) {
   Loader l;
-  for (auto col: columns) {
-    if (! l.readHeader(fs))
-      return false;
+  for (auto *col: columns) {
+    l.readHeader(fs);
     col->resize(l.elem_count);
-    if (! l.readData(fs, (char*) col->data()))
-      return false;
+    l.readData(fs, (char*) col->data());
   }
-  return true;
 }
 
-bool Database :: Table :: save(std::ofstream &fs) {
-  for (auto col : columns)
-    if (! Saver::write(fs, (char*) col->data(), 8*sizeof(int), col->size()))
-      return false;
-  return true;
+void Database :: Table :: save(std::ofstream &fs) {
+  for (auto *col : columns)
+    Saver::write(fs, (char*) col->data(), 8*sizeof(int), col->size());
 }
 
 // XXX: description

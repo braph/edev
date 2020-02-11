@@ -21,6 +21,7 @@ Fetcher :: Fetcher(int first, int last, int parallel) : alive(true) {
 
 Fetcher :: ~Fetcher() {
   curl_multi_cleanup(curl_multi);
+  alive = false;
   if (thread.joinable())
     thread.join();
 }
@@ -99,7 +100,7 @@ void Fetcher :: work(int first, int last, int parallel) {
     if (running_handles)
       curl_multi_wait(curl_multi, NULL, 0, 1000, NULL);
 
-  } while (running_handles);
+  } while (alive && running_handles);
 
   alive = false;
 }

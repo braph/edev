@@ -1,22 +1,24 @@
-#CXXFLAGS   := -g -Wall -Wpedantic
-CXXFLAGS   := -O2 -Wall -Wpedantic
+DEBUG = 1 # 0|1
+
+#CXXFLAGS   := -Og -g -Wall -Wpedantic -DDEBUG=$(DEBUG)
+CXXFLAGS   := -O2 -Wall -Wpedantic -DDEBUG=$(DEBUG)
 CPPFLAGS := $(shell xml2-config --cflags)
 LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 clean:
-	rm *.o
+	rm -f *.o
+	rm -f views/*.o
+	rm -f ui/*.o
+	rm -f widgets/*.o
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
-	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o
+	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
+	player.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
-
-config.o: shellsplit.o filesystem.o theme.o
-
-theme.o: colors.o
 
 # ============================================================================
 # Views
@@ -38,7 +40,7 @@ test_updater: browsepage.o database.o strpool.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
-test_tabbar: config.o theme.o
+test_tabbar: config.o theme.o filesystem.o colors.o shellsplit.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TABBAR views/tabbar.cpp $^
 
 test_strpool:

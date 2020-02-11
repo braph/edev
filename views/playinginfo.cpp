@@ -150,7 +150,8 @@ int main() {
     for (int pos = 0; pos < 100; pos+=13) {
       p.setPositionAndLength(pos, 344);
       p.draw();
-      p.refresh();
+      p.noutrefresh();
+      doupdate();
       usleep(1000 * 40);
     }
   }

@@ -103,7 +103,7 @@ std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
-    if (!in_list<std::string>(w, {"playinginfo", "tabbar", "mainwindow", "progressbar"}))
+    if (!in_list<std::string>(w, {"playinginfo", "tabbar", "windows", "progressbar"}))
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }

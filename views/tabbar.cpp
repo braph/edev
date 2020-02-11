@@ -5,7 +5,7 @@
 using namespace Views;
 
 TabBar :: TabBar()
-: current(0)
+: UI::Window(), current(0)
 {
 }
 
@@ -20,20 +20,28 @@ void TabBar :: select(unsigned int index) {
   draw();
 }
 
+void TabBar :: layout(UI::Pos pos, UI::Size size) {
+  size.height = 1;
+  this->pos = pos;
+  this->size = size;
+  wresize(win, size.height, size.width);
+  mvwin(win, pos.y, pos.x);
+}
+
 void TabBar :: draw() {
-    werase(win);
-    wmove(win, 0, 0);
+  werase(win);
+  wmove(win, 0, 0);
 
-    unsigned int i = 0;
-    for (const auto &label : tabs) {
-      if (i == current)
-        wattrset(win, Theme::get(Theme::TABBAR_SELECTED));
-      else
-        wattrset(win, Theme::get(Theme::TABBAR_UNSELECTED));
+  unsigned int i = 0;
+  for (const auto &label : tabs) {
+    if (i++ == current)
+      wattrset(win, Theme::get(Theme::TABBAR_SELECTED));
+    else
+      wattrset(win, Theme::get(Theme::TABBAR_UNSELECTED));
 
-      waddstr(win, label.c_str());
-      waddch(win, ' ');
-    }
+    waddch(win, ' ');
+    waddstr(win, label.c_str());
+  }
 }
 
 #if 0
@@ -72,6 +80,8 @@ int main() {
   for (;;)
     for (int i = 0; i < 3; ++i) {
       b.select(i);
+      b.noutrefresh();
+      doupdate();
       sleep(1);
     }
 

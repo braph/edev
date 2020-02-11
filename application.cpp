@@ -1,15 +1,12 @@
 #include "ektoplayer.hpp"
 #include "database.hpp"
 #include "updater.hpp"
+#include "player.hpp"
 #include "config.hpp"
 #include "colors.hpp"
 #include "theme.hpp"
 #include "xml.hpp"
-
-#include "ui/container.hpp"
-#include "views/splash.hpp"
-#include "views/progressbar.hpp"
-#include "views/playinginfo.hpp"
+#include "views/mainwindow.hpp"
 
 #include <unistd.h>  // TODO: Remove me
 #include <signal.h>
@@ -25,13 +22,13 @@ static Database database;
 static void init();
 static void program();
 static void cleanup();
-static bool hv_SIGWINCH = false;
+static bool hv_SIGWINCH = true;
 static void on_SIGWINCH(int) { hv_SIGWINCH = true; }
 static const char* emsg;
 
 int main(int argc, char **argv) {
-  std::string err;
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
+  std::string err;
 
   try {
     init();
@@ -44,11 +41,6 @@ int main(int argc, char **argv) {
 
   if (err.size())
     std::cout << emsg << ": " << err << std::endl;
-
-  try { database.save(Config::database_file); }
-  catch (const std::exception &e) {
-    std::cout << "Error saving database file: " << e.what() << std::endl;
-  }
 
   return !! err.size();
 }
@@ -63,7 +55,6 @@ static void init() {
   noecho();
   start_color();
   use_default_colors();
-  timeout(100);
   curs_set(0);
   mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
 
@@ -125,25 +116,43 @@ static void program() {
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
-  Views::Splash         v_Splash;
-  Views::PlayingInfo    v_PlayingInfo(database);
-  Views::ProgressBar    v_ProgressBar;
-  UI::VerticalContainer v_VerticalContainer;
-  v_VerticalContainer.add(&v_PlayingInfo);
-  v_VerticalContainer.add(&v_ProgressBar);
-  v_VerticalContainer.add(&v_Splash);
+  Mpg123Player player;
+  Views::MainWindow mainwindow(database);
+
+  player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
 
   int c;
 MAINLOOP:
-  updater.write_to_database();
+  player.poll(); // First instruction, player needs some time to fetch info
 
-  v_VerticalContainer.layout({0,0}, {LINES,COLS});
-  v_VerticalContainer.draw();
-  v_VerticalContainer.refresh();
+  if (updater.write_to_database()) {
+    try { database.save(Config::database_file); }
+    catch (const std::exception &e) {
+      throw std::runtime_error(std::string("Error saving database file: ") + e.what());
+    }
+  }
 
-  c = wgetch(v_VerticalContainer.active_win());
-  if (c == 'q')
-    return;
+  if (hv_SIGWINCH) {
+    hv_SIGWINCH = false;
+    mainwindow.layout({0,0}, {LINES,COLS});
+  }
+
+  mainwindow.progressBar.setPercent(player.percent());
+  mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
+
+  mainwindow.draw();
+  mainwindow.noutrefresh();
+  doupdate();
+
+  WINDOW *win = mainwindow.active_win();
+  wtimeout(win, 700);
+  c = wgetch(win);
+  switch (c) {
+    case 'q': return;
+    case 'b': player.seek_backward(10); break;
+    case 'f': player.seek_forward(10); break;
+    case 'x': player.poll(); break;
+  }
 
 goto MAINLOOP;
 }

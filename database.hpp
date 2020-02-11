@@ -1,6 +1,7 @@
 #ifndef _DATABASE_HPP
 #define _DATABASE_HPP
 
+#include <array>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -97,8 +98,8 @@ public:
     void    resize(size_t n)    { for (auto col : columns) col->resize(n);  }
     void    reserve(size_t n)   { for (auto col : columns) col->reserve(n); }
 
-    bool load(std::ifstream&);
-    bool save(std::ofstream&);
+    void load(std::ifstream&);
+    void save(std::ofstream&);
   };
 
   // === Base class for all records ===========================================
@@ -413,7 +414,7 @@ public:
   Styles      styles;
   Albums      albums;
   Tracks      tracks;
-  std::vector<StringPool*> pools;
+  std::array<StringPool*, 9> pools;
   Database()
   : styles(*this)
   , albums(*this)
@@ -427,7 +428,7 @@ public:
     tracks.find("", true);
 
     // We know that the database will *at least* hold this amount of data,
-    // so pre allocate the buffers. (January, 2020)
+    // so pre allocate the buffers. (February, 2020)
 #define STYLES 25
 #define ALBUMS 2078
 #define TRACKS 14402
@@ -458,8 +459,8 @@ public:
     return Result<Tracks, Tracks::Track>(tracks);
   }
 
-  bool load(const std::string&);
-  bool save(const std::string&);
+  void load(const std::string&);
+  void save(const std::string&);
 };
 
 #endif

@@ -137,7 +137,7 @@
     <description>Specify widget order of tabbar (left to right)</description>
   </opt>
 
-  <opt name="main.widgets" type="std::vector&lt;std::string&gt;" parse="opt_parse_main_widgets" default="&quot;playinginfo,tabbar,mainwindow,progressbar&quot;" lateinit="yes">
+  <opt name="main.widgets" type="std::vector&lt;std::string&gt;" parse="opt_parse_main_widgets" default="&quot;playinginfo,tabbar,windows,progressbar&quot;" lateinit="yes">
     <description>Specify widgets to show (up to down)</description>
   </opt>
 </config>

@@ -11,5 +11,5 @@ playinginfo_format_top = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT
 playinginfo_format_bottom = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_BOTTOM);
 playinginfo_format_top_256 = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_TOP_256);
 playinginfo_format_bottom_256 = opt_parse_playinginfo_format(DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256);
-main_widgets = opt_parse_main_widgets("playinginfo,tabbar,mainwindow,progressbar");
+main_widgets = opt_parse_main_widgets("playinginfo,tabbar,windows,progressbar");
 tabs_widgets = opt_parse_tabs_widgets("splash,playlist,browser,info,help");

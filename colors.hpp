@@ -21,7 +21,7 @@ namespace UI {
       struct mapping { const char* name; unsigned int value; };
       static mapping attributes[];
 
-      static std::string to_string(int);
+      static std::string to_string(unsigned int);
       static int parse(const std::string&);
   };
 

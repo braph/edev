@@ -13,11 +13,7 @@ using namespace UI;
 using namespace Views;
 
 void ProgressBar :: setPercent(float percent) {
-  int new_width = size.width - (percent * size.width);
-  if (new_width != pad_mincol) {
-    pad_mincol = new_width;
-    // need refresh();
-  }
+  pad_mincol = size.width - (percent * size.width);
 }
 
 void ProgressBar :: draw() {
@@ -76,7 +72,8 @@ int main() {
   for (;;)
     for (float f = 0.0; f < 1; f += 0.01) {
       b.setPercent(f);
-      b.refresh();
+      b.noutrefresh();
+      doupdate();
       usleep(1000 * 30);
     }
 

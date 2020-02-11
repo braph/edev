@@ -6,29 +6,28 @@
 
 namespace UI {
   struct Size {
+    enum { KEEP = -1 };
     int height;
     int width;
 
+    Size()                      : height(0),      width(0)     { }
     Size(int height, int width) : height(height), width(width) { }
-    Size() :                      height(0),      width(0)     { }
 
     bool operator==(const Size&rhs) {
       return rhs.height == height && rhs.width == width;
     }
 
-    Size calc(int _width, int _height)
-    {
-      return Size(width + _width, height + _height);
+    Size calc(int height, int width) {
+      return Size(this->height + height, this->width + width);
     }
 
-    /*
-    def update(width: nil, height: nil)
-       Size.new(width: (width or @width), height: (height or @height))
-    end
-
-    def to_s;  "[(Size) height=#{height}, width=#{width}]"  end
-    */
-
+    Size duplicate(int height, int width = KEEP) {
+      return Size(
+          height == KEEP ? this->height : height,
+          width  == KEEP ? this->width  : width
+      );
+    }
+    //def to_s;  "[(Size) height=#{height}, width=#{width}]"  end
   };
 
   struct Pos {
@@ -43,7 +42,7 @@ namespace UI {
     bool visible;
     virtual void    draw() = 0;
     virtual void    layout(Pos pos, Size size) = 0;
-    virtual void    refresh() = 0;
+    virtual void    noutrefresh() = 0;
     virtual WINDOW* active_win() = 0;
 
     Widget(Pos pos = {0,0}, Size size = {0,0}, bool visible = true)
@@ -55,10 +54,9 @@ namespace UI {
   class Window : public Widget {
   protected:
     WINDOW *win;
-    int flags;
 
   public:
-    Window() : flags(0) {
+    Window() {
       win = newwin(0, 0, 0, 0);
       getmaxyx(win, size.height, size.width);
     }
@@ -70,42 +68,40 @@ namespace UI {
       mvwin(win, pos.y, pos.x);
     }
 
-    void refresh() {
-      wrefresh(win);
+    void noutrefresh() {
+      wnoutrefresh(win);
     }
 
     WINDOW *active_win() { return win; }
   };
 
   class Pad : public Widget {
-    protected:
-      WINDOW *win;
-      Size size;
-      Pos  pos;
-      int  pad_minrow;
-      int  pad_mincol;
+  protected:
+    WINDOW *win;
+    int  pad_minrow;
+    int  pad_mincol;
 
-    public:
-      Pad() {
-        win = newpad(1,1);
-        size.height = 1;
-        size.width  = 1;
-        pos.x = pos.y = 0;
-        pad_minrow = 0;
-        pad_mincol = 0;
-      }
+  public:
+    Pad() {
+      win = newpad(1,1);
+      size.height = 1;
+      size.width  = 1;
+      pos.x = pos.y = 0;
+      pad_minrow = 0;
+      pad_mincol = 0;
+    }
 
-      void setSize(int y, int x) {
-        size.height = y;
-        size.width  = x;
-      }
+    void setSize(int y, int x) {
+      size.height = y;
+      size.width  = x;
+    }
 
-      void refresh() {
-        prefresh(win, pad_minrow, pad_mincol, pos.y, pos.x,
-            pos.y + size.height - 1, pos.x + size.width - 1);
-      }
+    void noutrefresh() {
+      pnoutrefresh(win, pad_minrow, pad_mincol, pos.y, pos.x,
+          pos.y + size.height - 1, pos.x + size.width - 1);
+    }
 
-      WINDOW *active_win() { return win; }
+    WINDOW *active_win() { return win; }
   };
 }
 

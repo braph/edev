@@ -8,6 +8,14 @@
 #define STRLEN(S)     (sizeof(S)-1)
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 
+#if DEBUG
+#include <cassert>
+#else
+#define assert(...) (void)0
+#endif
+
+#define assert_not_reached() assert(!"reached")
+
 inline int clamp(int value, int lower, int upper) {
   if (value < lower) return lower;
   if (value > upper) return upper;
