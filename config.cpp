@@ -7,67 +7,65 @@
 #include "colors.hpp"
 #include "xml.hpp"
 
-#include <fstream>
 #include <boost/algorithm/string.hpp>
+
+#include <cinttypes>
+#include <fstream>
 
 #define COLUMN_NAMES { "number", "artist", "album", "title", "styles", "bpm", "year" }
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP =
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP =
   "<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
   "<artist bold='on' fg='blue' /><text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
   "<text fg='236'>&lt;&lt; </text><title bold='on' fg='178' /><text fg='236'> &gt;&gt;</text>";
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
  "<artist bold='on' fg='24' /><text> - </text><album bold='on' fg='160' /><text> (</text><year fg='37' /><text>)</text>";
 
 #if I_FOUND_A_BETTER_SOLUTION_THAN_XML
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP =
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP =
   "{fg=black}<< {fg=yellow,bold}${title} {fg=black}>>"
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
   "{fg=blue,bold}${artist} <text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
   "<artist bold='on' fg='blue' /><text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
   "{artist fg=blue bold} {text - } ";
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
   "<text fg='236'>&lt;&lt; </text><title bold='on' fg='178' /><text fg='236'> &gt;&gt;</text>";
 
-static const char * const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
+static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
  "<artist bold='on' fg='24' /><text> - </text><album bold='on' fg='160' /><text> (</text><year fg='37' /><text>)</text>";
 #endif
 
-static const char * const DEFAULT_PLAYLIST_COLUMNS =
+static const char* const DEFAULT_PLAYLIST_COLUMNS =
   "number 3 fg=magenta  | artist 25% fg=blue | album 30% fg=red |"
   "title  33% fg=yellow | styles 20% fg=cyan | bpm   3 fg=green right";
 
-static const char * const DEFAULT_PLAYLIST_COLUMNS_256 =
+static const char* const DEFAULT_PLAYLIST_COLUMNS_256 =
   "number 3 fg=97    | artist 25% fg=24 | album 30% fg=160 |"
   "title  33% fg=178 | styles 20% fg=37 | bpm   3 fg=28 right";
 
 /* === Parsing for primitives === */
-int opt_parse_int(const std::string &s) {
-  try { 
-    size_t pos = 0; 
-    int i = std::stoi(s, &pos); // throws on empty
-    if (pos != s.size())
-      throw pos;
-    return i;
-  } catch (...) {
+static int opt_parse_int(const std::string &s) {
+  char *end;
+  int i = std::strtoimax(s.c_str(), &end, 10);
+  if (!s.size() || end != s.c_str() + s.size())
     throw std::invalid_argument("not an integer");
-  }
+  return i;
 }
 
-bool opt_parse_bool(const std::string &s) {
+static bool opt_parse_bool(const std::string &s) {
   if (s == "true")        return true;
   else if (s == "false")  return false;
   else throw std::invalid_argument("expected `true` or `false`");
 }
 
-char opt_parse_char(const std::string &s) {
+static char opt_parse_char(const std::string &s) {
   if (s.size() != 1)
     throw std::invalid_argument("expected a single character");
   return s[0];
@@ -75,7 +73,7 @@ char opt_parse_char(const std::string &s) {
 /* === End of primitives === */
 
 /* === Option parsing functions === */
-int opt_parse_use_colors(const std::string &s) {
+static int opt_parse_use_colors(const std::string &s) {
   /**/ if (s == "auto")   return -1;
   else if (s == "mono")   return 0;
   else if (s == "8")      return 8;
@@ -83,14 +81,14 @@ int opt_parse_use_colors(const std::string &s) {
   throw std::invalid_argument("expected auto|mono|8|256");
 }
 
-int opt_parse_threads(const std::string &s) {
+static int opt_parse_threads(const std::string &s) {
   int i = opt_parse_int(s);
   if (i < 1)
     throw std::invalid_argument("integer must be > 1");
   return i;
 }
 
-std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
+static std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
@@ -99,7 +97,7 @@ std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
   return widgets;
 }
 
-std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
+static std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
@@ -107,9 +105,8 @@ std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }
-/* ========================== */
 
-PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
+static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
   std::vector<std::string> opts;
   std::vector<std::string> columns;
   boost::split(columns, s, boost::is_any_of("|"));
@@ -153,7 +150,7 @@ PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 }
 
 //"<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
-PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
+static PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
   PlayingInfoFormat result;
   std::string xml = "<r>" + _xml + "</r>"; // Add fake root element
   XmlDoc   doc = XmlDoc::readDoc(xml, NULL, NULL, XML_PARSE_COMPACT);
@@ -199,6 +196,7 @@ PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
 
   return result;
 }
+/* ========================== */
 
 #include "config/config.members.declare.cpp"
 
@@ -218,12 +216,6 @@ void Config :: set(const std::string &option, const std::string &value) {
     throw std::invalid_argument("unknown option: " + option);
   }
 }
-
-/*
-void Config :: color(const std::vector<std::string> &vec) {
-  int fg, bg, attr;
-}
-*/
 
 void Config :: read(const std::string &file) {
   std::ifstream infile;
@@ -261,7 +253,8 @@ void Config :: read(const std::string &file) {
       throw;
   }
   catch (const std::exception &e) {
-    std::string _= file+':'+std::to_string(no)+": "+command+": "+e.what();
+    char _[1024];
+    snprintf(_, sizeof(_), "%s:%u: %s: %s", file.c_str(), no, command.c_str(), e.what());
     throw std::invalid_argument(_);
   }
 }
@@ -276,12 +269,18 @@ int main() {
 
   // === Primitives ===
   assert(opt_parse_int("1")       == 1);
+  except(opt_parse_int(""));
+  except(opt_parse_int("-"));
+  except(opt_parse_int("1a"));
+  except(opt_parse_int("a1"));
+
   assert(opt_parse_bool("true")   == true);
   assert(opt_parse_bool("false")  == false);
-  assert(opt_parse_char("c")      == 'c');
-
-  except(opt_parse_int("-"));
+  except(opt_parse_bool(""));
   except(opt_parse_bool("-"));
+
+  assert(opt_parse_char("c")      == 'c');
+  except(opt_parse_char(""));
   except(opt_parse_char("12"));
 
   // === Objects ===

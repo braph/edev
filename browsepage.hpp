@@ -79,31 +79,31 @@ struct Album {
 };
 
 class BrowsePage {
-  public:
-    unsigned int num_pages;
-    unsigned int current_page;
-    std::string base_url;
-    std::vector<Album> albums;
+public:
+  unsigned int num_pages;
+  unsigned int current_page;
+  std::string base_url;
+  std::vector<Album> albums;
 
-    BrowsePage()
-    : num_pages(0)
-    , current_page(0)
-    {}
+  BrowsePage()
+  : num_pages(0)
+  , current_page(0)
+  {}
 
-    BrowsePage(const std::string &src)
-    : num_pages(0)
-    , current_page(0) {
-      albums.reserve(5);
-      parse_src(src);
-    }
+  BrowsePage(const std::string &src)
+  : num_pages(0)
+  , current_page(0) {
+    albums.reserve(5);
+    parse_src(src);
+  }
 
-    void parse_src(const std::string&);
-    std::map<std::string, std::string> getStyles(const std::string&);
-    std::string getBaseUrl(const std::string&, int*n);
+  void parse_src(const std::string&);
+  std::map<std::string, std::string> getStyles(const std::string&);
+  std::string getBaseUrl(const std::string&, int*n);
 
-    inline std::string getPageUrl(unsigned int num) {
-      return base_url + std::to_string(num);
-    }
+  inline std::string getPageUrl(unsigned int num) {
+    return base_url + std::to_string(num);
+  }
 };
 
 #endif

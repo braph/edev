@@ -22,9 +22,6 @@
   X(TABBAR_TOGGLE,      "tabbar.toggle")      \
 
 class Actions {
-  Database &db;
-  Mpg123Player &p;
-  Views::MainWindow &v;
 public:
 #define X(ENUM, STR) ENUM,
   enum ActionID { XActions ACTIONID_LAST };
@@ -33,6 +30,11 @@ public:
   int call(ActionID);
   static ActionID parse(const std::string&);
   static const char* to_string(ActionID);
+
+private:
+  Database &db;
+  Mpg123Player &p;
+  Views::MainWindow &v;
 };
 
 #endif

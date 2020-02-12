@@ -55,9 +55,6 @@ public:
 };
 
 class Window : public Widget {
-protected:
-  WINDOW *win;
-
 public:
   Window() {
     win = newwin(0, 0, 0, 0);
@@ -82,14 +79,12 @@ public:
   }
 
   WINDOW *active_win() { return win; }
+
+protected:
+  WINDOW *win;
 };
 
 class Pad : public Widget {
-protected:
-  WINDOW *win;
-  int  pad_minrow;
-  int  pad_mincol;
-
 public:
   Pad() {
     win = newpad(1,1);
@@ -107,8 +102,13 @@ public:
   }
 
   WINDOW *active_win() { return win; }
+
+protected:
+  WINDOW *win;
+  int  pad_minrow;
+  int  pad_mincol;
 };
 
-}
+} // namespace UI
 
 #endif

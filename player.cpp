@@ -1,6 +1,10 @@
 #include "player.hpp"
+
 #include "common.hpp"
+
 #include <iostream>//XXX
+
+namespace bp = boost::process;
 
 Mpg123Player :: Mpg123Player()
 : audio_system("jack,pulse,alsa,oss")

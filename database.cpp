@@ -223,36 +223,36 @@ void  TRACK :: album_id(int i)  { db.tracks.album_id[id] =         i;         }
 
 int Database :: OrderBy :: compare(const Styles::Style &a, const Styles::Style &b) {
   switch (column) {
-    case STYLE_URL:   return strcmp(a.url(),  b.url());
-    case STYLE_NAME:  return strcmp(a.name(), b.name());
-    default:          return false;  
+  case STYLE_URL:   return strcmp(a.url(),  b.url());
+  case STYLE_NAME:  return strcmp(a.name(), b.name());
+  default:          return false;  
   }
 }
 
 int Database :: OrderBy :: compare(const Albums::Album &a, const Albums::Album &b) {
   switch (column) {
-    case ALBUM_URL:             return strcmp(a.url(),          b.url());
-    case ALBUM_TITLE:           return strcmp(a.title(),        b.title());
-    case ALBUM_ARTIST:          return strcmp(a.artist(),       b.artist());
-    case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    b.cover_url());
-    case ALBUM_DESCRIPTION:     return strcmp(a.description(),  b.description());
-    case ALBUM_DATE:            return a.date() -           b.date();
-    case ALBUM_RATING:          return a.rating() -         b.rating();
-    case ALBUM_VOTES:           return a.votes() -          b.votes();
-    case ALBUM_DOWNLOAD_COUNT:  return a.download_count() - b.download_count();
-    default:                    return false;
+  case ALBUM_URL:             return strcmp(a.url(),          b.url());
+  case ALBUM_TITLE:           return strcmp(a.title(),        b.title());
+  case ALBUM_ARTIST:          return strcmp(a.artist(),       b.artist());
+  case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    b.cover_url());
+  case ALBUM_DESCRIPTION:     return strcmp(a.description(),  b.description());
+  case ALBUM_DATE:            return a.date() -           b.date();
+  case ALBUM_RATING:          return a.rating() -         b.rating();
+  case ALBUM_VOTES:           return a.votes() -          b.votes();
+  case ALBUM_DOWNLOAD_COUNT:  return a.download_count() - b.download_count();
+  default:                    return false;
   }
 }
 
 int Database :: OrderBy :: compare(const Tracks::Track &a, const Tracks::Track &b) {
   switch (column) {
-    case TRACK_URL:    return strcmp(a.url(),      b.url());
-    case TRACK_TITLE:  return strcmp(a.title(),    b.title());
-    case TRACK_ARTIST: return strcmp(a.artist(),   b.artist());
-    case TRACK_REMIX:  return strcmp(a.remix(),    b.remix());
-    case TRACK_NUMBER: return        a.number() -  b.number();
-    case TRACK_BPM:    return        a.bpm() -     b.bpm();
-    default:           return compare(a.album(), b.album());
+  case TRACK_URL:    return strcmp(a.url(),      b.url());
+  case TRACK_TITLE:  return strcmp(a.title(),    b.title());
+  case TRACK_ARTIST: return strcmp(a.artist(),   b.artist());
+  case TRACK_REMIX:  return strcmp(a.remix(),    b.remix());
+  case TRACK_NUMBER: return        a.number() -  b.number();
+  case TRACK_BPM:    return        a.bpm() -     b.bpm();
+  default:           return compare(a.album(), b.album());
   }
 }
 
@@ -262,36 +262,36 @@ int Database :: OrderBy :: compare(const Tracks::Track &a, const Tracks::Track &
 
 int Database :: Where :: compare(const Tracks::Track &t) {
   switch (column) {
-    case TRACK_URL:    return strcmp(t.url(),    strValue);
-    case TRACK_TITLE:  return strcmp(t.title(),  strValue);
-    case TRACK_ARTIST: return strcmp(t.artist(), strValue);
-    case TRACK_REMIX:  return strcmp(t.remix(),  strValue);
-    case TRACK_NUMBER: return t.number() -       intValue;
-    case TRACK_BPM:    return t.bpm() -          intValue;
-    default:           return compare(t.album());
+  case TRACK_URL:    return strcmp(t.url(),    strValue);
+  case TRACK_TITLE:  return strcmp(t.title(),  strValue);
+  case TRACK_ARTIST: return strcmp(t.artist(), strValue);
+  case TRACK_REMIX:  return strcmp(t.remix(),  strValue);
+  case TRACK_NUMBER: return t.number() -       intValue;
+  case TRACK_BPM:    return t.bpm() -          intValue;
+  default:           return compare(t.album());
   }
 }
 
 int Database :: Where :: compare(const Albums::Album &a) {
   switch (column) {
-    case ALBUM_URL:             return strcmp(a.url(),          strValue);
-    case ALBUM_TITLE:           return strcmp(a.title(),        strValue);
-    case ALBUM_ARTIST:          return strcmp(a.artist(),       strValue);
-    case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    strValue);
-    case ALBUM_DESCRIPTION:     return strcmp(a.description(),  strValue);
-    case ALBUM_DATE:            return a.date() -               intValue;
-    case ALBUM_RATING:          return a.rating() -             intValue;
-    case ALBUM_VOTES:           return a.votes() -              intValue;
-    case ALBUM_DOWNLOAD_COUNT:  return a.download_count() -     intValue;
-    default:                    std::abort();
+  case ALBUM_URL:             return strcmp(a.url(),          strValue);
+  case ALBUM_TITLE:           return strcmp(a.title(),        strValue);
+  case ALBUM_ARTIST:          return strcmp(a.artist(),       strValue);
+  case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    strValue);
+  case ALBUM_DESCRIPTION:     return strcmp(a.description(),  strValue);
+  case ALBUM_DATE:            return a.date() -               intValue;
+  case ALBUM_RATING:          return a.rating() -             intValue;
+  case ALBUM_VOTES:           return a.votes() -              intValue;
+  case ALBUM_DOWNLOAD_COUNT:  return a.download_count() -     intValue;
+  default:                    std::abort();
   }
 }
 
 int Database :: Where :: compare(const Styles::Style &s) {
   switch (column) {
-    case STYLE_URL:     return strcmp(s.url(),    strValue);
-    case STYLE_NAME:    return strcmp(s.name(),   strValue);
-    default:            std::abort();
+  case STYLE_URL:     return strcmp(s.url(),    strValue);
+  case STYLE_NAME:    return strcmp(s.name(),   strValue);
+  default:            std::abort();
   }
 }
 

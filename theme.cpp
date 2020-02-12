@@ -1,6 +1,8 @@
 #include "theme.hpp"
 #include "colors.hpp"
 
+#include <stdexcept>
+
 #define defualt    -2
 #define white      COLOR_WHITE
 #define black      COLOR_BLACK

@@ -8,31 +8,7 @@
 
 /* XXX: in/out locks? */
 
-namespace bp = boost::process;
-
 class Mpg123Player {
-  enum {
-    FLAG_NEED_FORMAT = 1
-  };
-
-  std::thread thr;
-  bp::child proc;
-  bp::opstream in;
-  bp::ipstream out;
-  bp::ipstream err;
-  std::string file;
-  std::string audio_system;
-  unsigned char flags;
-  unsigned char state;
-  unsigned char channels;
-  unsigned int  sample_rate;
-  unsigned int  seconds_total;
-  unsigned int  seconds_played;
-  unsigned int  seconds_remaining;
-
-  void read_data();
-  void start_mpg123();
-
 public:
   enum {
     STATE_STOPPED = 0,
@@ -60,6 +36,29 @@ public:
   inline unsigned int position() { return seconds_played;         }
   inline unsigned int length()   { return seconds_total;          }
   inline float        percent()  { return (seconds_total ? (float) position() / length() : 0); }
+
+private:
+  enum {
+    FLAG_NEED_FORMAT = 1
+  };
+
+  std::thread thr;
+  boost::process::child proc;
+  boost::process::opstream in;
+  boost::process::ipstream out;
+  boost::process::ipstream err;
+  std::string file;
+  std::string audio_system;
+  unsigned char flags;
+  unsigned char state;
+  unsigned char channels;
+  unsigned int  sample_rate;
+  unsigned int  seconds_total;
+  unsigned int  seconds_played;
+  unsigned int  seconds_remaining;
+
+  void read_data();
+  void start_mpg123();
 };
 
 #endif

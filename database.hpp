@@ -1,12 +1,13 @@
 #ifndef _DATABASE_HPP
 #define _DATABASE_HPP
 
+#include "strpool.hpp"
+
 #include <array>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
-#include "strpool.hpp"
 
 /* ============================================================================
  * Metadata Database
@@ -331,12 +332,12 @@ public:
     bool operator()(const T& t) {
       int ret = compare(t);
       switch (op) {
-        case EQUAL:         return ! (ret == 0);
-        case UNEQUAL:       return ! (ret != 0);
-        case GREATER:       return ! (ret >  0);
-        case GREATER_EQUAL: return ! (ret >= 0);
-        case LESSER:        return ! (ret <  0);
-        case LESSER_EQUAL:  return ! (ret <= 0);
+      case EQUAL:         return ! (ret == 0);
+      case UNEQUAL:       return ! (ret != 0);
+      case GREATER:       return ! (ret >  0);
+      case GREATER_EQUAL: return ! (ret >= 0);
+      case LESSER:        return ! (ret <  0);
+      case LESSER_EQUAL:  return ! (ret <= 0);
       }
     }
   };

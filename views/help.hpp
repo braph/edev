@@ -4,11 +4,13 @@
 #include "../ui.hpp"
 
 namespace Views {
-  class Help : public UI::Pad {
-  public:
-    void draw();
-    void layout(UI::Pos, UI::Size);
-  };
-}
+
+class Help : public UI::Pad {
+public:
+  void draw();
+  void layout(UI::Pos, UI::Size);
+};
+
+} // namespace Views
 
 #endif

@@ -1,6 +1,10 @@
 #include "colors.hpp"
-#include "common.hpp"
+
 #include <cctype>
+#include <stdexcept>
+
+#include "common.hpp"
+
 using namespace UI;
 
 // === UI::Color ==============================================================
@@ -67,15 +71,19 @@ std::string Attribute :: to_string(unsigned int attribute) {
 // === UI::Colors =============================================================
 
 #define SHORTS_TO_INT(A,B) (A + (B<<16))
-std::map<int32_t, int> Colors :: color_pairs;
+std::vector<std::pair<int32_t, int32_t>> Colors :: color_pairs;
 int Colors :: id = 1;
 
 int Colors :: create_color_pair(short fg, short bg) {
-  int pair_id = color_pairs[SHORTS_TO_INT(fg,bg)];
-  if (! pair_id)
-    pair_id = color_pairs[SHORTS_TO_INT(fg,bg)] = id++;
+  int32_t fg_bg = SHORTS_TO_INT(fg, bg);
 
+  for (const auto& pair : color_pairs)
+    if (pair.first == fg_bg)
+      return pair.second;
+
+  int pair_id = id++;
   init_pair(pair_id, fg, bg);
+  color_pairs.push_back(std::pair<int32_t, int32_t>(fg_bg, pair_id));
   return pair_id;
 }
 
@@ -86,7 +94,7 @@ int Colors :: set(short fg, short bg, int attributes) {
 #if TEST_COLORS
 #include "test.hpp"
 int main() {
-  TEST_BEGIN
+  TEST_BEGIN();
 
   assert(UI::Color::parse("none")             == -1);
   assert(UI::Color::parse("white")            == COLOR_WHITE);
@@ -129,6 +137,6 @@ int main() {
   assert(UI::Colors::create_color_pair(COLOR_BLACK, -1) == 4);
   assert(UI::Colors::create_color_pair(COLOR_BLACK, -1) == 4);
 
-  TEST_END
+  TEST_END();
 }
 #endif

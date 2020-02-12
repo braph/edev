@@ -2,12 +2,8 @@
 #define _FILESYSTEM_HPP
 
 #include <string>
-#include <cstring>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <stdexcept>
 
-#define PATH_SEP      "/"
+#define PATH_SEP "/"
 
 namespace Filesystem {
   std::string home();

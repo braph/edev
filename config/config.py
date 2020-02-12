@@ -24,7 +24,7 @@ with open('config.members.hpp', 'w') as fh:
     options.sort(key=lambda o: o['type'])
     options.sort(key=lambda o: len(o['type']))
     for o in options:
-        print('static', o['type'], o['name'].replace('.', '_'), end=';\n', file=fh)
+        print('extern', o['type'], o['name'].replace('.', '_'), end=';\n', file=fh)
 
 with open('config.members.set.cpp', 'w') as fh:
     options.sort(key=lambda o: o['name'])

@@ -37,13 +37,12 @@ struct PlayingInfoFormatFoo {
 typedef std::vector<PlaylistColumnFormat> PlaylistColumns;
 typedef std::vector<PlayingInfoFormatFoo> PlayingInfoFormat;
 
-class Config {
-  Config(); /* Singleton */
-public:
-#include "config/config.members.hpp"
-  static void init();
-  static void set(const std::string&, const std::string&);
-  static void read(const std::string&);
-};
+namespace Config {
 
+#include "config/config.members.hpp"
+void init();
+void set(const std::string&, const std::string&);
+void read(const std::string&);
+
+} // namespace Config
 #endif

@@ -1,10 +1,12 @@
 #ifndef _COLORS_HPP
 #define _COLORS_HPP
 
-#include <map>
+#include <curses.h>
+
+#include <vector>
+#include <utility>
 #include <string>
 #include <cstdint>
-#include <curses.h>
 
 namespace UI {
   class Color {
@@ -27,7 +29,7 @@ namespace UI {
 
   class Colors {
     private:
-      static std::map<int32_t, int> color_pairs; // = int16_t(fg) AND int16_t(bg)
+      static std::vector<std::pair<int32_t, int32_t>> color_pairs;
       static int id;
     public:
       static int create_color_pair(short, short);

@@ -4,10 +4,12 @@
 #include "../ui.hpp"
 
 namespace Views {
-  class Splash : public UI::Window {
-  public:
-    void draw();
-  };
-}
+  
+class Splash : public UI::Window {
+public:
+  void draw();
+};
+
+} // namespace Views
 
 #endif
