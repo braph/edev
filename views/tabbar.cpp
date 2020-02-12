@@ -22,10 +22,14 @@ void TabBar :: select(unsigned int index) {
 
 void TabBar :: layout(UI::Pos pos, UI::Size size) {
   size.height = 1;
-  this->pos = pos;
-  this->size = size;
-  wresize(win, size.height, size.width);
-  mvwin(win, pos.y, pos.x);
+  if (size != this->size) {
+    this->size = size;
+    wresize(win, size.height, size.width);
+  }
+  if (pos != this->pos) {
+    this->pos = pos;
+    mvwin(win, pos.y, pos.x);
+  }
 }
 
 void TabBar :: draw() {
@@ -82,7 +86,7 @@ int main() {
       b.select(i);
       b.noutrefresh();
       doupdate();
-      sleep(1);
+      usleep(500 * 1000);
     }
 
   TEST_END();

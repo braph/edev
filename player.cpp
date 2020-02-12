@@ -14,6 +14,10 @@ Mpg123Player :: Mpg123Player()
 {
 }
 
+Mpg123Player :: ~Mpg123Player() {
+  proc.terminate();
+}
+
 void Mpg123Player :: play() {
   if (file.size())
     play(file);

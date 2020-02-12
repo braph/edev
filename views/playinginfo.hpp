@@ -8,12 +8,14 @@
 namespace Views {
   class PlayingInfo : public UI::Window {
   private:
-    int track_length;
-    int track_position;
     Database::Tracks::Track track;
-    PlayingInfoFormat *fmt_top;
-    PlayingInfoFormat *fmt_bottom;
-    void print_formatted_strings(PlayingInfoFormat *);
+    PlayingInfoFormat   *fmt_top;
+    PlayingInfoFormat   *fmt_bottom;
+    unsigned short      track_length;
+    unsigned short      track_position;
+    unsigned char       state;
+
+    void print_formatted_strings(PlayingInfoFormat*);
     void draw_position_and_length();
     void draw_track_info();
     void draw_state();
@@ -22,6 +24,7 @@ namespace Views {
     // Slot: clicked -> player.toggle
 
     PlayingInfo(Database&);
+    void setState(int);
     void setTrack(Database::Tracks::Track);
     void setPositionAndLength(int, int);
     void draw();

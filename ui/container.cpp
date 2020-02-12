@@ -48,11 +48,10 @@ void VerticalContainer :: layout(Pos pos, Size size) {
   this->size = size;
 
   for (auto w : widgets) {
-    if (! w->visible)
-      continue;
-
-    w->layout(pos, w->size.duplicate(UI::Size::KEEP, size.width));
-    pos.y       += w->size.height;
+    if (w->visible) {
+      w->layout(pos, w->size.duplicate(UI::Size::KEEP, size.width));
+      pos.y       += w->size.height;
+    }
   }
 }
 
@@ -70,10 +69,8 @@ void StackedContainer :: layout(Pos pos, Size size) {
   this->size = size;
 
   for (auto w : widgets) {
-    if (! w->visible)
-      continue;
-
-    w->layout(pos, size);
+    if (w->visible)
+      w->layout(pos, size);
   }
 }
 

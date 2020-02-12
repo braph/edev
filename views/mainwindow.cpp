@@ -6,11 +6,11 @@ using namespace UI;
 using namespace Views;
 
 MainWindow :: MainWindow(Database &db)
-: splash()
-, playingInfo(db)
+: playingInfo(db)
 , progressBar()
 , tabBar()
 , windows()
+, splash()
 {
   for (auto w : Config::main_widgets) {
     /**/ if (w == "playinginfo")    add(&playingInfo);
@@ -39,12 +39,9 @@ void MainWindow :: layout(Pos pos, Size size) {
   progressBar.layout(pos, size);
   tabBar.layout(pos, size);
 
-  if (playingInfo.visible)
-    size.height -= playingInfo.size.height;
-  if (progressBar.visible)
-    size.height -= progressBar.size.height;
-  if (tabBar.visible)
-    size.height -= tabBar.size.height;
+  if (playingInfo.visible)  size.height -= playingInfo.size.height;
+  if (progressBar.visible)  size.height -= progressBar.size.height;
+  if (tabBar.visible)       size.height -= tabBar.size.height;
 
   windows.layout(pos, size);
   

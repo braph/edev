@@ -14,11 +14,11 @@
 namespace Views {
   class MainWindow : public UI::VerticalContainer {
   public:
-    Views::Splash         splash;
     Views::PlayingInfo    playingInfo;
     Views::ProgressBar    progressBar;
     Views::TabBar         tabBar;
     UI::StackedContainer  windows;
+    Views::Splash         splash;
     MainWindow(Database&);
     void layout(UI::Pos, UI::Size);
   };

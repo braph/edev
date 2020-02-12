@@ -270,7 +270,7 @@ void Config :: read(const std::string &file) {
 #include "test.hpp"
 #include "colors.hpp"
 int main() {
-  TEST_BEGIN
+  TEST_BEGIN();
 
   Config::init();
 
@@ -297,6 +297,6 @@ int main() {
   assert(c[1].fg        == -1);
   assert(c[1].bg        == -1);
 
-  TEST_END
+  TEST_END();
 }
 #endif

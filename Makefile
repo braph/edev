@@ -16,7 +16,7 @@ clean:
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
-	player.o
+	player.o actions.o bindings.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
 

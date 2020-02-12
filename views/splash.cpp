@@ -44,7 +44,7 @@ static const short signatureFade_256[] = {99,105,111,117};
 using namespace UI;
 using namespace Views;
 void Splash :: draw() {
-  werase(win);
+  wclear(win);
   if (LOGO_HEIGHT > size.height || LOGO_WIDTH > size.width)
     return;
 

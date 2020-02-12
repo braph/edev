@@ -41,6 +41,7 @@ public:
   };
 
   Mpg123Player();
+ ~Mpg123Player();
 
   void poll();
 
@@ -52,11 +53,12 @@ public:
   void seek_forward(unsigned);
   void seek_backward(unsigned);
 
-  inline bool is_paused()        { return state == STATE_PAUSED;  }
-  inline bool is_stopped()       { return state == STATE_STOPPED; }
-  inline bool is_playing()       { return state == STATE_PLAYING; }
-  inline unsigned int position() { return seconds_played; }
-  inline unsigned int length()   { return seconds_total;  }
+  inline bool isPaused()         { return state == STATE_PAUSED;  }
+  inline bool isStopped()        { return state == STATE_STOPPED; }
+  inline bool isPlaying()        { return state == STATE_PLAYING; }
+  inline int  getState()         { return state;                  }
+  inline unsigned int position() { return seconds_played;         }
+  inline unsigned int length()   { return seconds_total;          }
   inline float        percent()  { return (seconds_total ? (float) position() / length() : 0); }
 };
 

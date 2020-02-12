@@ -1,5 +1,6 @@
 #include "ektoplayer.hpp"
 #include "database.hpp"
+#include "bindings.hpp"
 #include "updater.hpp"
 #include "player.hpp"
 #include "config.hpp"
@@ -22,8 +23,8 @@ static Database database;
 static void init();
 static void program();
 static void cleanup();
-static bool hv_SIGWINCH = true;
-static void on_SIGWINCH(int) { hv_SIGWINCH = true; }
+static bool redraw = true;
+static void on_SIGWINCH(int) { redraw = true; }
 static const char* emsg;
 
 int main(int argc, char **argv) {
@@ -60,6 +61,7 @@ static void init() {
 
   emsg = "Initialization error. This is a bug";
   Config::init();
+  Bindings::init();
 
   emsg = "Error while reading configuration file";
   if (fs::exists(Ektoplayer::config_file()))
@@ -118,6 +120,7 @@ static void program() {
 
   Mpg123Player player;
   Views::MainWindow mainwindow(database);
+  Actions actions(mainwindow, database, player);
 
   player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
 
@@ -132,27 +135,29 @@ MAINLOOP:
     }
   }
 
-  if (hv_SIGWINCH) {
-    hv_SIGWINCH = false;
+  if (redraw) {
+    redraw = false;
     mainwindow.layout({0,0}, {LINES,COLS});
+    mainwindow.draw();
   }
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
-  mainwindow.playingInfo.setState();
+  mainwindow.playingInfo.setState(player.getState());
 
-  mainwindow.draw();
   mainwindow.noutrefresh();
   doupdate();
 
   WINDOW *win = mainwindow.active_win();
   wtimeout(win, 700);
+  keypad(win, true);
   c = wgetch(win);
-  switch (c) {
-    case 'q': return;
-    case 'b': player.seek_backward(10); break;
-    case 'f': player.seek_forward(10); break;
-    case 'x': player.poll(); break;
+  if (Bindings::global[c]) {
+    c = actions.call((Actions::ActionID) Bindings::global[c]);
+    if (c == Actions::QUIT)
+      return;
+    else if (c == Actions::REDRAW)
+      redraw = true;
   }
 
 goto MAINLOOP;

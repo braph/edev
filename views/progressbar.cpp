@@ -19,7 +19,7 @@ void ProgressBar :: setPercent(float percent) {
 void ProgressBar :: draw() {
 }
 
-/* We draw the progress bar once inside the pad.  Everything else XXX */
+/* We draw the progress bar once inside a larger pad and just move it later */
 void ProgressBar :: layout(Pos pos, Size size) {
   size.height = 1;
   this->pos = pos;
@@ -37,14 +37,14 @@ void ProgressBar :: layout(Pos pos, Size size) {
     fade_size = ARRAY_SIZE(fading_8);
   }
 
-  wresize(win, 1, size.width * 2); // self.pad_size XXX-RM
+  wresize(win, 1, size.width * 2);
   mvwin(win, pos.y, pos.x);
   wmove(win, 0, 0);
 
 #define FG(COLOR) UI::Colors::set(COLOR, -1, 0)
   char c = Config::progressbar_progress_char;
   for (int i = 0; i < size.width; ++i) {
-    waddch(win, c| FG(proportionalGet(fade, fade_size, size.width, i)));
+    waddch(win, c|FG(proportionalGet(fade, fade_size, size.width, i)));
   }
 
   whline(win,

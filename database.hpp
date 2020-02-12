@@ -428,7 +428,7 @@ public:
     tracks.find("", true);
 
     // We know that the database will *at least* hold this amount of data,
-    // so pre allocate the buffers. (February, 2020)
+    // so pre allocate the buffers. (Numbers from February, 2020)
 #define STYLES 25
 #define ALBUMS 2078
 #define TRACKS 14402
