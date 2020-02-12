@@ -5,6 +5,8 @@
 #include "database.hpp"
 #include "views/mainwindow.hpp"
 
+#include <string>
+
 #define XActions \
   X(NONE,               "none")               \
   X(QUIT,               "quit")               \
@@ -20,15 +22,17 @@
   X(TABBAR_TOGGLE,      "tabbar.toggle")      \
 
 class Actions {
-  Views::MainWindow &v;
   Database &db;
   Mpg123Player &p;
+  Views::MainWindow &v;
 public:
 #define X(ENUM, STR) ENUM,
-  enum ActionID { XActions };
+  enum ActionID { XActions ACTIONID_LAST };
 #undef X
   Actions(Views::MainWindow&, Database&, Mpg123Player&);
   int call(ActionID);
+  static ActionID parse(const std::string&);
+  static const char* to_string(ActionID);
 };
 
 #endif

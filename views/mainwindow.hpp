@@ -7,6 +7,7 @@
 #include "../ui.hpp"
 #include "../ui/container.hpp"
 #include "splash.hpp"
+#include "help.hpp"
 #include "progressbar.hpp"
 #include "playinginfo.hpp"
 #include "tabbar.hpp"
@@ -19,6 +20,7 @@ namespace Views {
     Views::TabBar         tabBar;
     UI::StackedContainer  windows;
     Views::Splash         splash;
+    Views::Help           help;
     MainWindow(Database&);
     void layout(UI::Pos, UI::Size);
   };

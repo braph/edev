@@ -61,6 +61,7 @@ protected:
 public:
   Window() {
     win = newwin(0, 0, 0, 0);
+    keypad(win, true);
     getmaxyx(win, size.height, size.width);
   }
 
@@ -92,6 +93,7 @@ protected:
 public:
   Pad() {
     win = newpad(1,1);
+    keypad(win, true);
     size.height = 1;
     size.width  = 1;
     pos.x = pos.y = 0;

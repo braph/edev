@@ -1,8 +1,14 @@
 #include "actions.hpp"
 #include "common.hpp"
 
+static const char *action_strings[Actions::ACTIONID_LAST] = {
+#define X(ENUM, STR) STR,
+  XActions
+#undef X
+};
+
 Actions :: Actions(Views::MainWindow& v, Database& db, Mpg123Player& p)
-: v(v), db(db), p(p)
+: db(db), p(p), v(v)
 {
 }
 
@@ -21,4 +27,15 @@ int Actions :: call(ActionID id) {
   }
 
   return 0;
+}
+
+Actions::ActionID Actions :: parse(const std::string &s) {
+  for (size_t i = 0; i < Actions::ACTIONID_LAST; ++i)
+    if (s == action_strings[i])
+      return (Actions::ActionID) i;
+  return Actions::ACTIONID_LAST;
+}
+
+const char* Actions :: to_string(Actions::ActionID id) {
+  return action_strings[id];
 }

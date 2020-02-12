@@ -150,7 +150,6 @@ MAINLOOP:
 
   WINDOW *win = mainwindow.active_win();
   wtimeout(win, 700);
-  keypad(win, true);
   c = wgetch(win);
   if (Bindings::global[c]) {
     c = actions.call((Actions::ActionID) Bindings::global[c]);

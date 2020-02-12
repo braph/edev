@@ -16,7 +16,7 @@ clean:
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
-	player.o actions.o bindings.o
+	views/help.o player.o actions.o bindings.o 
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
 
@@ -26,6 +26,10 @@ application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o th
 
 test_splash: colors.o theme.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^
+	echo "Cannot test ncurses based stuff"
+
+test_help: colors.o theme.o bindings.o actions.o player.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_HELP views/help.cpp $^
 	echo "Cannot test ncurses based stuff"
 
 test_progressbar: config.o shellsplit.o filesystem.o colors.o theme.o

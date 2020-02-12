@@ -11,6 +11,7 @@ MainWindow :: MainWindow(Database &db)
 , tabBar()
 , windows()
 , splash()
+, help()
 {
   for (auto w : Config::main_widgets) {
     /**/ if (w == "playinginfo")    add(&playingInfo);
@@ -26,7 +27,7 @@ MainWindow :: MainWindow(Database &db)
     else if (w == "playlist") (void)0; // windows.add(&playlist);
     else if (w == "browser")  (void)0; // windows.add(&browser);
     else if (w == "info")     (void)0; // windows.add(&info);
-    else if (w == "help")     (void)0; // windows.add(&help);
+    else if (w == "help")     windows.add(&help);
     else assert_not_reached();
   }
 }
