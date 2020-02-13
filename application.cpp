@@ -12,6 +12,8 @@
 #include <signal.h>
 #include <glob.h>
 
+#include <libxml/xmlversion.h>
+
 #include <boost/filesystem/operations.hpp>
 
 #include <fstream>

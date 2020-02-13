@@ -6,6 +6,12 @@ CXXFLAGS   := -O2 -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_F
 CPPFLAGS := $(shell xml2-config --cflags)
 LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
+application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
+	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
+	views/help.o views/info.o player.o actions.o bindings.o 
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
+	echo "Cannot test ncurses based stuff"
+
 clean:
 	rm -f *.o
 	rm -f views/*.o
@@ -14,12 +20,6 @@ clean:
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
-
-application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
-	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
-	views/help.o views/info.o player.o actions.o bindings.o 
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
-	echo "Cannot test ncurses based stuff"
 
 # ============================================================================
 # Views

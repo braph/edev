@@ -1,11 +1,12 @@
 #include "../widgets/listwidget.hpp"
+
 #include "../config.hpp"
 #include "../colors.hpp"
+#include "../database.hpp"
 
-#include <map>
 #include <cstring>
 
-typedef std::map<std::string, std::string> SSMap;
+#include "rm_trackstr.cpp"
 
 using namespace UI;
 
@@ -106,72 +107,28 @@ void testTrackRenderer(const SSMap& track, const PlaylistColumns& columns) {
   refresh();
 }
 
-/*
-template<typename ItemType>
-void testListWidget(
-    ListWidget<ItemType> listWidget,
-    std::vector<ItemType> &testData)
-{
-  listWidget.setList(&testData);
-  listWidget.layout(LINES, COLS);
-  for (;;) {
-    listWidget.refresh();
-    switch (getch()) {
-      case 'k': listWidget.up();        break;
-      case 'j': listWidget.down();      break;
-      case 'K': listWidget.page_up();   break;
-      case 'J': listWidget.page_down(); break;
-      case 'g': listWidget.top();       break;
-      case 'G': listWidget.bottom();    break;
-      case 'l': listWidget.draw();      break;
-      case 'q': return;
-    }
-  }
-}
-*/
-
 int main() {
-  initscr();
+  TEST_BEGIN();
+  NCURSES_INIT();
+
   noecho();
   curs_set(0);
-  start_color();
-  use_default_colors();
-  UI::Color::init();
-  UI::Colors::init();
-  UI::Attribute::init();
   Config::init();
   //Ektoplayer::Theme.load(256);
 
-#define TRACK(number, artist, title, album, styles, bpm) \
-  { {"number", number}, \
-    {"artist", artist}, \
-    {"title",  title},  \
-    {"album",  album},  \
-    {"styles", styles}, \
-    {"bpm",    bpm} }
+  testTrackRenderer(testData[0], Config::playlist_columns);
 
-  std::vector<SSMap> testData = {
-    TRACK("01", "MyArtist", "MyTitle", "MyAlbum", "Goa,Pr", "1337"),
-    TRACK("02", "Foo",      "Bar",     "Bazzzzz", "Goa,Pr", "1337"),
-  };
+  /*
+  ListItemRenderer<std::string> renderer(COLS);
+  ListWidget<std::string> listWidget(renderer);
+  std::vector<std::string> testData = { "Hello", "This is a test string", "Foo Bar", "Muhahaha" };
+  for (int i = 0; i < 50; ++i) testData.push_back(std::to_string(i));
+  testListWidget<std::string>(listWidget, testData);
+  */
 
-  try {
-    testTrackRenderer(testData[0], Config::playlist_columns);
+  mvwaddstr(stdscr, LINES - 2, 0, "pause();");
+  pause();
 
-    /*
-    ListItemRenderer<std::string> renderer(COLS);
-    ListWidget<std::string> listWidget(renderer);
-    std::vector<std::string> testData = { "Hello", "This is a test string", "Foo Bar", "Muhahaha" };
-    for (int i = 0; i < 50; ++i) testData.push_back(std::to_string(i));
-    testListWidget<std::string>(listWidget, testData);
-    */
-
-    mvwaddstr(stdscr, LINES - 2, 0, "pause();");
-    pause();
-  } catch (const std::exception &e) {
-    std::cout << "Error: " << e.what() << std::endl;
-    return 1;
-  }
-  return 0;
+  TEST_END();
 }
 #endif

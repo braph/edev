@@ -31,9 +31,9 @@
  * database. A string is referenced using an ID, which is simply the offset
  * from the beginning of the buffer.
  *
- * Since inserting into a stringpool is expensive (the whole buffer has to be
+ * Inserting into a stringpool is expensive (the whole buffer has to be
  * searched) and the [sub]string-deduplication makes only sense on similar
- * data, we use separate pools for each column.
+ * data, so we use separate pools for each column.
  * Exception is {track,album}{title,artist,remix,style} - they all share the same
  * pool ("meta") as there is a chance that we can find duplicates there.
  *
@@ -86,6 +86,7 @@ public:
   typedef const char* ccstr;
 
   // === Column ===============================================================
+  // TODO: Implement the bitpacked vector
   typedef std::vector<int> Column;
 
   // === Base class for all tables ============================================
@@ -93,7 +94,8 @@ public:
     Database &db;
     std::vector<Column*> columns;
     Table(Database &db, std::vector<Column*> columns)
-      : db(db), columns(columns) { }
+    : db(db)
+    , columns(columns) { }
 
     size_t  size()              { return columns[0]->size();                }
     void    resize(size_t n)    { for (auto col : columns) col->resize(n);  }
