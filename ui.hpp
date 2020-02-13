@@ -4,6 +4,8 @@
 #include "unistd.h"
 #include "curses.h"
 
+#include <iostream> // XXX
+
 namespace UI {
 
 struct Size {
@@ -52,6 +54,10 @@ public:
   : pos(pos), size(size), visible(visible)
   {
   }
+
+#if PEDANTIC_FREE
+  virtual ~Widget() {};
+#endif
 };
 
 class Window : public Widget {
@@ -61,6 +67,12 @@ public:
     keypad(win, true);
     getmaxyx(win, size.height, size.width);
   }
+
+#if PEDANTIC_FREE
+ ~Window() {
+   delwin(win);
+ }
+#endif
 
   void layout(Pos pos, Size size) {
     if (size != this->size) {
@@ -95,6 +107,12 @@ public:
     pad_minrow = 0;
     pad_mincol = 0;
   }
+
+#if PEDANTIC_FREE
+ ~Pad() {
+   delwin(win);
+ }
+#endif
 
   void noutrefresh() {
     pnoutrefresh(win, pad_minrow, pad_mincol, pos.y, pos.x,

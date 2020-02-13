@@ -5,6 +5,7 @@
 
 #include "splash.hpp"
 #include "help.hpp"
+#include "info.hpp"
 #include "progressbar.hpp"
 #include "playinginfo.hpp"
 #include "tabbar.hpp"
@@ -22,6 +23,7 @@ public:
   Views::TabBar         tabBar;
   UI::StackedContainer  windows;
   Views::Splash         splash;
+  Views::Info           info;
   Views::Help           help;
   MainWindow(Database&);
   void layout(UI::Pos, UI::Size);

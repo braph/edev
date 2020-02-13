@@ -5,19 +5,22 @@
 using namespace Views;
 
 TabBar :: TabBar()
-: UI::Window(), current(0)
+: UI::Window(), _current(0)
 {
 }
 
-void TabBar :: add(const std::string &label) {
-  tabs.push_back(label);
+void TabBar :: addTab(const std::string &label) {
+  _tabs.push_back(label);
   draw();
 }
 
-void TabBar :: select(unsigned int index) {
-  index = index % tabs.size();
-  current = index;
+void TabBar :: setCurrentIndex(int index) {
+  _current = index % _tabs.size();
   draw();
+}
+
+int TabBar :: currentIndex() {
+  return _current;
 }
 
 void TabBar :: layout(UI::Pos pos, UI::Size size) {
@@ -37,8 +40,8 @@ void TabBar :: draw() {
   wmove(win, 0, 0);
 
   unsigned int i = 0;
-  for (const auto &label : tabs) {
-    if (i++ == current)
+  for (const auto &label : _tabs) {
+    if (i++ == _current)
       wattrset(win, Theme::get(Theme::TABBAR_SELECTED));
     else
       wattrset(win, Theme::get(Theme::TABBAR_UNSELECTED));
@@ -79,11 +82,11 @@ int main() {
   TabBar b;
   b.layout({0,0}, {LINES,COLS});
   for (auto s : {"Tab1", "Tab2", "Tab3"})
-    b.add(s);
+    b.addTab(s);
 
   for (;;)
     for (int i = 0; i < 3; ++i) {
-      b.select(i);
+      b.setCurrentIndex(i);
       b.noutrefresh();
       doupdate();
       usleep(500 * 1000);

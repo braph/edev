@@ -20,6 +20,11 @@
   X(PLAYINGINFO_TOGGLE, "playinginfo.toggle") \
   X(PROGRESSBAR_TOGGLE, "progressbar.toggle") \
   X(TABBAR_TOGGLE,      "tabbar.toggle")      \
+  X(TABS_NEXT,          "tabs.next")          \
+  X(TABS_PREV,          "tabs.prev")          \
+  X(SPLASH_SHOW,        "splash.show")        \
+  X(HELP_SHOW,          "help.show")          \
+  X(INFO_SHOW,          "info.show")          \
 
 class Actions {
 public:

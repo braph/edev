@@ -23,6 +23,7 @@ public:
 
   void play();
   void play(const std::string&);
+  void stop();
   void pause();
   void toggle();
   void set_position(unsigned);

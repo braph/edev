@@ -9,20 +9,20 @@ void init() {
   _['f']                  = _[KEY_RIGHT]  = Actions::PLAYER_FORWARD;
   _['b']                  = _[KEY_LEFT]   = Actions::PLAYER_BACKWARD;
 
-  //_['`']     = _['^']                     = SPLASH__SHOW;
+  _['`']     = _['^']                     = Actions::SPLASH_SHOW;
   //_['1']                                  = PLAYLIST__SHOW;
   //_['2']                                  = BROWSER__SHOW;
-  //_['3']                                  = INFO__SHOW;
-  //_['4']                  = _[KEY_F1]     = HELP__SHOW;
+  _['3']                                  = Actions::INFO_SHOW;
+  _['4']                  = _[KEY_F(1)]   = Actions::HELP_SHOW;
   _['!']     = _['\\']    = _[KEY_F(2)]   = Actions::PLAYINGINFO_TOGGLE;
   _['%']     = _['~']     = _[KEY_F(3)]   = Actions::PROGRESSBAR_TOGGLE;
   _['=']                  = _[KEY_F(4)]   = Actions::TABBAR_TOGGLE;
-  //_['s']                                  = PLAYER__STOP;
-  //_['p']                                  = PLAYER__TOGGLE;
+  _['s']                                  = Actions::PLAYER_STOP;
+  _['p']                                  = Actions::PLAYER_TOGGLE;
   //_['>']                                  = PLAYER__PLAY_NEXT;
   //_['<']                                  = PLAYER__PLAY_PREV;
-  //_['l']  = _['}']  = _['\t']             = TABS__NEXT;
-  //_['h']  = _['{']  = _[KEY_BTAB]         = TABS__PREV;
+  _['l']  = _['}']  = _['\t']             = Actions::TABS_NEXT;
+  _['h']  = _['{']  = _[KEY_BTAB]         = Actions::TABS_PREV;
   _[C('l')]                               = Actions::REDRAW;
   //_[C('r')]                               = RELOAD;
   //_[C('U')]                               = UPDATE;

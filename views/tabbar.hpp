@@ -13,13 +13,15 @@ namespace Views {
 class TabBar : public UI::Window {
 public:
   TabBar();
-  void layout(UI::Pos, UI::Size);
   void draw();
-  void add(const std::string&);
-  void select(unsigned int);
+  void layout(UI::Pos, UI::Size);
+  void addTab(const std::string&);
+  int currentIndex();
+  void setCurrentIndex(int);
+  size_t count();
 private:
-  std::vector<std::string> tabs;
-  unsigned int current;
+  std::vector<std::string> _tabs;
+  unsigned int _current;
 };
 
 } // namespace Views

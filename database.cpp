@@ -115,7 +115,7 @@ void Database :: Table :: save(std::ofstream &fs) {
     Saver::write(fs, (char*) col->data(), 8*sizeof(int), col->size());
 }
 
-// XXX: description
+/* Find a record by its URL or create one if it could not be found */
 template<typename TRecord, typename TTable>
 static TRecord find_or_create(TTable &table, StringPool &pool, const char *url) {
   bool newly_inserted = false;

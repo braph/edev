@@ -5,8 +5,10 @@
 #include "actions.hpp"
 
 namespace Bindings {
-  void init();
-  extern unsigned char global[KEY_MAX];
-}
+
+void init();
+extern unsigned char global[KEY_MAX];
+
+} // namespace Bindings
 
 #endif

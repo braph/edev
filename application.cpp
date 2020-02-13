@@ -6,15 +6,15 @@
 #include "config.hpp"
 #include "colors.hpp"
 #include "theme.hpp"
-#include "xml.hpp"
 #include "views/mainwindow.hpp"
 
 #include <unistd.h>  // TODO: Remove me
 #include <signal.h>
 #include <glob.h>
 
-#include <fstream>
 #include <boost/filesystem/operations.hpp>
+
+#include <fstream>
 
 namespace fs = boost::filesystem;
 using namespace Ektoplayer;
@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
   catch (const char *e)           { err = e;                        }
   catch (...)                     { err = "Unknown exception type"; }
   endwin();
+  delwin(stdscr);
 
   if (err.size())
     std::cout << emsg << ": " << err << std::endl;
@@ -94,7 +95,25 @@ static void init() {
   logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
   std::cerr.rdbuf(logfile->rdbuf());
 
-  Config::database_file = "/tmp/ekto-test.db"; // XXX TODO!
+  // We know that the database will *at least* hold this amount of data,
+  // so pre allocate the buffers. (Numbers from February, 2020)
+#define STYLES 25
+#define ALBUMS 2078
+#define TRACKS 14402
+  database.styles.reserve(STYLES);
+  database.albums.reserve(ALBUMS);
+  database.tracks.reserve(TRACKS);
+  // These are the average string lengths.
+  database.pool_desc.reserve(ALBUMS * 720);
+  database.pool_mp3_url.reserve(ALBUMS * 39);
+  database.pool_wav_url.reserve(ALBUMS * 39);
+  database.pool_flac_url.reserve(ALBUMS * 39);
+  database.pool_cover_url.reserve(ALBUMS * 35);
+  database.pool_album_url.reserve(ALBUMS * 22);
+  database.pool_track_url.reserve(TRACKS * 30);
+  database.pool_style_url.reserve(STYLES * 7);
+  database.pool_meta.reserve(ALBUMS * 15 + TRACKS * 25);
+
   emsg = "Database file corrupted? Try again, then delete it. Sorry!";
   if (fs::exists(Config::database_file))
     database.load(Config::database_file);
@@ -122,7 +141,7 @@ static void program() {
   Views::MainWindow mainwindow(database);
   Actions actions(mainwindow, database, player);
 
-  player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
+  //player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
 
   int c;
 MAINLOOP:
@@ -151,12 +170,14 @@ MAINLOOP:
   WINDOW *win = mainwindow.active_win();
   wtimeout(win, 700);
   c = wgetch(win);
-  if (Bindings::global[c]) {
-    c = actions.call((Actions::ActionID) Bindings::global[c]);
-    if (c == Actions::QUIT)
-      return;
-    else if (c == Actions::REDRAW)
-      redraw = true;
+  if (c != ERR) {
+    if (Bindings::global[c]) {
+      c = actions.call((Actions::ActionID) Bindings::global[c]);
+      if (c == Actions::QUIT)
+        return;
+      else if (c == Actions::REDRAW)
+        redraw = true;
+    }
   }
 
 goto MAINLOOP;

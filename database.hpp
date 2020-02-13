@@ -423,29 +423,10 @@ public:
   , pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url, &pool_track_url,
       &pool_cover_url, &pool_mp3_url, &pool_wav_url, &pool_flac_url})
   {
-    // Records with ID 0 are used as NULL records. Create them here.
+    // Records with ID 0 represent a NULL value. Create them here.
     styles.find("", true);
     albums.find("", true);
     tracks.find("", true);
-
-    // We know that the database will *at least* hold this amount of data,
-    // so pre allocate the buffers. (Numbers from February, 2020)
-#define STYLES 25
-#define ALBUMS 2078
-#define TRACKS 14402
-    styles.reserve(STYLES);
-    albums.reserve(ALBUMS);
-    tracks.reserve(TRACKS);
-    // These are the average string lengths.
-    pool_desc.reserve(ALBUMS * 720);
-    pool_mp3_url.reserve(ALBUMS * 39);
-    pool_wav_url.reserve(ALBUMS * 39);
-    pool_flac_url.reserve(ALBUMS * 39);
-    pool_cover_url.reserve(ALBUMS * 35);
-    pool_album_url.reserve(ALBUMS * 22);
-    pool_track_url.reserve(TRACKS * 30);
-    pool_style_url.reserve(STYLES * 7);
-    pool_meta.reserve(ALBUMS * 15 + TRACKS * 25);
   }
 
   Result<Styles, Styles::Style> getStyles() {

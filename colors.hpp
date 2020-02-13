@@ -9,32 +9,34 @@
 #include <cstdint>
 
 namespace UI {
-  class Color {
-    public:
-      struct mapping { const char* name; short value; };
-      static mapping colors[];
 
-      static std::string to_string(short);
-      static short parse(const std::string&);
-  };
+class Color {
+public:
+  struct mapping { const char* name; short value; };
+  static mapping colors[];
 
-  class Attribute {
-    public:
-      struct mapping { const char* name; unsigned int value; };
-      static mapping attributes[];
+  static std::string to_string(short);
+  static short parse(const std::string&);
+};
 
-      static std::string to_string(unsigned int);
-      static int parse(const std::string&);
-  };
+class Attribute {
+public:
+  struct mapping { const char* name; unsigned int value; };
+  static mapping attributes[];
 
-  class Colors {
-    private:
-      static std::vector<std::pair<int32_t, int32_t>> color_pairs;
-      static int id;
-    public:
-      static int create_color_pair(short, short);
-      static int set(short fg, short bg = -1, int attr = 0);
-  };
-}
+  static std::string to_string(unsigned int);
+  static int parse(const std::string&);
+};
+
+class Colors {
+public:
+  static int create_color_pair(short, short);
+  static int set(short fg, short bg = -1, int attr = 0);
+private:
+  static std::vector<std::pair<int32_t, int32_t>> color_pairs;
+  static int id;
+};
+
+} // namespace UI
 
 #endif

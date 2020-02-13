@@ -258,7 +258,7 @@ void Updater :: insert_browsepage(const BrowsePage& page) {
 #if PERFORMANCE_TEST
 #include <fstream>
 #include <streambuf>
-  for (int i = 1; i <= 416; ++i) { // XXX-4
+  for (int i = 1; i <= 416; ++i) {
     std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
     std::string src((std::istreambuf_iterator<char>(t)),
                      std::istreambuf_iterator<char>());

@@ -2,13 +2,11 @@
 
 #include "common.hpp"
 
-#include <iostream>//XXX
-
-namespace bp = boost::process;
+#include <iostream> //XXX
 
 Mpg123Player :: Mpg123Player()
 : audio_system("jack,pulse,alsa,oss")
-, flags(0)
+, flags(FLAG_NEED_FORMAT)
 , state(STATE_STOPPED)
 , channels(0)
 , sample_rate(0)
@@ -20,6 +18,10 @@ Mpg123Player :: Mpg123Player()
 
 Mpg123Player :: ~Mpg123Player() {
   proc.terminate();
+  in.close();
+  out.close();
+  if (thr.joinable())
+    thr.join();
 }
 
 void Mpg123Player :: play() {
@@ -33,12 +35,15 @@ void Mpg123Player :: play(const std::string &_file) {
   if (proc.valid() && proc.running())
     return;
 
-  flags = 0;
+  flags = FLAG_NEED_FORMAT;
   sample_rate = 0;
 
-  proc = bp::child(
-    bp::search_path("mpg123"), "-o", audio_system, "--fuzzy", "-R",
-    bp::std_in < in, bp::std_out > out, bp::std_err > err
+  proc = boost::process::child(
+    boost::process::search_path("mpg123"),
+    "-o", audio_system, "--fuzzy", "-R",
+    boost::process::std_in  < in,
+    boost::process::std_out > out,
+    boost::process::std_err > err
   );
 
   in << "L " << file << std::endl;
@@ -68,13 +73,16 @@ void Mpg123Player :: toggle() {
   in << 'P' << std::endl;
 }
 
+void Mpg123Player :: stop() {
+  in << 'S' << std::endl;
+}
+
 void Mpg123Player :: poll() {
   if (flags & FLAG_NEED_FORMAT) {
     flags &= ~FLAG_NEED_FORMAT;
     in << "FORMAT" << std::endl;
-  } else {
-    in << "SAMPLE" << std::endl;
   }
+  in << "SAMPLE" << std::endl;
 }
 
 static inline bool check_and_advance(const char **s, const char *prefix, size_t len) {
