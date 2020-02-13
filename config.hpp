@@ -8,7 +8,7 @@
 struct PlaylistColumnFormat {
   enum Justification { Right, Left };
 
-  std::string tag;
+  Database::ColumnID tag;
   short fg;
   short bg;
   short size;
@@ -16,7 +16,7 @@ struct PlaylistColumnFormat {
   enum Justification justify;
 
   PlaylistColumnFormat()
-    : fg(-1), bg(-1), size(0), relative(false), justify(Left)
+    : tag(Database::COLUMN_NONE), fg(-1), bg(-1), size(0), relative(false), justify(Left)
   {
   }
 };

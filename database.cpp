@@ -210,7 +210,7 @@ DB::Field  ALBUM :: operator[](DB::ColumnID id) const {
   case DB::ALBUM_TITLE:           return DB::Field(title());
   case DB::ALBUM_ARTIST:          return DB::Field(artist());
   case DB::ALBUM_DESCRIPTION:     return DB::Field(description());
-  case DB::ALBUM_DATE:            return DB::Field(0); // TODO
+  case DB::ALBUM_DATE:            return DB::Field((int) (date() /60/60/24));
   case DB::ALBUM_DAY:             goto DATE_CONVERSION;
   case DB::ALBUM_MONTH:           goto DATE_CONVERSION;
   case DB::ALBUM_YEAR:            goto DATE_CONVERSION;
@@ -218,7 +218,6 @@ DB::Field  ALBUM :: operator[](DB::ColumnID id) const {
   case DB::ALBUM_VOTES:           return DB::Field(votes());
   case DB::ALBUM_DOWNLOAD_COUNT:  return DB::Field(download_count());
   }
-
 DATE_CONVERSION:
   time_t ts = date();
   struct tm t;

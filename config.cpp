@@ -12,8 +12,6 @@
 #include <cinttypes>
 #include <fstream>
 
-#define COLUMN_NAMES { "number", "artist", "album", "title", "styles", "bpm", "year" }
-
 static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP =
   "<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
 
@@ -132,15 +130,15 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
         fmt.relative = (opt.back() == '%');
       }
       else {
-        if (!in_list<std::string>(opt, COLUMN_NAMES))
-          throw std::invalid_argument(opt + ": Invalid column name");
-        fmt.tag = opt;
+        fmt.tag = (Database::ColumnID) Database::columnIDFromStr(opt);
+        if (fmt.tag == Database::COLUMN_NONE)
+          throw std::invalid_argument(opt + ": No such tag");
       }
     }
 
     if (! fmt.size)
       throw std::invalid_argument(column + ": Missing column size");
-    if (fmt.tag.empty())
+    if (fmt.tag == Database::COLUMN_NONE)
       throw std::invalid_argument(column + ": Missing tag name");
 
     result.push_back(fmt);

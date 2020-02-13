@@ -353,6 +353,7 @@ public:
     else if (s == "remix")        return TRACK_REMIX;
     else if (s == "number")       return TRACK_NUMBER;
     else if (s == "bpm")          return TRACK_BPM;
+    else if (s == "styles")       return TRACK_NUMBER; // TODO
     else                          return COLUMN_NONE;
   }
 
@@ -389,19 +390,13 @@ public:
     Field        field;
   public:
     Where(ColumnID column, Operator op, int value)
-    : column(column)
-    , op(op)
-    , field(value) {}
+    : column(column), op(op), field(value) {}
 
     Where(ColumnID column, Operator op, float value)
-    : column(column)
-    , op(op)
-    , field(value) {}
+    : column(column), op(op), field(value) {}
 
     Where(ColumnID column, Operator op, const char* value)
-    : column(column)
-    , op(op)
-    , field(value) {}
+    : column(column), op(op), field(value) {}
 
     template<typename T>
     bool operator()(const T& t) {
