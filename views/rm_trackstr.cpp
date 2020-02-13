@@ -1,4 +1,18 @@
 
+
+// TODO: Fix this fucking shit asshoel
+static const char* trackField(Database::Tracks::Track track, int id) {
+  static char buf[32];
+  Database::Field f = track[(Database::TrackColumnID) id];
+  switch (f.type) {
+  case Database::Field::STRING:  return f.value.s;
+  case Database::Field::INTEGER: sprintf(buf, "%d", f.value.i); return buf;
+  case Database::Field::FLOAT:   sprintf(buf, "%f", f.value.f); return buf;
+  default:                       return "REPORT A BUG";
+  }
+}
+
+#if 0
 static const char* trackField(Database::Tracks::Track track, Database::ColumnID id) {
 #define SPRINTF(FMT, ...) (sprintf(buf, FMT, __VA_ARGS__), buf)
 #define DB Database
@@ -22,4 +36,5 @@ static const char* trackField(Database::Tracks::Track track, Database::ColumnID 
     case DB::TRACK_BPM:             return SPRINTF("%d", track.bpm());
   }
 }
+#endif
 

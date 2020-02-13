@@ -46,6 +46,10 @@
  * machines/architectures this should be fine. A minimal form of data
  * validation is performed, so the database may be rebuilt on errors.
  * And after all the database is more like a cache.
+ *
+ * XXX NOTE XXX
+ * Since the first entry of each table (ID = 0) is used as a NULL record,
+ * the row count will be off by one. I don't think that I'll fix that...
  */
 
 /* === GenericIterator ===
@@ -85,6 +89,83 @@ class Database {
 public:
   typedef const char* ccstr;
 
+  /* ==========================================================================
+   * ColumnIDs
+   *
+   * We can access a single field of a record using the index operator[].
+   * Since every Record class implements its own version of that method
+   * we have to define an enum for each class.
+   *
+   * Methods like `Result::order_by` refer to the `ColumnID` enum, though. WRANG XXX TODO
+   * ========================================================================*/
+
+  enum ColumnID {
+    COLUMN_NONE = 0
+  };
+
+  enum StyleColumnID {
+    STYLE_URL = COLUMN_NONE + 1,
+    STYLE_NAME,
+  };
+
+  enum AlbumColumnID {
+    ALBUM_URL = STYLE_NAME + 1,
+    ALBUM_TITLE,
+    ALBUM_ARTIST,
+    ALBUM_COVER_URL,
+    ALBUM_DESCRIPTION,
+    ALBUM_DATE,
+    ALBUM_RATING,
+    ALBUM_VOTES,
+    ALBUM_DOWNLOAD_COUNT,
+  };
+
+  enum TrackColumnID {
+    TRACK_URL = ALBUM_DOWNLOAD_COUNT + 1,
+    TRACK_TITLE,
+    TRACK_ARTIST,
+    TRACK_REMIX,
+    TRACK_NUMBER,
+    TRACK_BPM,
+  };
+
+  /* ==========================================================================
+   * The field struct is basically a union type.
+   * ========================================================================*/
+  struct Field {
+    enum Type {
+      STRING,
+      INTEGER,
+      FLOAT,
+    };
+
+    Type type;
+    union {
+      ccstr s;
+      int i;
+      float f;
+    } value;
+
+    inline Field(ccstr s) { setString(s);  }
+    inline Field(int i)   { setInteger(i); }
+    inline Field(float f) { setFloat(f);   }
+
+    inline void setString(ccstr s) {
+      this->value.s = s;
+      this->type = STRING;
+    }
+
+    inline void setInteger(int i) {
+      this->value.i = i;
+      this->type = INTEGER;
+    }
+
+    inline void setFloat(float f) {
+      this->value.f = f;
+      this->type = FLOAT;
+    }
+  };
+
   // === Column ===============================================================
   // TODO: Implement the bitpacked vector
   typedef std::vector<int> Column;
@@ -97,9 +178,9 @@ public:
     : db(db)
     , columns(columns) { }
 
-    size_t  size()              { return columns[0]->size();                }
-    void    resize(size_t n)    { for (auto col : columns) col->resize(n);  }
-    void    reserve(size_t n)   { for (auto col : columns) col->reserve(n); }
+    size_t  size()              { return columns[0]->size();            }
+    void    resize(size_t n)    { for (auto c : columns) c->resize(n);  }
+    void    reserve(size_t n)   { for (auto c : columns) c->reserve(n); }
 
     void load(std::ifstream&);
     void save(std::ofstream&);
@@ -113,7 +194,8 @@ public:
     inline bool valid() const     { return !!id; }
     inline operator bool() const  { return !!id; }
     Record& operator=(const Record &rhs) { id = rhs.id; return *this; }
-    void swap(Record &rhs) { size_t tmp = id; id = rhs.id; rhs.id = tmp; } // XXX TODO
+    bool operator!=(const Record &rhs) const { return id != rhs.id; }
+    bool operator==(const Record &rhs) const { return id != rhs.id; }
   };
 
   /* ==========================================================================
@@ -134,6 +216,8 @@ public:
       // SETTER
       void  url(ccstr);
       void  name(ccstr);
+      // XXX
+      Field operator[](StyleColumnID);
     };
 
     Style operator[](size_t id) { return Style(db, id); }
@@ -189,6 +273,8 @@ public:
       void    votes(int);
       void    download_count(int);
       void    styles(int);
+      // XXX
+      Field operator[](AlbumColumnID);
     };
 
     Album operator[](size_t id) { return Album(db, id); }
@@ -225,6 +311,8 @@ public:
       void    number(int);
       void    bpm(int);
       void    album_id(int);
+      // XXX
+      Field operator[](TrackColumnID);
     };
 
     Track operator[](size_t id) { return Track(db, id); }
@@ -235,31 +323,7 @@ public:
    * Order-By + Where
    * ========================================================================*/
 
-  enum ColumnID {
-    STYLE_URL,
-    STYLE_NAME,
-
-    ALBUM_URL,
-    ALBUM_TITLE,
-    ALBUM_ARTIST,
-    ALBUM_COVER_URL,
-    ALBUM_DESCRIPTION,
-    ALBUM_DATE,
-    ALBUM_RATING,
-    ALBUM_VOTES,
-    ALBUM_DOWNLOAD_COUNT,
-
-    TRACK_URL,
-    TRACK_TITLE,
-    TRACK_ARTIST,
-    TRACK_REMIX,
-    TRACK_NUMBER,
-    TRACK_BPM,
-
-    NPOS
-  };
-
-  static ColumnID columnIDFromStr(const std::string &s) {
+  static int columnIDFromStr(const std::string &s) {
     /**/ if (s == "style")        return STYLE_NAME;
     else if (s == "album")        return ALBUM_TITLE;
     else if (s == "album_artist") return ALBUM_ARTIST;
@@ -276,7 +340,7 @@ public:
     else if (s == "remix")        return TRACK_REMIX;
     else if (s == "number")       return TRACK_NUMBER;
     else if (s == "bpm")          return TRACK_BPM;
-    else                          return NPOS;
+    else                          return COLUMN_NONE;
   }
 
   enum SortOrder {
@@ -350,9 +414,11 @@ public:
     std::vector<int> indices;
     Result(TStore &store) : store(store) {
       indices.reserve(store.size());
-      for (size_t i = 1; i < store.size(); ++i)
+      for (size_t i = 1 /* Skip NULL record */; i < store.size(); ++i)
         indices.push_back(i);
     }
+
+    inline size_t size() { return indices.size(); }
 
     TRecord operator[](size_t id) {
       return store[indices[id]];

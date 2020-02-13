@@ -177,8 +177,8 @@ static PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
       if (node.children())
         throw std::invalid_argument(tag + ": THIS NODE HAS CHILDREN");
 
-      fmt.tag = Database::columnIDFromStr(tag);
-      if (fmt.tag == Database::NPOS)
+      fmt.tag = (Database::ColumnID) Database::columnIDFromStr(tag);
+      if (fmt.tag == Database::COLUMN_NONE)
         throw std::invalid_argument(tag + ": No such tag");
     }
 

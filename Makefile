@@ -1,8 +1,8 @@
 DEBUG 				= 1 # 0|1
 PEDANTIC_FREE = 1 # 0|1
 
-#CXXFLAGS   := -Og -g -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
-CXXFLAGS   := -O2 -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+CXXFLAGS   := -Og -g -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+#CXXFLAGS   := -O2 -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
 CPPFLAGS := $(shell xml2-config --cflags)
 LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 

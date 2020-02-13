@@ -139,6 +139,11 @@ NOT_FOUND:
   }
 }
 
+#define DB Database // TODO!
+#define STYLE Database :: Styles :: Style
+#define ALBUM Database :: Albums :: Album
+#define TRACK Database :: Tracks :: Track
+
 /* ============================================================================
  * Database :: Styles
  * ==========================================================================*/
@@ -147,12 +152,19 @@ Database::Styles::Style Database :: Styles :: find(const char *url, bool create)
   return find_or_create<Database::Styles::Style>(*this, db.pool_style_url, url);
 }
 
-#define STYLE Database :: Styles :: Style
+// GETTER
 ccstr   STYLE :: url()  const   { return STR_GET(style_url, db.styles.url[id]);  }
 ccstr   STYLE :: name() const   { return STR_GET(meta,      db.styles.name[id]); }
-
+// SETTER
 void    STYLE :: url(ccstr s)   { STR_SET(style_url, db.styles.url[id],  s);  }
 void    STYLE :: name(ccstr s)  { STR_SET(meta,      db.styles.name[id], s);  }
+// XXX
+DB::Field   STYLE :: operator[](DB::StyleColumnID id) {
+  switch (id) {
+  case DB::STYLE_URL:   return DB::Field("TODO");
+  case DB::STYLE_NAME:  return DB::Field("TODO");
+  }
+}
 
 /* ============================================================================
  * Database :: Albums
@@ -162,7 +174,7 @@ Database::Albums::Album Database::Albums::find(const char *url, bool create) {
   return find_or_create<Database::Albums::Album>(*this, db.pool_album_url, url);
 }
 
-#define ALBUM Database :: Albums :: Album
+// GETTER
 ccstr  ALBUM::url()            const { return STR_GET(album_url,  db.albums.url[id]);         }
 ccstr  ALBUM::title()          const { return STR_GET(meta,       db.albums.title[id]);       }
 ccstr  ALBUM::artist()         const { return STR_GET(meta,       db.albums.artist[id]);      }
@@ -176,7 +188,7 @@ float  ALBUM::rating()         const { return (float) db.albums.rating[id] / 100
 int    ALBUM::votes()          const { return db.albums.votes[id];                    }
 int    ALBUM::download_count() const { return db.albums.download_count[id];           }
 int    ALBUM::styles()         const { return db.albums.styles[id];                   }
-
+// SETTER
 void   ALBUM::url(ccstr s)          { STR_SET(album_url,    db.albums.url[id],         s); }
 void   ALBUM::title(ccstr s)        { STR_SET(meta,         db.albums.title[id],       s); }
 void   ALBUM::artist(ccstr s)       { STR_SET(meta,         db.albums.artist[id],      s); }
@@ -190,6 +202,18 @@ void   ALBUM::rating(float i)       { db.albums.rating[id] = i * 100;           
 void   ALBUM::votes(int i)          { db.albums.votes[id] = i;                  }
 void   ALBUM::download_count(int i) { db.albums.download_count[id] = i;         }
 void   ALBUM::styles(int i)         { db.albums.styles[id] = i;                 }
+// XXX
+DB::Field  ALBUM :: operator[](DB::AlbumColumnID id) {
+  switch (id) {
+  case DB::ALBUM_TITLE:           return DB::Field(title());
+  case DB::ALBUM_ARTIST:          return DB::Field(artist());
+  case DB::ALBUM_DESCRIPTION:     return DB::Field(description());
+  case DB::ALBUM_DATE:            return DB::Field(0); // TODO
+  case DB::ALBUM_RATING:          return DB::Field(rating());
+  case DB::ALBUM_VOTES:           return DB::Field(votes());
+  case DB::ALBUM_DOWNLOAD_COUNT:  return DB::Field(download_count());
+  }
+}
 
 /* ============================================================================
  * Database :: Tracks
@@ -199,7 +223,7 @@ Database::Tracks::Track Database::Tracks::find(const char* url, bool create) {
   return find_or_create<Database::Tracks::Track>(*this, db.pool_track_url, url);
 }
 
-#define TRACK Database :: Tracks :: Track
+// GETTER
 ccstr TRACK :: url()      const { return STR_GET(track_url, db.tracks.url[id]);      }
 ccstr TRACK :: title()    const { return STR_GET(meta,      db.tracks.title[id]);    }
 ccstr TRACK :: artist()   const { return STR_GET(meta,      db.tracks.artist[id]);   }
@@ -208,14 +232,28 @@ int   TRACK :: number()   const { return db.tracks.number[id];                }
 int   TRACK :: bpm()      const { return db.tracks.bpm[id];                   }
 int   TRACK :: album_id() const { return db.tracks.album_id[id];              }
 ALBUM TRACK :: album()    const { return db.albums[db.tracks.album_id[id]];   }
-
+// SETTER
 void  TRACK :: url(ccstr s)     { STR_SET(track_url, db.tracks.url[id],    s); }
 void  TRACK :: title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s); }
 void  TRACK :: artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s); }
 void  TRACK :: remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s); }
-void  TRACK :: number(int i)    { db.tracks.number[id] =           i;         }
-void  TRACK :: bpm(int i)       { db.tracks.bpm[id] =              i;         }
-void  TRACK :: album_id(int i)  { db.tracks.album_id[id] =         i;         }
+void  TRACK :: number(int i)    { db.tracks.number[id] = i;                    }
+void  TRACK :: bpm(int i)       { db.tracks.bpm[id] = i;                       }
+void  TRACK :: album_id(int i)  { db.tracks.album_id[id] = i;                  }
+// XXX
+DB::Field TRACK :: operator[](DB::TrackColumnID id) {
+  switch (id) {
+  //case TRACK_NUMBER:        return DB::Field(0); // TODO
+  //case TRACK_NUMBER:        return DB::Field(0); // TODO
+  //case TRACK_NUMBER:        return DB::Field(0); // TODO
+  case DB::TRACK_TITLE:     return DB::Field(title());
+  case DB::TRACK_ARTIST:    return DB::Field(artist());
+  case DB::TRACK_REMIX:     return DB::Field(remix());
+  case DB::TRACK_NUMBER:    return DB::Field(number());
+  case DB::TRACK_BPM:       return DB::Field(bpm());
+  default:                  return album()[(DB::AlbumColumnID) id];
+  }
+}
 
 /* ============================================================================
  * Database :: OrderBy
@@ -297,8 +335,55 @@ int Database :: Where :: compare(const Styles::Style &s) {
 
 // ============================================================================
 #if TEST_DATABASE
-#include <iostream>
+#include "test.hpp"
+
+template<typename T1, typename T2>
+bool result_equals_vector(T1 &result, T2 &vec) {
+  if (result.size() != vec.size())
+    return false;
+
+  for (size_t i = 0; i < result.size(); ++i)
+    if (result[i][Database::TRACK_TITLE].value.s != vec[i])
+      return false;
+
+  return true;
+}
+
 int main () {
+  TEST_BEGIN();
+
+  Database db;
+  db.load(TEST_DB);
+
+  if (db.tracks.size() < 100)
+    throw std::runtime_error("Sorry, I need a database with some data ...");
+
+  auto styles = db.getStyles();
+  auto albums = db.getAlbums();
+  auto tracks = db.getTracks();
+
+  // XXX Row count is off by one ...
+  assert (styles.size() + 1 == db.styles.size());
+  assert (albums.size() + 1 == db.albums.size());
+  assert (tracks.size() + 1 == db.tracks.size());
+
+  std::vector<const char*> track_titles;
+  track_titles.reserve(tracks.size());
+  for (auto track : tracks)
+    track_titles.push_back(track[Database::TRACK_TITLE].value.s);
+
+  // Duplication succeded
+  assert(result_equals_vector(tracks, track_titles));
+
+  // Sorting succeeded
+  std::sort(track_titles.begin(), track_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
+  tracks.order_by((Database::ColumnID) Database::TRACK_TITLE, Database::ASCENDING);
+  assert(result_equals_vector(tracks, track_titles));
+
+  for (size_t i = 0; i < 10; ++i)
+    std::cout << tracks[i].title() << " in album " << tracks[i].album().title() << std::endl;
+
+#if 0
   Database db;
   auto style = db.styles.find("foo", true);
   style.name("Foo-Style");
@@ -308,5 +393,8 @@ int main () {
   for (auto s : db.getStyles()) {
     std::cout << s.url() << ": " << s.name() << std::endl;
   }
+#endif
+
+  TEST_END();
 }
 #endif

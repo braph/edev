@@ -129,10 +129,10 @@ int main() {
   
   PlayingInfo p(db);
   p.layout({0,0}, {LINES, COLS});
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 100; ++i) {
     p.setTrack(db.tracks[i]);
 
-    for (int pos = 0; pos < 300; pos+=10) {
+    for (int pos = 0; pos < 300; pos+=100) {
       p.setPositionAndLength(pos, 300);
       p.noutrefresh();
       doupdate();
