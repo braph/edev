@@ -6,6 +6,7 @@
 #include <array>
 #include <vector>
 #include <string>
+#include <cstring>
 #include <fstream>
 #include <algorithm>
 
@@ -92,11 +93,15 @@ public:
   /* ==========================================================================
    * ColumnIDs
    *
+   * TODO:
    * We can access a single field of a record using the index operator[].
    * Since every Record class implements its own version of that method
    * we have to define an enum for each class.
    *
-   * Methods like `Result::order_by` refer to the `ColumnID` enum, though. WRANG XXX TODO
+   * Not all of these IDs correspond to a real field. They are merely
+   * views on another column (e.g. like `ALBUM_MONTH` -> `ALBUM_DATE`).
+   *
+   * Methods like `Result::order_by` refer to the `ColumnID` enum, though.
    * ========================================================================*/
 
   enum ColumnID {
@@ -115,6 +120,9 @@ public:
     ALBUM_COVER_URL,
     ALBUM_DESCRIPTION,
     ALBUM_DATE,
+    ALBUM_DAY,   //
+    ALBUM_MONTH, // View
+    ALBUM_YEAR,  //
     ALBUM_RATING,
     ALBUM_VOTES,
     ALBUM_DOWNLOAD_COUNT,
@@ -164,6 +172,14 @@ public:
       this->value.f = f;
       this->type = FLOAT;
     }
+
+    int compare(const Field &rhs) const {
+      switch (type) {
+      case STRING:  return strcmp(this->value.s, rhs.value.s);
+      case INTEGER: return this->value.i == rhs.value.i;
+      case FLOAT:   return this->value.f == rhs.value.f;
+      }
+    }
   };
 
   // === Column ===============================================================
@@ -211,13 +227,12 @@ public:
     struct Style : public Record {
       Style(Database &db, size_t id) : Record(db, id) {}
       // GETTER
+      Field operator[](ColumnID) const;
       ccstr url()   const;
       ccstr name()  const;
       // SETTER
       void  url(ccstr);
       void  name(ccstr);
-      // XXX
-      Field operator[](StyleColumnID);
     };
 
     Style operator[](size_t id) { return Style(db, id); }
@@ -246,19 +261,20 @@ public:
     struct Album : public Record {
       Album(Database &db, size_t id) : Record(db, id) {}
       // GETTER
-      ccstr   url()               const;
-      ccstr   title()             const;
-      ccstr   artist()            const;
-      ccstr   cover_url()         const;
-      ccstr   description()       const;
-      ccstr   archive_mp3_url()   const;
-      ccstr   archive_wav_url()   const;
-      ccstr   archive_flac_url()  const;
-      time_t  date()              const;
-      float   rating()            const;
-      int     votes()             const;
-      int     download_count()    const;
-      int     styles()            const;
+      Field   operator[](ColumnID) const;
+      ccstr   url()                const;
+      ccstr   title()              const;
+      ccstr   artist()             const;
+      ccstr   cover_url()          const;
+      ccstr   description()        const;
+      ccstr   archive_mp3_url()    const;
+      ccstr   archive_wav_url()    const;
+      ccstr   archive_flac_url()   const;
+      time_t  date()               const;
+      float   rating()             const;
+      int     votes()              const;
+      int     download_count()     const;
+      int     styles()             const;
       // SETTER
       void    url(ccstr);
       void    title(ccstr);
@@ -273,8 +289,6 @@ public:
       void    votes(int);
       void    download_count(int);
       void    styles(int);
-      // XXX
-      Field operator[](AlbumColumnID);
     };
 
     Album operator[](size_t id) { return Album(db, id); }
@@ -295,6 +309,7 @@ public:
     struct Track : public Record {
       Track(Database &db, size_t id) : Record(db, id) {}
       // GETTER
+      Field   operator[](ColumnID) const;
       ccstr   url()         const;
       ccstr   title()       const;
       ccstr   artist()      const;
@@ -311,8 +326,6 @@ public:
       void    number(int);
       void    bpm(int);
       void    album_id(int);
-      // XXX
-      Field operator[](TrackColumnID);
     };
 
     Track operator[](size_t id) { return Track(db, id); }
@@ -332,9 +345,9 @@ public:
     else if (s == "rating")       return ALBUM_RATING;
     else if (s == "votes")        return ALBUM_VOTES;
     else if (s == "downloads")    return ALBUM_DOWNLOAD_COUNT;
-    else if (s == "year")         return TRACK_NUMBER; // TODO
-    else if (s == "month")        return TRACK_NUMBER; // TODO
-    else if (s == "day")          return TRACK_NUMBER; // TODO
+    else if (s == "day")          return ALBUM_DAY;
+    else if (s == "month")        return ALBUM_MONTH;
+    else if (s == "year")         return ALBUM_YEAR;
     else if (s == "title")        return TRACK_TITLE;
     else if (s == "artist")       return TRACK_ARTIST;
     else if (s == "remix")        return TRACK_REMIX;
@@ -360,15 +373,12 @@ public:
   class OrderBy {
     ColumnID  column;
     SortOrder order;
-    int compare(const Styles::Style&, const Styles::Style&);
-    int compare(const Albums::Album&, const Albums::Album&);
-    int compare(const Tracks::Track&, const Tracks::Track&);
   public:
     OrderBy(ColumnID column, SortOrder order) : column(column), order(order) {}
 
     template<typename T>
     bool operator()(const T& a, const T& b) {
-      int ret = compare(a, b);
+      int ret = a[column].compare(b[column]);
       return (order == ASCENDING ? ret < 0 : ret > 0);
     }
   };
@@ -376,27 +386,26 @@ public:
   class Where {
     ColumnID     column;
     Operator     op;
-    int          intValue;
-    const char*  strValue;
-    int compare(const Tracks::Track&);
-    int compare(const Albums::Album&);
-    int compare(const Styles::Style&);
+    Field        field;
   public:
     Where(ColumnID column, Operator op, int value)
     : column(column)
     , op(op)
-    , intValue(value)
-    , strValue("") { /* TODO: check if column is really an int */ }
+    , field(value) {}
+
+    Where(ColumnID column, Operator op, float value)
+    : column(column)
+    , op(op)
+    , field(value) {}
 
     Where(ColumnID column, Operator op, const char* value)
     : column(column)
     , op(op)
-    , intValue(0)
-    , strValue(value) { /* TODO: check if column is really a string */ }
+    , field(value) {}
 
     template<typename T>
     bool operator()(const T& t) {
-      int ret = compare(t);
+      int ret = t.compare(field);
       switch (op) {
       case EQUAL:         return ! (ret == 0);
       case UNEQUAL:       return ! (ret != 0);

@@ -158,11 +158,11 @@ ccstr   STYLE :: name() const   { return STR_GET(meta,      db.styles.name[id]);
 // SETTER
 void    STYLE :: url(ccstr s)   { STR_SET(style_url, db.styles.url[id],  s);  }
 void    STYLE :: name(ccstr s)  { STR_SET(meta,      db.styles.name[id], s);  }
-// XXX
-DB::Field   STYLE :: operator[](DB::StyleColumnID id) {
-  switch (id) {
-  case DB::STYLE_URL:   return DB::Field("TODO");
-  case DB::STYLE_NAME:  return DB::Field("TODO");
+// INDEX
+DB::Field   STYLE :: operator[](DB::ColumnID id) const {
+  switch ((DB::StyleColumnID) id) {
+  case DB::STYLE_URL:   return DB::Field(url());
+  case DB::STYLE_NAME:  return DB::Field(name());
   }
 }
 
@@ -202,16 +202,32 @@ void   ALBUM::rating(float i)       { db.albums.rating[id] = i * 100;           
 void   ALBUM::votes(int i)          { db.albums.votes[id] = i;                  }
 void   ALBUM::download_count(int i) { db.albums.download_count[id] = i;         }
 void   ALBUM::styles(int i)         { db.albums.styles[id] = i;                 }
-// XXX
-DB::Field  ALBUM :: operator[](DB::AlbumColumnID id) {
-  switch (id) {
+// INDEX
+DB::Field  ALBUM :: operator[](DB::ColumnID id) const {
+  switch ((DB::AlbumColumnID) id) {
+  case DB::ALBUM_URL:             return DB::Field(url());
+  case DB::ALBUM_COVER_URL:       return DB::Field(cover_url());
   case DB::ALBUM_TITLE:           return DB::Field(title());
   case DB::ALBUM_ARTIST:          return DB::Field(artist());
   case DB::ALBUM_DESCRIPTION:     return DB::Field(description());
   case DB::ALBUM_DATE:            return DB::Field(0); // TODO
+  case DB::ALBUM_DAY:             goto DATE_CONVERSION;
+  case DB::ALBUM_MONTH:           goto DATE_CONVERSION;
+  case DB::ALBUM_YEAR:            goto DATE_CONVERSION;
   case DB::ALBUM_RATING:          return DB::Field(rating());
   case DB::ALBUM_VOTES:           return DB::Field(votes());
   case DB::ALBUM_DOWNLOAD_COUNT:  return DB::Field(download_count());
+  }
+
+DATE_CONVERSION:
+  time_t ts = date();
+  struct tm t;
+  localtime_r(&ts, &t);
+  switch ((DB::AlbumColumnID) id) {
+  case DB::ALBUM_DAY:             return DB::Field(t.tm_mday);
+  case DB::ALBUM_MONTH:           return DB::Field(t.tm_mon + 1);
+  case DB::ALBUM_YEAR:            return DB::Field(t.tm_year + 1900);
+  default:                        return DB::Field("BUG");
   }
 }
 
@@ -240,96 +256,15 @@ void  TRACK :: remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s); }
 void  TRACK :: number(int i)    { db.tracks.number[id] = i;                    }
 void  TRACK :: bpm(int i)       { db.tracks.bpm[id] = i;                       }
 void  TRACK :: album_id(int i)  { db.tracks.album_id[id] = i;                  }
-// XXX
-DB::Field TRACK :: operator[](DB::TrackColumnID id) {
-  switch (id) {
-  //case TRACK_NUMBER:        return DB::Field(0); // TODO
-  //case TRACK_NUMBER:        return DB::Field(0); // TODO
-  //case TRACK_NUMBER:        return DB::Field(0); // TODO
+// INDEX
+DB::Field TRACK :: operator[](DB::ColumnID id) const {
+  switch ((DB::TrackColumnID) id) {
   case DB::TRACK_TITLE:     return DB::Field(title());
   case DB::TRACK_ARTIST:    return DB::Field(artist());
   case DB::TRACK_REMIX:     return DB::Field(remix());
   case DB::TRACK_NUMBER:    return DB::Field(number());
   case DB::TRACK_BPM:       return DB::Field(bpm());
-  default:                  return album()[(DB::AlbumColumnID) id];
-  }
-}
-
-/* ============================================================================
- * Database :: OrderBy
- * ==========================================================================*/
-
-int Database :: OrderBy :: compare(const Styles::Style &a, const Styles::Style &b) {
-  switch (column) {
-  case STYLE_URL:   return strcmp(a.url(),  b.url());
-  case STYLE_NAME:  return strcmp(a.name(), b.name());
-  default:          return false;  
-  }
-}
-
-int Database :: OrderBy :: compare(const Albums::Album &a, const Albums::Album &b) {
-  switch (column) {
-  case ALBUM_URL:             return strcmp(a.url(),          b.url());
-  case ALBUM_TITLE:           return strcmp(a.title(),        b.title());
-  case ALBUM_ARTIST:          return strcmp(a.artist(),       b.artist());
-  case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    b.cover_url());
-  case ALBUM_DESCRIPTION:     return strcmp(a.description(),  b.description());
-  case ALBUM_DATE:            return a.date() -           b.date();
-  case ALBUM_RATING:          return a.rating() -         b.rating();
-  case ALBUM_VOTES:           return a.votes() -          b.votes();
-  case ALBUM_DOWNLOAD_COUNT:  return a.download_count() - b.download_count();
-  default:                    return false;
-  }
-}
-
-int Database :: OrderBy :: compare(const Tracks::Track &a, const Tracks::Track &b) {
-  switch (column) {
-  case TRACK_URL:    return strcmp(a.url(),      b.url());
-  case TRACK_TITLE:  return strcmp(a.title(),    b.title());
-  case TRACK_ARTIST: return strcmp(a.artist(),   b.artist());
-  case TRACK_REMIX:  return strcmp(a.remix(),    b.remix());
-  case TRACK_NUMBER: return        a.number() -  b.number();
-  case TRACK_BPM:    return        a.bpm() -     b.bpm();
-  default:           return compare(a.album(), b.album());
-  }
-}
-
-/* ============================================================================
- * Database :: Where
- * ==========================================================================*/
-
-int Database :: Where :: compare(const Tracks::Track &t) {
-  switch (column) {
-  case TRACK_URL:    return strcmp(t.url(),    strValue);
-  case TRACK_TITLE:  return strcmp(t.title(),  strValue);
-  case TRACK_ARTIST: return strcmp(t.artist(), strValue);
-  case TRACK_REMIX:  return strcmp(t.remix(),  strValue);
-  case TRACK_NUMBER: return t.number() -       intValue;
-  case TRACK_BPM:    return t.bpm() -          intValue;
-  default:           return compare(t.album());
-  }
-}
-
-int Database :: Where :: compare(const Albums::Album &a) {
-  switch (column) {
-  case ALBUM_URL:             return strcmp(a.url(),          strValue);
-  case ALBUM_TITLE:           return strcmp(a.title(),        strValue);
-  case ALBUM_ARTIST:          return strcmp(a.artist(),       strValue);
-  case ALBUM_COVER_URL:       return strcmp(a.cover_url(),    strValue);
-  case ALBUM_DESCRIPTION:     return strcmp(a.description(),  strValue);
-  case ALBUM_DATE:            return a.date() -               intValue;
-  case ALBUM_RATING:          return a.rating() -             intValue;
-  case ALBUM_VOTES:           return a.votes() -              intValue;
-  case ALBUM_DOWNLOAD_COUNT:  return a.download_count() -     intValue;
-  default:                    std::abort();
-  }
-}
-
-int Database :: Where :: compare(const Styles::Style &s) {
-  switch (column) {
-  case STYLE_URL:     return strcmp(s.url(),    strValue);
-  case STYLE_NAME:    return strcmp(s.name(),   strValue);
-  default:            std::abort();
+  default:                  return album()[id];
   }
 }
 
@@ -338,12 +273,12 @@ int Database :: Where :: compare(const Styles::Style &s) {
 #include "test.hpp"
 
 template<typename T1, typename T2>
-bool result_equals_vector(T1 &result, T2 &vec) {
+bool result_fields_equals_vector(T1 &result, DB::ColumnID id, T2 &vec) {
   if (result.size() != vec.size())
     return false;
 
   for (size_t i = 0; i < result.size(); ++i)
-    if (result[i][Database::TRACK_TITLE].value.s != vec[i])
+    if (result[i][id].value.s != vec[i])
       return false;
 
   return true;
@@ -367,18 +302,34 @@ int main () {
   assert (albums.size() + 1 == db.albums.size());
   assert (tracks.size() + 1 == db.tracks.size());
 
+  // ==========================================================================
   std::vector<const char*> track_titles;
   track_titles.reserve(tracks.size());
   for (auto track : tracks)
-    track_titles.push_back(track[Database::TRACK_TITLE].value.s);
+    track_titles.push_back(track[(Database::ColumnID) Database::TRACK_TITLE].value.s);
 
   // Duplication succeded
-  assert(result_equals_vector(tracks, track_titles));
+  assert(result_fields_equals_vector(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
 
   // Sorting succeeded
   std::sort(track_titles.begin(), track_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
   tracks.order_by((Database::ColumnID) Database::TRACK_TITLE, Database::ASCENDING);
-  assert(result_equals_vector(tracks, track_titles));
+  assert(result_fields_equals_vector(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
+
+  // ==========================================================================
+  std::vector<const char*> album_titles;
+  album_titles.reserve(tracks.size());
+  for (auto track : tracks)
+    album_titles.push_back(track[(Database::ColumnID) Database::ALBUM_TITLE].value.s);
+
+  // Duplication succeded
+  assert(result_fields_equals_vector(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
+
+  // Sorting succeeded
+  std::sort(album_titles.begin(), album_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
+  tracks.order_by((Database::ColumnID) Database::ALBUM_TITLE, Database::ASCENDING);
+  assert(result_fields_equals_vector(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
+
 
   for (size_t i = 0; i < 10; ++i)
     std::cout << tracks[i].title() << " in album " << tracks[i].album().title() << std::endl;
