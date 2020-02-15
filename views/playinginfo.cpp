@@ -123,7 +123,7 @@ int main() {
   NCURSES_INIT();
 
   Config::init();
-  Theme::loadTheme(256);
+  Theme::loadTheme(COLORS);
   Database db;
   db.load(TEST_DB);
   

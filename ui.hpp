@@ -16,8 +16,8 @@ struct Size {
   Size()                      : height(0),      width(0)     { }
   Size(int height, int width) : height(height), width(width) { }
 
-  bool operator==(const Size &s) const { return s.height == height && s.width == width; }
-  bool operator!=(const Size &s) const { return s.height != height || s.width != width; }
+  bool operator==(const Size& s) const { return s.height == height && s.width == width; }
+  bool operator!=(const Size& s) const { return s.height != height || s.width != width; }
 
   Size calc(int height, int width) {
     return Size(this->height + height, this->width + width);
@@ -36,8 +36,11 @@ struct Pos {
   int y;
   int x;
 
-  bool operator==(const Pos &p) const { return p.y == y && p.x == x; }
-  bool operator!=(const Pos &p) const { return p.y != y || p.x != x; }
+  bool operator==(const Pos& p) const { return p.y == y && p.x == x; }
+  bool operator!=(const Pos& p) const { return p.y != y || p.x != x; }
+  // TODO: is rhs right?
+  //bool operator>=(const Pos& p) const { return x >= p.x && y >= p.y; }
+  //bool operator<=(const Pos& p) const { return x <= p.x && y <= p.y; }
 };
 
 class Widget {

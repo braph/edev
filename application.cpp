@@ -1,4 +1,5 @@
 #include "ektoplayer.hpp"
+#include "downloads.hpp"
 #include "database.hpp"
 #include "bindings.hpp"
 #include "updater.hpp"
@@ -22,6 +23,7 @@ namespace fs = boost::filesystem;
 using namespace Ektoplayer;
 
 static Database database;
+static Downloads downloads(10);
 static void init();
 static void program();
 static void cleanup();
@@ -29,7 +31,7 @@ static bool redraw = true;
 static void on_SIGWINCH(int) { redraw = true; }
 static const char* emsg;
 
-int main(int argc, char **argv) {
+int main() {
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
   std::string err;
 
@@ -97,24 +99,20 @@ static void init() {
   logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
   std::cerr.rdbuf(logfile->rdbuf());
 
-  // We know that the database will *at least* hold this amount of data,
-  // so pre allocate the buffers. (Numbers from February, 2020)
-#define STYLES 25
-#define ALBUMS 2078
-#define TRACKS 14402
-  database.styles.reserve(STYLES);
-  database.albums.reserve(ALBUMS);
-  database.tracks.reserve(TRACKS);
-  // These are the average string lengths.
-  database.pool_desc.reserve(ALBUMS * 720);
-  database.pool_mp3_url.reserve(ALBUMS * 39);
-  database.pool_wav_url.reserve(ALBUMS * 39);
-  database.pool_flac_url.reserve(ALBUMS * 39);
-  database.pool_cover_url.reserve(ALBUMS * 35);
-  database.pool_album_url.reserve(ALBUMS * 22);
-  database.pool_track_url.reserve(TRACKS * 30);
-  database.pool_style_url.reserve(STYLES * 7);
-  database.pool_meta.reserve(ALBUMS * 15 + TRACKS * 25);
+  // The database will *at least* hold this amount of data
+  database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
+  database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
+  database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
+  // These are the average string lengths
+  database.pool_desc.reserve(EKTOPLAZM_ALBUM_COUNT * 710);
+  database.pool_mp3_url.reserve(EKTOPLAZM_ALBUM_COUNT * 39);
+  database.pool_wav_url.reserve(EKTOPLAZM_ALBUM_COUNT * 39);
+  database.pool_flac_url.reserve(EKTOPLAZM_ALBUM_COUNT * 39);
+  database.pool_cover_url.reserve(EKTOPLAZM_ALBUM_COUNT * 35);
+  database.pool_album_url.reserve(EKTOPLAZM_ALBUM_COUNT * 22);
+  database.pool_track_url.reserve(EKTOPLAZM_TRACK_COUNT * 30);
+  database.pool_style_url.reserve(EKTOPLAZM_STYLE_COUNT * 7);
+  database.pool_meta.reserve(EKTOPLAZM_ALBUM_COUNT * 15 + EKTOPLAZM_TRACK_COUNT * 25);
 
   emsg = "Database file corrupted? Try again, then delete it. Sorry!";
   if (fs::exists(Config::database_file))
@@ -133,7 +131,7 @@ static void init() {
 static void program() {
   std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
 
-  Updater updater(database);
+  Updater updater(database, downloads);
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
   else if (Config::small_update_pages > 0)
@@ -148,12 +146,11 @@ static void program() {
   int c;
 MAINLOOP:
   player.poll(); // First instruction, player needs some time to fetch info
+  downloads.work();
 
-  if (updater.write_to_database()) {
-    try { database.save(Config::database_file); }
-    catch (const std::exception &e) {
-      throw std::runtime_error(std::string("Error saving database file: ") + e.what());
-    }
+  try { database.save(Config::database_file); }
+  catch (const std::exception &e) {
+    throw std::runtime_error(std::string("Error saving database file: ") + e.what());
   }
 
   if (redraw) {
@@ -174,7 +171,7 @@ MAINLOOP:
   c = wgetch(win);
   if (c != ERR) {
     if (Bindings::global[c]) {
-      c = actions.call((Actions::ActionID) Bindings::global[c]);
+      c = actions.call(static_cast<Actions::ActionID>(Bindings::global[c]));
       if (c == Actions::QUIT)
         return;
       else if (c == Actions::REDRAW)

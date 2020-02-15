@@ -1,5 +1,5 @@
 
-static const char* trackField(Database::Tracks::Track track, int id) {
+static const char* trackField(const Database::Tracks::Track &track, int id) {
   static char buf[32];
   Database::Field f = track[(Database::ColumnID) id];
   switch (f.type) {

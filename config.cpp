@@ -12,41 +12,27 @@
 #include <cinttypes>
 #include <fstream>
 
+using namespace Views;
+
 static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP =
-  "<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
+  "'<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}";
 
 static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
-  "<artist bold='on' fg='blue' /><text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
+  "artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'";
 
 static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
-  "<text fg='236'>&lt;&lt; </text><title bold='on' fg='178' /><text fg='236'> &gt;&gt;</text>";
+  "'<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}";
 
 static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
- "<artist bold='on' fg='24' /><text> - </text><album bold='on' fg='160' /><text> (</text><year fg='37' /><text>)</text>";
-
-#if I_FOUND_A_BETTER_SOLUTION_THAN_XML
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP =
-  "{fg=black}<< {fg=yellow,bold}${title} {fg=black}>>"
-
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
-  "{fg=blue,bold}${artist} <text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
-  "<artist bold='on' fg='blue' /><text> - </text><album bold='on' fg='red' /><text> (</text><year fg='cyan' /><text>)</text>";
-  "{artist fg=blue bold} {text - } ";
-
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
-  "<text fg='236'>&lt;&lt; </text><title bold='on' fg='178' /><text fg='236'> &gt;&gt;</text>";
-
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
- "<artist bold='on' fg='24' /><text> - </text><album bold='on' fg='160' /><text> (</text><year fg='37' /><text>)</text>";
-#endif
+  "artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'";
 
 static const char* const DEFAULT_PLAYLIST_COLUMNS =
-  "number 3 fg=magenta  | artist 25% fg=blue | album 30% fg=red |"
-  "title  33% fg=yellow | styles 20% fg=cyan | bpm   3 fg=green right";
+  "number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%}"
+  "title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}";
 
 static const char* const DEFAULT_PLAYLIST_COLUMNS_256 =
-  "number 3 fg=97    | artist 25% fg=24 | album 30% fg=160 |"
-  "title  33% fg=178 | styles 20% fg=37 | bpm   3 fg=28 right";
+  "number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%}"
+  "title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}";
 
 /* === Parsing for primitives === */
 static int opt_parse_int(const std::string &s) {
@@ -104,42 +90,113 @@ static std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   return widgets;
 }
 
-static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
-  std::vector<std::string> opts;
-  std::vector<std::string> columns;
-  boost::split(columns, s, boost::is_any_of("|"));
+// OLD STUFF
+static inline const char* skipWhitespace(const char *s) {
+  while (*s && (*s == ' ' || *s == '\t')) { ++s; }
+  return s;
+}
+#if 0
+static inline const char* skipWhitespace(const char *s) {
+  return s + std::strspn(s, " \t");
+}
+#endif
 
+struct AttributeParser {
+  const char* s;
+  std::string opt, value;
+  AttributeParser(const std::string& s) : s(s.c_str()) {}
+
+  bool next() {
+    opt.clear();
+    value.clear();
+    std::string* current = &opt;
+    s = skipWhitespace(s);
+    for (; *s; ++s) {
+      if (*s == ',' || isspace(*s))   { break;                  }
+      else if (*s == '=')             { current = &value;       }
+      else                            { current->push_back(*s); }
+    }
+
+    return !opt.empty();
+  }
+};
+
+struct FormatParser {
+  const char* s;
+  Database::ColumnID column;
+  std::string text;
+  std::string _attributes;
+  FormatParser(const std::string& str) : s(str.c_str()) {}
+
+  bool next() {
+    column = Database::COLUMN_NONE;
+    text.clear();
+    _attributes.clear();
+    s = skipWhitespace(s);
+
+    if (*s == '\'' || *s == '"') { // Its a string literal
+      char quote = *s++;
+      bool escaped = false;
+      for (; *s; ++s) {
+        /**/ if (escaped)     { text.push_back(*s); escaped = false; }
+        else if (*s == '\\')  { escaped = true;                      }
+        else if (*s == quote) { break;                               }
+        else                  { text.push_back(*s);                  }
+      }
+    }
+    else {
+      for (; *s && std::isalnum(*s); ++s)
+        text.push_back(*s);
+
+      if (text.empty())
+        return false;
+
+      column = (Database::ColumnID) Database::columnIDFromStr(text);
+      if (column == Database::COLUMN_NONE)
+        throw std::invalid_argument(text + ": No such tag");
+    }
+
+    s = skipWhitespace(s);
+    if (*s == '{') { // Having attributes
+      ++s;
+      for (; *s && *s != '}'; ++s)
+        _attributes.push_back(*s);
+      ++s;
+    }
+
+    return true;
+  }
+
+  AttributeParser attributes() {
+    return AttributeParser(_attributes);
+  }
+};
+
+static PlaylistColumns opt_parse_playlist_columns(const std::string &s) { // MOCKUP
   PlaylistColumns result;
-  for (auto &column : columns) {
+  FormatParser formatParser(s);
+  while (formatParser.next()) {
     PlaylistColumnFormat fmt;
 
-    boost::split(opts, column, boost::is_any_of(" \t"), boost::token_compress_on);
-    for (auto &opt : opts) {
-      if (opt.empty())
-        continue;
-      else if (0 == opt.find("fg="))
-        fmt.fg = UI::Color::parse(opt.substr(3));
-      else if (0 == opt.find("bg="))
-        fmt.bg = UI::Color::parse(opt.substr(3));
-      else if (opt == "right")
-        fmt.justify = PlaylistColumnFormat::Right;
-      else if (opt == "left")
-        fmt.justify = PlaylistColumnFormat::Left;
-      else if (std::isdigit(opt[0])) {
-        fmt.size = std::stoi(opt);
-        fmt.relative = (opt.back() == '%');
-      }
-      else {
-        fmt.tag = (Database::ColumnID) Database::columnIDFromStr(opt);
-        if (fmt.tag == Database::COLUMN_NONE)
-          throw std::invalid_argument(opt + ": No such tag");
+    if (formatParser.column == Database::COLUMN_NONE)
+      throw std::invalid_argument("Missing column name");
+
+    fmt.tag = formatParser.column;
+
+    auto attr = formatParser.attributes();
+    while (attr.next()) {
+      /**/ if (attr.opt == "fg")     fmt.fg = UI::Color::parse(attr.value);
+      else if (attr.opt == "bg")     fmt.bg = UI::Color::parse(attr.value);
+      else if (attr.opt == "right")  fmt.justify = PlaylistColumnFormat::Right;
+      else if (attr.opt == "left")   fmt.justify = PlaylistColumnFormat::Left;
+      else if (attr.opt == "size") {
+        fmt.size = std::stoi(attr.value);
+        fmt.relative = (attr.value.back() == '%');
       }
     }
 
     if (! fmt.size)
-      throw std::invalid_argument(column + ": Missing column size");
-    if (fmt.tag == Database::COLUMN_NONE)
-      throw std::invalid_argument(column + ": Missing tag name");
+      throw std::invalid_argument(formatParser.text + ": Missing column size");
 
     result.push_back(fmt);
   }
@@ -148,45 +205,23 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 }
 
 //"<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
-static PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
+static PlayingInfoFormat opt_parse_playinginfo_format(const std::string& s) {
   PlayingInfoFormat result;
-  std::string xml = "<r>" + _xml + "</r>"; // Add fake root element
-  XmlDoc   doc = XmlDoc::readDoc(xml, NULL, NULL, XML_PARSE_COMPACT);
-  XmlNode root = doc.getRootElement(); // Safe, always having root element
 
-  for (XmlNode node = root.children(); node; node = node.next()) {
+  FormatParser formatParser(s);
+  while (formatParser.next()) {
     PlayingInfoFormatFoo fmt;
-    std::string tag = node.name();
 
-    //std::cout << "node type is: " << node.type() << std::endl;
-    /*
-    if (node->type == XML_TEXT_NODE)
-      continue;
-    */
+    if (formatParser.column)
+      fmt.tag  = formatParser.column;
+    else
+      fmt.text = formatParser.text;
 
-    if (node.type() != XML_ELEMENT_NODE)
-      continue;
-      //throw std::invalid_argument("THIS IS NOT A ELEMENT NODE");
-
-    if (tag == "text") {
-      fmt.text = node.text();
-    }
-    else {
-      if (node.children())
-        throw std::invalid_argument(tag + ": THIS NODE HAS CHILDREN");
-
-      fmt.tag = (Database::ColumnID) Database::columnIDFromStr(tag);
-      if (fmt.tag == Database::COLUMN_NONE)
-        throw std::invalid_argument(tag + ": No such tag");
-    }
-
-    for (XmlAttribute attribute = node.attributes(); attribute; attribute = attribute.next()) {
-      std::string name  = attribute.name();
-      std::string value = attribute.value();
-
-      if /**/ (name == "fg")   fmt.fg   = UI::Color::parse(value);
-      else if (name == "bg")   fmt.bg   = UI::Color::parse(value);
-      else                     fmt.attributes |= UI::Attribute::parse(name);
+    auto attr = formatParser.attributes();
+    while (attr.next()) {
+      /**/ if (attr.opt == "fg")   fmt.fg = UI::Color::parse(attr.value);
+      else if (attr.opt == "bg")   fmt.bg = UI::Color::parse(attr.value);
+      else fmt.attributes |= UI::Attribute::parse(attr.opt);
     }
 
     result.push_back(fmt);
@@ -194,6 +229,7 @@ static PlayingInfoFormat opt_parse_playinginfo_format(const std::string &_xml) {
 
   return result;
 }
+
 /* ========================== */
 
 #include "config/config.members.declare.cpp"
@@ -283,7 +319,7 @@ int main() {
 
   // === Objects ===
   PlaylistColumns c;
-  c = opt_parse_playlist_columns("number 3 fg=blue bg=magenta | artist 10%");
+  c = opt_parse_playlist_columns("number{fg=blue bg=magenta size=3} artist{size=10%}");
   assert(c.size()       == 2);
   assert(c[0].size      == 3);
   assert(c[0].relative  == false);

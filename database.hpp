@@ -2,6 +2,7 @@
 #define _DATABASE_HPP
 
 #include "strpool.hpp"
+#include "common.hpp"
 
 #include <array>
 #include <vector>
@@ -9,6 +10,8 @@
 #include <cstring>
 #include <fstream>
 #include <algorithm>
+
+#define DB_VERSION 1 // Change this each time the DB ABI breaks
 
 /* ============================================================================
  * Metadata Database
@@ -49,8 +52,16 @@
  * And after all the database is more like a cache.
  *
  * XXX NOTE XXX
- * Since the first entry of each table (ID = 0) is used as a NULL record,
- * the row count will be off by one. I don't think that I'll fix that...
+ * The `Album::styles` field stores at max 4 styles...
+ * Records with ID = 0 (first ROW) are used for representing a NULL value.
+ * The row count of a table will therefore be off by one.
+ * It is easier to do a `-1` on the return value of Table::size() than applying
+ * this -1 logic all over the place. this won't be fixed.
+ *
+ * XXX NOTE XXX
+ * URLs are stored in a non escaped way! TODO
+ *
+ * The reason for that is also the implementation of the Album::styles().
  */
 
 /* === GenericIterator ===
@@ -93,15 +104,12 @@ public:
   /* ==========================================================================
    * ColumnIDs
    *
-   * TODO:
-   * We can access a single field of a record using the index operator[].
-   * Since every Record class implements its own version of that method
-   * we have to define an enum for each class.
+   * A single field of a record can be accessed using the index operator[].
+   * Although there are multiple enum types defined all functions use the
+   * `ColumnID` type as parameter.
    *
-   * Not all of these IDs correspond to a real field. They are merely
-   * views on another column (e.g. like `ALBUM_MONTH` -> `ALBUM_DATE`).
-   *
-   * Methods like `Result::order_by` refer to the `ColumnID` enum, though.
+   * Not all of these IDs correspond to a real field. Some of them are just a
+   * `view` of another column (e.g. `ALBUM_DAY` returns day of `ALBUM_DATE`).
    * ========================================================================*/
 
   enum ColumnID {
@@ -120,9 +128,9 @@ public:
     ALBUM_COVER_URL,
     ALBUM_DESCRIPTION,
     ALBUM_DATE,
-    ALBUM_DAY,   //
-    ALBUM_MONTH, // View
-    ALBUM_YEAR,  //
+    ALBUM_DAY,   // -.
+    ALBUM_MONTH, //  +- View
+    ALBUM_YEAR,  // -'
     ALBUM_RATING,
     ALBUM_VOTES,
     ALBUM_DOWNLOAD_COUNT,
@@ -136,6 +144,27 @@ public:
     TRACK_NUMBER,
     TRACK_BPM,
   };
+
+  static int columnIDFromStr(const std::string &s) {
+    /**/ if (s == "style")        return STYLE_NAME;
+    else if (s == "album")        return ALBUM_TITLE;
+    else if (s == "album_artist") return ALBUM_ARTIST;
+    else if (s == "description")  return ALBUM_DESCRIPTION;
+    else if (s == "date")         return ALBUM_DATE;
+    else if (s == "rating")       return ALBUM_RATING;
+    else if (s == "votes")        return ALBUM_VOTES;
+    else if (s == "downloads")    return ALBUM_DOWNLOAD_COUNT;
+    else if (s == "day")          return ALBUM_DAY;
+    else if (s == "month")        return ALBUM_MONTH;
+    else if (s == "year")         return ALBUM_YEAR;
+    else if (s == "title")        return TRACK_TITLE;
+    else if (s == "artist")       return TRACK_ARTIST;
+    else if (s == "remix")        return TRACK_REMIX;
+    else if (s == "number")       return TRACK_NUMBER;
+    else if (s == "bpm")          return TRACK_BPM;
+    else if (s == "styles")       return TRACK_NUMBER; // TODO
+    else                          return COLUMN_NONE;
+  }
 
   /* ==========================================================================
    * The field struct is basically a union type.
@@ -174,10 +203,11 @@ public:
     }
 
     int compare(const Field &rhs) const {
+      assert(type == rhs.type);
       switch (type) {
       case STRING:  return strcmp(this->value.s, rhs.value.s);
-      case INTEGER: return this->value.i == rhs.value.i;
-      case FLOAT:   return this->value.f == rhs.value.f;
+      case INTEGER: return this->value.i - rhs.value.i;
+      case FLOAT:   return this->value.f - rhs.value.f;
       }
     }
   };
@@ -207,11 +237,10 @@ public:
     Database &db;
     size_t    id;
     inline Record(Database &db, size_t id) : db(db), id(id) {}
-    inline bool valid() const     { return !!id; }
-    inline operator bool() const  { return !!id; }
-    Record& operator=(const Record &rhs) { id = rhs.id; return *this; }
+    inline operator bool()             const { return id != 0;    }
     bool operator!=(const Record &rhs) const { return id != rhs.id; }
-    bool operator==(const Record &rhs) const { return id != rhs.id; }
+    bool operator==(const Record &rhs) const { return id == rhs.id; }
+    Record& operator=(const Record &rhs) { id = rhs.id; return *this; }
   };
 
   /* ==========================================================================
@@ -336,27 +365,6 @@ public:
    * Order-By + Where
    * ========================================================================*/
 
-  static int columnIDFromStr(const std::string &s) {
-    /**/ if (s == "style")        return STYLE_NAME;
-    else if (s == "album")        return ALBUM_TITLE;
-    else if (s == "album_artist") return ALBUM_ARTIST;
-    else if (s == "description")  return ALBUM_DESCRIPTION;
-    else if (s == "date")         return ALBUM_DATE;
-    else if (s == "rating")       return ALBUM_RATING;
-    else if (s == "votes")        return ALBUM_VOTES;
-    else if (s == "downloads")    return ALBUM_DOWNLOAD_COUNT;
-    else if (s == "day")          return ALBUM_DAY;
-    else if (s == "month")        return ALBUM_MONTH;
-    else if (s == "year")         return ALBUM_YEAR;
-    else if (s == "title")        return TRACK_TITLE;
-    else if (s == "artist")       return TRACK_ARTIST;
-    else if (s == "remix")        return TRACK_REMIX;
-    else if (s == "number")       return TRACK_NUMBER;
-    else if (s == "bpm")          return TRACK_BPM;
-    else if (s == "styles")       return TRACK_NUMBER; // TODO
-    else                          return COLUMN_NONE;
-  }
-
   enum SortOrder {
     ASCENDING,
     DESCENDING,
@@ -418,7 +426,7 @@ public:
     std::vector<int> indices;
     Result(TStore &store) : store(store) {
       indices.reserve(store.size());
-      for (size_t i = 1 /* Skip NULL record */; i < store.size(); ++i)
+      for (size_t i = 1 /* Skip NULL Record */; i < store.size(); ++i)
         indices.push_back(i);
     }
 
@@ -481,25 +489,13 @@ public:
   StringPool  pool_album_url;
   StringPool  pool_track_url;
   StringPool  pool_cover_url;
-  StringPool  pool_mp3_url;
-  StringPool  pool_wav_url;
-  StringPool  pool_flac_url;
+  StringPool  pool_archive_url;
   Styles      styles;
   Albums      albums;
   Tracks      tracks;
-  std::array<StringPool*, 9> pools;
-  Database()
-  : styles(*this)
-  , albums(*this)
-  , tracks(*this)
-  , pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url, &pool_track_url,
-      &pool_cover_url, &pool_mp3_url, &pool_wav_url, &pool_flac_url})
-  {
-    // Records with ID 0 represent a NULL value. Create them here.
-    styles.find("", true);
-    albums.find("", true);
-    tracks.find("", true);
-  }
+  std::array<StringPool*, 7> pools;
+
+  Database();
 
   Result<Styles, Styles::Style> getStyles() {
     return Result<Styles, Styles::Style>(styles);

@@ -1,15 +1,45 @@
+#include "ektoplayer.hpp"
 #include "browsepage.hpp"
+#include "common.hpp"
 #include "xml.hpp"
-#include <algorithm>    
+
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
+
+#include <algorithm>    
+
+static inline std::string& lstrip(std::string& s, char what) {
+  while (s.size() && s.front() == what)
+    s.erase(0, 1);
+  return s;
+}
+
+static inline std::string& rstrip(std::string& s, char what) {
+  while (s.size() && s.back() == what)
+    s.pop_back();
+  return s;
+}
+
+static inline std::string& strip(std::string& s, char what) {
+  return lstrip(rstrip(s, what), what);
+}
 
 static inline std::string _basename(std::string s) {
   size_t pos = s.rfind('/');
   if (pos != std::string::npos)
     s.erase(0, pos+1);
   return s;
+}
+
+static inline size_t find_dash(const std::string& s, size_t &dash_len) {
+  size_t pos;
+  for (const auto dash : { "–" /* Unicode */, "-" /* ASCII */ })
+    if (std::string::npos != (pos = s.find(dash))) {
+      dash_len = std::strlen(dash);
+      return pos;
+    }
+  return std::string::npos;
 }
 
 /* Taken and adapted from:
@@ -36,9 +66,19 @@ std::string base64_decode(std::string input)
   }
 }
 
-std::string BrowsePage :: getBaseUrl(const std::string& src, int*num_pages) {
+void BrowsePage :: parse_src(const std::string &src) {
   XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
+  std::vector<std::string> tracks;
+
+#if 0
+  // === Get base url ===
+  // -> https://ektoplazm.com/style/uplifting/page/2 (remove "/2")
+  std::string base_url = xpath.query_string("string(//div[contains(@class, 'wp-pagenavi')]//a/@href)");
+  if (! base_url.empty()) {
+    base_url = base_url.substr(0, base_url.find_last_not_of("0123456789") + 1);
+  }
+#endif
 
   // === Find number of pages === (XXX Strange, this query fails with [0] ...)
   std::string result = xpath.query_string("string(//span[@class = 'pages']/text())");
@@ -47,49 +87,9 @@ std::string BrowsePage :: getBaseUrl(const std::string& src, int*num_pages) {
     std::string pages = result;
     auto p = pages.find_last_not_of("0123456789");
     if (p != std::string::npos) {
-      *num_pages = std::stoi(pages.substr(p + 1));
+      num_pages = std::stoi(pages.substr(p + 1));
     }
   }
-
-  // === Get base url ===
-  // -> https://ektoplazm.com/style/uplifting/page/2 (remove "/2")
-  std::string base_url = xpath.query_string("string(//div[contains(@class, 'wp-pagenavi')]//a/@href)");
-  if (! base_url.empty()) {
-    base_url = base_url.substr(0, base_url.find_last_not_of("0123456789") + 1);
-  }
-
-  return base_url;
-}
-
-std::map<std::string, std::string> BrowsePage :: getStyles(const std::string &src) {
-  std::map<std::string, std::string> result;
-  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
-  auto xpath = doc.xpath();
-
-  // === List of all available styles ===
-  auto div = xpath.query("//div[@id = 'sidemenu']")[0];
-  for (auto a : xpath.query(".//a[contains(@href, '/style/')]", div)) {
-    // <a href="http://.../style/progressive/">Progressive</a>
-    std::string url = a["href"];
-    if (! url.empty()) {
-      if (url.back() == '/')
-        url.pop_back();
-
-      size_t idx = url.rfind('/');
-      if (idx != std::string::npos)
-        url.erase(0, idx+1);
-
-      if (!url.empty() && !a.text().empty())
-        result[url] = a.text();
-    }
-  }
-
-  return result;
-}
-
-void BrowsePage :: parse_src(const std::string &src) {
-  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
-  auto xpath = doc.xpath();
 
   // Collect albums
   for (auto post : xpath.query("//div[starts-with(@id, 'post-')]")) {
@@ -105,7 +105,7 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // === Styles ===
     for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
-      std::string url = a["href"]; // "http://.../<style>"
+      std::string url = a["href"]; // "http://.../style/<STYLE>/"
       if (! url.empty()) {
         if (url.back() == '/')
           url.pop_back();
@@ -113,7 +113,7 @@ void BrowsePage :: parse_src(const std::string &src) {
         if (idx != std::string::npos)
           url.erase(0, idx+1);
         if (! url.empty())
-          album.styles.push_back(url);
+          album.styles.push_back(Style(url, a.text()));
       }
     }
 
@@ -148,8 +148,6 @@ void BrowsePage :: parse_src(const std::string &src) {
       std::string url = a["href"];
       if (! url.empty()) {
         url = _basename(url);
-        for (size_t pos; (pos = url.find("%20")) != std::string::npos;)
-          url.replace(pos, 3, " ");
         album.archive_urls.push_back(url);
       }
     }
@@ -164,7 +162,7 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // === Direct mp3 track URLs ===
     // <script type="text/javascript"> (...) soundFile:"(...)"
-    std::vector<std::string> tracks;
+    tracks.clear();
     tracks.reserve(10);
     for (auto script : xpath.query(".//script", post)) {
       std::string text = script.text();
@@ -220,10 +218,13 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // Extract the artist name from the album title ("artist - album_name")
     // and set the artist on tracks that dont have it yet.
-    auto idx = album.title.find(" – "/* Unicode dash */);
+    size_t dash_len;
+    size_t idx = find_dash(album.title, dash_len);
     if (idx != std::string::npos) {
       album.artist = album.title.substr(0, idx);
-      album.title  = album.title.substr(idx + 5);
+      album.title  = album.title.substr(idx + dash_len);
+      strip(album.title,  ' ');
+      strip(album.artist, ' ');
       for (auto &track : album.tracks)
         if (track.artist.empty())
           track.artist = album.artist;
@@ -233,22 +234,28 @@ void BrowsePage :: parse_src(const std::string &src) {
           track.artist = "Unknown Artist";
     }
 
+    // Fix missing track titles:
+    // Sometimes the track title is merged into the track artist. ("artist - track")
+    // Example: https://ektoplazm.com/free-music/gods-food
+    for (auto &track : album.tracks)
+      if (track.title.empty()) {
+        size_t idx = find_dash(track.artist, dash_len);
+        if (idx != std::string::npos) {
+          track.title  = track.artist.substr(0, idx);
+          track.artist = track.artist.substr(idx + dash_len);
+          strip(track.title,  ' ');
+          strip(track.artist, ' ');
+        }
+      }
+
     // Push back album
     albums.push_back(album);
   }
 }
 
 #ifdef TEST_BROWSEPAGE
-#include "http.hpp"
-
 int main() {
-  SimpleHTTP http;
-  std::string src = http.get("https://ektoplazm.com/section/free-music");
-  BrowsePage bp(src);
-  std::cout << "Num Pages: "    << bp.num_pages     << std::endl;
-  std::cout << "Base URL:  "    << bp.base_url      << std::endl;
-  std::cout << "getPageUrl(2):" << bp.getPageUrl(2) << std::endl;
-  for (auto &album : bp.albums)
-    std::cout << "album:\n" << album.to_string() << std::endl;
+  // Testing of BrowsePage is done in Updater class
+  return 0;
 }
 #endif

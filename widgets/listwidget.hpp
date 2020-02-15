@@ -166,8 +166,7 @@ private:
   TContainer *m_list;
 };
 
-#if TEST_LISTWIDGET
-
+// === Testing ================================================================
 template<typename TContainer, typename TItem>
 void testListWidget(
   ListItemRenderer<TItem> &renderer,
@@ -195,7 +194,6 @@ void testListWidget(
     doupdate();
   }
 }
-
-#endif // TEST_LISTWIDGET
+// ============================================================================
 
 #endif

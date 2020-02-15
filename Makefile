@@ -1,14 +1,16 @@
 DEBUG 				= 1 # 0|1
 PEDANTIC_FREE = 1 # 0|1
 
-#CXXFLAGS   := -Og -g -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
-CXXFLAGS   := -O2 -Wall -Wpedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+WARNINGS = -Wall -Wpedantic -pedantic -Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
+
+CXXFLAGS   := -std=c++11 -Og -g $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+#CXXFLAGS   := -std=c++11 -O2 $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
 CPPFLAGS := $(shell xml2-config --cflags)
 LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
-	views/help.o views/info.o player.o actions.o bindings.o 
+	views/help.o views/info.o player.o actions.o bindings.o downloads.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
 
@@ -41,7 +43,7 @@ test_database: strpool.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
 	./a.out
 
-test_updater: browsepage.o database.o strpool.o
+test_updater: browsepage.o database.o strpool.o downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
@@ -88,7 +90,7 @@ test_oddvector:
 	./a.out
 
 # TODO
-test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o
+test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
 	echo "Widgets cannot be tested in Make"
 

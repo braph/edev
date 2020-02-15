@@ -3,9 +3,25 @@
 
 #include "../ui.hpp"
 #include "../database.hpp"
-#include "../config.hpp"
+#include <vector>
+#include <string>
 
 namespace Views {
+
+struct PlayingInfoFormatFoo {
+  short fg;
+  short bg;
+  unsigned int attributes;
+  Database::ColumnID tag;
+  std::string text;
+
+  PlayingInfoFormatFoo()
+    : fg(-1), bg(-1), attributes(0)
+  {
+  }
+};
+
+typedef std::vector<PlayingInfoFormatFoo> PlayingInfoFormat;
 
 class PlayingInfo : public UI::Window {
   // Slot: clicked -> player.toggle

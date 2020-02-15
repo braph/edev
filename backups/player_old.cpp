@@ -1,7 +1,7 @@
 #include <ao/ao.h>
 #include <mpg123.h>
 
-#define BITS 8
+#define BITS 32
 
 int main(int argc, char *argv[])
 {
@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
     /* initializations */
     ao_initialize();
     driver = ao_default_driver_id();
+
+
     mpg123_init();
     mh = mpg123_new(NULL, &err);
     buffer_size = mpg123_outblock(mh);
@@ -34,12 +36,21 @@ int main(int argc, char *argv[])
     mpg123_getformat(mh, &rate, &channels, &encoding);
 
     /* set the output format and open the output device */
-    format.bits = mpg123_encsize(encoding) * BITS;
+    //format.bits = mpg123_encsize(encoding) * BITS;
     format.rate = rate;
     format.channels = channels;
     format.byte_format = AO_FMT_NATIVE;
     format.matrix = 0;
+
+    driver = ao_driver_id("oss");
+
     dev = ao_open_live(driver, &format, NULL);
+    if (! dev) {
+      if (errno == AO_EOPENDEVICE)
+      printf("EOPENDEIVCE\n");
+      printf("FOOOO\n");
+      return 1;
+    }
 
     /* decode and play */
     while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)

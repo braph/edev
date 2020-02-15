@@ -1,7 +1,10 @@
+#include "playlist.hpp"
+
 #include "../widgets/listwidget.hpp"
 
 #include "../config.hpp"
 #include "../colors.hpp"
+#include "../theme.hpp"
 #include "../database.hpp"
 
 #include <cstring>
@@ -10,7 +13,7 @@
 
 using namespace UI;
 
-class TrackRenderer : public ListItemRenderer<SSMap> {
+class TrackRenderer : public ListItemRenderer<Database::Tracks::Track> {
   private:
     const PlaylistColumns& m_columns;
 
@@ -21,29 +24,15 @@ class TrackRenderer : public ListItemRenderer<SSMap> {
     }
 
     //void setFormat(format); -> wants layout
-    virtual void render(WINDOW *win, const SSMap &item, int index, bool cursor, bool active); // marked, selection
+    void render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active); // marked, selection
 };
 
-// assert(column_format)
-void TrackRenderer :: render(WINDOW *win, const SSMap &item, int index, bool cursor, bool active /* selection */) {
+void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active /* selection */) {
   int additional_attributes = 0;
   if (active) additional_attributes |= A_BOLD;
   if (cursor) additional_attributes |= A_STANDOUT;
   int selection = 0; // XXX: this is a parameter
 
-  /*
-  if (selection)
-    color = UI::Colors.get("list.item_selection");
-  else if (index % 2 == 0)
-    color = UI::Colors.get("list.item_even");
-  else
-    color = UI::Colors.get("list.item_odd");
-
-  scr.attrset(color | additional_attributes)
-  scr.addstr("[#{item}]".ljust(@width))
-  */
-  // ---- SNAP
- 
   int y = getcury(win);
   int x = 0; // lef_pad;
 
@@ -60,11 +49,11 @@ void TrackRenderer :: render(WINDOW *win, const SSMap &item, int index, bool cur
 
  for (const auto &column : m_columns) {
    if (selection)
-     wattrset(win, Colors::get("list.item_selection") | additional_attributes);
+     wattrset(win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
    else
-     wattrset(win, Colors::set("", column.fg, column.bg, 0) | additional_attributes);
+     wattrset(win, Colors::set(column.fg, column.bg, 0) | additional_attributes);
 
-   const char* value = item.at(column.tag).c_str(); // RUBY %.2d
+   const char* value = trackField(item, column.tag); // RUBY %.2d
    int len = strlen(value);
    int colwidth;
 
@@ -91,20 +80,23 @@ void TrackRenderer :: render(WINDOW *win, const SSMap &item, int index, bool cur
 }
 
 #if TEST_PLAYLIST
-#include <unistd.h>
+#include "../test.hpp"
 #include <string>
-#include <iostream>
+#include <algorithm>
 
-void testTrackRenderer(const SSMap& track, const PlaylistColumns& columns) {
+void testTrackRenderer(Database &db, const PlaylistColumns& columns) {
   TrackRenderer tr(columns);
   tr.setWidth(COLS);
 
-  int y = -1;
-  wmove(stdscr, ++y, 0);  tr.render(stdscr, track, 0, false, false);
-  wmove(stdscr, ++y, 0);  tr.render(stdscr, track, 0, true,  false);
-  wmove(stdscr, ++y, 0);  tr.render(stdscr, track, 0, false, true); 
-  wmove(stdscr, ++y, 0);  tr.render(stdscr, track, 0, true,  true);
+  auto tracks = db.getTracks();
+  int cursor = LINES / 2;
+
+  for (int y = 0; y < std::max(LINES, 10); ++y) {
+    wmove(stdscr, y, 0);
+    tr.render(stdscr, tracks[y], y, y == 3, y == cursor);
+  }
   refresh();
+  getch();
 }
 
 int main() {
@@ -114,9 +106,17 @@ int main() {
   noecho();
   curs_set(0);
   Config::init();
-  //Ektoplayer::Theme.load(256);
+  Theme::loadTheme(COLORS);
+  Database db;
+  db.load(TEST_DB);
+  assert(db.tracks.size() > 10);
 
-  testTrackRenderer(testData[0], Config::playlist_columns);
+  testTrackRenderer(db, Config::playlist_columns);
+
+  TrackRenderer tr(Config::playlist_columns);
+  tr.setWidth(COLS);
+  auto tracks = db.getTracks();
+  testListWidget(tr, tracks);
 
   /*
   ListItemRenderer<std::string> renderer(COLS);
@@ -125,9 +125,6 @@ int main() {
   for (int i = 0; i < 50; ++i) testData.push_back(std::to_string(i));
   testListWidget<std::string>(listWidget, testData);
   */
-
-  mvwaddstr(stdscr, LINES - 2, 0, "pause();");
-  pause();
 
   TEST_END();
 }

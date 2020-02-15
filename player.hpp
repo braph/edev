@@ -6,8 +6,6 @@
 
 #include <boost/process.hpp>
 
-/* XXX: in/out locks? */
-
 class Mpg123Player {
 public:
   enum {
@@ -36,7 +34,7 @@ public:
   inline int  getState()         { return state;                  }
   inline unsigned int position() { return seconds_played;         }
   inline unsigned int length()   { return seconds_total;          }
-  inline float        percent()  { return (seconds_total ? (float) position() / length() : 0); }
+  inline float        percent()  { return (seconds_total ? static_cast<float>(position()) / length() : 0); }
 
 private:
   enum {
