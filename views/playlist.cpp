@@ -7,25 +7,12 @@
 #include "../theme.hpp"
 #include "../database.hpp"
 
-#include <cstring>
-
 #include "rm_trackstr.cpp"
 
+#include <cstring>
+
 using namespace UI;
-
-class TrackRenderer : public ListItemRenderer<Database::Tracks::Track> {
-  private:
-    const PlaylistColumns& m_columns;
-
-  public:
-    TrackRenderer(const PlaylistColumns& columns)
-    : m_columns(columns)
-    {
-    }
-
-    //void setFormat(format); -> wants layout
-    void render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active); // marked, selection
-};
+using namespace Views;
 
 void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active /* selection */) {
   int additional_attributes = 0;

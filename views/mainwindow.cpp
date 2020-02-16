@@ -11,8 +11,11 @@ MainWindow :: MainWindow(Database &db)
 , tabBar()
 , windows()
 , splash()
+, trackRenderer(Config::playlist_columns)
+, playlist(trackRenderer)
 , info()
 , help()
+, pl(db.getTracks())
 {
   for (auto w : Config::main_widgets) {
     /**/ if (w == "playinginfo")    addWidget(&playingInfo);
@@ -24,13 +27,15 @@ MainWindow :: MainWindow(Database &db)
 
   for (auto w : Config::tabs_widgets) {
     /**/ if (w == "splash")   windows.addWidget(&splash);
-    else if (w == "playlist") continue; // windows.addWidget(&playlist);
+    else if (w == "playlist") windows.addWidget(&playlist);
     else if (w == "browser")  continue; // windows.addWidget(&browser);
     else if (w == "info")     windows.addWidget(&info);
     else if (w == "help")     windows.addWidget(&help);
     else assert_not_reached();
     tabBar.addTab(w);
   }
+
+  playlist.attachList(&pl);
 }
 
 void MainWindow :: layout(Pos pos, Size size) {

@@ -10,7 +10,7 @@ LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shel
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
-	views/help.o views/info.o player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o
+	views/help.o views/info.o views/playlist.o player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
 

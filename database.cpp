@@ -352,9 +352,11 @@ int main () {
   auto tracks = db.getTracks();
 
   // Test: ROW with ID 0 is actually empty
+/*
   assert (! std::strlen(db.styles[0].url()));
   assert (! std::strlen(db.albums[0].url()));
   assert (! std::strlen(db.tracks[0].url()));
+*/
 
   if (db.tracks.size() < 100)
     throw std::runtime_error("Sorry, I need a database with some data ...");

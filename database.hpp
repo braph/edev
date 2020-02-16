@@ -62,17 +62,15 @@
  * The reason for that is also the implementation of the Album::styles(). //XXX
  */
 
-/* === GenericIterator ===
- * Make anything iterable that provides an index operator[] */
-template<typename TStore, typename TItem>
+/* Make anything iterable that provides operator[] */
+template<typename TContainer>
 class GenericIterator
-: public std::iterator<std::random_access_iterator_tag, TItem> {
-  TStore &store;
-  size_t idx;
+: public std::iterator<std::random_access_iterator_tag, typename TContainer::value_type> {
 public:
   typedef GenericIterator iterator;
+  typedef typename TContainer::value_type value_type;
 
-  GenericIterator(TStore &store, size_t idx) : store(store), idx(idx) {}
+  GenericIterator(TContainer &container, size_t idx) : container(container), idx(idx) {}
 
   bool operator==(const iterator&it) const { return idx == it.idx; }
   bool operator!=(const iterator&it) const { return idx != it.idx; }
@@ -81,18 +79,21 @@ public:
   bool operator<=(const iterator&it) const { return idx <= it.idx; }
   bool operator>=(const iterator&it) const { return idx >= it.idx; }
 
-  TItem operator*()                  const { return store[idx]; }
-  TItem operator[](ptrdiff_t n)      const { return *(*this + n); }
+  value_type operator*()             const { return container[idx]; }
+  value_type operator[](ptrdiff_t n) const { return *(*this + n);   }
 
   iterator& operator++()                  { ++idx; return *this; }
   iterator& operator--()                  { --idx; return *this; }
-  iterator  operator++(int)       { iterator old = *this; ++idx; return old; }
-  iterator  operator--(int)       { iterator old = *this; --idx; return old; }
-  iterator& operator+=(ptrdiff_t n)       { idx += n; return *this; }
-  iterator& operator-=(ptrdiff_t n)       { idx -= n; return *this; }
+  iterator  operator++(int)         { iterator old = *this; ++idx; return old; }
+  iterator  operator--(int)         { iterator old = *this; --idx; return old; }
+  iterator& operator+=(ptrdiff_t n)       { idx += n; return *this;            }
+  iterator& operator-=(ptrdiff_t n)       { idx -= n; return *this;            }
   iterator  operator+ (ptrdiff_t n) const { iterator i = *this; return i += n; }
   iterator  operator- (ptrdiff_t n) const { iterator i = *this; return i -= n; }
-  iterator& operator= (const iterator&it) { idx=it.idx; return *this; } 
+  iterator& operator= (const iterator&it) { idx = it.idx; return *this;        } 
+private:
+  TContainer &container;
+  size_t idx;
 };
 
 class Database {
@@ -143,7 +144,7 @@ public:
     TRACK_BPM,
   };
 
-  static ColumnID columnIDFromStr(const std::string &s) {
+  static ColumnID columnIDFromStr(const std::string &s) { //XXX make array
     /**/ if (s == "style")        return static_cast<ColumnID>(STYLE_NAME);
     else if (s == "album")        return static_cast<ColumnID>(ALBUM_TITLE);
     else if (s == "album_artist") return static_cast<ColumnID>(ALBUM_ARTIST);
@@ -271,6 +272,8 @@ public:
       void  name(ccstr);
     };
 
+    typedef Style value_type;
+
     Style operator[](size_t id) { return Style(db, id); }
     Style find(const char *url, bool create);
   };
@@ -326,6 +329,7 @@ public:
       void    download_count(int);
       void    styles(int);
     };
+    typedef Album value_type;
 
     Album operator[](size_t id) { return Album(db, id); }
     Album find(const char *url, bool create);
@@ -363,6 +367,7 @@ public:
       void    bpm(int);
       void    album_id(int);
     };
+    typedef Track value_type;
 
     Track operator[](size_t id) { return Track(db, id); }
     Track find(const char *url, bool create);
@@ -427,26 +432,33 @@ public:
     }
   };
 
-  template<typename TStore, typename TRecord>
-  struct Result {
+  template<typename TStore>
+  class Result {
     TStore &store;
     std::vector<int> indices;
+  public:
     Result(TStore &store) : store(store) {
       indices.reserve(store.size());
       for (size_t i = 1 /* Skip NULL Record */; i < store.size(); ++i)
         indices.push_back(i);
     }
 
-    inline size_t size() { return indices.size(); }
+    typedef typename TStore::value_type value_type;
 
-    TRecord operator[](size_t id) {
+    inline size_t size() {
+      return indices.size();
+    }
+
+    value_type operator[](size_t id) {
       return store[indices[id]];
     }
-    GenericIterator<Result, TRecord> begin() {
-      return GenericIterator<Result, TRecord>(*this, 0);
+
+    GenericIterator<Result> begin() {
+      return GenericIterator<Result>(*this, 0);
     }
-    GenericIterator<Result, TRecord> end() {
-      return GenericIterator<Result, TRecord>(*this, indices.size());
+
+    GenericIterator<Result> end() {
+      return GenericIterator<Result>(*this, size());
     }
 
     /* ========================================================================
@@ -454,20 +466,20 @@ public:
      * ======================================================================*/
 
     struct OrderByProxy {
-      Result<TStore, TRecord> &result;
+      Result<TStore> &result;
       OrderBy orderBy;
-      OrderByProxy(Result<TStore, TRecord> &result, ColumnID column, SortOrder order)
+      OrderByProxy(Result<TStore> &result, ColumnID column, SortOrder order)
       : result(result), orderBy(column, order) {}
       bool operator()(size_t a, size_t b) {
         return orderBy(result.store[a], result.store[b]);
       }
     };
 
-    template<typename TValue>
+    template<typename TStore>
     struct WhereProxy {
-      Result<TStore, TRecord> &result;
+      Result<TStore> &result;
       Where where;
-      WhereProxy(Result<TStore, TRecord> &result, ColumnID column, Operator op, TValue value)
+      WhereProxy(Result<TStore> &result, ColumnID column, Operator op, TValue value)
       : result(result), where(column, op, value) {}
       bool operator()(size_t i) {
         return where(result.store[i]);
@@ -504,16 +516,16 @@ public:
 
   Database();
 
-  Result<Styles, Styles::Style> getStyles() {
-    return Result<Styles, Styles::Style>(styles);
+  Result<Styles> getStyles() {
+    return Result<Styles>(styles);
   }
 
-  Result<Albums, Albums::Album> getAlbums() {
-    return Result<Albums, Albums::Album>(albums);
+  Result<Albums> getAlbums() {
+    return Result<Albums>(albums);
   }
 
-  Result<Tracks, Tracks::Track> getTracks() {
-    return Result<Tracks, Tracks::Track>(tracks);
+  Result<Tracks> getTracks() {
+    return Result<Tracks>(tracks);
   }
 
   void load(const std::string&);
