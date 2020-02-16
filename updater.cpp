@@ -56,7 +56,7 @@ bool Updater :: start(int pages) {
   };
 
   // Retrieve the first page
-  BufferDownload dl(Ektoplayer::URL::browse_url(1));
+  BufferDownload dl(Ektoplayer::browse_url(1));
   dl.onFinished = cb;
   CURLcode e = dl.perform();
   if (e != CURLE_OK) {
@@ -85,7 +85,7 @@ bool Updater :: start(int pages) {
 
   std::string url;
   while (firstPage <= lastPage) {
-    url = Ektoplayer::URL::browse_url(firstPage++);
+    url = Ektoplayer::browse_url(firstPage++);
     Download* dl = new BufferDownload(url);
     dl->onFinished = cb;
     downloads.addDownload(dl, Downloads::LOW);
@@ -98,7 +98,7 @@ void Updater :: insert_album(Album& album) {
   int32_t styles = 0;
 
   for (auto &style : album.styles) {
-    style.url = Ektoplayer::URL::style_pack(style.url);
+    Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL, NULL);
 
     auto row = db.styles.find(style.url.c_str(), true);
     if (! *(row.name()))
@@ -107,8 +107,8 @@ void Updater :: insert_album(Album& album) {
     styles += row.id;
   }
 
-  album.url = Ektoplayer::URL::album_pack(album.url);
-  album.cover_url = Ektoplayer::URL::cover_pack(album.cover_url);
+  Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL, NULL);
+  Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
   clean_description(album.description);
 
   auto a = db.albums.find(album.url.c_str(), true);
@@ -124,21 +124,21 @@ void Updater :: insert_album(Album& album) {
 
   for (auto &u : album.archive_urls) {
     if (std::string::npos != u.rfind("MP3.zip")) {
-      u = Ektoplayer::URL::archive_mp3_pack(u);
+      Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "MP3.zip");
       a.archive_mp3_url(u.c_str());
     }
     else if (std::string::npos != u.rfind("WAV.rar")) {
-      u = Ektoplayer::URL::archive_wav_pack(u);
+      Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "WAV.rar");
       a.archive_wav_url(u.c_str());
     }
     else if (std::string::npos != u.rfind("FLAC.zip")) {
-      u = Ektoplayer::URL::archive_flac_pack(u);
+      Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "FLAC.zip");
       a.archive_flac_url(u.c_str());
     }
   }
 
   for (auto &track : album.tracks) {
-    track.url = Ektoplayer::URL::track_pack(track.url);
+    Ektoplayer::url_shrink(track.url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
 
     auto t = db.tracks.find(track.url.c_str(), true);
     t.album_id(a.id);
@@ -187,7 +187,7 @@ void test_warning(const Database::Tracks::Track& track, const char* reason) {
 int main() {
   TEST_BEGIN();
 
-#define DO_UPDATE 1
+#define DO_UPDATE 0
 #if DO_UPDATE
   // This also covers some testing of the Database class ======================
   unlink(TEST_DB);
@@ -221,56 +221,6 @@ int main() {
   assert(album_desc  == db.albums[albums_size-1].description());
 #endif
 
-#if 0
-  for (auto style : db.getStyles())
-    std::cout << style.url() << std::endl;
-  for (auto track : db.getTracks())
-    std::cout << track.url() << std::endl;
-  for (auto album : db.getAlbums()) {
-    std::cout << album.url() << std::endl;
-    std::cout << album.cover_url() << std::endl;
-    std::cout << album.archive_mp3_url() << std::endl;
-    std::cout << album.archive_wav_url() << std::endl;
-    std::cout << album.archive_flac_url() << std::endl;
-  }
-  for (auto album : db.getAlbums()) {
-    std::cout << album.description() << std::endl;
-  }
-#endif
-
-  // Print out some statistics
-  std::vector<std::pair<const char*, StringPool*>> pools = {
-    {"meta",        &db.pool_meta},
-    {"desc",        &db.pool_desc},
-    {"style_url",   &db.pool_style_url},
-    {"album_url",   &db.pool_album_url},
-    {"track_url",   &db.pool_track_url},
-    {"cover_url",   &db.pool_cover_url},
-    {"archive_url", &db.pool_archive_url},
-  };
-
-  for (auto pair : pools) { // TODO.
-    char* data = pair.second->data();
-    for (size_t i = pair.second->size() - 1; i--;)
-      if (data[i] == '\0')
-        std::cout << pair.first << ':' << &data[i+1] << std::endl;
-  }
-
-  for (auto pair : pools) { // TODO.
-    size_t n_strings = 0;
-    char* data = pair.second->data();
-    for (size_t i = pair.second->size(); i--;)
-      n_strings += (data[i] == '\0');
-
-    std::cout
-      << pair.first << ": " << n_strings << " strings"
-      << " average length: " << pair.second->size() / n_strings
-      << " total length: " << pair.second->size()
-      << " capacity: " << pair.second->capacity() << std::endl;
-  }
-
-  return 0;
-
   // Tests of BrowsePage ======================================================
   // - are all styles valid?
   for (auto style : db.getStyles()) {
@@ -298,6 +248,44 @@ int main() {
     if (std::strlen(album.artist()) < 1)
       test_warning(album, "ARTIST < 1");
 #endif
+  }
+
+  // Print out defines
+  std::vector<std::pair<const char*, StringPool*>> pools = {
+    {"META",        &db.pool_meta},
+    {"DESC",        &db.pool_desc},
+    {"STYLE_URL",   &db.pool_style_url},
+    {"ALBUM_URL",   &db.pool_album_url},
+    {"TRACK_URL",   &db.pool_track_url},
+    {"COVER_URL",   &db.pool_cover_url},
+    {"ARCHIVE_URL", &db.pool_archive_url},
+  };
+
+#if 0 /* Dump content of string pools */
+  for (auto pair : pools) {
+    char* data = pair.second->data();
+    for (size_t i = pair.second->size() - 1; i--;)
+      if (data[i] == '\0')
+        std::cout << pair.first << ':' << &data[i+1] << std::endl;
+  }
+#endif
+
+  db.shrink_to_fit();
+
+  std::cout
+    << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << std::endl
+    << "#define EKTOPLAZM_ALBUM_COUNT " << db.albums.size() << std::endl
+    << "#define EKTOPLAZM_TRACK_COUNT " << db.tracks.size() << std::endl;
+
+  for (auto pair : pools) {
+    size_t n_strings = 0;
+    char* data = pair.second->data();
+    for (size_t i = pair.second->size(); i--;)
+      n_strings += (data[i] == '\0');
+
+    std::cout
+      << "#define EKTOPLAZM_" << pair.first << "_SIZE " << pair.second->size()
+      << " // average lenth: " << pair.second->size() / n_strings << std::endl;
   }
 
   TEST_END();

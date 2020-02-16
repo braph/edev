@@ -11,6 +11,10 @@
 
 class Downloads;
 
+/* ============================================================================
+ * Download base class
+ * ==========================================================================*/
+
 class Download {
 public:
   Download(const std::string&);
@@ -30,25 +34,35 @@ private:
   CURL *curl_easy;
 };
 
+/* ============================================================================
+ * Download to string buffer
+ * ==========================================================================*/
+
 class BufferDownload : public Download {
 public:
   BufferDownload(const std::string&);
   std::string& getContent();
 private:
   std::string buffer;
+  std::ofstream stream;
 };
 
-#if 0
+/* ============================================================================
+ * Download to file
+ * ==========================================================================*/
+
 class FileDownload : public Download {
 public:
   FileDownload(const std::string&, const std::string&);
- ~FileDownload();
   const std::string& getFilename();
 private:
   std::string filename;
   std::ofstream stream;
-}
-#endif
+};
+
+/* ============================================================================
+ * Download mangager - handle multiple Downloads
+ * ==========================================================================*/
 
 class Downloads {
 public:

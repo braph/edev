@@ -1,4 +1,5 @@
 #include "ektoplayer.hpp"
+#include "trackloader.hpp"
 #include "downloads.hpp"
 #include "database.hpp"
 #include "bindings.hpp"
@@ -19,8 +20,8 @@
 
 #include <fstream>
 
-namespace fs = boost::filesystem;
 using namespace Ektoplayer;
+namespace fs = boost::filesystem;
 
 static Database database;
 static Downloads downloads(10);
@@ -103,16 +104,13 @@ static void init() {
   database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
   database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
   database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
-  // These are the average string lengths
-  database.pool_desc.reserve(EKTOPLAZM_ALBUM_COUNT * 710);
-  database.pool_mp3_url.reserve(EKTOPLAZM_ALBUM_COUNT * 39);
-  database.pool_wav_url.reserve(EKTOPLAZM_ALBUM_COUNT * 39);
-  database.pool_flac_url.reserve(EKTOPLAZM_ALBUM_COUNT * 39);
-  database.pool_cover_url.reserve(EKTOPLAZM_ALBUM_COUNT * 35);
-  database.pool_album_url.reserve(EKTOPLAZM_ALBUM_COUNT * 22);
-  database.pool_track_url.reserve(EKTOPLAZM_TRACK_COUNT * 30);
-  database.pool_style_url.reserve(EKTOPLAZM_STYLE_COUNT * 7);
-  database.pool_meta.reserve(EKTOPLAZM_ALBUM_COUNT * 15 + EKTOPLAZM_TRACK_COUNT * 25);
+  database.pool_desc.reserve(EKTOPLAZM_DESC_SIZE);
+  database.pool_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+  database.pool_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
+  database.pool_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
+  database.pool_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
+  database.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
+  database.pool_meta.reserve(EKTOPLAZM_META_SIZE);
 
   emsg = "Database file corrupted? Try again, then delete it. Sorry!";
   if (fs::exists(Config::database_file))
@@ -138,15 +136,19 @@ static void program() {
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
   Mpg123Player player;
+  //player.audio_system = Config::audio_system;
+  TrackLoader trackloader(downloads);
   Views::MainWindow mainwindow(database);
   Actions actions(mainwindow, database, player);
 
   //player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
+  //player.play("/home/braph/.cache/ektoplayer/globular-popping-out.mp3.mp3");
 
   int c;
+  int n = 4;
 MAINLOOP:
   player.poll(); // First instruction, player needs some time to fetch info
-  downloads.work();
+  downloads.work(); // XXX
 
   try { database.save(Config::database_file); }
   catch (const std::exception &e) {
@@ -167,8 +169,20 @@ MAINLOOP:
   doupdate();
 
   WINDOW *win = mainwindow.active_win();
-  wtimeout(win, 700);
+  wtimeout(win, 100);
   c = wgetch(win);
+
+  if (c == 'p') {
+    player.play(trackloader.getFileForTrack(database.tracks[n], false));
+  }
+  else if (c == '>') {
+    ++n;
+  }
+  else if (c == 'l') {
+    trackloader.getFileForTrack(database.tracks[n], false);
+  }
+  else
+
   if (c != ERR) {
     if (Bindings::global[c]) {
       c = actions.call(static_cast<Actions::ActionID>(Bindings::global[c]));
@@ -195,30 +209,29 @@ static void cleanup() {
 }
 
 #if 0
-TODO config::audio_system
 TODO database.events.on(:update_finished, &browser.method(:reload))
 TODO preload playlist
 
-        player.events.on(:stop) do |reason|
-         operations.send(:'playlist.play_next') if reason == :track_completed
+  player.events.on(:stop) do |reason|
+   operations.send(:'playlist.play_next') if reason == :track_completed
+  end
+
+  time_t now = time(NULL);
+  if (Config::prefetch && now % 5 == 0) {
+    if (player.state != PLAYING)
+      continue;
+
+     current_download_track = nil
+     loop do
+        sleep 5 // clock() % 5?
+
+        next_track = playlist.get_next_pos
+        next if current_download_track == next_track
+
+        if player.length > 30 and player.position_percent > 0.5
+           trackloader.get_track_file(playlist[next_track]['url'])
+           current_download_track = next_track
+           sleep 5
         end
-
-    time_t now = time(NULL);
-    if (Config::prefetch && now % 5 == 0) {
-      if (player.state != PLAYING)
-        continue;
-
-       current_download_track = nil
-       loop do
-          sleep 5 // clock() % 5?
-
-          next_track = playlist.get_next_pos
-          next if current_download_track == next_track
-
-          if player.length > 30 and player.position_percent > 0.5
-             trackloader.get_track_file(playlist[next_track]['url'])
-             current_download_track = next_track
-             sleep 5
-          end
-       end
+     end
 #endif

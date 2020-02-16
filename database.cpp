@@ -5,7 +5,6 @@
 #define  streq(a,b) (!strcmp(a,b))
 typedef const char* ccstr;
 
-// TODO: WRITE/READ DATABASE ID
 // TODO: find(const char *url, bool create): create is not respected!
 
 /* ============================================================================
@@ -91,6 +90,11 @@ void Database :: load(const std::string &file) {
   fs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
   fs.open(file, std::ios::binary);
 
+  size_t abi_version = 0;
+  fs.read(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
+  if (abi_version != DB_ABI_VERSION)
+    throw std::runtime_error("Database ABI version mismatch");
+
   Loader l;
   for (auto p : pools) {
     l.readHeader(fs);
@@ -108,12 +112,46 @@ void Database :: save(const std::string &file) {
   fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
   fs.open(file, std::ios::binary);
 
+  size_t abi_version = DB_ABI_VERSION;
+  fs.write(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
+
   for (auto p : pools)
     Saver::write(fs, p->data(), 8/*BITS*/, p->size());
 
   styles.save(fs);
   albums.save(fs);
   tracks.save(fs);
+}
+
+void Database :: shrink_to_fit() {
+  shrink_pool_to_fit(pool_meta,
+    {&styles.name, &albums.title, &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
+}
+
+void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
+  // Collect all strings in pool
+  std::vector<const char*> allStrings;
+  for (auto column : columns)
+    for (auto id : *column)
+      allStrings.push_back(pool.get(id));
+
+  // Longest strings first, as they may contain a shorter one
+  std::sort(allStrings.begin(), allStrings.end(),
+      [](const char* a, const char* b) { return strlen(a) > strlen(b); });
+
+  // Add the strings in the right order to a new stringpool
+  StringPool newPool;
+  newPool.reserve(pool.size());
+  for (auto str : allStrings)
+    newPool.add(str);
+
+  // Update the IDs in the columns
+  for (auto column : columns)
+    for (auto& id : *column)
+      id = newPool.add(pool.get(id));
+
+  // Transfer the pool
+  pool = newPool;
 }
 
 /* ============================================================================
@@ -125,19 +163,22 @@ void Database :: Table :: load(std::ifstream &fs) {
   for (auto* col : columns) {
     l.readHeader(fs);
     col->resize(l.elem_count);
-    l.readData(fs, (char*) col->data());
+    l.readData(fs, reinterpret_cast<char*>(col->data()));
   }
 }
 
 void Database :: Table :: save(std::ofstream &fs) {
   for (auto* col : columns)
-    Saver::write(fs, (char*) col->data(), 8*sizeof(int), col->size());
+    Saver::write(fs, reinterpret_cast<char*>(col->data()), 8*sizeof(int), col->size());
 }
 
 /* Find a record by its URL or create one if it could not be found */
 // TODO: begin() is not valid since first entry is null
 template<typename TRecord, typename TTable>
 static TRecord find_or_create(TTable &table, StringPool &pool, const char *url) {
+  if (!*url)
+    return TRecord(table.db, 0);
+
   bool newly_inserted = false;
   size_t strId = pool.add(url, &newly_inserted);
   Database::Column::iterator beg;
@@ -205,7 +246,7 @@ ccstr  ALBUM::archive_mp3_url() const { return STR_GET(archive_url,  db.albums.a
 ccstr  ALBUM::archive_wav_url() const { return STR_GET(archive_url,  db.albums.archive_wav[id]); }
 ccstr  ALBUM::archive_flac_url() const { return STR_GET(archive_url, db.albums.archive_flac[id]); }
 time_t ALBUM::date()           const { return db.albums.date[id] * 60 * 60 * 24;      }
-float  ALBUM::rating()         const { return (float) db.albums.rating[id] / 100;     }
+float  ALBUM::rating()         const { return static_cast<float>(db.albums.rating[id]) / 100; }
 int    ALBUM::votes()          const { return db.albums.votes[id];                    }
 int    ALBUM::download_count() const { return db.albums.download_count[id];           }
 int    ALBUM::styles()         const { return db.albums.styles[id];                   }
@@ -231,7 +272,7 @@ DB::Field ALBUM::operator[](DB::ColumnID id) const {
   case DB::ALBUM_TITLE:           return DB::Field(title());
   case DB::ALBUM_ARTIST:          return DB::Field(artist());
   case DB::ALBUM_DESCRIPTION:     return DB::Field(description());
-  case DB::ALBUM_DATE:            return DB::Field((int) (date() /60/60/24));
+  case DB::ALBUM_DATE:            return DB::Field(date());
   case DB::ALBUM_RATING:          return DB::Field(rating());
   case DB::ALBUM_VOTES:           return DB::Field(votes());
   case DB::ALBUM_DOWNLOAD_COUNT:  return DB::Field(download_count());

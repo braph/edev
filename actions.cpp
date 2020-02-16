@@ -48,7 +48,7 @@ SELECT_TAB:         index %= v.windows.count();
 Actions::ActionID Actions :: parse(const std::string &s) {
   for (size_t i = 0; i < Actions::ACTIONID_LAST; ++i)
     if (s == action_strings[i])
-      return (Actions::ActionID) i;
+      return static_cast<Actions::ActionID>(i);
   return Actions::ACTIONID_LAST;
 }
 

@@ -37,13 +37,13 @@ public:
   inline bool valid()         const { return m_attribute; }
   inline operator bool()      const { return m_attribute; }
   inline operator xmlAttr*()  const { return m_attribute; }
-  inline const char*  name()  const { return (const char*) m_attribute->name; }
+  inline const char*  name()  const { return reinterpret_cast<const char*>(m_attribute->name); }
   inline XmlAttribute next()  const { return XmlAttribute(m_attribute->next); }
 
   inline std::string value() const { 
-    xmlChar* v = ::xmlNodeListGetString(m_attribute->doc, m_attribute->children, 1);
-    std::string value = (const char*) v;
-    ::xmlFree(v);
+    xmlChar* _ = ::xmlNodeListGetString(m_attribute->doc, m_attribute->children, 1);
+    std::string value = reinterpret_cast<const char*>(_);
+    ::xmlFree(_);
     return value;
   }
 };
@@ -54,21 +54,21 @@ class XmlNode {
 private:
   xmlNode *m_node;
 public:
-  inline XmlNode(xmlNode *node) : m_node(node)  {}
+  inline XmlNode(xmlNode *node) : m_node(node) {}
   inline operator     xmlNode*()   const { return m_node; }
   inline operator     bool()       const { return m_node; }
   inline bool         valid()      const { return m_node; }
-  inline const char*  name()       const { return (const char*) m_node->name; }
+  inline const char*  name()       const { return reinterpret_cast<const char*>(m_node->name); }
   inline int          type()       const { return m_node->type;               }
   inline XmlNode      next()       const { return XmlNode(m_node->next);      }
   inline XmlNode      children()   const { return XmlNode(m_node->children);  }
   inline XmlAttribute attributes() const { return XmlAttribute(m_node->properties); }
   inline std::string  text()       const { 
     std::string value;
-    xmlChar* v = xmlNodeListGetString(m_node->doc, m_node->xmlChildrenNode, 1);
-    if (v) {
-      value = (const char*) v;
-      xmlFree(v);
+    xmlChar* _ = xmlNodeListGetString(m_node->doc, m_node->xmlChildrenNode, 1);
+    if (_) {
+      value = reinterpret_cast<const char*>(_);
+      xmlFree(_);
     }
     return value;
   }
@@ -76,23 +76,23 @@ public:
   inline std::string dump(int level = 0, int format = 0) {
     xmlBufferPtr buf = xmlBufferCreate();
     xmlNodeDump(buf, m_node->doc, m_node, level, format);
-    std::string result = (const char*) xmlBufferContent(buf);
+    std::string result = reinterpret_cast<const char*>(xmlBufferContent(buf));
     xmlBufferFree(buf);
     return result;
   }
 
   inline std::string get_attribute(const char *name) const {
     std::string value;
-    xmlChar* v = ::xmlGetProp(m_node, (xmlChar*) name);
-    if (v) {
-      value = (const char*) v;
-      xmlFree(v);
+    xmlChar* _ = ::xmlGetProp(m_node, reinterpret_cast<const xmlChar*>(name));
+    if (_) {
+      value = reinterpret_cast<const char*>(_);
+      xmlFree(_);
     }
     return value;
   }
 
   inline void set_attribute(const char* name, const char *value) const {
-    xmlSetProp(m_node, (xmlChar*) name, (xmlChar*) value);
+    xmlSetProp(m_node, reinterpret_cast<const xmlChar*>(name), reinterpret_cast<const xmlChar*>(value));
   }
 
   inline std::string operator[](const char* name) const
@@ -168,30 +168,30 @@ public:
   }
 
   inline XmlXPathResult query(const char *xpath) {
-    xmlXPathObjectPtr _ = ::xmlXPathEvalExpression((xmlChar*) xpath, m_xpathcontext);
+    xmlXPathObjectPtr _ = ::xmlXPathEvalExpression(reinterpret_cast<const xmlChar*>(xpath), m_xpathcontext);
     //if (!_) { error; } XXX
     return XmlXPathResult(_);
   }
 
   inline XmlXPathResult query(const char *xpath, xmlNodePtr node) {
-    xmlXPathObjectPtr _ = ::xmlXPathNodeEval(node, (xmlChar*) xpath, m_xpathcontext);
+    xmlXPathObjectPtr _ = ::xmlXPathNodeEval(node, reinterpret_cast<const xmlChar*>(xpath), m_xpathcontext);
     //if (!_) { error; } XXX
     return XmlXPathResult(_);
   }
 
   inline std::string query_string(const char *xpath) {
     std::string value;
-    xmlXPathObjectPtr _ = ::xmlXPathEvalExpression((xmlChar*) xpath, m_xpathcontext);
+    xmlXPathObjectPtr _ = ::xmlXPathEvalExpression(reinterpret_cast<const xmlChar*>(xpath), m_xpathcontext);
     //if (!_) { error; }
     if (_->stringval)
-      value = (const char*) _->stringval;
+      value = reinterpret_cast<const char*>(_->stringval);
     xmlXPathFreeObject(_);
     return value;
   }
 
   inline std::string query_string(const char *xpath, xmlNodePtr node) {
     std::string value;
-    xmlXPathObjectPtr _ = ::xmlXPathNodeEval(node, (xmlChar*) xpath, m_xpathcontext);
+    xmlXPathObjectPtr _ = ::xmlXPathNodeEval(node, reinterpret_cast<const xmlChar*>(xpath), m_xpathcontext);
     if (! _) {
       xmlErrorPtr e = xmlGetLastError();
       throw std::invalid_argument(e->str1);
@@ -200,7 +200,7 @@ public:
     else {
       //XXX std::cout << _->type << std::endl;
       if (_->stringval)
-        value = (const char*) _->stringval;
+        value = reinterpret_cast<const char*>(_->stringval);
 
       xmlXPathFreeObject(_);
     }
@@ -242,7 +242,7 @@ public:
 
   /* Wrappers for read-functions */
   static inline XmlDoc readDoc(const char *cur, const char *URL = NULL, const char *encoding = NULL, int options = 0) {
-    xmlDocPtr doc = xmlReadDoc((const xmlChar*) cur, URL, encoding, options);
+    xmlDocPtr doc = xmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);
@@ -307,7 +307,7 @@ public:
   }
 
   static inline XmlDoc readDoc(const char *cur, const char *URL = NULL, const char *encoding = NULL, int options = 0) {
-    xmlDocPtr doc = htmlReadDoc((const xmlChar*) cur, URL, encoding, options);
+    xmlDocPtr doc = htmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);

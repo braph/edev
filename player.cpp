@@ -32,24 +32,22 @@ void Mpg123Player :: play() {
 void Mpg123Player :: play(const std::string &_file) {
   file = _file;
 
-  if (proc.valid() && proc.running())
-    return;
+  if (!proc.valid() || !proc.running()) {
+    proc = boost::process::child(
+      boost::process::search_path("mpg123"),
+      "-o", audio_system, "--fuzzy", "-R",
+      boost::process::std_in  < in,
+      boost::process::std_out > out,
+      boost::process::std_err > err
+    );
 
-  flags = FLAG_NEED_FORMAT;
+    thr = std::thread(&Mpg123Player::read_data, this);
+  }
+
   sample_rate = 0;
-
-  proc = boost::process::child(
-    boost::process::search_path("mpg123"),
-    "-o", audio_system, "--fuzzy", "-R",
-    boost::process::std_in  < in,
-    boost::process::std_out > out,
-    boost::process::std_err > err
-  );
-
+  flags = FLAG_NEED_FORMAT;
   in << "L " << file << std::endl;
   in << "SILENCE"    << std::endl;
-
-  thr = std::thread(&Mpg123Player::read_data, this);
 }
 
 void Mpg123Player :: set_position(unsigned seconds) {
@@ -99,7 +97,6 @@ void Mpg123Player :: read_data() {
 
   try {
     while (proc.valid() && proc.running() && std::getline(out, buf) ) {
-      std::cerr << "Parsing: " << buf << std::endl;
       line = buf.c_str();
 
       if (0){}
@@ -127,6 +124,17 @@ void Mpg123Player :: read_data() {
         seconds_played    = played;
         seconds_remaining = remaining;
         seconds_total     = seconds_played + seconds_remaining;
+      }
+      on("@E ") {
+      }
+      on("@I ") {
+      }
+      on("@R ") {
+      }
+      on("@S ") {
+      }
+      else {
+        std::cerr << "Mpg123Player: ?line:" << buf << std::endl;
       }
     }
   }

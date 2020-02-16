@@ -9,9 +9,10 @@
 #include <string>
 #include <cstring>
 #include <fstream>
+#include <utility>
 #include <algorithm>
 
-#define DB_VERSION 1 // Change this each time the DB ABI breaks
+#define DB_ABI_VERSION 1 // Change this each time the DB ABI breaks
 
 /* ============================================================================
  * Metadata Database
@@ -58,10 +59,7 @@
  * It is easier to do a `-1` on the return value of Table::size() than applying
  * this -1 logic all over the place. this won't be fixed.
  *
- * XXX NOTE XXX
- * URLs are stored in a non escaped way! TODO
- *
- * The reason for that is also the implementation of the Album::styles().
+ * The reason for that is also the implementation of the Album::styles(). //XXX
  */
 
 /* === GenericIterator ===
@@ -145,25 +143,25 @@ public:
     TRACK_BPM,
   };
 
-  static int columnIDFromStr(const std::string &s) {
-    /**/ if (s == "style")        return STYLE_NAME;
-    else if (s == "album")        return ALBUM_TITLE;
-    else if (s == "album_artist") return ALBUM_ARTIST;
-    else if (s == "description")  return ALBUM_DESCRIPTION;
-    else if (s == "date")         return ALBUM_DATE;
-    else if (s == "rating")       return ALBUM_RATING;
-    else if (s == "votes")        return ALBUM_VOTES;
-    else if (s == "downloads")    return ALBUM_DOWNLOAD_COUNT;
-    else if (s == "day")          return ALBUM_DAY;
-    else if (s == "month")        return ALBUM_MONTH;
-    else if (s == "year")         return ALBUM_YEAR;
-    else if (s == "title")        return TRACK_TITLE;
-    else if (s == "artist")       return TRACK_ARTIST;
-    else if (s == "remix")        return TRACK_REMIX;
-    else if (s == "number")       return TRACK_NUMBER;
-    else if (s == "bpm")          return TRACK_BPM;
-    else if (s == "styles")       return TRACK_NUMBER; // TODO
-    else                          return COLUMN_NONE;
+  static ColumnID columnIDFromStr(const std::string &s) {
+    /**/ if (s == "style")        return static_cast<ColumnID>(STYLE_NAME);
+    else if (s == "album")        return static_cast<ColumnID>(ALBUM_TITLE);
+    else if (s == "album_artist") return static_cast<ColumnID>(ALBUM_ARTIST);
+    else if (s == "description")  return static_cast<ColumnID>(ALBUM_DESCRIPTION);
+    else if (s == "date")         return static_cast<ColumnID>(ALBUM_DATE);
+    else if (s == "rating")       return static_cast<ColumnID>(ALBUM_RATING);
+    else if (s == "votes")        return static_cast<ColumnID>(ALBUM_VOTES);
+    else if (s == "downloads")    return static_cast<ColumnID>(ALBUM_DOWNLOAD_COUNT);
+    else if (s == "day")          return static_cast<ColumnID>(ALBUM_DAY);
+    else if (s == "month")        return static_cast<ColumnID>(ALBUM_MONTH);
+    else if (s == "year")         return static_cast<ColumnID>(ALBUM_YEAR);
+    else if (s == "title")        return static_cast<ColumnID>(TRACK_TITLE);
+    else if (s == "artist")       return static_cast<ColumnID>(TRACK_ARTIST);
+    else if (s == "remix")        return static_cast<ColumnID>(TRACK_REMIX);
+    else if (s == "number")       return static_cast<ColumnID>(TRACK_NUMBER);
+    else if (s == "bpm")          return static_cast<ColumnID>(TRACK_BPM);
+    else if (s == "styles")       return static_cast<ColumnID>(TRACK_NUMBER); // TODO
+    else                          return static_cast<ColumnID>(COLUMN_NONE);
   }
 
   /* ==========================================================================
@@ -174,6 +172,7 @@ public:
       STRING,
       INTEGER,
       FLOAT,
+      TIME,
     };
 
     Type type;
@@ -181,11 +180,13 @@ public:
       ccstr s;
       int i;
       float f;
+      time_t t;
     } value;
 
-    inline Field(ccstr s) { setString(s);  }
-    inline Field(int i)   { setInteger(i); }
-    inline Field(float f) { setFloat(f);   }
+    inline Field(ccstr s)   { setString(s);  }
+    inline Field(int i)     { setInteger(i); }
+    inline Field(float f)   { setFloat(f);   }
+    inline Field(time_t t)  { setTime(t);    }
 
     inline void setString(ccstr s) {
       this->value.s = s;
@@ -201,6 +202,11 @@ public:
       this->value.f = f;
       this->type = FLOAT;
     }
+    
+    inline void setTime(time_t t) {
+      this->value.t = t;
+      this->type = TIME;
+    }
 
     int compare(const Field &rhs) const {
       assert(type == rhs.type);
@@ -208,6 +214,7 @@ public:
       case STRING:  return strcmp(this->value.s, rhs.value.s);
       case INTEGER: return this->value.i - rhs.value.i;
       case FLOAT:   return this->value.f - rhs.value.f;
+      case TIME:    return this->value.t - rhs.value.t;
       }
     }
   };
@@ -237,10 +244,10 @@ public:
     Database &db;
     size_t    id;
     inline Record(Database &db, size_t id) : db(db), id(id) {}
-    inline operator bool()             const { return id != 0;    }
-    bool operator!=(const Record &rhs) const { return id != rhs.id; }
-    bool operator==(const Record &rhs) const { return id == rhs.id; }
-    Record& operator=(const Record &rhs) { id = rhs.id; return *this; }
+    inline operator bool()              const { return id != 0;      }
+    bool operator!=(const Record &rhs)  const { return id != rhs.id; }
+    bool operator==(const Record &rhs)  const { return id == rhs.id; }
+    Record& operator=(const Record &rhs)      { id = rhs.id; return *this; }
   };
 
   /* ==========================================================================
@@ -511,6 +518,9 @@ public:
 
   void load(const std::string&);
   void save(const std::string&);
+  void shrink_to_fit();
+private:
+  void shrink_pool_to_fit(StringPool&, std::initializer_list<Column*>);
 };
 
 #endif

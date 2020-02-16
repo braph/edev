@@ -151,7 +151,7 @@ struct FormatParser {
       if (text.empty())
         return false;
 
-      column = (Database::ColumnID) Database::columnIDFromStr(text);
+      column = Database::columnIDFromStr(text);
       if (column == Database::COLUMN_NONE)
         throw std::invalid_argument(text + ": No such tag");
     }

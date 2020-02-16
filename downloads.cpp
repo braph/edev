@@ -69,7 +69,6 @@ std::string& BufferDownload :: getContent() {
 /* ============================================================================
  * FileDownload
  * ==========================================================================*/
-#if 0
 static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *p) {
   static_cast<std::ofstream*>(p)->write(data, size*nmemb);
   return size*nmemb;
@@ -78,6 +77,8 @@ static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *p) {
 FileDownload :: FileDownload(const std::string &url, const std::string &file)
 : Download(url), filename(file)
 {
+  stream.exceptions(std::ofstream::failbit|std::ofstream::badbit);
+  stream.open(file, std::ios::binary);
   setopt(CURLOPT_WRITEFUNCTION, write_stream_cb);
   setopt(CURLOPT_WRITEDATA, &stream);
 }
@@ -85,7 +86,6 @@ FileDownload :: FileDownload(const std::string &url, const std::string &file)
 const std::string& FileDownload :: getFilename() {
   return filename;
 }
-#endif
 
 /* ============================================================================
  * Downloads
@@ -97,7 +97,7 @@ Downloads :: Downloads(int parallel)
   curl_global_init(CURL_GLOBAL_ALL);
   if (! (curl_multi = curl_multi_init()))
     throw std::runtime_error("curl_multi_init()");
-  curl_multi_setopt(curl_multi, CURLMOPT_MAXCONNECTS, (long) parallel);
+  curl_multi_setopt(curl_multi, CURLMOPT_MAXCONNECTS, static_cast<long>(parallel));
 }
 
 Downloads :: ~Downloads() {
@@ -107,8 +107,8 @@ Downloads :: ~Downloads() {
   curl_global_cleanup();
 }
 
-void Downloads :: addDownload(Download* dl, Priority prio) {
-  if (prio == LOW)
+void Downloads :: addDownload(Download* dl, Priority priority) {
+  if (priority == LOW)
     queue.push_back(dl);
   else
     queue.push_front(dl);
@@ -127,11 +127,11 @@ int Downloads :: work() {
   CURLMsg *msg;
   int msgs_left = -1;
   while ((msg = curl_multi_info_read(curl_multi, &msgs_left))) {
-    CURL *curl = msg->easy_handle;
-    assert(curl); // This should never be 
+    CURL *curl_easy = msg->easy_handle;
+    assert(curl_easy); // This should never be 
 
     Download *dl;
-    curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &dl);
+    curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, &dl);
     const char *url = dl->lastURL();
 
     if (msg->msg == CURLMSG_DONE) {
@@ -142,7 +142,7 @@ int Downloads :: work() {
 
       if (dl->onFinished)
         dl->onFinished(*dl, msg->data.result);
-      curl_multi_remove_handle(curl_multi, curl);
+      curl_multi_remove_handle(curl_multi, curl_easy);
       delete dl;
     }
     else {

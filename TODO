@@ -20,3 +20,6 @@ models
     color = UI::Colors.get("list.item_odd");
 
 - Config: rename config.members.hpp etc.
+
+- small refactorings:
+- httpcode -> httpCode

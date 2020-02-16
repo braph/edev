@@ -16,9 +16,16 @@
 #define EKTOPLAZM_ARCHIVE_BASE_URL EKTOPLAZM_URL "/files/"
 
 // Count of online data (last updated: February 2020)
-#define EKTOPLAZM_STYLE_COUNT      25
-#define EKTOPLAZM_ALBUM_COUNT      2078
-#define EKTOPLAZM_TRACK_COUNT      14402
+#define EKTOPLAZM_STYLE_COUNT 29
+#define EKTOPLAZM_ALBUM_COUNT 2079
+#define EKTOPLAZM_TRACK_COUNT 14403
+#define EKTOPLAZM_META_SIZE 286645 // average lenth: 14
+#define EKTOPLAZM_DESC_SIZE 1468245 // average lenth: 706
+#define EKTOPLAZM_STYLE_URL_SIZE 245 // average lenth: 8
+#define EKTOPLAZM_ALBUM_URL_SIZE 49777 // average lenth: 24
+#define EKTOPLAZM_TRACK_URL_SIZE 391013 // average lenth: 27
+#define EKTOPLAZM_COVER_URL_SIZE 67666 // average lenth: 32
+#define EKTOPLAZM_ARCHIVE_URL_SIZE 77069 // average lenth: 37
 
 namespace Ektoplayer {
 
@@ -30,29 +37,6 @@ static inline std::string config_file() {
   return config_dir() + PATH_SEP "ektoplayer.rc";
 }
 
-namespace URL {
-
-std::string style(std::string);
-std::string style_pack(std::string);
-
-std::string track(std::string);
-std::string track_pack(std::string);
-
-std::string album(std::string);
-std::string album_pack(std::string);
-
-std::string cover(std::string);
-std::string cover_pack(std::string);
-
-std::string archive_mp3(std::string);
-std::string archive_mp3_pack(std::string);
-
-std::string archive_wav(std::string);
-std::string archive_wav_pack(std::string);
-
-std::string archive_flac(std::string);
-std::string archive_flac_pack(std::string);
-
 static inline std::string browse_url(int page = 1) {
   if (page == 1)
     return EKTOPLAZM_BROWSE_URL;
@@ -60,7 +44,15 @@ static inline std::string browse_url(int page = 1) {
     return EKTOPLAZM_BROWSE_URL "/page/" + std::to_string(page);
 }
 
-} // namespace URL
+/* Shrink a url
+ * - Unescape it
+ * - Remove prefix and suffix
+ */
+std::string& url_shrink(std::string&, const char*, const char*);
+
+// Expand a previously shrinked url
+std::string& url_expand(std::string&, const char*, const char*);
+
 } // namespace Ektoplayer
 
 #endif
