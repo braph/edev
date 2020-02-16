@@ -49,7 +49,7 @@ bool Updater :: start(int pages) {
 
   std::function<void(Download&, CURLcode)> cb = [this](Download& _dl, CURLcode code) {
     BufferDownload &dl = static_cast<BufferDownload&>(_dl);
-    if (code == CURLE_OK && dl.httpcode() == 200) {
+    if (code == CURLE_OK && dl.httpCode() == 200) {
       BrowsePage page(dl.getContent());
       this->insert_browsepage(page);
     }
@@ -270,7 +270,7 @@ int main() {
   }
 #endif
 
-  db.shrink_to_fit();
+  //db.shrink_to_fit();
 
   std::cout
     << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << std::endl

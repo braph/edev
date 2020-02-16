@@ -32,10 +32,10 @@ protected:
   int m_width;
 };
 
-template<typename TContainer, typename TItem>
+template<typename TContainer, typename TRenderer>
 class ListWidget : public UI::Window {
 public:
-  ListWidget(ListItemRenderer<TItem> renderer)
+  ListWidget(TRenderer renderer)
   : m_cursor(0)
   , m_active(0)
   , m_top_index(0)
@@ -52,7 +52,6 @@ public:
     size.width = width;
     wresize(win, height, width);
     m_item_renderer.setWidth(size.width); // if item_renderer?
-    //super;
   }
 
   void render_item(int idx, bool cursor) {
@@ -146,8 +145,8 @@ public:
   }
 
   // === Navigation === //
-  void top()       { m_cursor = m_top_index = 0;          draw();           }
-  void bottom()    { m_cursor = m_top_index = INT_MAX;    draw();           }
+  void top()       { m_cursor = m_top_index = 0;        draw(); }
+  void bottom()    { m_cursor = m_top_index = INT_MAX;  draw(); }
   void page_up()   { scroll_up(); }
   void page_down() { scroll_down(); }
   /*
@@ -162,17 +161,17 @@ private:
   int m_cursor;
   int m_active;
   int m_top_index;
-  ListItemRenderer<TItem> m_item_renderer;
+  TRenderer m_item_renderer;
   TContainer *m_list;
 };
 
 // === Testing ================================================================
-template<typename TContainer, typename TItem>
+template<typename TContainer, typename TRenderer>
 void testListWidget(
-  ListItemRenderer<TItem> &renderer,
-  TContainer &testData
+  TContainer &testData,
+  TRenderer &renderer
 ) {
-  ListWidget<TContainer, TItem> listWidget(renderer);
+  ListWidget<TContainer, TRenderer> listWidget(renderer);
   listWidget.attachList(&testData);
   listWidget.layout(LINES, COLS);
   listWidget.draw();
@@ -183,7 +182,9 @@ void testListWidget(
     switch (wgetch(listWidget.active_win())) {
       case 'k': listWidget.up();        break;
       case 'j': listWidget.down();      break;
+      case KEY_PPAGE:
       case 'K': listWidget.page_up();   break;
+      case KEY_NPAGE:
       case 'J': listWidget.page_down(); break;
       case 'g': listWidget.top();       break;
       case 'G': listWidget.bottom();    break;
@@ -193,6 +194,22 @@ void testListWidget(
     listWidget.noutrefresh();
     doupdate();
   }
+}
+
+template<typename TContainer, typename TRenderer>
+void testListItemRenderer(TContainer& container, TRenderer& renderer) {
+  renderer.setWidth(COLS);
+  int cursor = LINES / 2;
+
+  for (int y = 0; y < container.size(); ++y) {
+    if (y >= LINES)
+      break;
+
+    wmove(stdscr, y, 0);
+    renderer.render(stdscr, container[y], y, y == 3, y == cursor);
+  }
+  refresh();
+  getch();
 }
 // ============================================================================
 

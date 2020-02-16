@@ -61,7 +61,7 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   fileDownload->onFinished = [=](Download& _dl, CURLcode curl_e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
     boost::system::error_code e;
-    if (curl_e == CURLE_OK && dl.httpcode() == 200) {
+    if (curl_e == CURLE_OK && dl.httpCode() == 200) {
       if (Config::use_cache) {
         boost::filesystem::rename(dl.getFilename(), file_in_cache, e);
         if (e) {

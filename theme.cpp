@@ -175,7 +175,6 @@ void Theme :: loadTheme(unsigned int theme) {
 #if TEST_THEME
 #include "test.hpp"
 int main() {
-  UI::Colors::init();
 }
 #endif
 

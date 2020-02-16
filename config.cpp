@@ -103,13 +103,13 @@ static inline const char* skipWhitespace(const char *s) {
 
 struct AttributeParser {
   const char* s;
-  std::string opt, value;
+  std::string name, value;
   AttributeParser(const std::string& s) : s(s.c_str()) {}
 
   bool next() {
-    opt.clear();
+    name.clear();
     value.clear();
-    std::string* current = &opt;
+    std::string* current = &name;
     s = skipWhitespace(s);
     for (; *s; ++s) {
       if (*s == ',' || isspace(*s))   { break;                  }
@@ -117,7 +117,7 @@ struct AttributeParser {
       else                            { current->push_back(*s); }
     }
 
-    return !opt.empty();
+    return !name.empty();
   }
 };
 
@@ -185,11 +185,11 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) { // MOC
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.opt == "fg")     fmt.fg = UI::Color::parse(attr.value);
-      else if (attr.opt == "bg")     fmt.bg = UI::Color::parse(attr.value);
-      else if (attr.opt == "right")  fmt.justify = PlaylistColumnFormat::Right;
-      else if (attr.opt == "left")   fmt.justify = PlaylistColumnFormat::Left;
-      else if (attr.opt == "size") {
+      /**/ if (attr.name == "fg")     fmt.fg = UI::Color::parse(attr.value);
+      else if (attr.name == "bg")     fmt.bg = UI::Color::parse(attr.value);
+      else if (attr.name == "right")  fmt.justify = PlaylistColumnFormat::Right;
+      else if (attr.name == "left")   fmt.justify = PlaylistColumnFormat::Left;
+      else if (attr.name == "size") {
         fmt.size = std::stoi(attr.value);
         fmt.relative = (attr.value.back() == '%');
       }
@@ -219,9 +219,9 @@ static PlayingInfoFormat opt_parse_playinginfo_format(const std::string& s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.opt == "fg")   fmt.fg = UI::Color::parse(attr.value);
-      else if (attr.opt == "bg")   fmt.bg = UI::Color::parse(attr.value);
-      else fmt.attributes |= UI::Attribute::parse(attr.opt);
+      /**/ if (attr.name == "fg")   fmt.fg = UI::Color::parse(attr.value);
+      else if (attr.name == "bg")   fmt.bg = UI::Color::parse(attr.value);
+      else fmt.attributes |= UI::Attribute::parse(attr.name);
     }
 
     result.push_back(fmt);

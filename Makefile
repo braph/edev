@@ -1,7 +1,7 @@
 DEBUG 				= 1 # 0|1
 PEDANTIC_FREE = 1 # 0|1
 
-WARNINGS = -Wall -Wpedantic -pedantic -Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
+WARNINGS = -Wall -Wpedantic -pedantic #-Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
 
 CXXFLAGS   := -std=c++11 -Og -g $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
 #CXXFLAGS   := -std=c++11 -O2 $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)

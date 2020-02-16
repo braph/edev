@@ -22,7 +22,7 @@ public:
   std::function<void(Download&, CURLcode)> onFinished;
   CURLcode perform();
   void cleanup();
-  int httpcode();
+  int httpCode();
   const char* lastURL();
 
   template<typename T>
@@ -71,7 +71,7 @@ public:
   Downloads(int);
  ~Downloads();
   void addDownload(Download*, Priority);
-  int work();
+  int work(struct curl_waitfd*, unsigned int extra_nfds);
 
 private:
   CURLM *curl_multi;

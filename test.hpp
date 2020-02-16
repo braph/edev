@@ -29,5 +29,7 @@
 #define NCURSES_INIT() \
   initscr(); \
   start_color(); \
-  use_default_colors()
+  use_default_colors(); \
+  noecho(); \
+  curs_set(0)
 

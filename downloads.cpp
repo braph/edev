@@ -28,7 +28,7 @@ CURLcode Download :: perform() {
   return e;
 }
 
-int Download :: httpcode() {
+int Download :: httpCode() {
   long code = 0;
   curl_easy_getinfo(curl_easy, CURLINFO_RESPONSE_CODE, &code);
   return code;
@@ -114,7 +114,11 @@ void Downloads :: addDownload(Download* dl, Priority priority) {
     queue.push_front(dl);
 }
 
-int Downloads :: work() {
+int Downloads :: work(struct curl_waitfd* extra, unsigned int extra_nfds) {
+  //curl_multi_wait(curl_multi, extra, extra_nfds, 10, &running_handles);
+  //if (! running_handles)
+  //  return 0;
+
   int running_handles;
   curl_multi_perform(curl_multi, &running_handles);
   while (running_handles < parallel && queue.size()) {
@@ -136,7 +140,7 @@ int Downloads :: work() {
 
     if (msg->msg == CURLMSG_DONE) {
       if (msg->data.result == CURLE_OK)
-        std::cerr << url << ": " << dl->httpcode() << std::endl;
+        std::cerr << url << ": " << dl->httpCode() << std::endl;
       else
         std::cerr << url << ": " << curl_easy_strerror(msg->data.result) << std::endl;
 

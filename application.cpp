@@ -10,7 +10,7 @@
 #include "theme.hpp"
 #include "views/mainwindow.hpp"
 
-#include <unistd.h>  // TODO: Remove me
+#include <unistd.h>
 #include <signal.h>
 #include <glob.h>
 
@@ -23,36 +23,43 @@
 using namespace Ektoplayer;
 namespace fs = boost::filesystem;
 
-static Database database;
-static Downloads downloads(10);
-static void init();
-static void program();
-static void cleanup();
 static bool redraw = true;
 static void on_SIGWINCH(int) { redraw = true; }
-static const char* emsg;
 
-int main() {
-  LIBXML_TEST_VERSION /* Check for ABI mismatch */
-  std::string err;
+class Application {
+public:
+  Application();
+ ~Application();
+  void run();
+  void init();
+  void cleanup();
+private:
+  Database database;
+  Downloads downloads;
+  Updater updater;
+  TrackLoader trackloader;
+  Mpg123Player player;
+  const char* error;
+};
 
-  try {
-    init();
-    program();
+Application :: Application()
+: database()
+, downloads(10)
+, updater(database, downloads)
+, trackloader(downloads)
+, player()
+{
+  try { init(); }
+  catch (const std::exception &e) {
+    throw std::runtime_error(std::string(error) + ": " + e.what());
   }
-  catch (const std::exception &e) { err = e.what();                 }
-  catch (const char *e)           { err = e;                        }
-  catch (...)                     { err = "Unknown exception type"; }
-  endwin();
-  delwin(stdscr);
-
-  if (err.size())
-    std::cout << emsg << ": " << err << std::endl;
-
-  return !! err.size();
 }
 
-static void init() {
+Application :: ~Application() {
+  cleanup();
+}
+
+void Application :: init() {
   // Set terminal title
   std::cout << "\033]0;ektoplayer\007" << std::endl;
 
@@ -65,35 +72,35 @@ static void init() {
   curs_set(0);
   mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
 
-  emsg = "Initialization error. This is a bug";
+  error = "Initialization error. This is a bug";
   Config::init();
   Bindings::init();
 
-  emsg = "Error while reading configuration file";
+  error = "Error while reading configuration file";
   if (fs::exists(Ektoplayer::config_file()))
     Config::read(Ektoplayer::config_file());
 
-  emsg = "Could not create config directory";
+  error = "Could not create config directory";
   fs::create_directories(Ektoplayer::config_dir());
 
-  emsg = "Could not create cache directory";
+  error = "Could not create cache directory";
   if (Config::use_cache)
     if (! fs::is_directory(Config::cache_dir))
       fs::create_directory(Config::cache_dir);
 
-  emsg = "Could not create temp_dir";
+  error = "Could not create temp_dir";
   if (! fs::is_directory(Config::temp_dir))
     fs::create_directory(Config::temp_dir);
 
-  emsg = "Could not create download_dir";
+  error = "Could not create download_dir";
   if (! fs::is_directory(Config::download_dir))
     fs::create_directory(Config::download_dir);
 
-  emsg = "Could not create archive_dir";
+  error = "Could not create archive_dir";
   if (! fs::is_directory(Config::archive_dir))
     fs::create_directory(Config::archive_dir);
 
-  emsg = "Error opening log file";
+  error = "Error opening log file";
   std::ios::sync_with_stdio(false);
   std::ofstream *logfile = new std::ofstream();
   logfile->exceptions(std::ofstream::failbit|std::ofstream::badbit);
@@ -112,48 +119,50 @@ static void init() {
   database.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
   database.pool_meta.reserve(EKTOPLAZM_META_SIZE);
 
-  emsg = "Database file corrupted? Try again, then delete it. Sorry!";
+  error = "Database file corrupted? Try again, then delete it. Sorry!";
   if (fs::exists(Config::database_file))
     database.load(Config::database_file);
 
   // Set the error message to something more generic
-  emsg = "Error";
+  error = "Error";
 
   // All colors are beautiful
   Theme::loadTheme(Config::use_colors != -1 ? Config::use_colors : COLORS);
-
-  atexit(cleanup);
-  signal(SIGWINCH, on_SIGWINCH);
 }
 
-static void program() {
+void Application :: run() {
   std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
 
-  Updater updater(database, downloads);
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
-  Mpg123Player player;
   //player.audio_system = Config::audio_system;
-  TrackLoader trackloader(downloads);
   Views::MainWindow mainwindow(database);
   Actions actions(mainwindow, database, player);
 
   //player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
-  //player.play("/home/braph/.cache/ektoplayer/globular-popping-out.mp3.mp3");
 
   int c;
   int n = 4;
+  int download_iterations;
 MAINLOOP:
   player.poll(); // First instruction, player needs some time to fetch info
-  downloads.work(); // XXX
 
-  try { database.save(Config::database_file); }
-  catch (const std::exception &e) {
-    throw std::runtime_error(std::string("Error saving database file: ") + e.what());
+  for (download_iterations = 0; download_iterations < 10; ++download_iterations) {
+    if (! downloads.work(NULL, 0))
+      break;
   }
+
+#if 0
+  if (download_iterations) {
+    try { database.save(Config::database_file); }
+    catch (const std::exception &e) {
+      throw std::runtime_error(std::string("Error saving database file: ") + e.what());
+    }
+  }
+#endif
 
   if (redraw) {
     redraw = false;
@@ -169,7 +178,7 @@ MAINLOOP:
   doupdate();
 
   WINDOW *win = mainwindow.active_win();
-  wtimeout(win, 100);
+  wtimeout(win, 1000);
   c = wgetch(win);
 
   if (c == 'p') {
@@ -196,16 +205,34 @@ MAINLOOP:
 goto MAINLOOP;
 }
 
-static void cleanup() {
+void Application :: cleanup() {
   glob_t globbuf;
   char pattern[8192];
   sprintf(pattern, "%s" PATH_SEP "~ekto-*", Config::temp_dir.c_str());
   glob(pattern, GLOB_NOSORT|GLOB_NOESCAPE, NULL, &globbuf);
-  while (globbuf.gl_pathc--)
-    unlink(globbuf.gl_pathv[globbuf.gl_pathc]);
+  for (size_t i = 0; i < globbuf.gl_pathc; ++i)
+    unlink(globbuf.gl_pathv[i]);
 #if PEDANTIC_FREE
   globfree(&globbuf);
 #endif
+}
+
+int main() {
+  LIBXML_TEST_VERSION /* Check for ABI mismatch */
+  signal(SIGWINCH, on_SIGWINCH);
+
+  try {
+    Application app;
+    app.run();
+  }
+  catch (const std::exception &e) {
+    endwin();
+    std::cout << e.what() << std::endl;
+    return 1;
+  }
+
+  delwin(stdscr);
+  return 0;
 }
 
 #if 0

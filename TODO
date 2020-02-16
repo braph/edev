@@ -1,10 +1,8 @@
 in_list() vs strstr!
 create a playlist mockup
 models
-- drop XML from config .... well maybe its done?
 - check write_to_database() and to an actual flush to disk? ...
 - Database: syles() return as array of stringzzz
-- Drop thread() from updater, use curl_multi_wait+fds{STDIN}
 - ui.hpp: change size type of Pos,Size to short?
 - mouse section events
 - downloads: add tries options?
@@ -20,6 +18,3 @@ models
     color = UI::Colors.get("list.item_odd");
 
 - Config: rename config.members.hpp etc.
-
-- small refactorings:
-- httpcode -> httpCode
