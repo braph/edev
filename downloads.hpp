@@ -71,7 +71,7 @@ public:
   Downloads(int);
  ~Downloads();
   void addDownload(Download*, Priority);
-  int work(struct curl_waitfd*, unsigned int extra_nfds);
+  int work();
 
 private:
   CURLM *curl_multi;

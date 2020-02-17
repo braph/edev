@@ -465,17 +465,7 @@ public:
      * Proxy objects
      * ======================================================================*/
 
-    struct OrderByProxy {
-      Result<TStore> &result;
-      OrderBy orderBy;
-      OrderByProxy(Result<TStore> &result, ColumnID column, SortOrder order)
-      : result(result), orderBy(column, order) {}
-      bool operator()(size_t a, size_t b) {
-        return orderBy(result.store[a], result.store[b]);
-      }
-    };
-
-    template<typename TStore>
+    template<typename TValue>
     struct WhereProxy {
       Result<TStore> &result;
       Where where;
@@ -487,8 +477,10 @@ public:
     };
 
     void order_by(ColumnID column, SortOrder order) {
-      OrderByProxy orderProxy(*this, column, order);
-      std::sort(indices.begin(), indices.end(), orderProxy);
+      OrderBy orderBy(column, order);
+      std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
+        return orderBy(this->store[a], this->store[b]);
+      });
     }
 
     template<typename TValue>

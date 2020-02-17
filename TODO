@@ -18,3 +18,8 @@ models
     color = UI::Colors.get("list.item_odd");
 
 - Config: rename config.members.hpp etc.
+
+- Reset terminal on quit
+
+- Small optimizations:
+  - buffer->reserve(50 * 1024) on downloading browsepage

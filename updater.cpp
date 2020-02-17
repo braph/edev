@@ -2,12 +2,6 @@
 #include "ektoplayer.hpp"
 #include <iostream>
 
-#if 0
-  // Do the reserve here, not in constructor, as constructing a download job
-  // should not eat up our memory
-  buffer->reserve(50 * 1024);
-#endif
-
 static std::string& clean_description(std::string& desc) {
   size_t pos;
 
@@ -220,6 +214,17 @@ int main() {
   assert(track_url   == db.tracks[tracks_size-1].url());
   assert(album_desc  == db.albums[albums_size-1].description());
 #endif
+  
+  // Testing shrink_to_fit()
+  {
+    Database db2;
+    db2.load(TEST_DB);
+    db2.shrink_to_fit();
+    for (size_t i = 0; i < db.tracks.size(); ++i)
+      assert(streq(db.tracks[i].title(), db2.tracks[i].title()));
+    for (size_t i = 0; i < db.albums.size(); ++i)
+      assert(streq(db.albums[i].title(), db2.albums[i].title()));
+  }
 
   // Tests of BrowsePage ======================================================
   // - are all styles valid?
@@ -269,8 +274,6 @@ int main() {
         std::cout << pair.first << ':' << &data[i+1] << std::endl;
   }
 #endif
-
-  //db.shrink_to_fit();
 
   std::cout
     << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << std::endl

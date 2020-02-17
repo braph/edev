@@ -114,7 +114,7 @@ void Downloads :: addDownload(Download* dl, Priority priority) {
     queue.push_front(dl);
 }
 
-int Downloads :: work(struct curl_waitfd* extra, unsigned int extra_nfds) {
+int Downloads :: work() {
   //curl_multi_wait(curl_multi, extra, extra_nfds, 10, &running_handles);
   //if (! running_handles)
   //  return 0;

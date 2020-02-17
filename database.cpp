@@ -176,9 +176,6 @@ void Database :: Table :: save(std::ofstream &fs) {
 // TODO: begin() is not valid since first entry is null
 template<typename TRecord, typename TTable>
 static TRecord find_or_create(TTable &table, StringPool &pool, const char *url) {
-  if (!*url)
-    return TRecord(table.db, 0);
-
   bool newly_inserted = false;
   size_t strId = pool.add(url, &newly_inserted);
   Database::Column::iterator beg;
@@ -347,16 +344,14 @@ int main () {
   Database db;
   db.load(TEST_DB);
 
-  auto styles = db.getStyles();
-  auto albums = db.getAlbums();
-  auto tracks = db.getTracks();
-
   // Test: ROW with ID 0 is actually empty
-/*
   assert (! std::strlen(db.styles[0].url()));
   assert (! std::strlen(db.albums[0].url()));
   assert (! std::strlen(db.tracks[0].url()));
-*/
+
+  auto styles = db.getStyles();
+  auto albums = db.getAlbums();
+  auto tracks = db.getTracks();
 
   if (db.tracks.size() < 100)
     throw std::runtime_error("Sorry, I need a database with some data ...");

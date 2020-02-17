@@ -57,6 +57,14 @@ Application :: Application()
 
 Application :: ~Application() {
   cleanup();
+
+  try {
+    database.shrink_to_fit();
+    database.save(Config::database_file);
+  }
+  catch (const std::exception &e) {
+    throw std::runtime_error(std::string("Error saving database file: ") + e.what());
+  }
 }
 
 void Application :: init() {
@@ -151,18 +159,9 @@ MAINLOOP:
   player.poll(); // First instruction, player needs some time to fetch info
 
   for (download_iterations = 0; download_iterations < 10; ++download_iterations) {
-    if (! downloads.work(NULL, 0))
+    if (! downloads.work())
       break;
   }
-
-#if 0
-  if (download_iterations) {
-    try { database.save(Config::database_file); }
-    catch (const std::exception &e) {
-      throw std::runtime_error(std::string("Error saving database file: ") + e.what());
-    }
-  }
-#endif
 
   if (redraw) {
     redraw = false;
