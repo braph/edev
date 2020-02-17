@@ -13,6 +13,7 @@ public:
   inline size_t       size()            { return storage.size();         }
   inline size_t       capacity()        { return storage.capacity();     }
   inline char*        data()            { return const_cast<char*>(storage.data()); }
+  std::string&        storage2()        { return storage;                }
 private:
   std::string storage;
 };

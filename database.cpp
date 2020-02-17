@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include <cstring>
 #include <cstdlib>
+#include <unordered_map>
 #define  streq(a,b) (!strcmp(a,b))
 typedef const char* ccstr;
 
@@ -129,26 +130,39 @@ void Database :: shrink_to_fit() {
 }
 
 void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
-  // Collect all strings in pool
-  std::vector<const char*> allStrings;
+  // Speed up a bit by avoiding StringPool::get()
+  const char* data = pool.data();
+
+  size_t nIDs = 0; // Average ID count
+  for (auto c : columns) { nIDs += c->size(); }
+  nIDs /= columns.size();
+
+  // Build the map used for remapping IDs, storing all IDs used in columns
+  std::unordered_map<int, int> idRemap;
+  idRemap.reserve(nIDs);
   for (auto column : columns)
     for (auto id : *column)
-      allStrings.push_back(pool.get(id));
+      idRemap[id] = 0;
 
-  // Longest strings first, as they may contain a shorter one
-  std::sort(allStrings.begin(), allStrings.end(),
-      [](const char* a, const char* b) { return strlen(a) > strlen(b); });
+  // Sort the IDs by their string length
+  std::vector<int> idSortedByLength;
+  idSortedByLength.reserve(idRemap.size());
+  for (auto& pair : idRemap)
+    idSortedByLength.push_back(pair.first);
 
-  // Add the strings in the right order to a new stringpool
+  std::sort(idSortedByLength.begin(), idSortedByLength.end(), [&](int a, int b)
+      { return a != b && strlen(data + a) > strlen(data + b); });
+
+  // Add strings in the right order to the stringpool and store the new ID
   StringPool newPool;
   newPool.reserve(pool.size());
-  for (auto str : allStrings)
-    newPool.add(str);
+  for (auto id : idSortedByLength)
+    idRemap[id] = newPool.add(data + id);
 
-  // Update the IDs in the columns
+  // Replace the IDs from the old pool by the IDs from the new pool
   for (auto column : columns)
     for (auto& id : *column)
-      id = newPool.add(pool.get(id));
+      id = idRemap[id];
 
   // Transfer the pool
   pool = newPool;
@@ -174,8 +188,8 @@ void Database :: Table :: save(std::ofstream &fs) {
 
 /* Find a record by its URL or create one if it could not be found */
 // TODO: begin() is not valid since first entry is null
-template<typename TRecord, typename TTable>
-static TRecord find_or_create(TTable &table, StringPool &pool, const char *url) {
+template<typename TTable>
+static typename TTable::value_type find_or_create(TTable &table, StringPool &pool, const char *url) {
   bool newly_inserted = false;
   size_t strId = pool.add(url, &newly_inserted);
   Database::Column::iterator beg;
@@ -191,9 +205,9 @@ NOT_FOUND:
     size_t pos = table.size();
     table.resize(pos+1);
     table.url[pos] = strId;
-    return TRecord(table.db, pos);
+    return typename TTable::value_type(table.db, pos);
   } else {
-    return TRecord(table.db, fnd-beg);
+    return typename TTable::value_type(table.db, fnd-beg);
   }
 }
 
@@ -207,7 +221,7 @@ NOT_FOUND:
  * ==========================================================================*/
 
 STYLE Database::Styles::find(const char *url, bool create) {
-  return find_or_create<Database::Styles::Style>(*this, db.pool_style_url, url);
+  return find_or_create(*this, db.pool_style_url, url);
 }
 
 // GETTER
@@ -230,7 +244,7 @@ DB::Field STYLE::operator[](DB::ColumnID id) const {
  * ==========================================================================*/
 
 ALBUM Database::Albums::find(const char *url, bool create) {
-  return find_or_create<Database::Albums::Album>(*this, db.pool_album_url, url);
+  return find_or_create(*this, db.pool_album_url, url);
 }
 
 // GETTER
@@ -291,7 +305,7 @@ DB::Field ALBUM::operator[](DB::ColumnID id) const {
  * ==========================================================================*/
 
 TRACK Database::Tracks::find(const char* url, bool create) {
-  return find_or_create<Database::Tracks::Track>(*this, db.pool_track_url, url);
+  return find_or_create(*this, db.pool_track_url, url);
 }
 
 // GETTER
@@ -344,7 +358,7 @@ int main () {
   Database db;
   db.load(TEST_DB);
 
-  // Test: ROW with ID 0 is actually empty
+  /* Test: ROW with ID 0 is actually empty */
   assert (! std::strlen(db.styles[0].url()));
   assert (! std::strlen(db.albums[0].url()));
   assert (! std::strlen(db.tracks[0].url()));
@@ -356,32 +370,32 @@ int main () {
   if (db.tracks.size() < 100)
     throw std::runtime_error("Sorry, I need a database with some data ...");
 
-  // Test: Count of result set equals the number of table entries
+  /* Test: Count of result set equals the number of table entries */
   assert (styles.size() == db.styles.size() - 1);
   assert (albums.size() == db.albums.size() - 1);
   assert (tracks.size() == db.tracks.size() - 1);
-  // Test: First row of database contains valid data
+  /* Test: First row of database contains valid data */
   assert (std::strlen(db.styles[1].url()));
   assert (std::strlen(db.albums[1].url()));
   assert (std::strlen(db.tracks[1].url()));
-  // Test: First row of result set contains valid data
+  /* Test: First row of result set contains valid data */
   assert (std::strlen(styles[0].url()));
   assert (std::strlen(albums[0].url()));
   assert (std::strlen(tracks[0].url()));
-  // Test: The first row of a result set equals the first record of a table
+  /* Test: The first row of a result set equals the first record of a table */
   assert (styles[0].url() == db.styles[1].url());
   assert (albums[0].url() == db.albums[1].url());
   assert (tracks[0].url() == db.tracks[1].url());
-  // Test: Last row of database contains valid data
+  /* Test: Last row of database contains valid data */
   assert (std::strlen(db.styles[db.styles.size() - 1].url()));
   assert (std::strlen(db.albums[db.albums.size() - 1].url()));
   assert (std::strlen(db.tracks[db.tracks.size() - 1].url()));
-  // Test: Last row of result set
+  /* Test: Last row of result set */
   assert (std::strlen(styles[styles.size() - 1].url()));
   assert (std::strlen(albums[albums.size() - 1].url()));
   assert (std::strlen(tracks[tracks.size() - 1].url()));
 
-  // Test: ORDER BY TRACK_TITLE ===============================================
+  /* Test: ORDER BY TRACK_TITLE ============================================ */
   std::vector<const char*> track_titles;
   for (auto track : tracks)
     track_titles.push_back(track.title());
@@ -395,7 +409,7 @@ int main () {
   assert(equals(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
 
 
-  // Test: ORDER BY ALBUM_TITLE ===============================================
+  /* Test: ORDER BY ALBUM_TITLE ============================================ */
   std::vector<const char*> album_titles;
   for (auto track : tracks)
     album_titles.push_back(track.album().title());
@@ -409,14 +423,18 @@ int main () {
   assert(equals(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
 
 
-  // TODO: Check WHERE!
-  // albums.where(Database::ALBUM_URL, Database::EQUAL, "zis0ky-into-the-abyss");
+  /* Test: WHERE ALBUM_TITLE =============================================== */
+  tracks.where((Database::ColumnID) Database::ALBUM_TITLE, Database::EQUAL, "Interbeing");
+  assert(tracks.size());
+  for (auto track : tracks)
+    assert(streq(track.album().title(), "Interbeing"));
 
-  for (size_t i = 0; i < 10; ++i)
-    std::cout << tracks[i].title() << " in album " << tracks[i].album().title() << std::endl;
+  /* Test: WHERE TRACK_TITLE =============================================== */
+  tracks.where((Database::ColumnID) Database::TRACK_TITLE, Database::EQUAL, "Satori");
+  assert(tracks.size() == 1);
+  assert(streq(tracks[0].title(), "Satori"));
 
-
-  // === Test if it failes to open invalid databases ==========================
+  /* Test: Failing to load a invalid database ============================== */
   except(db.load("/non-existend"));
   except(db.load("/bin/true"));
 

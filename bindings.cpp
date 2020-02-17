@@ -3,6 +3,7 @@
 namespace Bindings {
 
 unsigned char global[KEY_MAX];
+unsigned char playlist[KEY_MAX];
 
 void init() {
 #define _ global
@@ -28,9 +29,19 @@ void init() {
   //_[C('U')]                               = UPDATE;
 
   _['q']                                  = Actions::QUIT;
+#undef _
+
+#define _ playlist
+  _['g']      = _[KEY_HOME]               = Actions::PLAYLIST_TOP;
+  _['G']      = _[KEY_END]                = Actions::PLAYLIST_BOTTOM;
+  _['k']      = _[KEY_UP]                 = Actions::PLAYLIST_UP;
+  _['j']      = _[KEY_DOWN]               = Actions::PLAYLIST_DOWN;
+  _[C('u')]   = _[KEY_PPAGE]              = Actions::PLAYLIST_PAGE_UP;
+  _[C('d')]   = _[KEY_NPAGE]              = Actions::PLAYLIST_PAGE_DOWN;
+#undef _
 }
 
-}
+} // namespace Bindings
 
 
 
@@ -75,36 +86,36 @@ void init() {
 
 #if NUR_ZUR_UEBERSICHT
   // nav: help, info, browser, playlist
-         @bindings[:playlist] = {
-            # selection
-            :'playlist.toggle_selection' => ['^v'                          ],
-            # search
-            :'playlist.search_next'    => [?n                              ],
-            :'playlist.search_prev'    => [?N                              ],
-            :'playlist.search_up'      => [??                              ],
-            :'playlist.search_down'    => [?/                              ],
-            # playlist
-            :'playlist.play'           => [         ICurses::KEY_ENTER     ],
-            :'playlist.download_album' => [?$                              ],
-            :'playlist.reload'         => [?r                              ],
-            :'playlist.goto_current'   => [?o                              ],
-            :'playlist.clear'          => [?c                              ],
-            :'playlist.delete'         => [?d                              ],
-            # other
-            :'player.toggle'           => [' '                             ]
-         }
-         @bindings[:browser] = {
-            # selection
-            :'browser.toggle_selection' => ['^v'                           ],
-            # search
-            :'browser.search_next'     => [?n                              ],
-            :'browser.search_prev'     => [?N                              ],
-            :'browser.search_up'       => [??                              ],
-            :'browser.search_down'     => [?/                              ],
-            # browser
-            :'browser.add_to_playlist' => [' ', ?a                         ],
-            :'browser.enter'           => [         ICurses::KEY_ENTER     ],
-            :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]
-         }
-         @bindings[:splash] = {}
+   @bindings[:playlist] = {
+      # selection
+      :'playlist.toggle_selection' => ['^v'                          ],
+      # search
+      :'playlist.search_next'    => [?n                              ],
+      :'playlist.search_prev'    => [?N                              ],
+      :'playlist.search_up'      => [??                              ],
+      :'playlist.search_down'    => [?/                              ],
+      # playlist
+      :'playlist.play'           => [         ICurses::KEY_ENTER     ],
+      :'playlist.download_album' => [?$                              ],
+      :'playlist.reload'         => [?r                              ],
+      :'playlist.goto_current'   => [?o                              ],
+      :'playlist.clear'          => [?c                              ],
+      :'playlist.delete'         => [?d                              ],
+      # other
+      :'player.toggle'           => [' '                             ]
+   }
+   @bindings[:browser] = {
+      # selection
+      :'browser.toggle_selection' => ['^v'                           ],
+      # search
+      :'browser.search_next'     => [?n                              ],
+      :'browser.search_prev'     => [?N                              ],
+      :'browser.search_up'       => [??                              ],
+      :'browser.search_down'     => [?/                              ],
+      # browser
+      :'browser.add_to_playlist' => [' ', ?a                         ],
+      :'browser.enter'           => [         ICurses::KEY_ENTER     ],
+      :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]
+   }
+   @bindings[:splash] = {}
 #endif

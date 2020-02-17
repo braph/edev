@@ -181,7 +181,7 @@ void test_warning(const Database::Tracks::Track& track, const char* reason) {
 int main() {
   TEST_BEGIN();
 
-#define DO_UPDATE 0
+#define DO_UPDATE 1
 #if DO_UPDATE
   // This also covers some testing of the Database class ======================
   unlink(TEST_DB);

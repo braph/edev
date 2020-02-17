@@ -25,6 +25,12 @@
   X(SPLASH_SHOW,        "splash.show")        \
   X(HELP_SHOW,          "help.show")          \
   X(INFO_SHOW,          "info.show")          \
+  X(PLAYLIST_TOP,       "playlist.top")       \
+  X(PLAYLIST_BOTTOM,    "playlist.bottom")    \
+  X(PLAYLIST_UP,        "playlist.up")        \
+  X(PLAYLIST_DOWN,      "playlist.down")      \
+  X(PLAYLIST_PAGE_UP,   "playlist.page_up")   \
+  X(PLAYLIST_PAGE_DOWN, "playlist.page_down") \
 
 class Actions {
 public:

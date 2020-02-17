@@ -27,6 +27,15 @@ int Actions :: call(ActionID id) {
   case PLAYINGINFO_TOGGLE: v.playingInfo.visible = !v.playingInfo.visible; return REDRAW;
   case PROGRESSBAR_TOGGLE: v.progressBar.visible = !v.progressBar.visible; return REDRAW;
 
+  // === Playlist stuff =======================================================
+  case PLAYLIST_TOP:       v.playlist.top();        break;
+  case PLAYLIST_BOTTOM:    v.playlist.bottom();     break;
+  case PLAYLIST_UP:        v.playlist.up();         break;
+  case PLAYLIST_DOWN:      v.playlist.down();       break;
+  case PLAYLIST_PAGE_UP:   v.playlist.page_up();    break;
+  case PLAYLIST_PAGE_DOWN: v.playlist.page_down();  break;
+  // ==========================================================================
+
   // === TABs stuff ===========================================================
   case TABS_NEXT:   index = v.windows.currentIndex() + 1; goto SELECT_TAB;
   case TABS_PREV:   index = v.windows.currentIndex() - 1; goto SELECT_TAB;

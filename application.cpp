@@ -154,14 +154,12 @@ void Application :: run() {
 
   int c;
   int n = 4;
-  int download_iterations;
+  int downloading;
 MAINLOOP:
-  player.poll(); // First instruction, player needs some time to fetch info
-
-  for (download_iterations = 0; download_iterations < 10; ++download_iterations) {
-    if (! downloads.work())
-      break;
-  }
+  // First instruction, player needs some time to fetch info
+  player.poll();
+  // Do at max 10 download iterations
+  for (downloading = 0; downloading < 10 && downloads.work(); ++downloading);
 
   if (redraw) {
     redraw = false;
@@ -179,25 +177,27 @@ MAINLOOP:
   WINDOW *win = mainwindow.active_win();
   wtimeout(win, 1000);
   c = wgetch(win);
-
-  if (c == 'p') {
-    player.play(trackloader.getFileForTrack(database.tracks[n], false));
-  }
-  else if (c == '>') {
-    ++n;
-  }
-  else if (c == 'l') {
-    trackloader.getFileForTrack(database.tracks[n], false);
-  }
-  else
-
   if (c != ERR) {
-    if (Bindings::global[c]) {
-      c = actions.call(static_cast<Actions::ActionID>(Bindings::global[c]));
-      if (c == Actions::QUIT)
-        return;
-      else if (c == Actions::REDRAW)
-        redraw = true;
+    if (c == 'p')
+      player.play(trackloader.getFileForTrack(database.tracks[n], false));
+    else if (c == '>')
+      ++n;
+    //else if (c == 'l') {
+    //  trackloader.getFileForTrack(database.tracks[n], false);
+    //}
+    else if (c != ERR) {
+      if (Bindings::global[c])
+        c = Bindings::global[c];
+      else if (Bindings::playlist[c])
+        c = Bindings::playlist[c];
+
+      if (c) {
+        c = actions.call(static_cast<Actions::ActionID>(c));
+        if (c == Actions::QUIT)
+          return;
+        else if (c == Actions::REDRAW)
+          redraw = true;
+      }
     }
   }
 

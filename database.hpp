@@ -420,7 +420,7 @@ public:
 
     template<typename T>
     bool operator()(const T& t) {
-      int ret = t.compare(field);
+      int ret = t[column].compare(field);
       switch (op) {
       case EQUAL:         return ! (ret == 0);
       case UNEQUAL:       return ! (ret != 0);
@@ -461,21 +461,6 @@ public:
       return GenericIterator<Result>(*this, size());
     }
 
-    /* ========================================================================
-     * Proxy objects
-     * ======================================================================*/
-
-    template<typename TValue>
-    struct WhereProxy {
-      Result<TStore> &result;
-      Where where;
-      WhereProxy(Result<TStore> &result, ColumnID column, Operator op, TValue value)
-      : result(result), where(column, op, value) {}
-      bool operator()(size_t i) {
-        return where(result.store[i]);
-      }
-    };
-
     void order_by(ColumnID column, SortOrder order) {
       OrderBy orderBy(column, order);
       std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
@@ -485,8 +470,10 @@ public:
 
     template<typename TValue>
     void where(ColumnID column, Operator op, TValue value) {
-      WhereProxy<TValue> whereProxy(*this, column, op, value);
-      indices.erase(std::remove_if(indices.begin(), indices.end(), whereProxy), indices.end());
+      Where where(column, op, value);
+      auto end = std::remove_if(indices.begin(), indices.end(),
+          [&](size_t i){ return where(this->store[i]); });
+      indices.erase(end, indices.end());
     }
   };
 

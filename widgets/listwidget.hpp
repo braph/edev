@@ -47,11 +47,17 @@ public:
     m_list = list;
   }
 
-  void layout(int height, int width) {
-    size.height = height;
-    size.width = width;
-    wresize(win, height, width);
-    m_item_renderer.setWidth(size.width); // if item_renderer?
+  void layout(UI::Pos pos, UI::Size size) {
+    if (size != this->size) {
+      this->size = size;
+      wresize(win, size.height, size.width);
+    }
+    if (pos != this->pos) {
+      this->pos = pos;
+      mvwin(win, pos.y, pos.x);
+    }
+
+    m_item_renderer.setWidth(size.width);
   }
 
   void render_item(int idx, bool cursor) {
@@ -173,7 +179,7 @@ void testListWidget(
 ) {
   ListWidget<TContainer, TRenderer> listWidget(renderer);
   listWidget.attachList(&testData);
-  listWidget.layout(LINES, COLS);
+  listWidget.layout({0,0}, {LINES,COLS});
   listWidget.draw();
   listWidget.noutrefresh();
   doupdate();

@@ -21,5 +21,7 @@ models
 
 - Reset terminal on quit
 
+- view/progressbar.cpp: layout() check if size has changed
+
 - Small optimizations:
   - buffer->reserve(50 * 1024) on downloading browsepage
