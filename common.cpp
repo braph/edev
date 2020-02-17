@@ -1,11 +1,14 @@
 #include "common.hpp"
 
+wchar_t* toWideString(const char* s, size_t* len) {
+  static wchar_t buf[1024];
+  *len = mbstowcs(buf, s, sizeof(buf));
+  return buf;
+}
+
 #if TEST_COMMON
-#include <cassert>
+#include "test.hpp"
+
 int main() {
-  assert( secondsToTime(0)  == "00:00" );
-  assert( secondsToTime(1)  == "00:01" );
-  assert( secondsToTime(60) == "01:00" );
-  assert( secondsToTime(61) == "01:01" );
 }
 #endif

@@ -40,10 +40,10 @@ void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, i
     if (selection)
       wattrset(win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
     else
-      wattrset(win, Colors::set(column.fg, column.bg, 0) | additional_attributes);
+      wattrset(win, Colors::set(column.fg, column.bg, additional_attributes));
 
-    const char* value = trackField(item, column.tag);
-    int len = strlen(value);
+    size_t len;
+    wchar_t* value = toWideString(trackField(item, column.tag), &len);
     int colwidth;
 
     if (column.relative)
@@ -52,23 +52,17 @@ void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, i
       colwidth = column.size;
 
     // Clear the column field with spaces
-    mvwhline(win, y, x, ' ', colwidth);
-
-    wchar_t buff[100];
-    mbstowcs(buff, value, 100);
+    mvwhline(win, y, x, ' ', colwidth + 1);
 
     if (column.justify == PlaylistColumnFormat::Left)
-      mvwaddnwstr(win, y, x, buff, colwidth);
+      mvwaddnwstr(win, y, x, value, colwidth);
     else if (column.justify == PlaylistColumnFormat::Right) {
-      if (len < colwidth) {
-        mvwaddwstr(win, y, x + colwidth - len, buff); // TODO
-      } else {
-        mvwaddnwstr(win, y, x, buff, colwidth);
-      }
+      if (len < colwidth)
+        mvwaddwstr(win, y, x + colwidth - len, value); // TODO
+      else
+        mvwaddnwstr(win, y, x, value, colwidth);
     }
 
-    // if not last column
-    waddch(win, ' ');
     x += colwidth+1;
   }
 }

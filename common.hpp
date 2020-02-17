@@ -2,7 +2,6 @@
 #define _COMMON_HPP
 
 #include <string>
-#include <cstdio>
 #include <initializer_list>
 
 #define STRLEN(S)     (sizeof(S)-1)
@@ -17,17 +16,12 @@
 
 #define assert_not_reached() assert(!"reached")
 
+wchar_t* toWideString(const char* s, size_t* len);
+
 inline int clamp(int value, int lower, int upper) {
   if (value < lower) return lower;
   if (value > upper) return upper;
   return value;
-}
-
-inline std::string secondsToTime(unsigned int seconds) {
-  char buf[8] = "00:00";
-  if (seconds)
-    sprintf(buf, "%02d:%02d", seconds/60, seconds%60);
-  return buf;
 }
 
 template<typename T> inline bool in_list(const T &elem, const std::initializer_list<T> &list) {
@@ -36,9 +30,6 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
       return true;
   return false;
 }
-
-// TODO: better name for proportionalGet + return type
-
 
 template<typename TContainer>
 int proportionalGet(const TContainer &container, unsigned int size, unsigned int pos) {

@@ -163,6 +163,9 @@ public:
   //void center()    { force_cursorpos(size.height / 2); }
   */
 
+  int getSelected() { return m_top_index + m_cursor; }
+  typename TContainer::value_type getItem() { return (*m_list)[m_top_index+m_cursor]; }
+
 private:
   int m_cursor;
   int m_active;

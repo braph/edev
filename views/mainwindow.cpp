@@ -28,7 +28,7 @@ MainWindow :: MainWindow(Database &db)
   for (auto w : Config::tabs_widgets) {
     /**/ if (w == "splash")   windows.addWidget(&splash);
     else if (w == "playlist") windows.addWidget(&playlist);
-    else if (w == "browser")  continue; // windows.addWidget(&browser);
+    else if (w == "browser")  windows.addWidget(&playlist); /*TODO*/
     else if (w == "info")     windows.addWidget(&info);
     else if (w == "help")     windows.addWidget(&help);
     else assert_not_reached();

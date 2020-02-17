@@ -1,7 +1,6 @@
 in_list() vs strstr!
 create a playlist mockup
 models
-- check write_to_database() and to an actual flush to disk? ...
 - Database: syles() return as array of stringzzz
 - ui.hpp: change size type of Pos,Size to short?
 - mouse section events

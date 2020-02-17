@@ -73,6 +73,7 @@ void Application :: init() {
 
   // Initialize curses
   initscr();
+  savetty();
   cbreak();
   noecho();
   start_color();
@@ -153,7 +154,6 @@ void Application :: run() {
   //player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
 
   int c;
-  int n = 4;
   int downloading;
 MAINLOOP:
   // First instruction, player needs some time to fetch info
@@ -178,10 +178,10 @@ MAINLOOP:
   wtimeout(win, 1000);
   c = wgetch(win);
   if (c != ERR) {
-    if (c == 'p')
-      player.play(trackloader.getFileForTrack(database.tracks[n], false));
-    else if (c == '>')
-      ++n;
+    if (c == 'p') {
+      std::cerr << mainwindow.playlist.getItem().title() << std::endl;
+      player.play(trackloader.getFileForTrack(mainwindow.playlist.getItem(), false));
+    }
     //else if (c == 'l') {
     //  trackloader.getFileForTrack(database.tracks[n], false);
     //}
@@ -230,6 +230,7 @@ int main() {
     return 1;
   }
 
+  resetty();
   delwin(stdscr);
   return 0;
 }

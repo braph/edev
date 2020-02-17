@@ -74,8 +74,8 @@ Database :: Database()
 : styles(*this)
 , albums(*this)
 , tracks(*this)
-, pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url, &pool_track_url,
-    &pool_cover_url, &pool_archive_url})
+, pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url,
+    &pool_track_url, &pool_cover_url, &pool_archive_url})
 {
   // Records with ID 0 represent a NULL value. Create them here.
   styles.find("", true);
@@ -117,7 +117,7 @@ void Database :: save(const std::string &file) {
   fs.write(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
 
   for (auto p : pools)
-    Saver::write(fs, p->data(), 8/*BITS*/, p->size());
+    Saver::write(fs, p->data(), 8 /*BITS*/, p->size());
 
   styles.save(fs);
   albums.save(fs);
@@ -144,7 +144,7 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
     for (auto id : *column)
       idRemap[id] = 0;
 
-  // Sort the IDs by their string length
+  // Sort the IDs, longest strings first
   std::vector<int> idSortedByLength;
   idSortedByLength.reserve(idRemap.size());
   for (auto& pair : idRemap)
@@ -187,7 +187,6 @@ void Database :: Table :: save(std::ofstream &fs) {
 }
 
 /* Find a record by its URL or create one if it could not be found */
-// TODO: begin() is not valid since first entry is null
 template<typename TTable>
 static typename TTable::value_type find_or_create(TTable &table, StringPool &pool, const char *url) {
   bool newly_inserted = false;
@@ -253,8 +252,8 @@ ccstr  ALBUM::title()          const { return STR_GET(meta,       db.albums.titl
 ccstr  ALBUM::artist()         const { return STR_GET(meta,       db.albums.artist[id]);      }
 ccstr  ALBUM::cover_url()      const { return STR_GET(cover_url,  db.albums.cover_url[id]);   }
 ccstr  ALBUM::description()    const { return STR_GET(desc,       db.albums.description[id]); }
-ccstr  ALBUM::archive_mp3_url() const { return STR_GET(archive_url,  db.albums.archive_mp3[id]); }
-ccstr  ALBUM::archive_wav_url() const { return STR_GET(archive_url,  db.albums.archive_wav[id]); }
+ccstr  ALBUM::archive_mp3_url()  const { return STR_GET(archive_url,  db.albums.archive_mp3[id]); }
+ccstr  ALBUM::archive_wav_url()  const { return STR_GET(archive_url,  db.albums.archive_wav[id]); }
 ccstr  ALBUM::archive_flac_url() const { return STR_GET(archive_url, db.albums.archive_flac[id]); }
 time_t ALBUM::date()           const { return db.albums.date[id] * 60 * 60 * 24;      }
 float  ALBUM::rating()         const { return static_cast<float>(db.albums.rating[id]) / 100; }
@@ -267,8 +266,8 @@ void   ALBUM::title(ccstr s)        { STR_SET(meta,         db.albums.title[id],
 void   ALBUM::artist(ccstr s)       { STR_SET(meta,         db.albums.artist[id],      s); }
 void   ALBUM::cover_url(ccstr s)    { STR_SET(cover_url,    db.albums.cover_url[id],   s); }
 void   ALBUM::description(ccstr s)  { STR_SET(desc,         db.albums.description[id], s); }
-void   ALBUM::archive_mp3_url(ccstr s) { STR_SET(archive_url,  db.albums.archive_mp3[id], s); }
-void   ALBUM::archive_wav_url(ccstr s) { STR_SET(archive_url,  db.albums.archive_wav[id], s); }
+void   ALBUM::archive_mp3_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s); }
+void   ALBUM::archive_wav_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s); }
 void   ALBUM::archive_flac_url(ccstr s) { STR_SET(archive_url, db.albums.archive_flac[id], s); }
 void   ALBUM::date(time_t t)        { db.albums.date[id] = t / 60 / 60 / 24;    }
 void   ALBUM::rating(float i)       { db.albums.rating[id] = i * 100;           }
