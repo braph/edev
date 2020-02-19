@@ -2,6 +2,7 @@
 #define _COMMON_HPP
 
 #include <string>
+#include <cstring>
 #include <initializer_list>
 
 #define STRLEN(S)     (sizeof(S)-1)
@@ -16,7 +17,20 @@
 
 #define assert_not_reached() assert(!"reached")
 
-wchar_t* toWideString(const char* s, size_t* len);
+wchar_t* toWideString(const char* s, size_t* len = NULL);
+static inline wchar_t* toWideString(const std::string& s, size_t* len = NULL) {
+  return toWideString(s.c_str(), len);
+}
+
+// If `*s` starts with `prefix` advance the pointer beyond the prefix and return true
+template<size_t LEN>
+static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
+  if (! std::strncmp(*s, prefix, LEN - 1)) {
+    *s += LEN - 1;
+    return true;
+  }
+  return false;
+}
 
 inline int clamp(int value, int lower, int upper) {
   if (value < lower) return lower;
@@ -32,7 +46,7 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
 }
 
 template<typename TContainer>
-int proportionalGet(const TContainer &container, unsigned int size, unsigned int pos) {
+typename TContainer::value_type proportionalGet(const TContainer &container, unsigned int size, unsigned int pos) {
   unsigned int i = container.size() * pos / size;
   return container[i];
 }
@@ -44,7 +58,7 @@ int proportionalGet(const TContainer &container, size_t container_size, unsigned
 }
 
 template<typename TContainer>
-int proportionalGet2(const TContainer &container, unsigned int size, unsigned int pos) {
+typename TContainer::value_type proportionalGet2(const TContainer &container, unsigned int size, unsigned int pos) {
   unsigned int i = container.size() * pos * 2 / size;
   if (i >= container.size())
     i = container.size() - (i - container.size() + 1);

@@ -24,3 +24,18 @@ models
 
 - Small optimizations:
   - buffer->reserve(50 * 1024) on downloading browsepage
+
+- Use data().end() - data.begin() instead of size()/bits
+
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGABRT, SIG_IGN);
+
+- Views::Progressbar: How to add a single wchar_t? 
+
+- std::unique_ptr<> to store chars in palyinginfo
+
+- Maybe
+#if 0
+TODO database.events.on(:update_finished, &browser.method(:reload))
+TODO preload playlist
+#endif

@@ -41,14 +41,19 @@ void ProgressBar :: layout(Pos pos, Size size) {
   mvwin(win, pos.y, pos.x);
   wmove(win, 0, 0);
 
-#define FG(COLOR) UI::Colors::set(COLOR, -1, 0)
-  char c = Config::progressbar_progress_char;
-  for (int i = 0; i < size.width; ++i) {
-    waddch(win, c|FG(proportionalGet(fade, fade_size, size.width, i)));
-  }
+  int i;
+  wchar_t c;
 
-  whline(win,
-    Config::progressbar_rest_char|Theme::get(Theme::PROGRESSBAR_REST), 1337);
+  c = Config::progressbar_progress_char;
+  for (i = 0; i < size.width; ++i) {
+    wattron(win, UI::Colors::set(proportionalGet(fade, fade_size, size.width, i), -1, 0));
+    waddnwstr(win, &c, 1);
+  }
+  
+  c = Config::progressbar_rest_char;
+  wattrset(win, Theme::get(Theme::PROGRESSBAR_REST));
+  for (; i < size.width*2; ++i)
+    waddnwstr(win, &c, 1);
 }
 
 #if TODO

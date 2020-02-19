@@ -13,7 +13,7 @@
 
 class TrackLoader {
 public:
-  std::string getFileForTrack(Database::Tracks::Track, bool);
+  std::string getFileForTrack(Database::Tracks::Track, bool force_reload=false);
 //void downloadAlbum(const Database::Tracks::Track&);
   TrackLoader(Downloads&);
 private:

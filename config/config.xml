@@ -101,11 +101,11 @@
     <description>Enable/disable progressbar</description>
   </opt>
 
-  <opt name="progressbar.progress_char" type="char" parse="opt_parse_char" default="&apos;~&apos;">
+  <opt name="progressbar.progress_char" type="wchar_t" parse="opt_parse_char" default="&apos;~&apos;">
     <description>Character used for displaying playing progress</description>
   </opt>
 
-  <opt name="progressbar.rest_char" type="char" parse="opt_parse_char" default="&apos;~&apos;">
+  <opt name="progressbar.rest_char" type="wchar_t" parse="opt_parse_char" default="&apos;~&apos;">
     <description>Character used for the rest of the line</description>
   </opt>
 

@@ -9,10 +9,11 @@
 
 #define STOPPED_HEADING "- Ektoplayer -"
 #define STATE_LEN 9
-static const char state_to_string[3][STATE_LEN+1] = {
+static const char state_to_string[4][STATE_LEN+1] = {
   /* 0 */ "[stopped]",
   /* 1 */ " [paused]",
   /* 2 */ "[playing]",
+  /* 3 */ "[loading]"
 };
 
 using namespace UI;
@@ -83,8 +84,8 @@ void PlayingInfo :: draw_track_info() {
     wattrset(win, 0);
     mvwaddstr(win, 1, size.width / 2 - STRLEN(STOPPED_HEADING) / 2, STOPPED_HEADING);
   } else {
-    wmove(win, 0, 0); print_formatted_strings(fmt_top);
-    wmove(win, 1, 0); print_formatted_strings(fmt_bottom);
+    wmove(win, 0, 0); print_formatted_strings(*fmt_top);
+    wmove(win, 1, 0); print_formatted_strings(*fmt_bottom);
   }
 }
 
@@ -97,22 +98,25 @@ void PlayingInfo :: draw() {
 
 #include "rm_trackstr.cpp"
 
-void PlayingInfo :: print_formatted_strings(PlayingInfoFormat *format) {
+void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   unsigned int sum = 0;
-  for (const auto &fmt : *format) {
-    if (fmt.text.size())
-      sum += fmt.text.size();
+
+  for (const auto &fmt : format) {
+    size_t len;
+    if (fmt.text.length())
+      toWideString(fmt.text, &len);
     else
-      sum += strlen(trackField(track, fmt.tag));
+      toWideString(trackField(track, fmt.tag), &len);
+    sum += len;
   }
 
   wmove(win, getcury(win), size.width/2 - sum/2);
-  for (const auto &fmt : *format) {
+  for (const auto &fmt : format) {
     wattrset(win, UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
-    if (! fmt.text.empty())
-      waddstr(win, fmt.text.c_str());
+    if (fmt.text.length())
+      waddwstr(win, toWideString(fmt.text));
     else
-      waddstr(win, trackField(track, fmt.tag));
+      waddwstr(win, toWideString(trackField(track, fmt.tag)));
   }
 }
 

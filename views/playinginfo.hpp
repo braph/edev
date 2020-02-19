@@ -40,7 +40,7 @@ private:
   unsigned short      track_position;
   unsigned char       state;
 
-  void print_formatted_strings(PlayingInfoFormat*);
+  void print_formatted_strings(const PlayingInfoFormat&);
   void draw_position_and_length();
   void draw_track_info();
   void draw_state();

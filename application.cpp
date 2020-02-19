@@ -18,13 +18,14 @@
 
 #include <boost/filesystem/operations.hpp>
 
+#include <locale>
 #include <fstream>
 
 using namespace Ektoplayer;
 namespace fs = boost::filesystem;
 
-static bool redraw = true;
-static void on_SIGWINCH(int) { redraw = true; }
+static bool have_SIGWINCH;
+static void on_SIGWINCH(int) { have_SIGWINCH = true; }
 
 class Application {
 public:
@@ -40,6 +41,7 @@ private:
   TrackLoader trackloader;
   Mpg123Player player;
   const char* error;
+  std::ofstream logfile;
 };
 
 Application :: Application()
@@ -63,7 +65,8 @@ Application :: ~Application() {
     database.save(Config::database_file);
   }
   catch (const std::exception &e) {
-    throw std::runtime_error(std::string("Error saving database file: ") + e.what());
+    endwin();
+    std::cout << "Error saving database to file: " << e.what() << std::endl;
   }
 }
 
@@ -71,9 +74,12 @@ void Application :: init() {
   // Set terminal title
   std::cout << "\033]0;ektoplayer\007" << std::endl;
 
+  // Use the locale from the environment?!
+  std::locale::global(std::locale(""));
+
   // Initialize curses
   initscr();
-  savetty();
+  //savetty();
   cbreak();
   noecho();
   start_color();
@@ -111,36 +117,33 @@ void Application :: init() {
 
   error = "Error opening log file";
   std::ios::sync_with_stdio(false);
-  std::ofstream *logfile = new std::ofstream();
-  logfile->exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
-  std::cerr.rdbuf(logfile->rdbuf());
+  logfile.exceptions(std::ofstream::failbit|std::ofstream::badbit);
+  logfile.open(Config::log_file, std::ofstream::out|std::ofstream::app);
+  std::cerr.rdbuf(logfile.rdbuf());
 
-  // The database will *at least* hold this amount of data
-  database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
-  database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
-  database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
-  database.pool_desc.reserve(EKTOPLAZM_DESC_SIZE);
-  database.pool_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
-  database.pool_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
-  database.pool_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
-  database.pool_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
-  database.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
-  database.pool_meta.reserve(EKTOPLAZM_META_SIZE);
-
-  error = "Database file corrupted? Try again, then delete it. Sorry!";
+  error = "Error opening database file. Try again, then delete it. Sorry!";
   if (fs::exists(Config::database_file))
     database.load(Config::database_file);
-
-  // Set the error message to something more generic
-  error = "Error";
+  else {
+    // The database will *at least* hold this amount of data
+    database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
+    database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
+    database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
+    database.pool_meta.reserve(EKTOPLAZM_META_SIZE);
+    database.pool_desc.reserve(EKTOPLAZM_DESC_SIZE);
+    database.pool_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
+    database.pool_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
+    database.pool_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
+    database.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
+    database.pool_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+  }
 
   // All colors are beautiful
   Theme::loadTheme(Config::use_colors != -1 ? Config::use_colors : COLORS);
 }
 
 void Application :: run() {
-  std::cerr << "Database track count on start: " << database.tracks.size() << std::endl;
+  std::cerr << "Database track count: " << database.tracks.size() << std::endl;
 
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
@@ -149,56 +152,69 @@ void Application :: run() {
 
   //player.audio_system = Config::audio_system;
   Views::MainWindow mainwindow(database);
-  Actions actions(mainwindow, database, player);
-
-  //player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
+  Actions actions(mainwindow, database, player, trackloader);
 
   int c;
   int downloading;
-MAINLOOP:
-  // First instruction, player needs some time to fetch info
-  player.poll();
-  // Do at max 10 download iterations
-  for (downloading = 0; downloading < 10 && downloads.work(); ++downloading);
+  WINDOW *win;
+  Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
+  Database::Tracks::Track currentPrefetching(database, 0);
 
-  if (redraw) {
-    redraw = false;
-    mainwindow.layout({0,0}, {LINES,COLS});
-    mainwindow.draw();
-  }
+WINDOW_RESIZE:
+  have_SIGWINCH = false;
+  mainwindow.layout({0,0}, {LINES,COLS});
+  mainwindow.draw();
+
+MAINLOOP:
+  if (have_SIGWINCH)
+    goto WINDOW_RESIZE;
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
   mainwindow.playingInfo.setState(player.getState());
-
+  mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem()); //XXX
   mainwindow.noutrefresh();
   doupdate();
 
-  WINDOW *win = mainwindow.active_win();
-  wtimeout(win, 1000);
-  c = wgetch(win);
-  if (c != ERR) {
-    if (c == 'p') {
-      std::cerr << mainwindow.playlist.getItem().title() << std::endl;
-      player.play(trackloader.getFileForTrack(mainwindow.playlist.getItem(), false));
-    }
-    //else if (c == 'l') {
-    //  trackloader.getFileForTrack(database.tracks[n], false);
-    //}
-    else if (c != ERR) {
-      if (Bindings::global[c])
-        c = Bindings::global[c];
-      else if (Bindings::playlist[c])
-        c = Bindings::playlist[c];
+  // Do at max 10 download iterations
+  for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
 
-      if (c) {
-        c = actions.call(static_cast<Actions::ActionID>(c));
-        if (c == Actions::QUIT)
-          return;
-        else if (c == Actions::REDRAW)
-          redraw = true;
-      }
+  // First instruction, player may need some time to poll info
+  player.work();
+  if (player.isTrackCompleted())
+    actions.call(Actions::PLAYLIST_NEXT);
+
+  // Song prefetching
+  if (Config::prefetch &&
+      player.getState() == Mpg123Player::STATE_PLAYING &&
+      player.length() >= 30 &&
+      player.percent() >= 0.5 &&
+      mainwindow.playlist.getList() &&
+      mainwindow.playlist.getList()->size() >= 2
+      ) {
+    auto list = mainwindow.playlist.getList();
+    nextTrack = (*list)[(mainwindow.playlist.getActiveIndex() + 1) % list->size()];
+    if (nextTrack != currentPrefetching) {
+      trackloader.getFileForTrack(nextTrack);
+      currentPrefetching = nextTrack;
     }
+  }
+
+  win = mainwindow.active_win();
+  wtimeout(win, (downloading ? 100 : 1000));
+  if ((c = wgetch(win)) != ERR) {
+    if (Bindings::global[c])
+      c = Bindings::global[c];
+    else if (Bindings::playlist[c])
+      c = Bindings::playlist[c];
+    else
+      c = Actions::NONE;
+
+    c = actions.call(static_cast<Actions::ActionID>(c));
+    if (c == Actions::QUIT)
+      return;
+    else if (c == Actions::REDRAW)
+      goto WINDOW_RESIZE;
   }
 
 goto MAINLOOP;
@@ -230,35 +246,8 @@ int main() {
     return 1;
   }
 
-  resetty();
+  //resetty();
+  reset_shell_mode();
   delwin(stdscr);
   return 0;
 }
-
-#if 0
-TODO database.events.on(:update_finished, &browser.method(:reload))
-TODO preload playlist
-
-  player.events.on(:stop) do |reason|
-   operations.send(:'playlist.play_next') if reason == :track_completed
-  end
-
-  time_t now = time(NULL);
-  if (Config::prefetch && now % 5 == 0) {
-    if (player.state != PLAYING)
-      continue;
-
-     current_download_track = nil
-     loop do
-        sleep 5 // clock() % 5?
-
-        next_track = playlist.get_next_pos
-        next if current_download_track == next_track
-
-        if player.length > 30 and player.position_percent > 0.5
-           trackloader.get_track_file(playlist[next_track]['url'])
-           current_download_track = next_track
-           sleep 5
-        end
-     end
-#endif

@@ -1,185 +1,213 @@
 #include "player.hpp"
 
 #include "common.hpp"
+#include "process.cpp"
+#include "process_unix.cpp"
 
 #include <iostream> //XXX
+#include "unistd.h"
 
 Mpg123Player :: Mpg123Player()
 : audio_system("jack,pulse,alsa,oss")
-, flags(FLAG_NEED_FORMAT)
+, failed(0)
 , state(STATE_STOPPED)
+, track_completed(false)
 , channels(0)
 , sample_rate(0)
 , seconds_total(0)
 , seconds_played(0)
 , seconds_remaining(0)
+, process(nullptr)
 {
 }
 
-Mpg123Player :: ~Mpg123Player() {
-  proc.terminate();
-  in.close();
-  out.close();
-  if (thr.joinable())
-    thr.join();
+void Mpg123Player :: play(const std::string &file) {
+  if (this->file != file) {
+    this->file = file;
+    sample_rate = 0;
+    channels = 0;
+  }
+  play();
 }
 
 void Mpg123Player :: play() {
-  if (file.size())
-    play(file);
-}
-
-void Mpg123Player :: play(const std::string &_file) {
-  file = _file;
-
-  if (!proc.valid() || !proc.running()) {
-    proc = boost::process::child(
-      boost::process::search_path("mpg123"),
-      "-o", audio_system, "--fuzzy", "-R",
-      boost::process::std_in  < in,
-      boost::process::std_out > out,
-      boost::process::std_err > err
-    );
-
-    thr = std::thread(&Mpg123Player::read_data, this);
-  }
-
-  sample_rate = 0;
-  flags = FLAG_NEED_FORMAT;
-  in << "L " << file << std::endl;
-  in << "SILENCE"    << std::endl;
-}
-
-void Mpg123Player :: set_position(unsigned seconds) {
-  in << "J " << seconds << 's' << std::endl;
-}
-
-void Mpg123Player :: seek_forward(unsigned seconds) {
-  in << "J +" << seconds << 's' << std::endl;
-}
-
-void Mpg123Player :: seek_backward(unsigned seconds) {
-  in << "J -" << seconds << 's' << std::endl;
-}
-
-void Mpg123Player :: pause() {
-  if (state == STATE_PLAYING)
-    in << 'P' << std::endl;
-}
-
-void Mpg123Player :: toggle() {
-  in << 'P' << std::endl;
+  state = STATE_LOADING;
+  seconds_total = 0;
+  seconds_played = 0;
+  seconds_remaining = 0;
+  work();
 }
 
 void Mpg123Player :: stop() {
-  in << 'S' << std::endl;
-}
-
-void Mpg123Player :: poll() {
-  if (flags & FLAG_NEED_FORMAT) {
-    flags &= ~FLAG_NEED_FORMAT;
-    in << "FORMAT" << std::endl;
+  if (process) {
+    process->close_stdin();
+    process->get_exit_status();
+    process = nullptr;
   }
-  in << "SAMPLE" << std::endl;
+
+  state = STATE_STOPPED;
 }
 
-static inline bool check_and_advance(const char **s, const char *prefix, size_t len) {
-  if (!std::strncmp(*s, prefix, len)) {
-    *s += len;
-    return true;
+void Mpg123Player :: work() {
+  // Return immediately if we have nothing to do
+  if (! state)
+    return;
+
+  // We got something to do, there has to be a process object
+  if (! process)
+    goto CREATE_PROCESS;
+  else if (! process->running()) {
+    process.reset();
+CREATE_PROCESS:
+    process = std::unique_ptr<Mpg123Process>(new Mpg123Process(
+        "/bin/mpg123 -o pulse -R", "",
+        [&](const char* buffer, size_t n) { read_output(buffer, n); },
+        [&](const char* buffer, size_t n) { failed++;               },
+        true, 4096 /* Buffer size */));
   }
-  return false;
+
+  // We are trying to play a track
+  if (state == STATE_LOADING)
+    *process << "L " << file << "\nSILENCE\n";
+
+  // FORMAT gives us our sample rate
+  if (! sample_rate)
+    *process << "FORMAT\n";
+
+  *process << "SAMPLE\n";
 }
 
-void Mpg123Player :: read_data() {
-  std::string buf;
-  const char* line;
+static std::string _buffer;
+void Mpg123Player :: read_output(const char* __buffer, size_t len) {
+  char* buffer = const_cast<char*>(__buffer); // We now we can change the buffer
+  char* end;
 
-  try {
-    while (proc.valid() && proc.running() && std::getline(out, buf) ) {
-      line = buf.c_str();
+  while ((end = static_cast<char*>(std::memchr(buffer, '\n', len)))) {
+    *end = '\0';
+    if (_buffer.size()) {
+      _buffer.append(buffer);
+      parse_line(_buffer.c_str());
+      _buffer.clear();
+    } else {
+      parse_line(buffer);
+      len -= (end-buffer)+1;
+      buffer = end + 1;
+    }
+  }
 
-      if (0){}
-#define on(S) else if (check_and_advance(&line, S, STRLEN(S)))
-      on("@SAMPLE ") {
-        if (! sample_rate)
-          flags |= FLAG_NEED_FORMAT;
-        else {
-          unsigned int samples_played, samples_total;
-          std::sscanf(line, "%u %u", &samples_played, &samples_total);
-          seconds_played = samples_played / sample_rate;
-          seconds_total  = samples_total  / sample_rate;
-        }
-      }
-      on("@FORMAT ") {
-        std::sscanf(line, "%u %hhu", &sample_rate, &channels);
-      }
-      on("@P ") {
+  if (len)
+    _buffer.append(buffer, len);
+
+#if 0
+  if (!_buffer.size())
+
+  while (std::string::npos != (len = _buffer.find('\n'))) {
+    _buffer[len] = '\0';
+    parse_line(_buffer.c_str());
+    _buffer.erase(0, len+1);
+  }
+#endif
+}
+
+/* Parse Mpg123's output:
+ *   @FORMAT 44100 2
+ *   @E Unknown command or no arguments: foo
+ */
+void Mpg123Player :: parse_line(const char* line) {
+  if (*line++ != '@')
+    return;
+
+  // Single char command
+  if (line[0] && line[1] == ' ') {
+    float played, remaining;
+    char c = line[0];
+    line += 2;
+    switch (c) {
+      case 'P': /* Playing State */
         state = std::atoi(line);
-      }
-      on("@F ") {
-        int _;
-        float played = 0, remaining = 0;
-        std::sscanf(line, "%d %d %f %f", &_, &_, &played, &remaining);
+        if (state == STATE_STOPPED) {
+          if (failed) // Try again if playback stopped because of failure
+            state = STATE_LOADING;
+          else
+            track_completed = true;
+        }
+        else {
+          track_completed = false;
+          failed = 0;
+        }
+        break;
+      case 'E': /* Error message */ ++failed; break;
+      case 'I': /* Info */ break;
+      case 'J': /* Jump */ break;
+      case 'R': /* ???? */ break;
+      case 'S': /* ???? */ break;
+      case 'F': 
+        std::sscanf(line, "%*d %*d %f %f", /* &d, &d, */ &played, &remaining);
         seconds_played    = played;
         seconds_remaining = remaining;
         seconds_total     = seconds_played + seconds_remaining;
-      }
-      on("@E ") {
-      }
-      on("@I ") {
-      }
-      on("@R ") {
-      }
-      on("@S ") {
-      }
-      else {
-        std::cerr << "Mpg123Player: ?line:" << buf << std::endl;
-      }
+        break;
+      default:
+        std::cerr << "parse_output(): " << c << ' ' << line << std::endl;
     }
   }
-  catch (const std::exception &e) {
-    std::cerr << "Error occured: " << e.what() << std::endl;
+  // String command
+  else {
+    if (cstr_seek(&line, "SAMPLE ")) {
+      if (sample_rate) {
+        unsigned int samples_played, samples_total;
+        std::sscanf(line, "%u %u", &samples_played, &samples_total);
+        seconds_played = samples_played / sample_rate;
+        seconds_total  = samples_total  / sample_rate;
+      }
+    }
+    else if (cstr_seek(&line, "FORMAT ")) {
+      std::sscanf(line, "%u %hhu", &sample_rate, &channels);
+    }
+    else
+      std::cerr << "parse_output(): " << line << std::endl;
   }
-
-  std::cerr << "Player: Reading thread died" << std::endl;
 }
 
-//in << "VOLUME 0.1" << std::endl; // XXX
+void Mpg123Player :: set_position(unsigned seconds) {
+  if (process && process->running())
+    *process << "J " << seconds << "s\n";
+}
 
-#if 0
-   def stop
-      stop_polling_thread
-      @track_completed = nil
-      @seconds_played = @seconds_total = 0
-      @events.trigger(:position_change)
-      @events.trigger(:stop)
-      write(?Q) if @state != STATE_STOPPED
-   end
+void Mpg123Player :: seek_forward(unsigned seconds) {
+  if (process && process->running())
+    *process << "J +" << seconds << "s\n";
+}
 
-    // rescue Ektoplayer::Application.log()...
-    // send(cmd, line) rescue nil
-    // ensure....
-    // begin msg = mpg123_err.read
-    // rescue msg = '' end
-    /*
-        Ektoplayer::Application.log(self, 'player closed:', msg)
-        @mpg123_thread.kill if @mpg123_thread
-        (@mpg123_in.close rescue nil)  if @mpg123_in
-        (@mpg123_out.close rescue nil) if @mpg123_out
-        @mpg123_thread = nil
-        stop_polling_thread
-    start_polling_thread if @polling_interval > 0
-    */
+void Mpg123Player :: seek_backward(unsigned seconds) {
+  if (process && process->running())
+    *process << "J -" << seconds << "s\n";
+}
 
+void Mpg123Player :: pause() {
+  if (process && process->running())
+    if (state == STATE_PLAYING)
+      *process << "P\n";
+}
+
+void Mpg123Player :: toggle() {
+  if (process && process->running())
+    *process << "P\n";
+}
+
+#if USE_VOLUME
+void Mpg123Player :: volume(int volume) {
+  if (process && process->running())
+    *process << "VOLUME " << volume << '\n';
+}
 #endif
 
 #if TEST_PLAYER
-#include <unistd.h>
-#include <iostream>
-#include <cassert>
+#include "test.hpp"
 
 int main() {
+  TEST_BEGIN();
+
   Mpg123Player player;
   assert (! player.is_playing());
   assert (! player.is_paused());
@@ -198,5 +226,7 @@ int main() {
   assert (  player.percent());
 
   pause();
+
+  TEST_END();
 }
 #endif

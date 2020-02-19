@@ -12,7 +12,7 @@
 #include <utility>
 #include <algorithm>
 
-#define DB_ABI_VERSION 1 // Change this each time the DB ABI breaks
+#define DB_ABI_VERSION 1
 
 /* ============================================================================
  * Metadata Database
@@ -495,17 +495,9 @@ public:
 
   Database();
 
-  Result<Styles> getStyles() {
-    return Result<Styles>(styles);
-  }
-
-  Result<Albums> getAlbums() {
-    return Result<Albums>(albums);
-  }
-
-  Result<Tracks> getTracks() {
-    return Result<Tracks>(tracks);
-  }
+  Result<Styles> getStyles() { return Result<Styles>(styles); }
+  Result<Albums> getAlbums() { return Result<Albums>(albums); }
+  Result<Tracks> getTracks() { return Result<Tracks>(tracks); }
 
   void load(const std::string&);
   void save(const std::string&);

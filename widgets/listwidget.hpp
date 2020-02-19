@@ -40,8 +40,11 @@ public:
   , m_active(0)
   , m_top_index(0)
   , m_item_renderer(renderer)
+  , m_list(NULL)
   {
   }
+
+  TContainer* getList() { return m_list; }
 
   void attachList(TContainer *list) {
     m_list = list;
@@ -155,6 +158,11 @@ public:
   void bottom()    { m_cursor = m_top_index = INT_MAX;  draw(); }
   void page_up()   { scroll_up(); }
   void page_down() { scroll_down(); }
+  void gotoSelected() {
+    m_cursor = 0;
+    m_top_index = m_active;
+    draw();
+  }
   /*
   void page_up()   { scroll_up(size.height); }
   void page_down() { scroll_down(size.height); }
@@ -164,7 +172,12 @@ public:
   */
 
   int getSelected() { return m_top_index + m_cursor; }
+
   typename TContainer::value_type getItem() { return (*m_list)[m_top_index+m_cursor]; }
+  typename TContainer::value_type getActiveItem() { return (*m_list)[m_active]; }
+
+  int getActiveIndex()         { return m_active; }
+  void setActiveIndex(int idx) { m_active = idx; draw(); } // CLAMP!
 
 private:
   int m_cursor;

@@ -33,7 +33,6 @@ public:
   {
   }
 
-  //void setFormat(format); -> wants layout
   void render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active); // marked, selection
 private:
   const PlaylistColumns& m_columns;

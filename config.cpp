@@ -49,10 +49,12 @@ static bool opt_parse_bool(const std::string &s) {
   else throw std::invalid_argument("expected `true` or `false`");
 }
 
-static char opt_parse_char(const std::string &s) {
-  if (s.size() != 1)
+static wchar_t opt_parse_char(const std::string &s) {
+  size_t len;
+  wchar_t* ws = toWideString(s, &len);
+  if (len != 1)
     throw std::invalid_argument("expected a single character");
-  return s[0];
+  return *ws;
 }
 /* === End of primitives === */
 
@@ -135,17 +137,17 @@ struct FormatParser {
     s = skipWhitespace(s);
 
     if (*s == '\'' || *s == '"') { // Its a string literal
-      char quote = *s++;
+      char quote = *s;
       bool escaped = false;
-      for (; *s; ++s) {
+      for (++s; *s; ++s) {
         /**/ if (escaped)     { text.push_back(*s); escaped = false; }
         else if (*s == '\\')  { escaped = true;                      }
-        else if (*s == quote) { break;                               }
+        else if (*s == quote) { ++s; break;                          }
         else                  { text.push_back(*s);                  }
       }
     }
     else {
-      for (; *s && std::isalnum(*s); ++s)
+      for (; std::isalnum(*s); ++s)
         text.push_back(*s);
 
       if (text.empty())
@@ -154,14 +156,17 @@ struct FormatParser {
       column = Database::columnIDFromStr(text);
       if (column == Database::COLUMN_NONE)
         throw std::invalid_argument(text + ": No such tag");
+
+      text.clear();
     }
 
     s = skipWhitespace(s);
     if (*s == '{') { // Having attributes
-      ++s;
-      for (; *s && *s != '}'; ++s)
-        _attributes.push_back(*s);
-      ++s;
+      while (*++s)
+        if (*s == '}')
+           { ++s; break; }
+        else
+          _attributes.push_back(*s);
     }
 
     return true;
@@ -329,6 +334,13 @@ int main() {
   assert(c[1].relative  == true);
   assert(c[1].fg        == -1);
   assert(c[1].bg        == -1);
+  PlayingInfoFormat fmt;
+  fmt = opt_parse_playinginfo_format("'>>'{fg=blue bg=magenta bold}");
+  assert(fmt.size()         == 1);
+  assert(fmt[0].text        == ">>");
+  assert(fmt[0].fg          == COLOR_BLUE);
+  assert(fmt[0].bg          == COLOR_MAGENTA);
+  assert(fmt[0].attributes  == A_BOLD);
 
   TEST_END();
 }

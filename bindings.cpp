@@ -11,8 +11,8 @@ void init() {
   _['b']                  = _[KEY_LEFT]   = Actions::PLAYER_BACKWARD;
 
   _['`']     = _['^']                     = Actions::SPLASH_SHOW;
-  //_['1']                                  = PLAYLIST__SHOW;
-  //_['2']                                  = BROWSER__SHOW;
+  _['1']                                  = Actions::PLAYLIST_SHOW;
+  _['2']                                  = Actions::BROWSER_SHOW;
   _['3']                                  = Actions::INFO_SHOW;
   _['4']                  = _[KEY_F(1)]   = Actions::HELP_SHOW;
   _['!']     = _['\\']    = _[KEY_F(2)]   = Actions::PLAYINGINFO_TOGGLE;
@@ -20,8 +20,8 @@ void init() {
   _['=']                  = _[KEY_F(4)]   = Actions::TABBAR_TOGGLE;
   _['s']                                  = Actions::PLAYER_STOP;
   _['p']                                  = Actions::PLAYER_TOGGLE;
-  //_['>']                                  = PLAYER__PLAY_NEXT;
-  //_['<']                                  = PLAYER__PLAY_PREV;
+  _['>']                                  = Actions::PLAYLIST_NEXT;
+  _['<']                                  = Actions::PLAYLIST_PREV;
   _['l']  = _['}']  = _['\t']             = Actions::TABS_NEXT;
   _['h']  = _['{']  = _[KEY_BTAB]         = Actions::TABS_PREV;
   _[C('l')]                               = Actions::REDRAW;
@@ -32,12 +32,14 @@ void init() {
 #undef _
 
 #define _ playlist
-  _['g']      = _[KEY_HOME]               = Actions::PLAYLIST_TOP;
-  _['G']      = _[KEY_END]                = Actions::PLAYLIST_BOTTOM;
-  _['k']      = _[KEY_UP]                 = Actions::PLAYLIST_UP;
-  _['j']      = _[KEY_DOWN]               = Actions::PLAYLIST_DOWN;
-  _[C('u')]   = _[KEY_PPAGE]              = Actions::PLAYLIST_PAGE_UP;
-  _[C('d')]   = _[KEY_NPAGE]              = Actions::PLAYLIST_PAGE_DOWN;
+  _['\n'] = _['\r']   = _[KEY_ENTER]      = Actions::PLAYLIST_PLAY;
+  _['g']              = _[KEY_HOME]       = Actions::PLAYLIST_TOP;
+  _['G']              = _[KEY_END]        = Actions::PLAYLIST_BOTTOM;
+  _['k']              = _[KEY_UP]         = Actions::PLAYLIST_UP;
+  _['j']              = _[KEY_DOWN]       = Actions::PLAYLIST_DOWN;
+  _[C('u')]           = _[KEY_PPAGE]      = Actions::PLAYLIST_PAGE_UP;
+  _[C('d')]           = _[KEY_NPAGE]      = Actions::PLAYLIST_PAGE_DOWN;
+  _['o']                                  = Actions::PLAYLIST_GOTO_CURRENT;
 #undef _
 }
 
@@ -95,10 +97,8 @@ void init() {
       :'playlist.search_up'      => [??                              ],
       :'playlist.search_down'    => [?/                              ],
       # playlist
-      :'playlist.play'           => [         ICurses::KEY_ENTER     ],
       :'playlist.download_album' => [?$                              ],
       :'playlist.reload'         => [?r                              ],
-      :'playlist.goto_current'   => [?o                              ],
       :'playlist.clear'          => [?c                              ],
       :'playlist.delete'         => [?d                              ],
       # other
