@@ -10,7 +10,7 @@
 Mpg123Player :: Mpg123Player()
 : audio_system("jack,pulse,alsa,oss")
 , failed(0)
-, state(STATE_STOPPED)
+, state(STOPPED)
 , track_completed(false)
 , channels(0)
 , sample_rate(0)
@@ -19,6 +19,10 @@ Mpg123Player :: Mpg123Player()
 , seconds_remaining(0)
 , process(nullptr)
 {
+}
+
+Mpg123Player :: ~Mpg123Player() {
+  stop();
 }
 
 void Mpg123Player :: play(const std::string &file) {
@@ -31,7 +35,7 @@ void Mpg123Player :: play(const std::string &file) {
 }
 
 void Mpg123Player :: play() {
-  state = STATE_LOADING;
+  state = LOADING;
   seconds_total = 0;
   seconds_played = 0;
   seconds_remaining = 0;
@@ -45,7 +49,7 @@ void Mpg123Player :: stop() {
     process = nullptr;
   }
 
-  state = STATE_STOPPED;
+  state = STOPPED;
 }
 
 void Mpg123Player :: work() {
@@ -67,7 +71,7 @@ CREATE_PROCESS:
   }
 
   // We are trying to play a track
-  if (state == STATE_LOADING)
+  if (state == LOADING)
     *process << "L " << file << "\nSILENCE\n";
 
   // FORMAT gives us our sample rate
@@ -79,7 +83,7 @@ CREATE_PROCESS:
 
 static std::string _buffer;
 void Mpg123Player :: read_output(const char* __buffer, size_t len) {
-  char* buffer = const_cast<char*>(__buffer); // We now we can change the buffer
+  char* buffer = const_cast<char*>(__buffer); // We know we can change the buffer
   char* end;
 
   while ((end = static_cast<char*>(std::memchr(buffer, '\n', len)))) {
@@ -120,14 +124,13 @@ void Mpg123Player :: parse_line(const char* line) {
   // Single char command
   if (line[0] && line[1] == ' ') {
     float played, remaining;
-    char c = line[0];
     line += 2;
-    switch (c) {
+    switch (line[-2]) {
       case 'P': /* Playing State */
-        state = std::atoi(line);
-        if (state == STATE_STOPPED) {
+        state = static_cast<State>(std::atoi(line));
+        if (state == STOPPED) {
           if (failed) // Try again if playback stopped because of failure
-            state = STATE_LOADING;
+            state = LOADING;
           else
             track_completed = true;
         }
@@ -148,7 +151,7 @@ void Mpg123Player :: parse_line(const char* line) {
         seconds_total     = seconds_played + seconds_remaining;
         break;
       default:
-        std::cerr << "parse_output(): " << c << ' ' << line << std::endl;
+        std::cerr << "parse_output(): " << &line[-2] << std::endl;
     }
   }
   // String command
@@ -186,7 +189,7 @@ void Mpg123Player :: seek_backward(unsigned seconds) {
 
 void Mpg123Player :: pause() {
   if (process && process->running())
-    if (state == STATE_PLAYING)
+    if (state == PLAYING)
       *process << "P\n";
 }
 

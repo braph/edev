@@ -1,13 +1,8 @@
 #ifndef _TRACKLOADER_HPP
 #define _TRACKLOADER_HPP
 
-#include "config.hpp"
+class Downloads;
 #include "database.hpp"
-#include "downloads.hpp"
-#include "ektoplayer.hpp"
-
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
 
 #include <string>
 

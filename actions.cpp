@@ -1,5 +1,10 @@
 #include "actions.hpp"
+
 #include "common.hpp"
+#include "player.hpp"
+#include "database.hpp"
+#include "trackloader.hpp"
+#include "views/mainwindow.hpp"
 
 static const char *action_strings[Actions::ACTIONID_LAST] = {
 #define X(ENUM, STR) STR,

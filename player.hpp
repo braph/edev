@@ -5,24 +5,23 @@
 #include <thread>
 #include <iostream>
 #include <mutex>
-#include <functional>
 #include <memory>
+#include <functional>
 
 #include <boost/process.hpp>
 #include "process.hpp"
 
-using namespace TinyProcessLib;
-
 class Mpg123Player {
 public:
-  enum {
-    STATE_STOPPED = 0, // <-.
-    STATE_PAUSED  = 1, //    } Mpg123 
-    STATE_PLAYING = 2, // <-'
-    STATE_LOADING = 3, // <--- New introduced
+  enum State : char {
+    STOPPED = 0, // <-.
+    PAUSED  = 1, //    } Mpg123 
+    PLAYING = 2, // <-'
+    LOADING = 3, // <--- New introduced
   };
 
   Mpg123Player();
+ ~Mpg123Player();
 
   void work();
 
@@ -35,17 +34,18 @@ public:
   void seek_forward(unsigned);
   void seek_backward(unsigned);
 
-  inline bool isTrackCompleted() { return track_completed;        }
-  inline bool isPaused()         { return state == STATE_PAUSED;  }
-  inline bool isStopped()        { return state == STATE_STOPPED; }
-  inline bool isPlaying()        { return state == STATE_PLAYING; }
-  inline int  getState()         { return state;                  }
-  inline unsigned int position() { return seconds_played;         }
-  inline unsigned int length()   { return seconds_total;          }
-  inline float        percent()  { return (seconds_total ? static_cast<float>(position()) / length() : 0); }
+  inline bool isTrackCompleted() { return track_completed;  }
+  inline bool isPaused()         { return state == PAUSED;  }
+  inline bool isStopped()        { return state == STOPPED; }
+  inline bool isPlaying()        { return state == PLAYING; }
+  inline int  getState()         { return state;            }
+  inline unsigned int position() { return seconds_played;   }
+  inline unsigned int length()   { return seconds_total;    }
+  inline float        percent()  { return (length() ? static_cast<float>(position()) / length() : 0); }
+  inline void  setPostionByPercent(float p) { set_position(length() * p); }
 
-  struct Mpg123Process : public Process {
-    using Process::Process;
+  struct Mpg123Process : public TinyProcessLib::Process {
+    using TinyProcessLib::Process::Process;
 
     template<size_t LEN>
     Mpg123Process& operator<<(const char (&s)[LEN]) {
@@ -92,8 +92,8 @@ public:
 private:
   std::string file;
   std::string audio_system;
-  unsigned char failed; // Automatically gives up trying on overflow
-  unsigned char state;
+  unsigned char failed; // Automatically gives up trying on overflow :3
+  State         state;
   bool          track_completed;
   unsigned char channels;
   unsigned int  sample_rate;

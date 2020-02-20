@@ -1,9 +1,10 @@
 #ifndef _UPDATER_HPP
 #define _UPDATER_HPP
 
-#include "database.hpp"
-#include "browsepage.hpp"
-#include "downloads.hpp"
+class Database;
+class Downloads;
+class BrowsePage;
+class Album;
 
 class Updater {
 public:

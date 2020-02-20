@@ -5,10 +5,9 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 
 namespace Views {
-
-//typedef void (*changed)(int);
 
 class TabBar : public UI::Window {
 public:
@@ -19,6 +18,8 @@ public:
   int currentIndex();
   void setCurrentIndex(int);
   size_t count();
+  bool handleClick(int,int,int);
+  std::function<void(int)> indexChanged;
 private:
   std::vector<std::string> _tabs;
   unsigned int _current;

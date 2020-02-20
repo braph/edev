@@ -33,7 +33,7 @@ public:
  ~Application();
   void run();
   void init();
-  void cleanup();
+  void cleanup_files();
 private:
   Database database;
   Downloads downloads;
@@ -41,7 +41,6 @@ private:
   TrackLoader trackloader;
   Mpg123Player player;
   const char* error;
-  std::ofstream logfile;
 };
 
 Application :: Application()
@@ -58,7 +57,7 @@ Application :: Application()
 }
 
 Application :: ~Application() {
-  cleanup();
+  cleanup_files();
 
   try {
     database.shrink_to_fit();
@@ -87,7 +86,7 @@ void Application :: init() {
   curs_set(0);
   mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
 
-  error = "Initialization error. This is a bug";
+  error = REPORT_BUG;
   Config::init();
   Bindings::init();
 
@@ -117,9 +116,10 @@ void Application :: init() {
 
   error = "Error opening log file";
   std::ios::sync_with_stdio(false);
-  logfile.exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  logfile.open(Config::log_file, std::ofstream::out|std::ofstream::app);
-  std::cerr.rdbuf(logfile.rdbuf());
+  std::ofstream *logfile = new std::ofstream();
+  logfile->exceptions(std::ofstream::failbit|std::ofstream::badbit);
+  logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
+  std::cerr.rdbuf(logfile->rdbuf());
 
   error = "Error opening database file. Try again, then delete it. Sorry!";
   if (fs::exists(Config::database_file))
@@ -154,9 +154,19 @@ void Application :: run() {
   Views::MainWindow mainwindow(database);
   Actions actions(mainwindow, database, player, trackloader);
 
+  // Connecting widgets events
+  mainwindow.progressBar.percentChanged = [&](float f) {
+    player.setPostionByPercent(f);
+  };
+  mainwindow.tabBar.indexChanged = [&](int idx) {
+    mainwindow.tabBar.setCurrentIndex(idx);
+    mainwindow.windows.setCurrentIndex(idx);
+  };
+
   int c;
   int downloading;
   WINDOW *win;
+  MEVENT mouse;
   Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
   Database::Tracks::Track currentPrefetching(database, 0);
 
@@ -179,14 +189,14 @@ MAINLOOP:
   // Do at max 10 download iterations
   for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
 
-  // First instruction, player may need some time to poll info
+  // Player stuff
   player.work();
   if (player.isTrackCompleted())
     actions.call(Actions::PLAYLIST_NEXT);
 
   // Song prefetching
   if (Config::prefetch &&
-      player.getState() == Mpg123Player::STATE_PLAYING &&
+      player.getState() == Mpg123Player::PLAYING &&
       player.length() >= 30 &&
       player.percent() >= 0.5 &&
       mainwindow.playlist.getList() &&
@@ -203,6 +213,15 @@ MAINLOOP:
   win = mainwindow.active_win();
   wtimeout(win, (downloading ? 100 : 1000));
   if ((c = wgetch(win)) != ERR) {
+    if (c == KEY_MOUSE) {
+      std::cerr << "KEYMOUSE" << std::endl;
+      if (OK == getmouse(&mouse)) {
+        std::cerr << "GETMOUSE==OK" << std::endl;
+        mainwindow.handleClick(mouse.bstate, mouse.y, mouse.x);
+      }
+      goto MAINLOOP;
+    }
+
     if (Bindings::global[c])
       c = Bindings::global[c];
     else if (Bindings::playlist[c])
@@ -220,7 +239,7 @@ MAINLOOP:
 goto MAINLOOP;
 }
 
-void Application :: cleanup() {
+void Application :: cleanup_files() {
   glob_t globbuf;
   char pattern[8192];
   sprintf(pattern, "%s" PATH_SEP "~ekto-*", Config::temp_dir.c_str());

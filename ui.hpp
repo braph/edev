@@ -52,6 +52,7 @@ public:
   virtual void    layout(Pos pos, Size size) = 0;
   virtual void    noutrefresh() = 0;
   virtual WINDOW* active_win() = 0;
+  virtual bool    handleClick(int button, int y, int x) { return false; }
 
   Widget(Pos pos = {0,0}, Size size = {0,0}, bool visible = true)
   : pos(pos), size(size), visible(visible)

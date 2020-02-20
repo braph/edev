@@ -25,6 +25,15 @@ void GenericContainer :: noutrefresh() {
   }
 }
 
+bool GenericContainer :: handleClick(int button, int y, int x) {
+  for (auto w : _widgets) {
+    if (w->visible && w->handleClick(button, y, x))
+      return true;
+  }
+
+  return false;
+}
+
 void GenericContainer :: addWidget(Widget* widget) {
   _widgets.push_back(widget);
 }
@@ -96,6 +105,11 @@ void StackedContainer :: draw() {
 void StackedContainer :: noutrefresh() {
   assert((unsigned) _current < _widgets.size());
   _widgets[_current]->noutrefresh();
+}
+
+bool StackedContainer :: handleClick(int button, int y, int x) {
+  assert((unsigned) _current < _widgets.size());
+  return _widgets[_current]->handleClick(button, y, x);
 }
 
 void StackedContainer :: layout(Pos pos, Size size) {

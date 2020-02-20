@@ -7,8 +7,8 @@
 namespace Bindings {
 
 void init();
-extern unsigned char global[KEY_MAX];
-extern unsigned char playlist[KEY_MAX];
+extern Actions::ActionID global[KEY_MAX];
+extern Actions::ActionID playlist[KEY_MAX];
 
 } // namespace Bindings
 

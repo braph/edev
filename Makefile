@@ -5,8 +5,8 @@ WARNINGS = -Wall -Wpedantic -pedantic #-Wextra -Winit-self -Wold-style-cast -Wov
 
 CXXFLAGS   := -std=c++11 -Og -g $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
 #CXXFLAGS   := -std=c++11 -O2 $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
-CPPFLAGS := $(shell xml2-config --cflags)
-LDLIBS   := -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
+CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline
+LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
@@ -26,6 +26,10 @@ clean:
 # ============================================================================
 # Views
 # ============================================================================
+
+test_readline:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_READLINE widgets/readline.cpp $^
+	echo "cannot test here"
 
 test_splash: colors.o theme.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^

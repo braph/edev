@@ -1,10 +1,10 @@
 #ifndef _ACTIONS_HPP
 #define _ACTIONS_HPP
 
-#include "player.hpp"
-#include "database.hpp"
-#include "trackloader.hpp"
-#include "views/mainwindow.hpp"
+class Database;
+class TrackLoader;
+class Mpg123Player;
+namespace Views { class MainWindow; }
 
 #include <string>
 
@@ -40,7 +40,7 @@
 class Actions {
 public:
 #define X(ENUM, STR) ENUM,
-  enum ActionID { XActions ACTIONID_LAST };
+  enum ActionID : unsigned char { XActions ACTIONID_LAST };
 #undef X
   Actions(Views::MainWindow&, Database&, Mpg123Player&, TrackLoader&);
   int call(ActionID);

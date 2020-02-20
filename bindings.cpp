@@ -2,8 +2,8 @@
 #define C(K) (K%32)
 namespace Bindings {
 
-unsigned char global[KEY_MAX];
-unsigned char playlist[KEY_MAX];
+Actions::ActionID global[KEY_MAX];
+Actions::ActionID playlist[KEY_MAX];
 
 void init() {
 #define _ global
@@ -45,47 +45,6 @@ void init() {
 
 } // namespace Bindings
 
-
-
-
-#if klasjdfslkdjf
-#define C(K) K
-
-void init() {
-#define _ global
-  _['`']     = _['^']                     = SPLASH__SHOW;
-  _['1']                                  = PLAYLIST__SHOW;
-  _['2']                                  = BROWSER__SHOW;
-  _['3']                                  = INFO__SHOW;
-  _['4']                  = _[KEY_F1]     = HELP__SHOW;
-  _['!']     = _['\\']    = _[KEY_F2]     = PLAYINGINFO__TOGGLE;
-  _['%']     = _['~']     = _[KEY_F3]     = PROGRESSBAR__TOGGLE;
-  _['=']                  = _[KEY_F4]     = TABBAR__TOGGLE;
-  _['f']                  = _[KEY_RIGHT]  = PLAYER__FORWARD;
-  _['b']                  = _[KEY_LEFT]   = PLAYER__BACKWARD;
-  _['s']                                  = PLAYER__STOP;
-  _['p']                                  = PLAYER__TOGGLE;
-  _['>']                                  = PLAYER__PLAY_NEXT;
-  _['<']                                  = PLAYER__PLAY_PREV;
-  _['l']  = _['}']  = _['\t']             = TABS__NEXT;
-  _['h']  = _['{']  = _[KEY_BTAB]         = TABS__PREV;
-  _['q']                                  = QUIT;
-  _[C('l')]                               = REFRESH;
-  _[C('r')]                               = RELOAD;
-  _[C('U')]                               = UPDATE;
-
-#undef _
-#define _ navigation
-  _['g']      = _[KEY_HOME]               = TOP;
-  _['G']      = _[KEY_END]                = BOTTOM;
-  _['k']      = _[KEY_UP]                 = UP;
-  _['j']      = _[KEY_DOWN]               = DOWN;
-  _[C('u')]   = _[KEY_PPAGE]              = PAGE_UP;
-  _[C('d')]   = _[KEY_NPAGE]              = PAGE_DOWN;
-}
-
-#endif
-
 #if NUR_ZUR_UEBERSICHT
   // nav: help, info, browser, playlist
    @bindings[:playlist] = {
@@ -117,5 +76,4 @@ void init() {
       :'browser.enter'           => [         ICurses::KEY_ENTER     ],
       :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]
    }
-   @bindings[:splash] = {}
 #endif

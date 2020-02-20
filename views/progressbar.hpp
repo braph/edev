@@ -3,12 +3,15 @@
 
 #include "../ui.hpp"
 
-namespace Views {
+#include <functional>
 
-//typedef void (*clicked)(percent);
+namespace Views {
 
 class ProgressBar : public UI::Pad {
 public:
+  std::function<void(float)> percentChanged;
+  bool handleClick(int, int, int);
+
   void setPercent(float);
   void layout(UI::Pos, UI::Size);
   void draw();

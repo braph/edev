@@ -12,14 +12,12 @@ static const short fading_256[] = {25,26,27,32,39,38,44,44,45,51,87,159,195};
 using namespace UI;
 using namespace Views;
 
-void ProgressBar :: setPercent(float percent) {
-  pad_mincol = size.width - (percent * size.width);
-}
+/* The progressbar is drawed only *once* in layout().
+ * It is positioned in the right place later by setPercent() */
 
 void ProgressBar :: draw() {
 }
 
-/* We draw the progress bar once inside a larger pad and just move it later */
 void ProgressBar :: layout(Pos pos, Size size) {
   size.height = 1;
   this->pos = pos;
@@ -56,12 +54,18 @@ void ProgressBar :: layout(Pos pos, Size size) {
     waddnwstr(win, &c, 1);
 }
 
-#if TODO
-void on_click(int button, int y, int x) {
-  clicked(button, x / size.width); // mevent.x - pad_mincol? size.width - 1?
-  // progress_width = x .... callback will do this, i think?
+void ProgressBar :: setPercent(float percent) {
+  pad_mincol = size.width - (percent * size.width);
 }
-#endif
+
+bool ProgressBar :: handleClick(int button, int y, int x) {
+  if (y == pos.y /* + size.height - 1 */) {
+    if (percentChanged)
+      percentChanged(static_cast<float>(x+1) / size.width);
+    return true;
+  }
+  return false;
+}
 
 #if TEST_PROGRESSBAR
 #include "../test.hpp"

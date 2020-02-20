@@ -51,25 +51,23 @@ void TabBar :: draw() {
   }
 }
 
-#if 0
-void clicked(...) {
-  int x, y;
-
-  // TODO: check for button?
-
-  unsigned int i = 0;
-  unsigned int p = 0;
-  for (const auto &label : tabs) {
-    if (x >= p && x <= p + label.size()) {
-      if (changed)
-        changed(...);
-      break;
+bool TabBar :: handleClick(int button, int y, int x) {
+  if (y == pos.y /* + size.height - 1 */) {
+    int label_x = 0;
+    for (int index = 0; index < _tabs.size(); ++index) {
+      label_x += _tabs[index].length() + 1;
+      if (x <= label_x) {
+        if (indexChanged)
+          indexChanged(index);
+        break;
+      }
     }
-    i++;
-    p += label.size() + 1;
+
+    return true;
   }
+
+  return false;
 }
-#endif
 
 #if TEST_TABBAR
 #include "../test.hpp"

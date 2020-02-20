@@ -1,4 +1,12 @@
 #include "trackloader.hpp"
+
+#include "config.hpp"
+#include "downloads.hpp"
+#include "ektoplayer.hpp"
+
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+
 #include <iostream>
 
 TrackLoader :: TrackLoader(Downloads& downloads)
@@ -45,12 +53,12 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   }
 
   if (boost::filesystem::exists(file_in_temp)) {
-    std::cerr << "RETURNING FROM TEMP: " << file_in_temp << std::endl;
+    std::cerr << "Returning from TEMP: " << file_in_temp << std::endl;
     return file_in_temp.string();
   }
 
   if (boost::filesystem::exists(file_in_cache)) {
-    std::cerr << "RETURNING FROM CACHE: " << file_in_temp << std::endl;
+    std::cerr << "Returning from CACHE: " << file_in_temp << std::endl;
     return file_in_cache.string();
   }
 

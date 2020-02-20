@@ -171,6 +171,15 @@ public:
   //void center()    { force_cursorpos(size.height / 2); }
   */
 
+  bool handleClick(int button, int y, int x) {
+    if (wmouse_trafo(win, &y, &x, false)) {
+      m_cursor = y;
+      draw();
+      return true;
+    }
+    return false;
+  }
+
   int getSelected() { return m_top_index + m_cursor; }
 
   typename TContainer::value_type getItem() { return (*m_list)[m_top_index+m_cursor]; }
@@ -178,6 +187,16 @@ public:
 
   int getActiveIndex()         { return m_active; }
   void setActiveIndex(int idx) { m_active = idx; draw(); } // CLAMP!
+
+#if TODO
+  void getch() {
+    if (readline) {
+      readline.getch();
+      if (readline.done()) {
+      }
+    }
+  }
+#endif
 
 private:
   int m_cursor;

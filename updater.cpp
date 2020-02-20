@@ -1,5 +1,10 @@
 #include "updater.hpp"
+
 #include "ektoplayer.hpp"
+#include "database.hpp"
+#include "browsepage.hpp"
+#include "downloads.hpp"
+
 #include <iostream>
 
 static std::string& clean_description(std::string& desc) {

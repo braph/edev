@@ -1,41 +1,28 @@
-in_list() vs strstr!
-create a playlist mockup
-models
-- Database: syles() return as array of stringzzz
-- ui.hpp: change size type of Pos,Size to short?
-- mouse section events
-- downloads: add tries options?
-- colorfader test in common.hpp
-- ProportionalGet -> SpanView
-
-- Browser:
+- application.cpp
+  - Do a real terminal reset terminal on quit
+  - Preload playlist
+  - What to do when the database hase updated?
+- config.cpp
+  - Replace in_list(T, std::initializer_list) by something like strstr?
+- database.cpp
+  - Style::styles() shall return an array of strings
+  - Dumper/Writer: use TContainer.begin() and TContainer.end() instead of calculating
+- ui.cpp
+  - Maybe change storage type of Pos and Size to short?
+- downloads.cpp
+  - Maybe add a `--tries` option to the Download base class?!
+  - Small optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)
+- common.hpp
+  - ProportionalGet rename to sth like `spannedGet`
+  - Add tests for ^
+- !!! Add browser
   if (selection)
     color = UI::Colors.get("list.item_selection");
   else if (index % 2 == 0)
     color = UI::Colors.get("list.item_even");
   else
     color = UI::Colors.get("list.item_odd");
-
-- Config: rename config.members.hpp etc.
-
-- Reset terminal on quit
-
-- view/progressbar.cpp: layout() check if size has changed
-
-- Small optimizations:
-  - buffer->reserve(50 * 1024) on downloading browsepage
-
-- Use data().end() - data.begin() instead of size()/bits
-
-  signal(SIGPIPE, SIG_IGN);
-  signal(SIGABRT, SIG_IGN);
-
-- Views::Progressbar: How to add a single wchar_t? 
-
-- std::unique_ptr<> to store chars in palyinginfo
-
-- Maybe
-#if 0
-TODO database.events.on(:update_finished, &browser.method(:reload))
-TODO preload playlist
-#endif
+- Config:
+  - rename files from config.member.hpp to something shorter...
+- view/progressbar.cpp
+  - layout(): check if size has changed (is that useful at all?!)
