@@ -31,7 +31,7 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   }
 #endif
 
-  std::cerr << "passed track is: " << track.url() << std::endl;
+  std::cerr << "Track " << track.title();
 
   std::string track_url = track.url();
   boost::filesystem::path track_file = track_url;
@@ -53,17 +53,17 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   }
 
   if (boost::filesystem::exists(file_in_temp)) {
-    std::cerr << "Returning from TEMP: " << file_in_temp << std::endl;
+    std::cerr << " -> TEMP: " << file_in_temp << std::endl;
     return file_in_temp.string();
   }
 
   if (boost::filesystem::exists(file_in_cache)) {
-    std::cerr << "Returning from CACHE: " << file_in_temp << std::endl;
+    std::cerr << " -> CACHE: " << file_in_cache << std::endl;
     return file_in_cache.string();
   }
 
   Ektoplayer::url_expand(track_url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
-  std::cerr << "expanded track si: " << track_url << std::endl;
+  std::cerr << " -> DOWNLOAD: " << track_url << std::endl;
 
   FileDownload* fileDownload = new FileDownload(track_url, file_in_temp.string());
   fileDownload->onFinished = [=](Download& _dl, CURLcode curl_e) {

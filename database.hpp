@@ -2,7 +2,9 @@
 #define _DATABASE_HPP
 
 #include "strpool.hpp"
+#include "generic.hpp"
 #include "common.hpp"
+#include "packedvector.hpp"
 
 #include <array>
 #include <vector>
@@ -62,40 +64,6 @@
  * The reason for that is also the implementation of the Album::styles(). //XXX
  */
 
-/* Make anything iterable that provides operator[] */
-template<typename TContainer>
-class GenericIterator
-: public std::iterator<std::random_access_iterator_tag, typename TContainer::value_type> {
-public:
-  typedef GenericIterator iterator;
-  typedef typename TContainer::value_type value_type;
-
-  GenericIterator(TContainer &container, size_t idx) : container(container), idx(idx) {}
-
-  bool operator==(const iterator&it) const { return idx == it.idx; }
-  bool operator!=(const iterator&it) const { return idx != it.idx; }
-  bool operator< (const iterator&it) const { return idx <  it.idx; }
-  bool operator> (const iterator&it) const { return idx >  it.idx; }
-  bool operator<=(const iterator&it) const { return idx <= it.idx; }
-  bool operator>=(const iterator&it) const { return idx >= it.idx; }
-
-  value_type operator*()             const { return container[idx]; }
-  value_type operator[](ptrdiff_t n) const { return *(*this + n);   }
-
-  iterator& operator++()                  { ++idx; return *this; }
-  iterator& operator--()                  { --idx; return *this; }
-  iterator  operator++(int)         { iterator old = *this; ++idx; return old; }
-  iterator  operator--(int)         { iterator old = *this; --idx; return old; }
-  iterator& operator+=(ptrdiff_t n)       { idx += n; return *this;            }
-  iterator& operator-=(ptrdiff_t n)       { idx -= n; return *this;            }
-  iterator  operator+ (ptrdiff_t n) const { iterator i = *this; return i += n; }
-  iterator  operator- (ptrdiff_t n) const { iterator i = *this; return i -= n; }
-  iterator& operator= (const iterator&it) { idx = it.idx; return *this;        } 
-private:
-  TContainer &container;
-  size_t idx;
-};
-
 class Database {
 public:
   typedef const char* ccstr;
@@ -104,6 +72,7 @@ public:
    * ColumnIDs
    *
    * A single field of a record can be accessed using the index operator[].
+   *
    * Although there are multiple enum types defined all functions use the
    * `ColumnID` type as parameter.
    *
@@ -221,8 +190,8 @@ public:
   };
 
   // === Column ===============================================================
-  // TODO: Implement the bitpacked vector
   typedef std::vector<int> Column;
+  //typedef DynamicPackedVector Column;
 
   // === Base class for all tables ============================================
   struct Table {

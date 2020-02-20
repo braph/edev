@@ -1,16 +1,15 @@
 - application.cpp
   - Do a real terminal reset terminal on quit
   - Preload playlist
-  - What to do when the database hase updated?
+  - What to do when the database has updated?
 - config.cpp
   - Replace in_list(T, std::initializer_list) by something like strstr?
 - database.cpp
   - Style::styles() shall return an array of strings
-  - Dumper/Writer: use TContainer.begin() and TContainer.end() instead of calculating
 - ui.cpp
   - Maybe change storage type of Pos and Size to short?
 - downloads.cpp
-  - Maybe add a `--tries` option to the Download base class?!
+  - Maybe add a --tries option to the Download base class?!
   - Small optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)
 - common.hpp
   - ProportionalGet rename to sth like `spannedGet`
@@ -25,4 +24,4 @@
 - Config:
   - rename files from config.member.hpp to something shorter...
 - view/progressbar.cpp
-  - layout(): check if size has changed (is that useful at all?!)
+  - layout(): check if size has changed?

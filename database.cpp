@@ -1,58 +1,111 @@
 #include "database.hpp"
+
 #include "common.hpp"
+
 #include <cstring>
 #include <cstdlib>
 #include <unordered_map>
 #define  streq(a,b) (!strcmp(a,b))
 typedef const char* ccstr;
 
-// TODO: find(const char *url, bool create): create is not respected!
+// TODO: find(const char *url, bool create): $create is not respected!
 
 /* ============================================================================
  * Dumper / Loader
  * ============================================================================
- * Helpers for saving and reading buffers to/from disk.
+ * Helpers for saving and reading containers to/from disk.
  * Binary format is:
- *   size_t elem_size  : Size of one element (in bits!!!)
+ *   size_t elem_size  : Size of containers element
  *   size_t elem_count : Element count
- *   char   data[]     : Buffer data, length = bytes_for(elem_size, elem_count)
- *   size_t elem_size  : Size of one element  -. 
- *   size_t elem_count : Element count        -'-> Used for validation
+ *   char   data[]     : Data (elem_size * elem_count)
+ *   size_t elem_size  : Size of containers element  -.
+ *   size_t elem_count : Element count               -'-> Used for validation
  */
 
-static inline size_t bytes_for(size_t bits, size_t count) {
-  bits *= count;
-  return (bits % 8 ? bits/8 + 1 : bits/8);
-}
+struct Dumper {
+  // Special
+  static void dump(std::ofstream& fs, DynamicPackedVector& container) {
+    size_t elem_size = container.bits();
+    size_t elem_count = container.size();
+    writeAtomic(fs, elem_size);
+    writeAtomic(fs, elem_count);
+    fs.write(reinterpret_cast<char*>(container.data()), container.data_size());
+    writeAtomic(fs, elem_size);
+    writeAtomic(fs, elem_count);
+  }
 
-struct Saver {
-  static void write(std::ofstream &fs, const char* buf, size_t elem_size, size_t elem_count) {
-    fs.write(reinterpret_cast<char*>(&elem_size),  sizeof(elem_size));
-    fs.write(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
-    if (elem_count)
-      fs.write(buf, bytes_for(elem_size, elem_count));
-    fs.write(reinterpret_cast<char*>(&elem_size),  sizeof(elem_size));
-    fs.write(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
+  static void dump(std::ofstream& fs, StringPool& pool)    { _dump(fs, pool); }
+  static void dump(std::ofstream& fs, std::vector<int>& v) { _dump(fs, v);    }
+
+private:
+  template<typename T> // vector, array, string, etc...
+  static void _dump(std::ofstream& fs, T& container) {
+    size_t elem_size = sizeof(*container.data());
+    size_t elem_count = container.size();
+    writeAtomic(fs, elem_size);
+    writeAtomic(fs, elem_count);
+    fs.write(reinterpret_cast<char*>(container.data()), elem_size * elem_count);
+    writeAtomic(fs, elem_size);
+    writeAtomic(fs, elem_count);
+  }
+
+  template<typename T>
+  static inline void writeAtomic(std::ofstream& fs, T& value) {
+    fs.write(reinterpret_cast<char*>(&value), sizeof(value));
   }
 };
 
 struct Loader {
+  // Special
+  void load(std::ifstream& fs, DynamicPackedVector& container) {
+    readHeader(fs);
+    container.push_back(1<<(elem_size-1)); // This adjusts bitwidth... TODO
+    container.resize(elem_count);
+    fs.read(reinterpret_cast<char*>(container.data()), container.data_size());
+    size_t result;
+    if (elem_size != readAtomic(fs, result))
+      throw std::runtime_error("Validation failed: Element size in header != Element size in footer");
+    if (elem_count != readAtomic(fs, result))
+      throw std::runtime_error("Validation failed: Element count in header != Element count in footer");
+  }
+
+  void load(std::ifstream& fs, StringPool& pool)    { _load(fs, pool);  }
+  void load(std::ifstream& fs, std::vector<int>& v) { _load(fs, v);     }
+
+private:
+  template<typename TContainer> // vector, array, string, etc...
+  void _load(std::ifstream&fs, TContainer& container) {
+    readHeader(fs);
+    if (elem_size != sizeof(*container.data()))
+      throw std::runtime_error("Element size in file != Element size of container");
+    container.resize(elem_count);
+    readData(fs, reinterpret_cast<char*>(container.data()));
+  }
+
   size_t elem_size;
   size_t elem_count;
-  void readHeader(std::ifstream &fs) {
+
+  void readHeader(std::ifstream& fs) {
     elem_size = elem_count = 0;
-    fs.read(reinterpret_cast<char*>(&elem_size),  sizeof(elem_size));
-    fs.read(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
+    readAtomic(fs, elem_size);
+    readAtomic(fs, elem_count);
+    if (elem_size == 0)
+      throw std::runtime_error("Invalid element size (0) in header");
   }
-  void readData(std::ifstream &fs, char *buf) {
-    if (elem_count)
-      fs.read(buf, bytes_for(elem_size, elem_count));
-    size_t elem_size_check  = 0;
-    size_t elem_count_check = 0;
-    fs.read(reinterpret_cast<char*>(&elem_size_check),   sizeof(elem_size_check));
-    fs.read(reinterpret_cast<char*>(&elem_count_check),  sizeof(elem_count_check));
-    if (elem_size != elem_size_check || elem_count != elem_count_check)
-      throw std::runtime_error("Column size check failed");
+
+  void readData(std::ifstream& fs, char* buf) {
+    fs.read(buf, elem_size * elem_count);
+    size_t result;
+    if (elem_size != readAtomic(fs, result))
+      throw std::runtime_error("Validation failed: Element size in header != Element size in footer");
+    if (elem_count != readAtomic(fs, result))
+      throw std::runtime_error("Validation failed: Element count in header != Element count in footer");
+  }
+
+  template<typename T>
+  inline T readAtomic(std::ifstream& fs, T& var) {
+    fs.read(reinterpret_cast<char*>(&var), sizeof(var));
+    return var;
   }
 };
 
@@ -86,7 +139,7 @@ Database :: Database()
   assert(0 == tracks.find("", true).id);
 }
 
-void Database :: load(const std::string &file) {
+void Database :: load(const std::string& file) {
   std::ifstream fs;
   fs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
   fs.open(file, std::ios::binary);
@@ -96,19 +149,15 @@ void Database :: load(const std::string &file) {
   if (abi_version != DB_ABI_VERSION)
     throw std::runtime_error("Database ABI version mismatch");
 
-  Loader l;
-  for (auto p : pools) {
-    l.readHeader(fs);
-    p->resize(l.elem_count);
-    l.readData(fs, p->data());
-  }
+  for (auto pool : pools)
+    Loader().load(fs, *pool);
 
   styles.load(fs);
   albums.load(fs);
   tracks.load(fs);
 }
 
-void Database :: save(const std::string &file) {
+void Database :: save(const std::string& file) {
   std::ofstream fs;
   fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
   fs.open(file, std::ios::binary);
@@ -117,7 +166,7 @@ void Database :: save(const std::string &file) {
   fs.write(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
 
   for (auto p : pools)
-    Saver::write(fs, p->data(), 8 /*BITS*/, p->size());
+    Dumper::dump(fs, *p);
 
   styles.save(fs);
   albums.save(fs);
@@ -172,23 +221,19 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
  * Database :: Table
  * ==========================================================================*/
 
-void Database :: Table :: load(std::ifstream &fs) {
-  Loader l;
-  for (auto* col : columns) {
-    l.readHeader(fs);
-    col->resize(l.elem_count);
-    l.readData(fs, reinterpret_cast<char*>(col->data()));
-  }
+void Database :: Table :: load(std::ifstream& fs) {
+  for (auto* col : columns)
+    Loader().load(fs, *col);
 }
 
-void Database :: Table :: save(std::ofstream &fs) {
+void Database :: Table :: save(std::ofstream& fs) {
   for (auto* col : columns)
-    Saver::write(fs, reinterpret_cast<char*>(col->data()), 8*sizeof(int), col->size());
+    Dumper::dump(fs, *col);
 }
 
 /* Find a record by its URL or create one if it could not be found */
 template<typename TTable>
-static typename TTable::value_type find_or_create(TTable &table, StringPool &pool, const char *url) {
+static typename TTable::value_type find_or_create(TTable& table, StringPool& pool, const char* url) {
   bool newly_inserted = false;
   size_t strId = pool.add(url, &newly_inserted);
   Database::Column::iterator beg;
@@ -341,7 +386,7 @@ DB::Field TRACK::operator[](DB::ColumnID id) const {
 #include "test.hpp"
 
 template<typename T1, typename T2>
-bool equals(T1 &result, DB::ColumnID id, T2 &vec) {
+bool equals(T1& result, DB::ColumnID id, T2& vec) {
   if (result.size() != vec.size())
     return false;
 
@@ -367,7 +412,7 @@ int main () {
   auto tracks = db.getTracks();
 
   if (db.tracks.size() < 100)
-    throw std::runtime_error("Sorry, I need a database with some data ...");
+    throw std::runtime_error("Sorry, I need a database with some data, please run the updater ...");
 
   /* Test: Count of result set equals the number of table entries */
   assert (styles.size() == db.styles.size() - 1);
@@ -434,7 +479,7 @@ int main () {
   assert(streq(tracks[0].title(), "Satori"));
 
   /* Test: Failing to load a invalid database ============================== */
-  except(db.load("/non-existend"));
+  except(db.load("/non-existent"));
   except(db.load("/bin/true"));
 
   TEST_END();

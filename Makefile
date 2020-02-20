@@ -10,7 +10,8 @@ LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -l
 
 application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
-	views/help.o views/info.o views/playlist.o player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o common.o
+	views/help.o views/info.o views/playlist.o player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o common.o \
+	packedvector.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 	echo "Cannot test ncurses based stuff"
 
@@ -93,11 +94,10 @@ test_playinginfo: colors.o theme.o config.o filesystem.o shellsplit.o database.o
 test: test_filesystem test_ektoplayer test_config
 	echo foo
 
-test_oddvector:
-	$(CXX) -DTEST_ODDVECTOR $(CXXFLAGS) oddvector.cpp
+test_packedvector:
+	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
 	./a.out
 
-# TODO
 test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
 	echo "Widgets cannot be tested in Make"

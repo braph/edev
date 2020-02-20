@@ -7,7 +7,7 @@
 
 #define STRLEN(S)     (sizeof(S)-1)
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
-#define REPORT_BUG    "REPORT A BUG"
+#define REPORT_BUG    "REPORT A BUG, PLEASE!"
 
 #if DEBUG
 #include <cassert>
@@ -22,7 +22,7 @@ static inline wchar_t* toWideString(const std::string& s, size_t* len = NULL) {
   return toWideString(s.c_str(), len);
 }
 
-// If `*s` starts with `prefix` advance the pointer beyond the prefix and return true
+// If `*s` starts with `prefix` advance the pointer beyond the prefix and return TRUE
 template<size_t LEN>
 static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
   if (! std::strncmp(*s, prefix, LEN - 1)) {
@@ -30,6 +30,10 @@ static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
     return true;
   }
   return false;
+}
+
+static inline size_t bytes_for_bits(size_t bits) {
+  return (bits % 8 ? bits/8 + 1 : bits/8);
 }
 
 inline int clamp(int value, int lower, int upper) {

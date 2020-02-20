@@ -4,8 +4,9 @@
 #include "process.cpp"
 #include "process_unix.cpp"
 
-#include <iostream> //XXX
 #include "unistd.h"
+
+#include <iostream> //XXX
 
 Mpg123Player :: Mpg123Player()
 : audio_system("jack,pulse,alsa,oss")
@@ -53,35 +54,29 @@ void Mpg123Player :: stop() {
 }
 
 void Mpg123Player :: work() {
-  // Return immediately if we have nothing to do
-  if (! state)
+  if (state == STOPPED)
     return;
 
-  // We got something to do, there has to be a process object
-  if (! process)
-    goto CREATE_PROCESS;
-  else if (! process->running()) {
-    process.reset();
-CREATE_PROCESS:
+  // Start process if he died (or wasn't even started yet)
+  if (!process || !process->running()) {
     process = std::unique_ptr<Mpg123Process>(new Mpg123Process(
-        "/bin/mpg123 -o pulse -R", "",
+        "/bin/mpg123 -o pulse -R", "", // TODO: -o audio_system --fuzzy
         [&](const char* buffer, size_t n) { read_output(buffer, n); },
         [&](const char* buffer, size_t n) { failed++;               },
         true, 4096 /* Buffer size */));
+    *process << "SILENCE\n";
   }
 
-  // We are trying to play a track
   if (state == LOADING)
-    *process << "L " << file << "\nSILENCE\n";
+    *process << "L " << file << "\n";
 
-  // FORMAT gives us our sample rate
-  if (! sample_rate)
+  if (!sample_rate)
     *process << "FORMAT\n";
 
   *process << "SAMPLE\n";
 }
 
-static std::string _buffer;
+static std::string _buffer; // TODO
 void Mpg123Player :: read_output(const char* __buffer, size_t len) {
   char* buffer = const_cast<char*>(__buffer); // We know we can change the buffer
   char* end;
@@ -166,6 +161,8 @@ void Mpg123Player :: parse_line(const char* line) {
     }
     else if (cstr_seek(&line, "FORMAT ")) {
       std::sscanf(line, "%u %hhu", &sample_rate, &channels);
+    }
+    else if (cstr_seek(&line, "silence ")) {
     }
     else
       std::cerr << "parse_output(): " << line << std::endl;
