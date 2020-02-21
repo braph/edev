@@ -32,8 +32,9 @@ static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
   return false;
 }
 
-static inline size_t bytes_for_bits(size_t bits) {
-  return (bits % 8 ? bits/8 + 1 : bits/8);
+static inline size_t size_for_bits(size_t bits, unsigned storage_size = 8) {
+  storage_size *= 8 /* bits */;
+  return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
 }
 
 inline int clamp(int value, int lower, int upper) {

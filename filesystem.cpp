@@ -28,10 +28,8 @@ namespace Filesystem {
   std::string expand(const std::string &path) {
     std::string new_path = path;
 
-    if (path.length() >= 1 && path[0] == '~') {
+    if (path.length() >= 1 && path[0] == '~')
       new_path.replace(0, 1, home());
-      return new_path;
-    }
 
     return new_path;
   }

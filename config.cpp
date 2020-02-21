@@ -14,26 +14,6 @@
 
 using namespace Views;
 
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP =
-  "'<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}";
-
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = 
-  "artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'";
-
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_TOP_256 =
-  "'<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}";
-
-static const char* const DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = 
-  "artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'";
-
-static const char* const DEFAULT_PLAYLIST_COLUMNS =
-  "number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%}"
-  "title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}";
-
-static const char* const DEFAULT_PLAYLIST_COLUMNS_256 =
-  "number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%}"
-  "title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}";
-
 /* === Parsing for primitives === */
 static int opt_parse_int(const std::string &s) {
   char *end;
@@ -237,17 +217,15 @@ static PlayingInfoFormat opt_parse_playinginfo_format(const std::string& s) {
 
 /* ========================== */
 
-#include "config/config.members.declare.cpp"
+#include "config/options.define.cpp"
 
 void Config :: init() {
-  const std::string CONFIG_DIR = Ektoplayer::config_dir();
-  const std::string HOME       = Filesystem::home();
-#include "config/config.members.initialize.cpp"
+#include "config/options.initialize.cpp"
 }
 
 void Config :: set(const std::string &option, const std::string &value) {
   try { if (0) {}
-#include "config/config.members.set.cpp"
+#include "config/options.set.cpp"
     else throw false;
   } catch (const std::exception &e) {
     throw std::invalid_argument(option + ": " + e.what());

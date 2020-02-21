@@ -59,7 +59,7 @@ struct Loader {
   // Special
   void load(std::ifstream& fs, DynamicPackedVector& container) {
     readHeader(fs);
-    container.push_back(1<<(elem_size-1)); // This adjusts bitwidth... TODO
+    container.reserve(elem_count, elem_size); // TODO?
     container.resize(elem_count);
     fs.read(reinterpret_cast<char*>(container.data()), container.data_size());
     size_t result;
@@ -210,8 +210,10 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 
   // Replace the IDs from the old pool by the IDs from the new pool
   for (auto column : columns)
-    for (auto& id : *column)
-      id = idRemap[id];
+    for (Column::iterator it = column->begin(); it != column->end(); ++it)
+      *it = idRemap[*it];
+    //for (auto& id : *column)
+    //  id = idRemap[id];
 
   // Transfer the pool
   pool = newPool;

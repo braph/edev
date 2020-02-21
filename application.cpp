@@ -157,6 +157,7 @@ void Application :: run() {
   // Connecting widgets events
   mainwindow.progressBar.percentChanged = [&](float f) {
     player.setPostionByPercent(f);
+    mainwindow.progressBar.setPercent(f);
   };
   mainwindow.tabBar.indexChanged = [&](int idx) {
     mainwindow.tabBar.setCurrentIndex(idx);
@@ -164,11 +165,15 @@ void Application :: run() {
   };
 
   int c;
+  int timeOut = 0;
   int downloading;
   WINDOW *win;
   MEVENT mouse;
   Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
   Database::Tracks::Track currentPrefetching(database, 0);
+  auto tracks = database.getTracks();
+#define TIMEOUT_PLAYING  1000 // Display refresh rate if playing
+#define TIMEOUT_DOWNLOAD 100  // Timeout working downloads
 
 WINDOW_RESIZE:
   have_SIGWINCH = false;
@@ -186,13 +191,13 @@ MAINLOOP:
   mainwindow.noutrefresh();
   doupdate();
 
-  // Do at max 10 download iterations
-  for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
-
   // Player stuff
   player.work();
   if (player.isTrackCompleted())
     actions.call(Actions::PLAYLIST_NEXT);
+
+  // Do at max 10 download iterations
+  for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
 
   // Song prefetching
   if (Config::prefetch &&
@@ -210,15 +215,19 @@ MAINLOOP:
     }
   }
 
+  if (downloading)
+    timeOut = TIMEOUT_DOWNLOAD;
+  else if (player.getState() == Mpg123Player::STOPPED || player.getState() == Mpg123Player::PAUSED)
+    timeOut += TIMEOUT_PLAYING;
+  else
+    timeOut = TIMEOUT_PLAYING;
+
   win = mainwindow.active_win();
-  wtimeout(win, (downloading ? 100 : 1000));
+  wtimeout(win, timeOut);
   if ((c = wgetch(win)) != ERR) {
     if (c == KEY_MOUSE) {
-      std::cerr << "KEYMOUSE" << std::endl;
-      if (OK == getmouse(&mouse)) {
-        std::cerr << "GETMOUSE==OK" << std::endl;
+      if (OK == getmouse(&mouse))
         mainwindow.handleClick(mouse.bstate, mouse.y, mouse.x);
-      }
       goto MAINLOOP;
     }
 
@@ -226,6 +235,12 @@ MAINLOOP:
       c = Bindings::global[c];
     else if (Bindings::playlist[c])
       c = Bindings::playlist[c];
+    else if (c == 'x') {
+      database.shrink_to_fit();
+      tracks = database.getTracks();
+      mainwindow.playlist.attachList(&tracks);
+      goto MAINLOOP;
+    }
     else
       c = Actions::NONE;
 

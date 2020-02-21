@@ -31,30 +31,31 @@ union BitShiftHelper {
  * ==========================================================================*/
 
 void PackedVector :: reserve(size_t n) {
-  //std::cerr << "reserve(" << n << ")" << std::endl;
+  __enter__("%lu", n);
   if (n > capacity())
     *this = PackedVector(_bits, n, begin(), end());
+  __leave__();
 }
 
-void PackedVector :: resize(size_t n, int value) {
-  //std::cerr << "resize(" << n << ")" << std::endl;
+void PackedVector :: resize(size_t n, value_type value) {
+  __enter__("%lu, %d", n, value);
   reserve(n);
   while (_size < n)
     push_back(value);
+  __leave__();
 }
 
-void PackedVector :: push_back(const int &value) {
-  //std::cerr << "push_back(" << value << ")" << std::endl;
+void PackedVector :: push_back(value_type value) {
+  __enter__("%d", value);
   if (_size == capacity())
-    reserve(_size * 2 + 1); // XXX
+    reserve(_size * 2 + 1); // TODO
 
   set(_size, value);
   ++_size;
+  __leave__();
 }
 
 PackedVector::value_type PackedVector :: get(size_t index) const {
-  //std::cerr << "get(" << index << ")" << std::endl;
-
   uint32_t dataIndex   = (index * _bits) / 32;
   uint32_t bitOffset   = (index * _bits) % 32;
 
@@ -73,13 +74,6 @@ void PackedVector :: set(size_t index, int value) {
   uint32_t dataIndex   = (index * _bits) / 32;
   uint32_t bitOffset   = (index * _bits) % 32;
 
-  /*
-  std::cout
-    << "set(index=" << index << ", value="  << value
-    << " dataIndex=" << dataIndex
-    << " bitOffset="   << bitOffset
-    << ")\n"; */
-
   if (bitOffset + _bits <= 32) {
     uint32_t e = _data[dataIndex];
     _data[dataIndex] = replace_bits_32(e, value, bitOffset, _bits);
@@ -93,10 +87,16 @@ void PackedVector :: set(size_t index, int value) {
   }
 }
 
+/* ============================================================================
+ * DynamicPackedVector
+ * ==========================================================================*/
+
 #if TEST_PACKEDVECTOR
 #include "test.hpp"
+#include <vector>
 int main() {
   TEST_BEGIN();
+#if 0
   {
     PackedVector v(8);
     assert(v.empty());
@@ -115,16 +115,67 @@ int main() {
     v.push_back(19);
     assert(v[3] == 19);
   }
+#endif
+
+#define SZ 1048576
+  {
+    std::vector<int> v;
+    for (int i = 0; i < SZ; ++i)
+      v.push_back(i);
+  }
 
   {
     DynamicPackedVector v;
-    for (int i = 0; i < 256; ++i) {
+    std::cout << "push back 0" << std::endl;
+    for (int i = 0; i < 20000; ++i) {
       v.push_back(i);
-      assert(v[i] == i);
-      std::cerr << v.bits() << std::endl;
+      //assert(v[i] == i); XXX
     }
   }
 
+  {
+    DynamicPackedVector v;
+    std::cout << "push back" << std::endl;
+    for (int i = 0; i < SZ; ++i) {
+      v.push_back(i);
+      //assert(v[i] == i); XXX
+    }
+
+    std::cout << "set" << std::endl;
+    for (int i = 0; i < SZ; ++i) {
+      v[i] = 2;
+    }
+
+    std::cout << "get" << std::endl;
+    for (int i = 0; i < SZ; ++i) {
+      assert(v[i] == 2);
+    }
+
+    std::cout << "*iterator =" << std::endl;
+    for (DynamicPackedVector::iterator it = v.begin(); it != v.end(); ++it) {
+      *it = 33;
+    }
+
+    std::cout << "get[33]" << std::endl;
+    for (int i = 0; i < SZ; ++i) {
+      assert(v[i] == 33);
+    }
+  }
+
+  {
+    std::cout << "push_back" << std::endl;
+    DynamicPackedVector v;
+    for (int i = 0; i < SZ; ++i)
+      v.push_back(1);
+
+    std::cout << "*it = 1024" << std::endl;
+    for (DynamicPackedVector::iterator it = v.begin(); it != v.end(); ++it)
+      *it = 1024;
+
+    std::cout << "v[i] == 1024" << std::endl;
+    for (int i = 0; i < SZ; ++i)
+      assert(v[i] == 1024);
+  }
 
   TEST_END();
 }

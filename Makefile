@@ -71,7 +71,7 @@ test_filesystem:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_FILESYSTEM filesystem.cpp
 	./a.out
 
-test_config: shellsplit.o colors.o xml.o filesystem.o
+test_config: shellsplit.o colors.o xml.o filesystem.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_CONFIG ektoplayer.cpp config.cpp $^
 	./a.out
 

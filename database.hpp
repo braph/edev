@@ -414,6 +414,11 @@ public:
 
     typedef typename TStore::value_type value_type;
 
+    Result& operator=(const Result& rhs) {
+      indices = rhs.indices;
+      return *this;
+    }
+
     inline size_t size() {
       return indices.size();
     }

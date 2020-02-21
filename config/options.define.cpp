@@ -1,5 +1,5 @@
 int                           Config :: threads = 20;
-int                           Config :: use_colors /* will be initialized later */;
+int                           Config :: use_colors = -1;
 int                           Config :: small_update_pages = 5;
 int                           Config :: playlist_load_newest = 1000;
 bool                          Config :: prefetch = true;
@@ -26,5 +26,5 @@ PlayingInfoFormat             Config :: playinginfo_format_top /* will be initia
 PlayingInfoFormat             Config :: playinginfo_format_bottom /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_top_256 /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_bottom_256 /* will be initialized later */;
-std::vector<std::string>      Config :: main_widgets /* will be initialized later */;
-std::vector<std::string>      Config :: tabs_widgets /* will be initialized later */;
+std::vector<std::string>      Config :: main_widgets = {"playinginfo","tabbar","windows","progressbar"};
+std::vector<std::string>      Config :: tabs_widgets = {"splash","playlist","browser","info","help"};

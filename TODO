@@ -6,6 +6,7 @@
   - Replace in_list(T, std::initializer_list) by something like strstr?
 - database.cpp
   - Style::styles() shall return an array of strings
+  - move Result class to Generic. Add an iterator proxy with a lambda!
 - ui.cpp
   - Maybe change storage type of Pos and Size to short?
 - downloads.cpp
@@ -23,5 +24,6 @@
     color = UI::Colors.get("list.item_odd");
 - Config:
   - rename files from config.member.hpp to something shorter...
+  - make it more static
 - view/progressbar.cpp
   - layout(): check if size has changed?
