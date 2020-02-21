@@ -26,6 +26,7 @@ namespace fs = boost::filesystem;
 
 static bool have_SIGWINCH;
 static void on_SIGWINCH(int) { have_SIGWINCH = true; }
+static void printDBStats(Database&);
 
 class Application {
 public:
@@ -143,6 +144,7 @@ void Application :: init() {
 }
 
 void Application :: run() {
+  printDBStats(database);
   std::cerr << "Database track count: " << database.tracks.size() << std::endl;
 
   if (database.tracks.size() < 42)
@@ -187,7 +189,7 @@ MAINLOOP:
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
   mainwindow.playingInfo.setState(player.getState());
-  mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem()); //XXX
+  mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem()); //XXX bounds
   mainwindow.noutrefresh();
   doupdate();
 
@@ -227,7 +229,7 @@ MAINLOOP:
   if ((c = wgetch(win)) != ERR) {
     if (c == KEY_MOUSE) {
       if (OK == getmouse(&mouse))
-        mainwindow.handleClick(mouse.bstate, mouse.y, mouse.x);
+        mainwindow.handleMouse(mouse);
       goto MAINLOOP;
     }
 
@@ -284,4 +286,15 @@ int main() {
   reset_shell_mode();
   delwin(stdscr);
   return 0;
+}
+
+static void printDBStats(Database& db) {
+  std::cerr << "Database statistics:";
+  const char* names[] = {"styles", "albums", "tracks"};
+  Database::Table* tables[] = {&db.styles, &db.albums, &db.tracks};
+  for (size_t i = 0; i < ARRAY_SIZE(tables); ++i) {
+    std::cerr << "\n" << names[i] << ":";
+    for (auto col : tables[i]->columns)
+      std::cerr << col->bits() << "|";
+  }
 }

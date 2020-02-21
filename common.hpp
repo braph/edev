@@ -32,7 +32,7 @@ static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
   return false;
 }
 
-static inline size_t size_for_bits(size_t bits, unsigned storage_size = 8) {
+static inline size_t size_for_bits(size_t bits, unsigned storage_size = 1) {
   storage_size *= 8 /* bits */;
   return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
 }

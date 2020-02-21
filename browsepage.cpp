@@ -7,6 +7,7 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 
+#include <string>
 #include <algorithm>    
 
 static inline size_t find_dash(const std::string& s, size_t &dash_len) {
@@ -21,7 +22,7 @@ static inline size_t find_dash(const std::string& s, size_t &dash_len) {
 
 /* Taken and adapted from:
  * https://stackoverflow.com/questions/46349697/decode-base64-string-using-boost */
-std::string base64_decode(std::string input)
+static std::string base64_decode(std::string input)
 {
   using namespace boost::archive::iterators;
   typedef transform_width<binary_from_base64<std::string::const_iterator >, 8, 6> ItBinaryT;

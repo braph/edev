@@ -9,12 +9,13 @@ namespace Views {
 
 class ProgressBar : public UI::Pad {
 public:
-  std::function<void(float)> percentChanged;
-  bool handleClick(int, int, int);
+  void draw();
+  void layout(UI::Pos, UI::Size);
 
   void setPercent(float);
-  void layout(UI::Pos, UI::Size);
-  void draw();
+
+  std::function<void(float)> percentChanged;
+  bool handleMouse(MEVENT&);
 };
 
 } // namespace Views

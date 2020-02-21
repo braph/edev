@@ -12,24 +12,21 @@ GenericContainer :: GenericContainer()
 }
 
 void GenericContainer :: draw() {
-  for (auto w : _widgets) {
+  for (auto w : _widgets)
     if (w->visible)
       w->draw();
-  }
 }
 
 void GenericContainer :: noutrefresh() {
-  for (auto w : _widgets) {
+  for (auto w : _widgets)
     if (w->visible)
       w->noutrefresh();
-  }
 }
 
-bool GenericContainer :: handleClick(int button, int y, int x) {
-  for (auto w : _widgets) {
-    if (w->visible && w->handleClick(button, y, x))
+bool GenericContainer :: handleMouse(MEVENT& m) {
+  for (auto w : _widgets)
+    if (w->visible && w->handleMouse(m))
       return true;
-  }
 
   return false;
 }
@@ -39,7 +36,7 @@ void GenericContainer :: addWidget(Widget* widget) {
 }
 
 WINDOW* GenericContainer :: active_win() {
-  assert((unsigned) _current < _widgets.size());
+  assert(static_cast<unsigned>(_current) < _widgets.size());
   return _widgets[_current]->active_win();
 }
 
@@ -62,7 +59,7 @@ size_t GenericContainer :: count() {
 }
 
 void GenericContainer :: setCurrentIndex(int index) {
-  assert((unsigned) index < _widgets.size());
+  assert(static_cast<unsigned>(index) < _widgets.size());
   _current = index;
   draw();
 }
@@ -98,18 +95,18 @@ StackedContainer :: StackedContainer()
 }
 
 void StackedContainer :: draw() {
-  assert((unsigned) _current < _widgets.size());
+  assert(static_cast<unsigned>(_current) < _widgets.size());
   _widgets[_current]->draw();
 }
 
 void StackedContainer :: noutrefresh() {
-  assert((unsigned) _current < _widgets.size());
+  assert(static_cast<unsigned>(_current) < _widgets.size());
   _widgets[_current]->noutrefresh();
 }
 
-bool StackedContainer :: handleClick(int button, int y, int x) {
-  assert((unsigned) _current < _widgets.size());
-  return _widgets[_current]->handleClick(button, y, x);
+bool StackedContainer :: handleMouse(MEVENT& m) {
+  assert(static_cast<unsigned>(_current) < _widgets.size());
+  return _widgets[_current]->handleMouse(m);
 }
 
 void StackedContainer :: layout(Pos pos, Size size) {

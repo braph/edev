@@ -62,7 +62,7 @@ void Mpg123Player :: work() {
     process = std::unique_ptr<Mpg123Process>(new Mpg123Process(
         "/bin/mpg123 -o pulse -R", "", // TODO: -o audio_system --fuzzy
         [&](const char* buffer, size_t n) { read_output(buffer, n); },
-        [&](const char* buffer, size_t n) { failed++;               },
+        [&](const char*       , size_t  ) { failed++;               },
         true, 4096 /* Buffer size */));
     *process << "SILENCE\n";
   }

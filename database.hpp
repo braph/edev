@@ -73,7 +73,7 @@ public:
    *
    * A single field of a record can be accessed using the index operator[].
    *
-   * Although there are multiple enum types defined all functions use the
+   * Although there are multiple enum types defined, all functions use the
    * `ColumnID` type as parameter.
    *
    * Not all of these IDs correspond to a real field. Some of them are just a
@@ -138,50 +138,26 @@ public:
    * The field struct is basically a union type.
    * ========================================================================*/
   struct Field {
-    enum Type {
-      STRING,
-      INTEGER,
-      FLOAT,
-      TIME,
-    };
+    enum  Type   { STRING,  INTEGER, FLOAT,   TIME,     };
+    union Value  { ccstr s; int i;   float f; time_t t; };
 
     Type type;
-    union {
-      ccstr s;
-      int i;
-      float f;
-      time_t t;
-    } value;
+    Value value;
 
     inline Field(ccstr s)   { setString(s);  }
     inline Field(int i)     { setInteger(i); }
     inline Field(float f)   { setFloat(f);   }
     inline Field(time_t t)  { setTime(t);    }
 
-    inline void setString(ccstr s) {
-      this->value.s = s;
-      this->type = STRING;
-    }
-
-    inline void setInteger(int i) {
-      this->value.i = i;
-      this->type = INTEGER;
-    }
-
-    inline void setFloat(float f) {
-      this->value.f = f;
-      this->type = FLOAT;
-    }
-    
-    inline void setTime(time_t t) {
-      this->value.t = t;
-      this->type = TIME;
-    }
+    inline void setString(ccstr s) { type = STRING;  value.s = s; }
+    inline void setInteger(int i)  { type = INTEGER; value.i = i; } 
+    inline void setFloat(float f)  { type = FLOAT;   value.f = f; }
+    inline void setTime(time_t t)  { type = TIME;    value.t = t; }
 
     int compare(const Field &rhs) const {
       assert(type == rhs.type);
       switch (type) {
-      case STRING:  return strcmp(this->value.s, rhs.value.s);
+      case STRING:  return strcmp(value.s, rhs.value.s);
       case INTEGER: return this->value.i - rhs.value.i;
       case FLOAT:   return this->value.f - rhs.value.f;
       case TIME:    return this->value.t - rhs.value.t;
@@ -190,8 +166,8 @@ public:
   };
 
   // === Column ===============================================================
-  typedef std::vector<int> Column;
-  //typedef DynamicPackedVector Column;
+  //typedef std::vector<int> Column;
+  typedef DynamicPackedVector Column;
 
   // === Base class for all tables ============================================
   struct Table {
@@ -476,6 +452,7 @@ public:
   void load(const std::string&);
   void save(const std::string&);
   void shrink_to_fit();
+
 private:
   void shrink_pool_to_fit(StringPool&, std::initializer_list<Column*>);
 };

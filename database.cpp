@@ -2,10 +2,14 @@
 
 #include "common.hpp"
 
-#include <cstring>
 #include <cstdlib>
+#include <climits>
+#include <cstring>
 #include <unordered_map>
+
 #define  streq(a,b) (!strcmp(a,b))
+#define  bitsOf(T) (CHAR_BIT*sizeof(T))
+
 typedef const char* ccstr;
 
 // TODO: find(const char *url, bool create): $create is not respected!
@@ -15,103 +19,87 @@ typedef const char* ccstr;
  * ============================================================================
  * Helpers for saving and reading containers to/from disk.
  * Binary format is:
- *   size_t elem_size  : Size of containers element
+ *   size_t elem_bits  : Size of a containers element
  *   size_t elem_count : Element count
- *   char   data[]     : Data (elem_size * elem_count)
- *   size_t elem_size  : Size of containers element  -.
- *   size_t elem_count : Element count               -'-> Used for validation
+ *   void*  data[]     : Data
+ *   size_t elem_bits  : Size of a containers element  -.
+ *   size_t elem_count : Element count                 -'-> Used for validation
  */
 
 struct Dumper {
-  // Special
-  static void dump(std::ofstream& fs, DynamicPackedVector& container) {
-    size_t elem_size = container.bits();
-    size_t elem_count = container.size();
-    writeAtomic(fs, elem_size);
-    writeAtomic(fs, elem_count);
-    fs.write(reinterpret_cast<char*>(container.data()), container.data_size());
-    writeAtomic(fs, elem_size);
-    writeAtomic(fs, elem_count);
-  }
-
-  static void dump(std::ofstream& fs, StringPool& pool)    { _dump(fs, pool); }
-  static void dump(std::ofstream& fs, std::vector<int>& v) { _dump(fs, v);    }
-
-private:
-  template<typename T> // vector, array, string, etc...
-  static void _dump(std::ofstream& fs, T& container) {
-    size_t elem_size = sizeof(*container.data());
-    size_t elem_count = container.size();
-    writeAtomic(fs, elem_size);
-    writeAtomic(fs, elem_count);
-    fs.write(reinterpret_cast<char*>(container.data()), elem_size * elem_count);
-    writeAtomic(fs, elem_size);
-    writeAtomic(fs, elem_count);
-  }
+  Dumper(std::ofstream& fs) : fs(fs) {}
 
   template<typename T>
-  static inline void writeAtomic(std::ofstream& fs, T& value) {
-    fs.write(reinterpret_cast<char*>(&value), sizeof(value));
+  void dump(std::vector<T>& v)
+  { dump(bitsOf(T), v.size(), reinterpret_cast<char*>(v.data())); }
+
+  void dump(DynamicPackedVector& v)
+  { dump(v.bits(), v.size(), reinterpret_cast<char*>(v.data())); }
+
+  void dump(StringPool& p)
+  { dump(bitsOf(char), p.size(), reinterpret_cast<char*>(p.data())); }
+
+private:
+  std::ofstream& fs;
+  void dump(size_t bits, size_t count, char* data) {
+    fs.write(reinterpret_cast<char*>(&bits),  sizeof(bits));
+    fs.write(reinterpret_cast<char*>(&count), sizeof(count));
+    fs.write(data, size_for_bits(bits*count));
+    fs.write(reinterpret_cast<char*>(&bits),  sizeof(bits));
+    fs.write(reinterpret_cast<char*>(&count), sizeof(count));
   }
 };
 
 struct Loader {
-  // Special
-  void load(std::ifstream& fs, DynamicPackedVector& container) {
-    readHeader(fs);
-    container.reserve(elem_count, elem_size); // TODO?
-    container.resize(elem_count);
-    fs.read(reinterpret_cast<char*>(container.data()), container.data_size());
-    size_t result;
-    if (elem_size != readAtomic(fs, result))
-      throw std::runtime_error("Validation failed: Element size in header != Element size in footer");
-    if (elem_count != readAtomic(fs, result))
-      throw std::runtime_error("Validation failed: Element count in header != Element count in footer");
+  Loader(std::ifstream& fs) : fs(fs) {}
+
+  void load(DynamicPackedVector& vec) {
+    readHeader();
+    vec.reserve(elem_count, elem_bits);
+    vec.resize(elem_count);
+    readData(reinterpret_cast<char*>(vec.data()));
   }
 
-  void load(std::ifstream& fs, StringPool& pool)    { _load(fs, pool);  }
-  void load(std::ifstream& fs, std::vector<int>& v) { _load(fs, v);     }
-
-private:
-  template<typename TContainer> // vector, array, string, etc...
-  void _load(std::ifstream&fs, TContainer& container) {
-    readHeader(fs);
-    if (elem_size != sizeof(*container.data()))
-      throw std::runtime_error("Element size in file != Element size of container");
-    container.resize(elem_count);
-    readData(fs, reinterpret_cast<char*>(container.data()));
-  }
-
-  size_t elem_size;
-  size_t elem_count;
-
-  void readHeader(std::ifstream& fs) {
-    elem_size = elem_count = 0;
-    readAtomic(fs, elem_size);
-    readAtomic(fs, elem_count);
-    if (elem_size == 0)
-      throw std::runtime_error("Invalid element size (0) in header");
-  }
-
-  void readData(std::ifstream& fs, char* buf) {
-    fs.read(buf, elem_size * elem_count);
-    size_t result;
-    if (elem_size != readAtomic(fs, result))
-      throw std::runtime_error("Validation failed: Element size in header != Element size in footer");
-    if (elem_count != readAtomic(fs, result))
-      throw std::runtime_error("Validation failed: Element count in header != Element count in footer");
+  void load(StringPool& pool) {
+    readHeader(bitsOf(char));
+    pool.resize(elem_count);
+    readData(reinterpret_cast<char*>(pool.data()));
   }
 
   template<typename T>
-  inline T readAtomic(std::ifstream& fs, T& var) {
-    fs.read(reinterpret_cast<char*>(&var), sizeof(var));
-    return var;
+  void load(std::vector<T>& v) {
+    readHeader(bitsOf(T));
+    v.resize(elem_count);
+    readData(reinterpret_cast<char*>(v.data()));
+  }
+
+private:
+  std::ifstream& fs;
+  size_t elem_bits;
+  size_t elem_count;
+
+  void readHeader(size_t expected_bits = 0) {
+    elem_bits = elem_count = 0xDEAD;
+    fs.read(reinterpret_cast<char*>(&elem_bits),  sizeof(elem_bits));
+    fs.read(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
+    if (elem_bits == 0 || elem_bits == 0xDEAD || (expected_bits && elem_bits != expected_bits))
+      throw std::runtime_error("Invalid bit count in header");
+  }
+
+  void readData(char* buf) {
+    size_t check_bits, check_count;
+    fs.read(buf, size_for_bits(elem_bits*elem_count));
+    fs.read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
+    fs.read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
+    if (check_bits != elem_bits || check_count != elem_count)
+      throw std::runtime_error("Validation failed: invalid bit/element count in footer");
   }
 };
 
 /* ============================================================================
  * A bit ugly, but cleans up the code a lot
  * ==========================================================================*/
+
 #define STR_SET(POOL_NAME, ID, S) \
   if (! streq(db.pool_##POOL_NAME.get(ID), S)) \
     { ID = db.pool_##POOL_NAME.add(S); }
@@ -150,7 +138,7 @@ void Database :: load(const std::string& file) {
     throw std::runtime_error("Database ABI version mismatch");
 
   for (auto pool : pools)
-    Loader().load(fs, *pool);
+    Loader(fs).load(*pool);
 
   styles.load(fs);
   albums.load(fs);
@@ -166,7 +154,7 @@ void Database :: save(const std::string& file) {
   fs.write(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
 
   for (auto p : pools)
-    Dumper::dump(fs, *p);
+    Dumper(fs).dump(*p);
 
   styles.save(fs);
   albums.save(fs);
@@ -174,23 +162,22 @@ void Database :: save(const std::string& file) {
 }
 
 void Database :: shrink_to_fit() {
-  shrink_pool_to_fit(pool_meta,
-    {&styles.name, &albums.title, &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
+  shrink_pool_to_fit(pool_meta, {&styles.name, &albums.title,
+      &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
 }
 
 void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
-  // Speed up a bit by avoiding StringPool::get()
-  const char* data = pool.data();
+  const char* data = pool.data(); // Avoid StringPool::get()
 
   size_t nIDs = 0; // Average ID count
-  for (auto c : columns) { nIDs += c->size(); }
+  for (auto col : columns) { nIDs += col->size(); }
   nIDs /= columns.size();
 
   // Build the map used for remapping IDs, storing all IDs used in columns
   std::unordered_map<int, int> idRemap;
   idRemap.reserve(nIDs);
-  for (auto column : columns)
-    for (auto id : *column)
+  for (auto col : columns)
+    for (auto id : *col)
       idRemap[id] = 0;
 
   // Sort the IDs, longest strings first
@@ -225,12 +212,12 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 
 void Database :: Table :: load(std::ifstream& fs) {
   for (auto* col : columns)
-    Loader().load(fs, *col);
+    Loader(fs).load(*col);
 }
 
 void Database :: Table :: save(std::ofstream& fs) {
   for (auto* col : columns)
-    Dumper::dump(fs, *col);
+    Dumper(fs).dump(*col);
 }
 
 /* Find a record by its URL or create one if it could not be found */
@@ -257,27 +244,29 @@ NOT_FOUND:
   }
 }
 
+
 #define DB    Database
 #define STYLE Database :: Styles :: Style
 #define ALBUM Database :: Albums :: Album
 #define TRACK Database :: Tracks :: Track
 
-/* ============================================================================
- * Database :: Styles
- * ==========================================================================*/
+
+// ============================================================================
+#define _ Database :: Styles :: Style // ======================================
+// ============================================================================
 
 STYLE Database::Styles::find(const char *url, bool create) {
   return find_or_create(*this, db.pool_style_url, url);
 }
 
 // GETTER
-ccstr   STYLE::url()  const   { return STR_GET(style_url, db.styles.url[id]);  }
-ccstr   STYLE::name() const   { return STR_GET(meta,      db.styles.name[id]); }
+ccstr   _::url()  const   { return STR_GET(style_url, db.styles.url[id]);  }
+ccstr   _::name() const   { return STR_GET(meta,      db.styles.name[id]); }
 // SETTER
-void    STYLE::url(ccstr s)   { STR_SET(style_url, db.styles.url[id],  s);     }
-void    STYLE::name(ccstr s)  { STR_SET(meta,      db.styles.name[id], s);     }
+void    _::url(ccstr s)   { STR_SET(style_url, db.styles.url[id],  s);     }
+void    _::name(ccstr s)  { STR_SET(meta,      db.styles.name[id], s);     }
 // INDEX
-DB::Field STYLE::operator[](DB::ColumnID id) const {
+DB::Field _::operator[](DB::ColumnID id) const {
   switch (static_cast<DB::StyleColumnID>(id)) {
   case DB::STYLE_URL:   return DB::Field(url());
   case DB::STYLE_NAME:  return DB::Field(name());
@@ -285,44 +274,50 @@ DB::Field STYLE::operator[](DB::ColumnID id) const {
   }
 }
 
-/* ============================================================================
- * Database :: Albums
- * ==========================================================================*/
+#undef _
+
+
+// ============================================================================
+#define _ Database :: Albums :: Album // ======================================
+// ============================================================================
 
 ALBUM Database::Albums::find(const char *url, bool create) {
   return find_or_create(*this, db.pool_album_url, url);
 }
 
+#define SHRINK_DATE(T) (T / 60 / 60 / 24 - 10000)
+#define EXPAND_DATE(T) ((T + 10000) * 60 * 60 * 24)
+
 // GETTER
-ccstr  ALBUM::url()            const { return STR_GET(album_url,  db.albums.url[id]);         }
-ccstr  ALBUM::title()          const { return STR_GET(meta,       db.albums.title[id]);       }
-ccstr  ALBUM::artist()         const { return STR_GET(meta,       db.albums.artist[id]);      }
-ccstr  ALBUM::cover_url()      const { return STR_GET(cover_url,  db.albums.cover_url[id]);   }
-ccstr  ALBUM::description()    const { return STR_GET(desc,       db.albums.description[id]); }
-ccstr  ALBUM::archive_mp3_url()  const { return STR_GET(archive_url,  db.albums.archive_mp3[id]); }
-ccstr  ALBUM::archive_wav_url()  const { return STR_GET(archive_url,  db.albums.archive_wav[id]); }
-ccstr  ALBUM::archive_flac_url() const { return STR_GET(archive_url, db.albums.archive_flac[id]); }
-time_t ALBUM::date()           const { return db.albums.date[id] * 60 * 60 * 24;      }
-float  ALBUM::rating()         const { return static_cast<float>(db.albums.rating[id]) / 100; }
-int    ALBUM::votes()          const { return db.albums.votes[id];                    }
-int    ALBUM::download_count() const { return db.albums.download_count[id];           }
-int    ALBUM::styles()         const { return db.albums.styles[id];                   }
+ccstr  _::url()              const { return STR_GET(album_url,   db.albums.url[id]);         }
+ccstr  _::title()            const { return STR_GET(meta,        db.albums.title[id]);       }
+ccstr  _::artist()           const { return STR_GET(meta,        db.albums.artist[id]);      }
+ccstr  _::cover_url()        const { return STR_GET(cover_url,   db.albums.cover_url[id]);   }
+ccstr  _::description()      const { return STR_GET(desc,        db.albums.description[id]); }
+ccstr  _::archive_mp3_url()  const { return STR_GET(archive_url, db.albums.archive_mp3[id]); }
+ccstr  _::archive_wav_url()  const { return STR_GET(archive_url, db.albums.archive_wav[id]); }
+ccstr  _::archive_flac_url() const { return STR_GET(archive_url, db.albums.archive_flac[id]);}
+time_t _::date()             const { return EXPAND_DATE(db.albums.date[id]);                 }
+float  _::rating()           const { return static_cast<float>(db.albums.rating[id]) / 100;  }
+int    _::votes()            const { return db.albums.votes[id];                             }
+int    _::download_count()   const { return db.albums.download_count[id];                    }
+int    _::styles()           const { return db.albums.styles[id];                            }
 // SETTER
-void   ALBUM::url(ccstr s)          { STR_SET(album_url,    db.albums.url[id],         s); }
-void   ALBUM::title(ccstr s)        { STR_SET(meta,         db.albums.title[id],       s); }
-void   ALBUM::artist(ccstr s)       { STR_SET(meta,         db.albums.artist[id],      s); }
-void   ALBUM::cover_url(ccstr s)    { STR_SET(cover_url,    db.albums.cover_url[id],   s); }
-void   ALBUM::description(ccstr s)  { STR_SET(desc,         db.albums.description[id], s); }
-void   ALBUM::archive_mp3_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s); }
-void   ALBUM::archive_wav_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s); }
-void   ALBUM::archive_flac_url(ccstr s) { STR_SET(archive_url, db.albums.archive_flac[id], s); }
-void   ALBUM::date(time_t t)        { db.albums.date[id] = t / 60 / 60 / 24;    }
-void   ALBUM::rating(float i)       { db.albums.rating[id] = i * 100;           }
-void   ALBUM::votes(int i)          { db.albums.votes[id] = i;                  }
-void   ALBUM::download_count(int i) { db.albums.download_count[id] = i;         }
-void   ALBUM::styles(int i)         { db.albums.styles[id] = i;                 }
+void   _::url(ccstr s)              { STR_SET(album_url,    db.albums.url[id],         s); }
+void   _::title(ccstr s)            { STR_SET(meta,         db.albums.title[id],       s); }
+void   _::artist(ccstr s)           { STR_SET(meta,         db.albums.artist[id],      s); }
+void   _::cover_url(ccstr s)        { STR_SET(cover_url,    db.albums.cover_url[id],   s); }
+void   _::description(ccstr s)      { STR_SET(desc,         db.albums.description[id], s); }
+void   _::archive_mp3_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s); }
+void   _::archive_wav_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s); }
+void   _::archive_flac_url(ccstr s) { STR_SET(archive_url, db.albums.archive_flac[id], s); }
+void   _::date(time_t t)            { db.albums.date[id]   = SHRINK_DATE(t);               }
+void   _::rating(float i)           { db.albums.rating[id] = i * 100;                      }
+void   _::votes(int i)              { db.albums.votes[id]  = i;                            }
+void   _::download_count(int i)     { db.albums.download_count[id] = i;                    }
+void   _::styles(int i)             { db.albums.styles[id] = i;                            }
 // INDEX
-DB::Field ALBUM::operator[](DB::ColumnID id) const {
+DB::Field _::operator[](DB::ColumnID id) const {
   switch (static_cast<DB::AlbumColumnID>(id)) {
   case DB::ALBUM_URL:             return DB::Field(url());
   case DB::ALBUM_COVER_URL:       return DB::Field(cover_url());
@@ -346,9 +341,12 @@ DB::Field ALBUM::operator[](DB::ColumnID id) const {
   }
 }
 
-/* ============================================================================
- * Database :: Tracks
- * ==========================================================================*/
+#undef _
+
+
+// ============================================================================
+#define _ Database :: Tracks :: Track // ======================================
+// ============================================================================
 
 TRACK Database::Tracks::find(const char* url, bool create) {
   return find_or_create(*this, db.pool_track_url, url);
@@ -369,7 +367,7 @@ void  TRACK::title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }
 void  TRACK::artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s);  }
 void  TRACK::remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s);  }
 void  TRACK::number(int i)    { db.tracks.number[id] = i;                     }
-void  TRACK::bpm(int i)       { db.tracks.bpm[id] = i;                        }
+void  TRACK::bpm(int i)       { db.tracks.bpm[id] = (i & 0xFF);               }
 void  TRACK::album_id(int i)  { db.tracks.album_id[id] = i;                   }
 // INDEX
 DB::Field TRACK::operator[](DB::ColumnID id) const {
@@ -382,6 +380,9 @@ DB::Field TRACK::operator[](DB::ColumnID id) const {
   default:                  return album()[id];
   }
 }
+
+#undef _
+
 
 // ============================================================================
 #if TEST_DATABASE

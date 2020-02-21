@@ -58,10 +58,10 @@ void ProgressBar :: setPercent(float percent) {
   pad_mincol = size.width - (percent * size.width);
 }
 
-bool ProgressBar :: handleClick(int button, int y, int x) {
-  if (y == pos.y /* + size.height - 1 */) {
+bool ProgressBar :: handleMouse(MEVENT& m) {
+  if (m.y == pos.y /* + size.height - 1 */) {
     if (percentChanged)
-      percentChanged(static_cast<float>(x+1) / size.width);
+      percentChanged(static_cast<float>(m.x+1) / size.width);
     return true;
   }
   return false;

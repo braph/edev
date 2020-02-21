@@ -16,6 +16,7 @@ public:
 
   GenericIterator() : container(NULL), idx(0) {}
   GenericIterator(TContainer& container, size_t idx) : container(&container), idx(idx) {}
+  GenericIterator(const GenericIterator& rhs) : container(rhs.container), idx(rhs.idx) {}
 
   iterator& operator=(const iterator&it) {
     container = it.container;

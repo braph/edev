@@ -24,7 +24,7 @@ void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, i
   int x = 0;
 
   // Substract the space that separates the columns
-  int width = m_width - m_columns.size() - 1;
+  int width = m_width - m_columns.size() + 1;
   // Sum of all relative widths
   int _100Percent = 0;
   for (const auto &column : m_columns) {
@@ -44,7 +44,7 @@ void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, i
 
     size_t len;
     wchar_t* value = toWideString(trackField(item, column.tag), &len);
-    int colwidth;
+    size_t colwidth;
 
     if (column.relative)
       colwidth = width * column.size / _100Percent;

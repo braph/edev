@@ -41,7 +41,8 @@ static std::string& escape(std::string& url) {
 
 namespace Ektoplayer {
 
-std::string& url_shrink(std::string& url, const char* prefix /*UNUSED*/, const char* suffix) {
+std::string& url_shrink(std::string& url, const char* prefix, const char* suffix) {
+  (void) prefix; // UNUSED for now
   unescape(url);
   url_basename(url);
   if (suffix)

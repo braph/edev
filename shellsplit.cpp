@@ -26,7 +26,7 @@ read_word:
           switch (*++it) {
             case '\0':  throw std::invalid_argument("missing terminating double quote");
             case '"':   ++it; goto read_word;
-            case '\\':  ++it;
+            case '\\':  ++it; /* FALLTHROUGH */
             default:    word += *it;
           }
 
@@ -36,8 +36,7 @@ read_word:
       case '\0':
         break;
 
-      case '\\':
-        ++it;
+      case '\\': ++it; /* FALLTHROUGH */
       default:
         word += *it++;
         goto read_word;

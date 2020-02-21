@@ -36,7 +36,7 @@ void Help :: draw() {
     }
 
     if (nkeys) {
-      mvwaddstr(win, getcury(win), 30, Actions::to_string((Actions::ActionID) id));
+      mvwaddstr(win, getcury(win), 30, Actions::to_string(static_cast<Actions::ActionID>(id)));
       wmove(win, getcury(win) + 1, 0);
       //waddch(win, '\n');
     }

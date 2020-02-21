@@ -18,7 +18,8 @@ public:
   int currentIndex();
   void setCurrentIndex(int);
   size_t count();
-  bool handleClick(int,int,int);
+
+  bool handleMouse(MEVENT&);
 protected:
   std::vector<Widget*> _widgets;
   int _current;
@@ -35,8 +36,9 @@ public:
   StackedContainer();
   void draw();
   void noutrefresh();
-  bool handleClick(int,int,int);
   void layout(Pos, Size);
+
+  bool handleMouse(MEVENT&);
 };
 
 }

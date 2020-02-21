@@ -102,7 +102,7 @@ void Updater :: insert_album(Album& album) {
     auto row = db.styles.find(style.url.c_str(), true);
     if (! *(row.name()))
       row.name(style.name.c_str());
-    styles <<= 8;
+    styles <<= 6; // TODO: move assignment logic got Database.cpp
     styles += row.id;
   }
 

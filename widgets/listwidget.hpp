@@ -26,6 +26,12 @@ public:
     else if (active)      marker = 'x';
     waddch(win, marker);
     waddnstr(win, ss.str().c_str(), m_width - 1);
+#else /* TODO: maybe ListRenderer is better used as a lambda? */
+    (void) win;
+    (void) item;
+    (void) index;
+    (void) cursor;
+    (void) active;
 #endif
   }
 protected:
@@ -74,14 +80,12 @@ public:
     m_cursor    = clamp(m_cursor,    0, size.height - 1);
     m_top_index = clamp(m_top_index, 0, m_list->size() - 1);
     m_top_index = clamp(m_top_index, 0, m_list->size() - size.height);
+    //m_selected = clamp(m_selected, 0, index_last()); XXX?
 
-    //m_selected = clamp(m_selected, 0, index_last());
-
-    int line = 0;
-    int idx  = m_top_index;
+    int line   = 0;
+    size_t idx = m_top_index;
     for (; line < size.height && idx < m_list->size(); ++line, ++idx) {
       wmove(win, line, 0);
-      //wprintw(win, "%.*s", size.width, "");
       render_item(idx, line == m_cursor);
     }
   }
@@ -93,7 +97,7 @@ public:
 
   /* Cursor down */
   void down() {
-    if (m_top_index + m_cursor + 1 >= m_list->size())
+    if (m_top_index + m_cursor + 1 >= static_cast<int>(m_list->size()))
       return;
 
     unselect_item();
@@ -126,7 +130,7 @@ public:
     int n = 0.5 * size.height;
 
     m_top_index += n;
-    if (m_top_index + size.height - 1 >= m_list->size()) {
+    if (m_top_index + size.height - 1 >= static_cast<int>(m_list->size())) {
       m_top_index = m_list->size() - size.height;
     }
 
@@ -171,9 +175,9 @@ public:
   //void center()    { force_cursorpos(size.height / 2); }
   */
 
-  bool handleClick(int button, int y, int x) {
-    if (wmouse_trafo(win, &y, &x, false)) {
-      m_cursor = y;
+  bool handleClick(MEVENT& m) {
+    if (wmouse_trafo(win, &m.y, &m.x, false)) {
+      m_cursor = m.y;
       draw();
       return true;
     }

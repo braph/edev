@@ -39,7 +39,7 @@ void TabBar :: draw() {
   werase(win);
   wmove(win, 0, 0);
 
-  unsigned int i = 0;
+  int i = 0;
   for (const auto &label : _tabs) {
     if (i++ == _current)
       wattrset(win, Theme::get(Theme::TABBAR_SELECTED));
@@ -51,12 +51,12 @@ void TabBar :: draw() {
   }
 }
 
-bool TabBar :: handleClick(int button, int y, int x) {
-  if (y == pos.y /* + size.height - 1 */) {
+bool TabBar :: handleMouse(MEVENT& m) {
+  if (m.y == pos.y /* + size.height - 1 */) {
     int label_x = 0;
-    for (int index = 0; index < _tabs.size(); ++index) {
+    for (size_t index = 0; index < _tabs.size(); ++index) {
       label_x += _tabs[index].length() + 1;
-      if (x <= label_x) {
+      if (m.x <= label_x) {
         if (indexChanged)
           indexChanged(index);
         break;
