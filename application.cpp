@@ -24,8 +24,11 @@
 using namespace Ektoplayer;
 namespace fs = boost::filesystem;
 
-static bool have_SIGWINCH;
-static void on_SIGWINCH(int) { have_SIGWINCH = true; }
+static volatile int have_SIGWINCH;
+static volatile int have_SIGTERM;
+static void on_SIGWINCH(int) { have_SIGWINCH = 1; }
+static void on_SIGINT(int)   { have_SIGTERM = 1;  }
+static void on_SIGTERM(int)  { have_SIGTERM = 1;  }
 static void printDBStats(Database&);
 
 class Application {
@@ -58,14 +61,15 @@ Application :: Application()
 }
 
 Application :: ~Application() {
+  endwin();
   cleanup_files();
+  std::cerr << "Terminated gracefully." << std::endl;
 
   try {
     database.shrink_to_fit();
     database.save(Config::database_file);
   }
   catch (const std::exception &e) {
-    endwin();
     std::cout << "Error saving database to file: " << e.what() << std::endl;
   }
 }
@@ -79,7 +83,6 @@ void Application :: init() {
 
   // Initialize curses
   initscr();
-  //savetty();
   cbreak();
   noecho();
   start_color();
@@ -145,7 +148,6 @@ void Application :: init() {
 
 void Application :: run() {
   printDBStats(database);
-  std::cerr << "Database track count: " << database.tracks.size() << std::endl;
 
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
@@ -173,9 +175,10 @@ void Application :: run() {
   MEVENT mouse;
   Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
   Database::Tracks::Track currentPrefetching(database, 0);
-  auto tracks = database.getTracks();
 #define TIMEOUT_PLAYING  1000 // Display refresh rate if playing
 #define TIMEOUT_DOWNLOAD 100  // Timeout working downloads
+
+  mainwindow.playlist.playlist = database.getTracks();
 
 WINDOW_RESIZE:
   have_SIGWINCH = false;
@@ -185,6 +188,8 @@ WINDOW_RESIZE:
 MAINLOOP:
   if (have_SIGWINCH)
     goto WINDOW_RESIZE;
+  if (have_SIGTERM)
+    return;
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
@@ -239,8 +244,14 @@ MAINLOOP:
       c = Bindings::playlist[c];
     else if (c == 'x') {
       database.shrink_to_fit();
-      tracks = database.getTracks();
-      mainwindow.playlist.attachList(&tracks);
+      mainwindow.playlist.playlist = database.getTracks();
+      goto MAINLOOP;
+    }
+    else if (c == 'i') {
+      std::cerr << mainwindow.playlist.getItem().title() << std::endl;
+      std::cerr << mainwindow.playlist.getItem().album().archive_mp3_url() << std::endl;
+      std::cerr << mainwindow.playlist.getItem().album().archive_wav_url() << std::endl;
+      std::cerr << mainwindow.playlist.getItem().album().description() << std::endl;
       goto MAINLOOP;
     }
     else
@@ -271,6 +282,8 @@ void Application :: cleanup_files() {
 int main() {
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
   signal(SIGWINCH, on_SIGWINCH);
+  signal(SIGINT,   on_SIGINT);
+  signal(SIGTERM,  on_SIGTERM);
 
   try {
     Application app;
@@ -282,19 +295,16 @@ int main() {
     return 1;
   }
 
-  //resetty();
-  reset_shell_mode();
   delwin(stdscr);
   return 0;
 }
 
 static void printDBStats(Database& db) {
-  std::cerr << "Database statistics:";
-  const char* names[] = {"styles", "albums", "tracks"};
-  Database::Table* tables[] = {&db.styles, &db.albums, &db.tracks};
-  for (size_t i = 0; i < ARRAY_SIZE(tables); ++i) {
-    std::cerr << "\n" << names[i] << ":";
-    for (auto col : tables[i]->columns)
-      std::cerr << col->bits() << "|";
+  std::cerr << "Database statistics:\n";
+  for (auto table : db.tables) {
+    std::cerr << table->name << "(" << table->size() << "): ";
+    for (auto column : table->columns)
+      std::cerr << column->bits() << "|";
+    std::cerr << "\n";
   }
 }

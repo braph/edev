@@ -15,9 +15,11 @@
 #define assert(...) (void)0
 #endif
 
-#define assert_not_reached() assert(!"reached")
+#define NOT_REACHED 0
+#define assert_not_reached() assert(NOT_REACHED)
 
 wchar_t* toWideString(const char* s, size_t* len = NULL);
+
 static inline wchar_t* toWideString(const std::string& s, size_t* len = NULL) {
   return toWideString(s.c_str(), len);
 }
@@ -48,34 +50,6 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
     if (elem == i)
       return true;
   return false;
-}
-
-template<typename TContainer>
-typename TContainer::value_type proportionalGet(const TContainer &container, unsigned int size, unsigned int pos) {
-  unsigned int i = container.size() * pos / size;
-  return container[i];
-}
-
-template<typename TContainer>
-int proportionalGet(const TContainer &container, size_t container_size, unsigned int size, unsigned int pos) {
-  unsigned int i = container_size * pos / size;
-  return container[i];
-}
-
-template<typename TContainer>
-typename TContainer::value_type proportionalGet2(const TContainer &container, unsigned int size, unsigned int pos) {
-  unsigned int i = container.size() * pos * 2 / size;
-  if (i >= container.size())
-    i = container.size() - (i - container.size() + 1);
-  return container[i];
-}
-
-template<typename TContainer>
-int proportionalGet2(const TContainer &container, size_t container_size, unsigned int size, unsigned int pos) {
-  unsigned int i = container_size * pos * 2 / size;
-  if (i >= container_size)
-    i = container_size - (i - container_size + 1);
-  return container[i];
 }
 
 #if TODO_BLAH

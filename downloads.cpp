@@ -69,6 +69,7 @@ std::string& BufferDownload :: getContent() {
 /* ============================================================================
  * FileDownload
  * ==========================================================================*/
+
 static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *p) {
   static_cast<std::ofstream*>(p)->write(data, size*nmemb);
   return size*nmemb;
@@ -117,7 +118,7 @@ void Downloads :: addDownload(Download* dl, Priority priority) {
 int Downloads :: work() {
   //curl_multi_wait(curl_multi, extra, extra_nfds, 10, &running_handles);
   //if (! running_handles)
-  //  return 0;
+  //  return 0; XXX
 
   int running_handles;
   curl_multi_perform(curl_multi, &running_handles);
@@ -132,7 +133,7 @@ int Downloads :: work() {
   int msgs_left = -1;
   while ((msg = curl_multi_info_read(curl_multi, &msgs_left))) {
     CURL *curl_easy = msg->easy_handle;
-    assert(curl_easy); // This should never be 
+    assert(curl_easy);
 
     Download *dl;
     curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, &dl);
@@ -149,9 +150,7 @@ int Downloads :: work() {
       curl_multi_remove_handle(curl_multi, curl_easy);
       delete dl;
     }
-    else {
-      std::cerr << url << ": " << msg->msg << std::endl;
-    }
+    else assert_not_reached();
   }
 
   return running_handles;

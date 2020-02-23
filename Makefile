@@ -1,10 +1,16 @@
 DEBUG 				= 1 # 0|1
 PEDANTIC_FREE = 1 # 0|1
 
-WARNINGS = -Wall -Wpedantic -pedantic #-Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
+WARNINGS = -Wall -Wpedantic -pedantic -Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
+WARNINGS = -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wno-unused
+# -Wundef -Wshadow -Wswitch-default -Wstrict-overflow=5 
+#WARNINGS += -Wsign-conversion
+#WARNINGS += -Werror 
 
-CXXFLAGS   := -std=c++11 -Og -g $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
-#CXXFLAGS   := -std=c++11 -O2 $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+STD = c++14
+
+CXXFLAGS   := -std=$(STD) -Og -g $(WARNINGS) -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+#CXXFLAGS   := -std=$(STD) -O2 $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
@@ -40,7 +46,7 @@ test_help: colors.o theme.o bindings.o actions.o player.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_HELP views/help.cpp $^
 	echo "Cannot test ncurses based stuff"
 
-test_progressbar: config.o shellsplit.o filesystem.o colors.o theme.o
+test_progressbar: config.o shellsplit.o filesystem.o colors.o theme.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PROGRESSBAR views/progressbar.cpp $^
 	echo "Widgets cannot be tested in Make"
 
@@ -98,11 +104,11 @@ test_packedvector:
 	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
 	./a.out
 
-test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o
+test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o packedvector.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
 	echo "Widgets cannot be tested in Make"
 
-test_listwidget: colors.o theme.o config.o filesystem.o shellsplit.o
+test_listwidget: colors.o theme.o config.o filesystem.o shellsplit.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_LISTWIDGET widgets/listwidget.cpp $^
 	echo "Widgets cannot be tested in Make"
 

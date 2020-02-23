@@ -1,9 +1,9 @@
 #ifndef _DATABASE_HPP
 #define _DATABASE_HPP
 
-#include "strpool.hpp"
-#include "generic.hpp"
 #include "common.hpp"
+#include "generic.hpp"
+#include "strpool.hpp"
 #include "packedvector.hpp"
 
 #include <array>
@@ -93,6 +93,7 @@ public:
     ALBUM_URL = STYLE_NAME + 1,
     ALBUM_TITLE,
     ALBUM_ARTIST,
+    ALBUM_STYLES,
     ALBUM_COVER_URL,
     ALBUM_DESCRIPTION,
     ALBUM_DATE,
@@ -130,13 +131,14 @@ public:
     else if (s == "remix")        return static_cast<ColumnID>(TRACK_REMIX);
     else if (s == "number")       return static_cast<ColumnID>(TRACK_NUMBER);
     else if (s == "bpm")          return static_cast<ColumnID>(TRACK_BPM);
-    else if (s == "styles")       return static_cast<ColumnID>(TRACK_NUMBER); // TODO
+    else if (s == "styles")       return static_cast<ColumnID>(ALBUM_STYLES);
     else                          return static_cast<ColumnID>(COLUMN_NONE);
   }
 
   /* ==========================================================================
    * The field struct is basically a union type.
    * ========================================================================*/
+
   struct Field {
     enum  Type   { STRING,  INTEGER, FLOAT,   TIME,     };
     union Value  { ccstr s; int i;   float f; time_t t; };
@@ -166,20 +168,24 @@ public:
   };
 
   // === Column ===============================================================
-  //typedef std::vector<int> Column;
-  typedef DynamicPackedVector Column;
+  //using Column = std::vector<int>;
+  using Column = DynamicPackedVector;
 
   // === Base class for all tables ============================================
   struct Table {
+    ccstr name;
     Database &db;
     std::vector<Column*> columns;
-    Table(Database &db, std::vector<Column*> columns)
-    : db(db)
+
+    Table(ccstr name, Database &db, std::vector<Column*> columns)
+    : name(name)
+    , db(db)
     , columns(columns) { }
 
-    size_t  size()              { return columns[0]->size();            }
-    void    resize(size_t n)    { for (auto c : columns) c->resize(n);  }
-    void    reserve(size_t n)   { for (auto c : columns) c->reserve(n); }
+    size_t  size()              { return columns[0]->size();                 }
+    void    resize(size_t n)    { for (auto c : columns) c->resize(n);       }
+    void    reserve(size_t n)   { for (auto c : columns) c->reserve(n);      }
+    void    shrink_to_fit()     { for (auto c : columns) c->shrink_to_fit(); }
 
     void load(std::ifstream&);
     void save(std::ofstream&);
@@ -204,7 +210,7 @@ public:
     Column url;
     Column name;
     Styles(Database &db)
-    : Table(db, {&url,&name}) {}
+    : Table("styles", db, {&url,&name}) {}
 
     struct Style : public Record {
       Style(Database &db, size_t id) : Record(db, id) {}
@@ -238,7 +244,7 @@ public:
     Column archive_wav;
     Column archive_flac;
     Albums(Database &db)
-    : Table(db,
+    : Table("albums", db,
       {&url,&title,&artist,&cover_url,&description,&date,&rating, &votes,
         &download_count,&styles,&archive_mp3,&archive_wav,&archive_flac}) {}
 
@@ -289,7 +295,7 @@ public:
     Column number;
     Column bpm;
     Tracks(Database &db)
-    : Table(db, {&url,&album_id,&title,&artist,&remix,&number,&bpm}) {}
+    : Table("tracks", db, {&url,&album_id,&title,&artist,&remix,&number,&bpm}) {}
 
     struct Track : public Record {
       Track(Database &db, size_t id) : Record(db, id) {}
@@ -379,10 +385,12 @@ public:
 
   template<typename TStore>
   class Result {
-    TStore &store;
+    TStore *store;
     std::vector<int> indices;
   public:
-    Result(TStore &store) : store(store) {
+    Result() : store(NULL) {}
+
+    Result(TStore &store) : store(&store) {
       indices.reserve(store.size());
       for (size_t i = 1 /* Skip NULL Record */; i < store.size(); ++i)
         indices.push_back(i);
@@ -391,6 +399,7 @@ public:
     typedef typename TStore::value_type value_type;
 
     Result& operator=(const Result& rhs) {
+      store   = rhs.store;
       indices = rhs.indices;
       return *this;
     }
@@ -400,7 +409,7 @@ public:
     }
 
     value_type operator[](size_t id) {
-      return store[indices[id]];
+      return (*store)[indices[id]];
     }
 
     GenericIterator<Result> begin() {
@@ -414,7 +423,7 @@ public:
     void order_by(ColumnID column, SortOrder order) {
       OrderBy orderBy(column, order);
       std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
-        return orderBy(this->store[a], this->store[b]);
+        return orderBy((*store)[a], (*store)[b]);
       });
     }
 
@@ -422,14 +431,19 @@ public:
     void where(ColumnID column, Operator op, TValue value) {
       Where where(column, op, value);
       auto end = std::remove_if(indices.begin(), indices.end(),
-          [&](size_t i){ return where(this->store[i]); });
+          [&](size_t i){ return where((*store)[i]); });
       indices.erase(end, indices.end());
     }
   };
 
   /* ==========================================================================
-   * Database members and methods - finally!
+   * Database members and methods
    * ========================================================================*/
+
+  Styles      styles;
+  Albums      albums;
+  Tracks      tracks;
+  std::array<Table*, 3> tables;
 
   StringPool  pool_meta;
   StringPool  pool_desc;
@@ -438,9 +452,6 @@ public:
   StringPool  pool_track_url;
   StringPool  pool_cover_url;
   StringPool  pool_archive_url;
-  Styles      styles;
-  Albums      albums;
-  Tracks      tracks;
   std::array<StringPool*, 7> pools;
 
   Database();

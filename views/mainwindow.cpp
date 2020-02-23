@@ -11,11 +11,9 @@ MainWindow :: MainWindow(Database &db)
 , tabBar()
 , windows()
 , splash()
-, trackRenderer(Config::playlist_columns)
-, playlist(trackRenderer)
+, playlist()
 , info()
 , help()
-, pl(db.getTracks())
 {
   for (auto w : Config::main_widgets) {
     /**/ if (w == "playinginfo")    addWidget(&playingInfo);
@@ -34,21 +32,19 @@ MainWindow :: MainWindow(Database &db)
     else assert_not_reached();
     tabBar.addTab(w);
   }
-
-  playlist.attachList(&pl);
 }
 
 void MainWindow :: layout(Pos pos, Size size) {
   this->pos = pos;
   this->size = size;
 
-  playingInfo.layout(pos, size);
-  progressBar.layout(pos, size);
   tabBar.layout(pos, size);
+  progressBar.layout(pos, size);
+  playingInfo.layout(pos, size);
 
-  if (playingInfo.visible)  size.height -= playingInfo.size.height;
-  if (progressBar.visible)  size.height -= progressBar.size.height;
   if (tabBar.visible)       size.height -= tabBar.size.height;
+  if (progressBar.visible)  size.height -= progressBar.size.height;
+  if (playingInfo.visible)  size.height -= playingInfo.size.height;
 
   windows.layout(pos, size);
   

@@ -2,7 +2,8 @@
 #define _PLAYLIST_HPP
 
 #include "../database.hpp"
-#include "../widgets/listwidget.hpp"
+#include "../ui/container.hpp"
+#include "../widgets/listwidget.hpp" // XXX
 
 #include <vector>
 
@@ -26,19 +27,21 @@ typedef std::vector<PlaylistColumnFormat> PlaylistColumns;
 
 namespace Views {
 
-class TrackRenderer : public ListItemRenderer<Database::Tracks::Track> {
+class TrackRenderer {
 public:
-  TrackRenderer(const PlaylistColumns& columns)
-  : m_columns(columns)
-  {
-  }
-
-  void render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active); // marked, selection
+  TrackRenderer(const PlaylistColumns& columns) : m_columns(columns) { }
+  void operator()(WINDOW*, int width, const Database::Tracks::Track&, int, bool, bool); // marked, selection
 private:
   const PlaylistColumns& m_columns;
 };
 
-typedef ListWidget<Database::Result<Database::Tracks>, TrackRenderer> Playlist;
+class Playlist : public ListWidget<Database::Result<Database::Tracks>> {
+public:
+  Playlist();
+  Database::Result<Database::Tracks> playlist;
+private:
+  TrackRenderer trackRenderer;
+};
 
 } // namespace Views
 

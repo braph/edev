@@ -1,20 +1,22 @@
 #include "playlist.hpp"
 
 #include "../widgets/listwidget.hpp"
-
+#include "rm_trackstr.cpp"
 #include "../config.hpp"
 #include "../colors.hpp"
 #include "../theme.hpp"
 #include "../database.hpp"
-
-#include "rm_trackstr.cpp"
 
 #include <cstring>
 
 using namespace UI;
 using namespace Views;
 
-void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, int index, bool cursor, bool active /* selection */) {
+/* ============================================================================
+ * TrackRenderer - display a track as a row with columns
+ * ==========================================================================*/
+
+void TrackRenderer :: operator()(WINDOW *win, int width, const Database::Tracks::Track &item, int index, bool cursor, bool active /* selection */) {
   int additional_attributes = 0;
   if (active) additional_attributes |= A_BOLD;
   if (cursor) additional_attributes |= A_STANDOUT;
@@ -24,7 +26,7 @@ void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, i
   int x = 0;
 
   // Substract the space that separates the columns
-  int width = m_width - m_columns.size() + 1;
+  width = width - m_columns.size() + 1;
   // Sum of all relative widths
   int _100Percent = 0;
   for (const auto &column : m_columns) {
@@ -67,6 +69,17 @@ void TrackRenderer :: render(WINDOW *win, const Database::Tracks::Track &item, i
   }
 }
 
+/* ============================================================================
+ * Playlist
+ * ==========================================================================*/
+
+Playlist :: Playlist()
+: trackRenderer(Config::playlist_columns)
+{
+  this->itemRenderer = trackRenderer;
+  this->attachList(&this->playlist);
+}
+
 #if TEST_PLAYLIST
 #include "../test.hpp"
 
@@ -78,6 +91,7 @@ int main() {
   Theme::loadTheme(COLORS);
   Database db;
   db.load(TEST_DB);
+  //db.load(Config::database_file);
   assert(db.tracks.size() > 10);
 
   TrackRenderer renderer(Config::playlist_columns);
@@ -85,7 +99,6 @@ int main() {
 
   testListItemRenderer(tracks, renderer);
 
-  renderer.setWidth(COLS);
   testListWidget(tracks, renderer);
 
   TEST_END();

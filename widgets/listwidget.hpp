@@ -6,46 +6,23 @@
 
 #include <sstream>
 #include <climits>
+#include <functional>
 
-template<typename TItem>
-class ListItemRenderer {
-public:
-  ListItemRenderer(int width = 0) : m_width(width) { }
+/* ============================================================================
+ * ListWidget - Template for displaying containers as a ncurses list
+ * ==========================================================================*/
 
-  void setWidth(int width) {
-    m_width = width;
-  }
-
-  virtual void render(WINDOW *win, const TItem &item, int index, bool cursor, bool active) { // marked, selection
-#if TEST_LISTWIDGET
-    // A primitive default renderer for testing purposes
-    std::stringstream ss; ss << item;
-    char marker = ' ';
-    if (cursor && active) marker = 'X';
-    else if (cursor)      marker = '>';
-    else if (active)      marker = 'x';
-    waddch(win, marker);
-    waddnstr(win, ss.str().c_str(), m_width - 1);
-#else /* TODO: maybe ListRenderer is better used as a lambda? */
-    (void) win;
-    (void) item;
-    (void) index;
-    (void) cursor;
-    (void) active;
-#endif
-  }
-protected:
-  int m_width;
-};
-
-template<typename TContainer, typename TRenderer>
+template<typename TContainer>
 class ListWidget : public UI::Window {
 public:
-  ListWidget(TRenderer renderer)
+  using value_type = typename TContainer::value_type;
+
+  std::function<void(WINDOW*, int, const value_type&, int, bool, bool)> itemRenderer;
+
+  ListWidget()
   : m_cursor(0)
   , m_active(0)
   , m_top_index(0)
-  , m_item_renderer(renderer)
   , m_list(NULL)
   {
   }
@@ -65,22 +42,20 @@ public:
       this->pos = pos;
       mvwin(win, pos.y, pos.x);
     }
-
-    m_item_renderer.setWidth(size.width);
   }
 
   void render_item(int idx, bool cursor) {
-    m_item_renderer.render(win, (*m_list)[idx], idx, cursor, idx == m_active);
+    if (itemRenderer)
+      itemRenderer(win, size.width, (*m_list)[idx], idx, cursor, idx == m_active);
   }
 
   void draw() {
-    //werase(win);
     wclear(win);
     if (! m_list) return;
     m_cursor    = clamp(m_cursor,    0, size.height - 1);
+    m_active    = clamp(m_active,    0, m_list->size() - 1);
     m_top_index = clamp(m_top_index, 0, m_list->size() - 1);
     m_top_index = clamp(m_top_index, 0, m_list->size() - size.height);
-    //m_selected = clamp(m_selected, 0, index_last()); XXX?
 
     int line   = 0;
     size_t idx = m_top_index;
@@ -163,10 +138,11 @@ public:
   void page_up()   { scroll_up(); }
   void page_down() { scroll_down(); }
   void gotoSelected() {
-    m_cursor = 0;
-    m_top_index = m_active;
+    m_cursor = size.height / 2;
+    m_top_index = m_active - m_cursor;
     draw();
   }
+
   /*
   void page_up()   { scroll_up(size.height); }
   void page_down() { scroll_down(size.height); }
@@ -175,7 +151,7 @@ public:
   //void center()    { force_cursorpos(size.height / 2); }
   */
 
-  bool handleClick(MEVENT& m) {
+  bool handleMouse(MEVENT& m) {
     if (wmouse_trafo(win, &m.y, &m.x, false)) {
       m_cursor = m.y;
       draw();
@@ -186,37 +162,27 @@ public:
 
   int getSelected() { return m_top_index + m_cursor; }
 
-  typename TContainer::value_type getItem() { return (*m_list)[m_top_index+m_cursor]; }
-  typename TContainer::value_type getActiveItem() { return (*m_list)[m_active]; }
+  value_type getItem() { return (*m_list)[m_top_index+m_cursor]; }
+  value_type getActiveItem() { return (*m_list)[m_active]; }
 
   int getActiveIndex()         { return m_active; }
-  void setActiveIndex(int idx) { m_active = idx; draw(); } // CLAMP!
-
-#if TODO
-  void getch() {
-    if (readline) {
-      readline.getch();
-      if (readline.done()) {
-      }
-    }
-  }
-#endif
+  void setActiveIndex(int idx) { m_active = idx; draw(); }
 
 private:
   int m_cursor;
   int m_active;
   int m_top_index;
-  TRenderer m_item_renderer;
-  TContainer *m_list;
+  TContainer* m_list;
 };
 
 // === Testing ================================================================
-template<typename TContainer, typename TRenderer>
+template<typename TContainer, typename TRender>
 void testListWidget(
-  TContainer &testData,
-  TRenderer &renderer
+  TContainer& testData,
+  TRender& render
 ) {
-  ListWidget<TContainer, TRenderer> listWidget(renderer);
+  ListWidget<TContainer> listWidget;
+  listWidget.itemRenderer = render;
   listWidget.attachList(&testData);
   listWidget.layout({0,0}, {LINES,COLS});
   listWidget.draw();
@@ -241,9 +207,8 @@ void testListWidget(
   }
 }
 
-template<typename TContainer, typename TRenderer>
-void testListItemRenderer(TContainer& container, TRenderer& renderer) {
-  renderer.setWidth(COLS);
+template<typename TContainer, typename TRender>
+void testListItemRenderer(TContainer& container, TRender& render) {
   int cursor = LINES / 2;
 
   for (int y = 0; y < container.size(); ++y) {
@@ -251,7 +216,7 @@ void testListItemRenderer(TContainer& container, TRenderer& renderer) {
       break;
 
     wmove(stdscr, y, 0);
-    renderer.render(stdscr, container[y], y, y == 3, y == cursor);
+    render(stdscr, COLS, container[y], y, y == 3, y == cursor);
   }
   refresh();
   getch();

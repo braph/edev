@@ -5,7 +5,6 @@
 #include "shellsplit.hpp"
 #include "common.hpp"
 #include "colors.hpp"
-#include "xml.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -14,7 +13,10 @@
 
 using namespace Views;
 
-/* === Parsing for primitives === */
+/* ============================================================================
+ * Parsing functions for primitives
+ * ==========================================================================*/
+
 static int opt_parse_int(const std::string &s) {
   char *end;
   int i = std::strtoimax(s.c_str(), &end, 10);
@@ -36,9 +38,11 @@ static wchar_t opt_parse_char(const std::string &s) {
     throw std::invalid_argument("expected a single character");
   return *ws;
 }
-/* === End of primitives === */
 
-/* === Option parsing functions === */
+/* ============================================================================
+ * Option parsing functions for primitives
+ * ==========================================================================*/
+
 static int opt_parse_use_colors(const std::string &s) {
   /**/ if (s == "auto")   return -1;
   else if (s == "mono")   return 0;
@@ -58,7 +62,7 @@ static std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
-    if (!in_list<std::string>(w, {"splash", "playlist", "browser", "info", "help"}))
+    if (!in_list<std::string>(w, {"splash","playlist","browser","info","help"}))
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }
@@ -67,7 +71,7 @@ static std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
-    if (!in_list<std::string>(w, {"playinginfo", "tabbar", "windows", "progressbar"}))
+    if (!in_list<std::string>(w, {"playinginfo","tabbar","windows","progressbar"}))
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }
@@ -157,7 +161,7 @@ struct FormatParser {
   }
 };
 
-static PlaylistColumns opt_parse_playlist_columns(const std::string &s) { // MOCKUP
+static PlaylistColumns opt_parse_playlist_columns(const std::string &s) { // XXX?MOCKUP
   PlaylistColumns result;
   FormatParser formatParser(s);
   while (formatParser.next()) {
@@ -215,7 +219,9 @@ static PlayingInfoFormat opt_parse_playinginfo_format(const std::string& s) {
   return result;
 }
 
-/* ========================== */
+/* ============================================================================
+ * End of option parsing functions
+ * ==========================================================================*/
 
 #include "config/options.define.cpp"
 
@@ -224,13 +230,12 @@ void Config :: init() {
 }
 
 void Config :: set(const std::string &option, const std::string &value) {
-  try { if (0) {}
+  try {
+    if (0) {}
 #include "config/options.set.cpp"
-    else throw false;
+    else throw std::invalid_argument("unknown option");
   } catch (const std::exception &e) {
     throw std::invalid_argument(option + ": " + e.what());
-  } catch (bool e) {
-    throw std::invalid_argument("unknown option: " + option);
   }
 }
 

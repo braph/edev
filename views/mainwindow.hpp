@@ -24,11 +24,9 @@ public:
   Views::TabBar         tabBar;
   UI::StackedContainer  windows;
   Views::Splash         splash;
-  Views::TrackRenderer  trackRenderer;
   Views::Playlist       playlist;
   Views::Info           info;
   Views::Help           help;
-  Database::Result<Database::Tracks> pl;
   MainWindow(Database&);
   void layout(UI::Pos, UI::Size);
 };

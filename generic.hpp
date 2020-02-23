@@ -9,10 +9,17 @@
  */
 template<typename TContainer>
 class GenericIterator
-: public std::iterator<std::random_access_iterator_tag, typename TContainer::reference> {
+//: public std::iterator<std::random_access_iterator_tag, typename TContainer::reference>
+{
 public:
+  using iterator_category = std::random_access_iterator_tag;
+  using value_type = typename TContainer::reference;
+  using difference_type = std::ptrdiff_t;
+  using pointer = typename TContainer::reference*;
+  using reference = typename TContainer::reference;//&;
+
   typedef GenericIterator iterator;
-  typedef typename TContainer::reference reference;
+  //typedef typename TContainer::reference reference;
 
   GenericIterator() : container(NULL), idx(0) {}
   GenericIterator(TContainer& container, size_t idx) : container(&container), idx(idx) {}
@@ -86,6 +93,52 @@ struct GenericReference {
   operator value_type() const {
     return _container.get(_index);
   }
+};
+
+/* Holds a reference + size of an array */
+template<typename T>
+struct ArrayView {
+  typedef T value_type;
+
+  ArrayView() : _array(NULL), _size(0) {}
+
+  template<size_t size>
+  inline ArrayView(T (&array)[size]) : _array(&array[0]), _size(size) {}
+
+  inline value_type& operator[](size_t index) { return _array[index]; }
+  inline size_t size()                 const  { return _size;         }
+
+private:
+  T*     _array;
+  size_t _size;
+};
+
+/* SpanView:
+ * [0] [1] [2] [3] <- index
+ * [a] [b]         <- Underlying container
+ * [a] [a] [b] [b] <- get(4, index)
+ * [a] [b] [b] [a] <- get2(4, index)
+ */
+template<typename TContainer>
+struct SpanView {
+  SpanView() : _container(NULL) {}
+  SpanView(TContainer& container) : _container(&container) {}
+  SpanView&operator=(const SpanView& rhs) { _container = rhs._container; return *this; }
+
+  typename TContainer::value_type get(size_t size, size_t index) {
+    size_t i = _container->size() * index / size;
+    return (*_container)[i];
+  }
+
+  typename TContainer::value_type get2(size_t size, size_t index) {
+    size_t i = _container->size() * index * 2 / size;
+    if (i >= _container->size())
+      i = _container->size() - (i - _container->size() + 1);
+    return (*_container)[i];
+  }
+
+private:
+  TContainer* _container;
 };
 
 #endif

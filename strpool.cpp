@@ -1,24 +1,61 @@
 #include "strpool.hpp"
-#include <cstring>
 
-/* Adds string `s` to the stringpool.
- * If the pool didn't contain the string yet and `newly_inserted` is not NULL,
- * it will be set to `true`.  NB: It's up to the caller to initialize the
- * variable to `false` before the call. */
-size_t StringPool :: add(const char *s, bool *newly_inserted) {
+#include <cstring>
+#include <climits>
+
+size_t StringPool :: add(const char *s, bool force_append) {
   if (!*s)
     return 0;
 
-  size_t len_with_0 = std::strlen(s) + 1;
-  size_t pos = storage.find(s, 1, len_with_0);
+  if (! force_append) {
+    size_t existing = find(s);
+    if (existing)
+      return existing;
+  }
+
+  size_t pos = storage.size();
+  storage.append(s, std::strlen(s) + 1);
+  return pos;
+}
+
+size_t StringPool :: find(const char *s) const {
+  if (!*s)
+    return 0;
+
+  const size_t len_with_0 = std::strlen(s) + 1;
+  const size_t pos = storage.find(s, 1, len_with_0);
   if (pos != std::string::npos)
     return pos;
 
-  if (newly_inserted)
-    *newly_inserted = true;
-  pos = storage.size();
-  storage.append(s, len_with_0);
-  return pos;
+  return 0;
+}
+
+bool StringPool :: isOptimized() const {
+  const char* pool_data = storage.data();
+  size_t pool_size = size();
+  size_t last = INT_MAX;
+  size_t len;
+
+  for (size_t i = 1; /* Skip empty string */ i < pool_size;) {
+    len = strlen(pool_data + i);
+    if (len > last)
+      return false;
+    last = len;
+    i += len + 1;
+  }
+
+  return true;
+}
+
+size_t StringPool :: count() const {
+  const char* pool_data = storage.data() + 1;
+  const char* pool_end =  storage.data() + storage.size();
+
+  size_t n = 0;
+  while (pool_data < pool_end)
+    pool_data += strlen(pool_data) + 1, ++n;
+
+  return n;
 }
 
 #if TEST_STRPOOL
@@ -28,7 +65,7 @@ size_t StringPool :: add(const char *s, bool *newly_inserted) {
   {"", "1", "2", "3", "foo", "bar", "baz"}
 
 int main() {
-  TEST_BEGIN
+  TEST_BEGIN();
 
   StringPool pool;
   assert(streq("", pool.get(0)));
@@ -39,10 +76,19 @@ int main() {
   assert(streq("0substr", pool.get(id0)));
   assert(streq("substr",  pool.get(id1)));
   assert(streq("substr",  pool.get(id2)));
+  assert(pool.count() == 1);
   
   for (auto s : TEST_DATA)
     assert(streq(s, pool.get(pool.add(s))));
 
-  TEST_END
+  assert(pool.count() == 7);
+  assert(!pool.isOptimized());
+
+  StringPool optimized;
+  optimized.add("longstring");
+  optimized.add("short");
+  assert(optimized.isOptimized());
+
+  TEST_END();
 }
 #endif

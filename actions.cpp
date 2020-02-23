@@ -44,10 +44,9 @@ int Actions :: call(ActionID id) {
   case PLAYLIST_NEXT: index = v.playlist.getActiveIndex() + 1; goto PLAYLIST_PLAY;
   case PLAYLIST_PREV: index = v.playlist.getActiveIndex() - 1; goto PLAYLIST_PLAY;
   case PLAYLIST_PLAY: index = v.playlist.getSelected();
-PLAYLIST_PLAY:
-      v.playlist.setActiveIndex(index);
-      p.play(t.getFileForTrack(v.playlist.getActiveItem(), false));
-      break;
+PLAYLIST_PLAY:        v.playlist.setActiveIndex(index);
+                      p.play(t.getFileForTrack(v.playlist.getActiveItem(), false));
+                      break;
 
   // === Tabs =================================================================
   case TABS_NEXT:     index = v.windows.currentIndex() + 1;   goto SELECT_TAB;

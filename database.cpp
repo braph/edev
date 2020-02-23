@@ -12,18 +12,16 @@
 
 typedef const char* ccstr;
 
-// TODO: find(const char *url, bool create): $create is not respected!
-
 /* ============================================================================
  * Dumper / Loader
  * ============================================================================
  * Helpers for saving and reading containers to/from disk.
  * Binary format is:
- *   size_t elem_bits  : Size of a containers element
+ *   size_t elem_bits  : Bit width of one element
  *   size_t elem_count : Element count
  *   void*  data[]     : Data
- *   size_t elem_bits  : Size of a containers element  -.
- *   size_t elem_count : Element count                 -'-> Used for validation
+ *   size_t elem_bits  : Bit width of one element -.
+ *   size_t elem_count : Element count            -'-> Used for validation
  */
 
 struct Dumper {
@@ -79,7 +77,7 @@ private:
   size_t elem_count;
 
   void readHeader(size_t expected_bits = 0) {
-    elem_bits = elem_count = 0xDEAD;
+    elem_bits = 0xDEAD; elem_count = 0;
     fs.read(reinterpret_cast<char*>(&elem_bits),  sizeof(elem_bits));
     fs.read(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
     if (elem_bits == 0 || elem_bits == 0xDEAD || (expected_bits && elem_bits != expected_bits))
@@ -87,7 +85,7 @@ private:
   }
 
   void readData(char* buf) {
-    size_t check_bits, check_count;
+    size_t check_bits = 0xDEAD, check_count = 0;
     fs.read(buf, size_for_bits(elem_bits*elem_count));
     fs.read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
     fs.read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
@@ -115,13 +113,14 @@ Database :: Database()
 : styles(*this)
 , albums(*this)
 , tracks(*this)
+, tables({&styles, &albums, &tracks})
 , pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url,
     &pool_track_url, &pool_cover_url, &pool_archive_url})
 {
   // Records with ID 0 represent a NULL value. Create them here.
-  styles.find("", true);
-  albums.find("", true);
-  tracks.find("", true);
+  for (auto table : tables)
+    table->resize(1);
+
   assert(0 == styles.find("", true).id);
   assert(0 == albums.find("", true).id);
   assert(0 == tracks.find("", true).id);
@@ -129,7 +128,7 @@ Database :: Database()
 
 void Database :: load(const std::string& file) {
   std::ifstream fs;
-  fs.exceptions(std::ifstream::failbit|std::ifstream::badbit);
+  fs.exceptions(std::ifstream::failbit|std::ifstream::badbit|std::ifstream::eofbit);
   fs.open(file, std::ios::binary);
 
   size_t abi_version = 0;
@@ -140,9 +139,8 @@ void Database :: load(const std::string& file) {
   for (auto pool : pools)
     Loader(fs).load(*pool);
 
-  styles.load(fs);
-  albums.load(fs);
-  tracks.load(fs);
+  for (auto table : tables)
+    table->load(fs);
 }
 
 void Database :: save(const std::string& file) {
@@ -156,44 +154,59 @@ void Database :: save(const std::string& file) {
   for (auto p : pools)
     Dumper(fs).dump(*p);
 
-  styles.save(fs);
-  albums.save(fs);
-  tracks.save(fs);
+  for (auto table : tables)
+    table->save(fs);
 }
 
 void Database :: shrink_to_fit() {
+  shrink_pool_to_fit(pool_style_url, {&styles.url});
+  shrink_pool_to_fit(pool_track_url, {&tracks.url});
+  shrink_pool_to_fit(pool_album_url, {&albums.url});
+  shrink_pool_to_fit(pool_cover_url, {&albums.cover_url});
+  shrink_pool_to_fit(pool_desc,      {&albums.description});
+  shrink_pool_to_fit(pool_archive_url,
+    {&albums.archive_mp3, &albums.archive_wav, &albums.archive_flac});
   shrink_pool_to_fit(pool_meta, {&styles.name, &albums.title,
-      &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
+    &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
+
+  for (auto table : tables)
+    table->shrink_to_fit();
 }
 
+#include <iostream>
 void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
-  const char* data = pool.data(); // Avoid StringPool::get()
+  std::cerr << " shrinking pool ...";
+  if (pool.isOptimized()) {
+    std::cerr << " already shrinked";
+    return;
+  }
 
-  size_t nIDs = 0; // Average ID count
-  for (auto col : columns) { nIDs += col->size(); }
-  nIDs /= columns.size();
+  StringPool newPool;
+  newPool.reserve(pool.size());
 
   // Build the map used for remapping IDs, storing all IDs used in columns
   std::unordered_map<int, int> idRemap;
-  idRemap.reserve(nIDs);
+  for (auto col : columns)
+    idRemap.reserve(col->size());
+
   for (auto col : columns)
     for (auto id : *col)
       idRemap[id] = 0;
 
+  using id_with_length = std::pair<unsigned int, unsigned int>;
+
   // Sort the IDs, longest strings first
-  std::vector<int> idSortedByLength;
+  std::vector<id_with_length> idSortedByLength;
   idSortedByLength.reserve(idRemap.size());
   for (auto& pair : idRemap)
-    idSortedByLength.push_back(pair.first);
+    idSortedByLength.push_back(id_with_length(pair.first, strlen(pool.get(pair.first))));
 
-  std::sort(idSortedByLength.begin(), idSortedByLength.end(), [&](int a, int b)
-      { return a != b && strlen(data + a) > strlen(data + b); });
+  std::sort(idSortedByLength.begin(), idSortedByLength.end(),
+      [](auto& a, auto& b){ return a.second > b.second; });
 
   // Add strings in the right order to the stringpool and store the new ID
-  StringPool newPool;
-  newPool.reserve(pool.size());
-  for (auto id : idSortedByLength)
-    idRemap[id] = newPool.add(data + id);
+  for (auto id_with_length : idSortedByLength)
+    idRemap[id_with_length.first] = newPool.add(pool.get(id_with_length.first));
 
   // Replace the IDs from the old pool by the IDs from the new pool
   for (auto column : columns)
@@ -202,7 +215,6 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
     //for (auto& id : *column)
     //  id = idRemap[id];
 
-  // Transfer the pool
   pool = newPool;
 }
 
@@ -222,26 +234,30 @@ void Database :: Table :: save(std::ofstream& fs) {
 
 /* Find a record by its URL or create one if it could not be found */
 template<typename TTable>
-static typename TTable::value_type find_or_create(TTable& table, StringPool& pool, const char* url) {
-  bool newly_inserted = false;
-  size_t strId = pool.add(url, &newly_inserted);
-  Database::Column::iterator beg;
-  Database::Column::iterator end;
-  Database::Column::iterator fnd;
-  if (newly_inserted)
-    goto NOT_FOUND;
-  beg = table.url.begin();
-  end = table.url.end();
-  fnd = std::find(beg, end, strId);
-  if (fnd == end) {
-NOT_FOUND:
+static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, const char* url, bool create) {
+  if (!*url)
+    return typename TTable::value_type(table.db, 0);
+
+  size_t strId = pool.find(url);
+  if (strId) {
+    Database::Column::iterator beg = table.url.begin();
+    Database::Column::iterator end = table.url.end();
+    Database::Column::iterator fnd = std::find(beg, end, strId);
+    if (fnd != end)
+      return typename TTable::value_type(table.db, fnd-beg);
+  }
+
+  if (create) {
+    if (! strId)
+      strId = pool.add(url, true);
+
     size_t pos = table.size();
     table.resize(pos+1);
     table.url[pos] = strId;
     return typename TTable::value_type(table.db, pos);
-  } else {
-    return typename TTable::value_type(table.db, fnd-beg);
   }
+
+  return typename TTable::value_type(table.db, 0);
 }
 
 
@@ -256,7 +272,7 @@ NOT_FOUND:
 // ============================================================================
 
 STYLE Database::Styles::find(const char *url, bool create) {
-  return find_or_create(*this, db.pool_style_url, url);
+  return find_by_url(*this, db.pool_style_url, url, create);
 }
 
 // GETTER
@@ -282,7 +298,7 @@ DB::Field _::operator[](DB::ColumnID id) const {
 // ============================================================================
 
 ALBUM Database::Albums::find(const char *url, bool create) {
-  return find_or_create(*this, db.pool_album_url, url);
+  return find_by_url(*this, db.pool_album_url, url, create);
 }
 
 #define SHRINK_DATE(T) (T / 60 / 60 / 24 - 10000)
@@ -323,6 +339,7 @@ DB::Field _::operator[](DB::ColumnID id) const {
   case DB::ALBUM_COVER_URL:       return DB::Field(cover_url());
   case DB::ALBUM_TITLE:           return DB::Field(title());
   case DB::ALBUM_ARTIST:          return DB::Field(artist());
+  case DB::ALBUM_STYLES:          return DB::Field(styles()); // TODO!
   case DB::ALBUM_DESCRIPTION:     return DB::Field(description());
   case DB::ALBUM_DATE:            return DB::Field(date());
   case DB::ALBUM_RATING:          return DB::Field(rating());
@@ -349,7 +366,7 @@ DB::Field _::operator[](DB::ColumnID id) const {
 // ============================================================================
 
 TRACK Database::Tracks::find(const char* url, bool create) {
-  return find_or_create(*this, db.pool_track_url, url);
+  return find_by_url(*this, db.pool_track_url, url, create);
 }
 
 // GETTER
@@ -367,7 +384,7 @@ void  TRACK::title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }
 void  TRACK::artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s);  }
 void  TRACK::remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s);  }
 void  TRACK::number(int i)    { db.tracks.number[id] = i;                     }
-void  TRACK::bpm(int i)       { db.tracks.bpm[id] = (i & 0xFF);               }
+void  TRACK::bpm(int i)       { db.tracks.bpm[id] = (i & 0xFF /* max 255 */); }
 void  TRACK::album_id(int i)  { db.tracks.album_id[id] = i;                   }
 // INDEX
 DB::Field TRACK::operator[](DB::ColumnID id) const {

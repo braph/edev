@@ -1,27 +1,26 @@
+- strpool.cpp:
+  - add test for append=true and maybe find
+- PRIO:
+  make actions a pimpl
+- database.cpp
+  - Database size has been halved. WTF, this must be a bug
+  - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
+  - Style::styles() shall return an array of strings
+  - Styles: Bitfields in the right order, maybe we get 3 bytes
+  - optimize dingens kirchens ... pool insert by len
+
 - application.cpp
-  - Do a real terminal reset terminal on quit
   - Preload playlist
   - What to do when the database has updated?
-- config.cpp
-  - Replace in_list(T, std::initializer_list) by something like strstr?
-- database.cpp
-  - Style::styles() shall return an array of strings
-  - move Result class to Generic. Add an iterator proxy with a lambda!
-  - Styles: Bitfields in the right order, maybe we get 3 bytes
 - ui.cpp
   - Maybe change storage type of Pos and Size to short?
 - downloads.cpp
   - Maybe add a --tries option to the Download base class?!
   - Small optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)
-- common.hpp
-  - ProportionalGet rename to sth like `spannedGet`
-  - Add tests for ^
-- !!! Add browser
-  if (selection)
-    color = UI::Colors.get("list.item_selection");
-  else if (index % 2 == 0)
-    color = UI::Colors.get("list.item_even");
-  else
-    color = UI::Colors.get("list.item_odd");
-- view/progressbar.cpp
-  - layout(): check if size has changed?
+- Add views/browser.cpp
+    if (selection)
+      color = UI::Colors.get("list.item_selection");
+    else if (index % 2 == 0)
+      color = UI::Colors.get("list.item_even");
+    else
+      color = UI::Colors.get("list.item_odd");

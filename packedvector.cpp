@@ -1,5 +1,7 @@
 #include "packedvector.hpp"
 
+#define GROW_FACTOR 2
+
 /* ============================================================================
  * Static helper functions
  * ==========================================================================*/
@@ -32,26 +34,32 @@ union BitShiftHelper {
 
 void PackedVector :: reserve(size_t n) {
   __enter__("%lu", n);
+
   if (n > capacity())
     *this = PackedVector(_bits, n, begin(), end());
+
   __leave__();
 }
 
 void PackedVector :: resize(size_t n, value_type value) {
   __enter__("%lu, %d", n, value);
+
   reserve(n);
   while (_size < n)
     push_back(value);
+
   __leave__();
 }
 
 void PackedVector :: push_back(value_type value) {
   __enter__("%d", value);
+
   if (_size == capacity())
-    reserve(_size * 2 + 1); // TODO
+    reserve(_size * GROW_FACTOR + 1);
 
   set(_size, value);
   ++_size;
+
   __leave__();
 }
 
@@ -90,6 +98,64 @@ void PackedVector :: set(size_t index, int value) {
 /* ============================================================================
  * DynamicPackedVector
  * ==========================================================================*/
+
+void DynamicPackedVector :: reserve(size_t n, int bits) {
+  __enter__("n = %lu, bits = %d", n, bits);
+
+  if (n < _vec.size())
+    n = _vec.size();
+
+  if (bits > _vec.bits())
+    _vec = PackedVector(bits, n, _vec.begin(), _vec.end());
+  else
+    _vec.reserve(n);
+
+  __leave__();
+}
+
+void DynamicPackedVector :: set(size_t index, value_type value) {
+  __enter__("index = %lu, value = %d", index, value);
+
+  reserve(capacity(), bitlength_32(value));
+  _vec.set(index, value);
+
+  __leave__();
+}
+
+void DynamicPackedVector :: push_back(value_type value) {
+  __enter__("%d", value);
+
+  size_t new_size;
+  if (size() == capacity())
+    new_size = size() * GROW_FACTOR + 1;
+  else
+    new_size = capacity(); // keep capacity!
+
+  reserve(new_size, bitlength_32(value));
+  _vec.push_back(value);
+
+  __leave__();
+}
+
+void DynamicPackedVector :: resize(size_t n, value_type value) {
+  __enter__("%lu, %d", n, value);
+
+  reserve(n, bitlength_32(value));
+  _vec.resize(n, value);
+
+  __leave__();
+}
+
+void DynamicPackedVector :: shrink_to_fit() {
+  value_type max = 0;
+  for (auto e : _vec)
+    if (e > max)
+      max = e;
+
+  int max_bits = bitlength_32(max);
+  if (max_bits != 0 && max_bits < _vec.bits())
+    _vec = PackedVector(max_bits, size(), _vec.begin(), _vec.end());
+}
 
 #if TEST_PACKEDVECTOR
 #include "test.hpp"

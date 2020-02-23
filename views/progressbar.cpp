@@ -3,6 +3,7 @@
 #include "../theme.hpp"
 #include "../config.hpp"
 #include "../common.hpp"
+#include "../generic.hpp"
 #include "../colors.hpp"
 
 static const short fading_0[]   = {-1};
@@ -23,34 +24,30 @@ void ProgressBar :: layout(Pos pos, Size size) {
   this->pos = pos;
   this->size = size;
 
-  const short *fade = fading_0;
-  size_t fade_size  = ARRAY_SIZE(fading_0);
-
-  if (Theme::current == 256) {
-    fade      = fading_256;
-    fade_size = ARRAY_SIZE(fading_256);
-  }
-  else if (Theme::current == 8) {
-    fade      = fading_8;
-    fade_size = ARRAY_SIZE(fading_8);
-  }
-
-  wresize(win, 1, size.width * 2);
+  wresize(win, size.height, size.width * 2);
   mvwin(win, pos.y, pos.x);
   wmove(win, 0, 0);
 
+  ArrayView<const short> fading(fading_0);
+
+  if (Theme::current == 256)
+    fading = fading_256;
+  else if (Theme::current == 8)
+    fading = fading_8;
+
   int i;
   wchar_t c;
+  auto fader = SpanView<ArrayView<const short>>(fading);
 
   c = Config::progressbar_progress_char;
   for (i = 0; i < size.width; ++i) {
-    wattron(win, UI::Colors::set(proportionalGet(fade, fade_size, size.width, i), -1, 0));
+    wattron(win, UI::Colors::set(fader.get(size.width, i), -1, 0));
     waddnwstr(win, &c, 1);
   }
   
   c = Config::progressbar_rest_char;
   wattrset(win, Theme::get(Theme::PROGRESSBAR_REST));
-  for (; i < size.width*2; ++i)
+  for (; i < size.width * 2; ++i)
     waddnwstr(win, &c, 1);
 }
 
