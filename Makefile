@@ -1,16 +1,13 @@
-DEBUG 				= 1 # 0|1
-PEDANTIC_FREE = 1 # 0|1
-
-WARNINGS = -Wall -Wpedantic -pedantic -Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
-WARNINGS = -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wno-unused
+WARNINGS = -Wall -Wpedantic -pedantic # -Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
+#WARNINGS = -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wno-unused
 # -Wundef -Wshadow -Wswitch-default -Wstrict-overflow=5 
 #WARNINGS += -Wsign-conversion
 #WARNINGS += -Werror 
 
 STD = c++14
 
-CXXFLAGS   := -std=$(STD) -Og -g $(WARNINGS) -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
-#CXXFLAGS   := -std=$(STD) -O2 $(WARNINGS) -pedantic -DDEBUG=$(DEBUG) -DPEDANTIC_FREE=$(PEDANTIC_FREE)
+CXXFLAGS   := -std=$(STD) -Og -g $(WARNINGS)
+#CXXFLAGS   := -std=$(STD) -O2 -DNDEBUG
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
@@ -19,7 +16,6 @@ application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o th
 	views/help.o views/info.o views/playlist.o player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o common.o \
 	packedvector.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
-	echo "Cannot test ncurses based stuff"
 
 clean:
 	rm -f *.o
@@ -50,11 +46,11 @@ test_progressbar: config.o shellsplit.o filesystem.o colors.o theme.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PROGRESSBAR views/progressbar.cpp $^
 	echo "Widgets cannot be tested in Make"
 
-test_database: strpool.o
+test_database: strpool.o packedvector.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
 	./a.out
 
-test_updater: browsepage.o database.o strpool.o downloads.o ektoplayer.o
+test_updater: browsepage.o database.o strpool.o downloads.o ektoplayer.o packedvector.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
@@ -120,8 +116,8 @@ test_ektoplayer:
 	$(CXX) -DTEST_EKTOPLAYER ektoplayer.cpp filesystem.cpp
 	./a.out
 
-test_colorfader:
-	$(CXX) -DTEST_COLORFADER colorfader.cpp
+test_generic:
+	$(CXX) -DTEST_GENERIC generic.cpp
 	./a.out
 
 test_ui:

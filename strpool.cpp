@@ -68,6 +68,7 @@ int main() {
   TEST_BEGIN();
 
   StringPool pool;
+  assert(! pool.find("non-existent"));
   assert(streq("", pool.get(0)));
   assert(0 == pool.add(""));
   size_t id0 = pool.add("0substr");
@@ -88,6 +89,8 @@ int main() {
   optimized.add("longstring");
   optimized.add("short");
   assert(optimized.isOptimized());
+  optimized.add("longstring", true);
+  assert(! optimized.isOptimized());
 
   TEST_END();
 }

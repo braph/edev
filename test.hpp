@@ -1,9 +1,10 @@
 // Stuff used for testing
 #include <iostream>
-#include <unistd.h>
+#include <stdexcept>
 #include <cstring>
+#include <unistd.h>
 #include "common.hpp"
-#undef assert // May be defined in common.hpp
+#undef NDEBUG
 #include <cassert>
 
 #define TEST_DB "/tmp/ektoplayer-test.db"

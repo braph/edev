@@ -64,7 +64,7 @@ std::string& url_expand(std::string& url, const char* prefix, const char* suffix
 
 #if TEST_EKTOPLAYER
 #include "test.hpp"
-#include <functional>
+
 using namespace Ektoplayer;
 
 int main() {

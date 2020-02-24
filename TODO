@@ -1,14 +1,16 @@
-- strpool.cpp:
-  - add test for append=true and maybe find
-- PRIO:
-  make actions a pimpl
-- database.cpp
-  - Database size has been halved. WTF, this must be a bug
-  - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
-  - Style::styles() shall return an array of strings
-  - Styles: Bitfields in the right order, maybe we get 3 bytes
-  - optimize dingens kirchens ... pool insert by len
+TODAY:
+- Config: Themes set()
+- Style::styles() shall return an array of strings
+- Styles: Bitfields in the right order, maybe we get 3 bytes
+- SpanView, gener.cpp
+- Make the Result class a Generic. Do std::sort() etc, by providing lambdas
 
+===============================================================================
+
+- Make actions a pImpl? --- seems not yet to be needed....
+- database.cpp
+  - Maybe optimize strpool.cpp for sorted insertion ...
+  - Lots of duplicated code in class:Table. Maybe use class TableBase + Table<T>?
 - application.cpp
   - Preload playlist
   - What to do when the database has updated?
@@ -16,7 +18,7 @@
   - Maybe change storage type of Pos and Size to short?
 - downloads.cpp
   - Maybe add a --tries option to the Download base class?!
-  - Small optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)
+  - Micro optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)
 - Add views/browser.cpp
     if (selection)
       color = UI::Colors.get("list.item_selection");

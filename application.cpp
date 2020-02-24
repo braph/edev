@@ -63,7 +63,6 @@ Application :: Application()
 Application :: ~Application() {
   endwin();
   cleanup_files();
-  std::cerr << "Terminated gracefully." << std::endl;
 
   try {
     database.shrink_to_fit();
@@ -72,6 +71,8 @@ Application :: ~Application() {
   catch (const std::exception &e) {
     std::cout << "Error saving database to file: " << e.what() << std::endl;
   }
+
+  std::cerr << "Terminated gracefully." << std::endl;
 }
 
 void Application :: init() {
@@ -274,7 +275,7 @@ void Application :: cleanup_files() {
   glob(pattern, GLOB_NOSORT|GLOB_NOESCAPE, NULL, &globbuf);
   for (size_t i = 0; i < globbuf.gl_pathc; ++i)
     unlink(globbuf.gl_pathv[i]);
-#if PEDANTIC_FREE
+#ifndef NDEBUG
   globfree(&globbuf);
 #endif
 }

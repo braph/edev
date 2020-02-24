@@ -20,8 +20,6 @@
  * Metadata Database
  * ============================================================================
  *
- * The metadata is organized in tables in a classic relational way.
- *
  * === Tables ===
  * A table consists of a fixed number of columns holding all the data.
  * For retrieving a row from a table a proxy object (struct Record) is returned.
@@ -163,6 +161,7 @@ public:
       case INTEGER: return this->value.i - rhs.value.i;
       case FLOAT:   return this->value.f - rhs.value.f;
       case TIME:    return this->value.t - rhs.value.t;
+      default:      assert_not_reached();
       }
     }
   };
@@ -186,9 +185,6 @@ public:
     void    resize(size_t n)    { for (auto c : columns) c->resize(n);       }
     void    reserve(size_t n)   { for (auto c : columns) c->reserve(n);      }
     void    shrink_to_fit()     { for (auto c : columns) c->shrink_to_fit(); }
-
-    void load(std::ifstream&);
-    void save(std::ofstream&);
   };
 
   // === Base class for all records ===========================================
@@ -223,10 +219,14 @@ public:
       void  name(ccstr);
     };
 
-    typedef Style value_type;
+    using value_type = Style;
+    using reference  = Style;
+    using iterator   = GenericIterator<Styles>;
 
-    Style operator[](size_t id) { return Style(db, id); }
-    Style find(const char *url, bool create);
+    value_type operator[](size_t id) { return value_type(db, id);      }
+    iterator begin()                 { return iterator(*this, 1);      }
+    iterator end()                   { return iterator(*this, size()); }
+    value_type find(const char *url, bool create);
   };
 
   struct Albums : public Table {
@@ -280,10 +280,15 @@ public:
       void    download_count(int);
       void    styles(int);
     };
-    typedef Album value_type;
 
-    Album operator[](size_t id) { return Album(db, id); }
-    Album find(const char *url, bool create);
+    using value_type = Album;
+    using reference  = Album;
+    using iterator   = GenericIterator<Albums>;
+
+    value_type operator[](size_t id) { return value_type(db, id);      }
+    iterator begin()                 { return iterator(*this, 1);      }
+    iterator end()                   { return iterator(*this, size()); }
+    value_type find(const char *url, bool create);
   };
 
   struct Tracks : public Table {
@@ -318,10 +323,15 @@ public:
       void    bpm(int);
       void    album_id(int);
     };
-    typedef Track value_type;
 
-    Track operator[](size_t id) { return Track(db, id); }
-    Track find(const char *url, bool create);
+    using value_type = Track;
+    using reference  = Track;
+    using iterator   = GenericIterator<Tracks>;
+
+    value_type operator[](size_t id) { return value_type(db, id);      }
+    iterator begin()                 { return iterator(*this, 1);      }
+    iterator end()                   { return iterator(*this, size()); }
+    value_type find(const char *url, bool create);
   };
 
   /* ==========================================================================
@@ -346,7 +356,10 @@ public:
     ColumnID  column;
     SortOrder order;
   public:
-    OrderBy(ColumnID column, SortOrder order) : column(column), order(order) {}
+    template<typename TColumn>
+    OrderBy(TColumn column, SortOrder order = ASCENDING)
+    : column(static_cast<ColumnID>(column))
+    , order(order) {}
 
     template<typename T>
     bool operator()(const T& a, const T& b) {
@@ -383,59 +396,6 @@ public:
     }
   };
 
-  template<typename TStore>
-  class Result {
-    TStore *store;
-    std::vector<int> indices;
-  public:
-    Result() : store(NULL) {}
-
-    Result(TStore &store) : store(&store) {
-      indices.reserve(store.size());
-      for (size_t i = 1 /* Skip NULL Record */; i < store.size(); ++i)
-        indices.push_back(i);
-    }
-
-    typedef typename TStore::value_type value_type;
-
-    Result& operator=(const Result& rhs) {
-      store   = rhs.store;
-      indices = rhs.indices;
-      return *this;
-    }
-
-    inline size_t size() {
-      return indices.size();
-    }
-
-    value_type operator[](size_t id) {
-      return (*store)[indices[id]];
-    }
-
-    GenericIterator<Result> begin() {
-      return GenericIterator<Result>(*this, 0);
-    }
-
-    GenericIterator<Result> end() {
-      return GenericIterator<Result>(*this, size());
-    }
-
-    void order_by(ColumnID column, SortOrder order) {
-      OrderBy orderBy(column, order);
-      std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
-        return orderBy((*store)[a], (*store)[b]);
-      });
-    }
-
-    template<typename TValue>
-    void where(ColumnID column, Operator op, TValue value) {
-      Where where(column, op, value);
-      auto end = std::remove_if(indices.begin(), indices.end(),
-          [&](size_t i){ return where((*store)[i]); });
-      indices.erase(end, indices.end());
-    }
-  };
-
   /* ==========================================================================
    * Database members and methods
    * ========================================================================*/
@@ -456,9 +416,14 @@ public:
 
   Database();
 
-  Result<Styles> getStyles() { return Result<Styles>(styles); }
-  Result<Albums> getAlbums() { return Result<Albums>(albums); }
-  Result<Tracks> getTracks() { return Result<Tracks>(tracks); }
+  std::vector<Styles::Style> getStyles() {
+    return std::vector<Styles::Style>(styles.begin(), styles.end()); }
+  
+  std::vector<Albums::Album> getAlbums() {
+    return std::vector<Albums::Album>(albums.begin(), albums.end()); }
+
+  std::vector<Tracks::Track> getTracks() {
+    return std::vector<Tracks::Track>(tracks.begin(), tracks.end()); }
 
   void load(const std::string&);
   void save(const std::string&);

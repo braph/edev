@@ -3,17 +3,12 @@
 
 #include <string>
 #include <cstring>
+#include <cassert>
 #include <initializer_list>
 
 #define STRLEN(S)     (sizeof(S)-1)
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 #define REPORT_BUG    "REPORT A BUG, PLEASE!"
-
-#if DEBUG
-#include <cassert>
-#else
-#define assert(...) (void)0
-#endif
 
 #define NOT_REACHED 0
 #define assert_not_reached() assert(NOT_REACHED)

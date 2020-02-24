@@ -35,10 +35,10 @@ private:
   const PlaylistColumns& m_columns;
 };
 
-class Playlist : public ListWidget<Database::Result<Database::Tracks>> {
+class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
   Playlist();
-  Database::Result<Database::Tracks> playlist;
+  std::vector<Database::Tracks::Track> playlist;
 private:
   TrackRenderer trackRenderer;
 };

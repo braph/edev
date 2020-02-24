@@ -16,7 +16,8 @@ typedef const char* ccstr;
  * Dumper / Loader
  * ============================================================================
  * Helpers for saving and reading containers to/from disk.
- * Binary format is:
+ *
+ * Binary format for containers:
  *   size_t elem_bits  : Bit width of one element
  *   size_t elem_count : Element count
  *   void*  data[]     : Data
@@ -27,41 +28,50 @@ typedef const char* ccstr;
 struct Dumper {
   Dumper(std::ofstream& fs) : fs(fs) {}
 
-  template<typename T>
-  void dump(std::vector<T>& v)
-  { dump(bitsOf(T), v.size(), reinterpret_cast<char*>(v.data())); }
-
-  void dump(DynamicPackedVector& v)
-  { dump(v.bits(), v.size(), reinterpret_cast<char*>(v.data())); }
+  void dump(size_t value)
+  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
   void dump(StringPool& p)
   { dump(bitsOf(char), p.size(), reinterpret_cast<char*>(p.data())); }
 
+  void dump(DynamicPackedVector& v)
+  { dump(v.bits(), v.size(), reinterpret_cast<char*>(v.data())); }
+
+  template<typename T>
+  void dump(std::vector<T>& v)
+  { dump(bitsOf(T), v.size(), reinterpret_cast<char*>(v.data())); }
+
+  void dump(Database::Table& t)
+  { for (auto col : t.columns) { dump(*col); } }
+
 private:
   std::ofstream& fs;
   void dump(size_t bits, size_t count, char* data) {
-    fs.write(reinterpret_cast<char*>(&bits),  sizeof(bits));
-    fs.write(reinterpret_cast<char*>(&count), sizeof(count));
+    dump(bits);
+    dump(count);
     fs.write(data, size_for_bits(bits*count));
-    fs.write(reinterpret_cast<char*>(&bits),  sizeof(bits));
-    fs.write(reinterpret_cast<char*>(&count), sizeof(count));
+    dump(bits);
+    dump(count);
   }
 };
 
 struct Loader {
   Loader(std::ifstream& fs) : fs(fs) {}
 
-  void load(DynamicPackedVector& vec) {
-    readHeader();
-    vec.reserve(elem_count, elem_bits);
-    vec.resize(elem_count);
-    readData(reinterpret_cast<char*>(vec.data()));
-  }
+  void load(size_t& value)
+  { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
 
   void load(StringPool& pool) {
     readHeader(bitsOf(char));
     pool.resize(elem_count);
     readData(reinterpret_cast<char*>(pool.data()));
+  }
+
+  void load(DynamicPackedVector& vec) {
+    readHeader();
+    vec.reserve(elem_count, elem_bits);
+    vec.resize(elem_count);
+    readData(reinterpret_cast<char*>(vec.data()));
   }
 
   template<typename T>
@@ -71,6 +81,9 @@ struct Loader {
     readData(reinterpret_cast<char*>(v.data()));
   }
 
+  void load(Database::Table& t)
+  { for (auto col : t.columns) { load(*col); } }
+
 private:
   std::ifstream& fs;
   size_t elem_bits;
@@ -78,8 +91,8 @@ private:
 
   void readHeader(size_t expected_bits = 0) {
     elem_bits = 0xDEAD; elem_count = 0;
-    fs.read(reinterpret_cast<char*>(&elem_bits),  sizeof(elem_bits));
-    fs.read(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
+    load(elem_bits);
+    load(elem_count);
     if (elem_bits == 0 || elem_bits == 0xDEAD || (expected_bits && elem_bits != expected_bits))
       throw std::runtime_error("Invalid bit count in header");
   }
@@ -131,31 +144,25 @@ void Database :: load(const std::string& file) {
   fs.exceptions(std::ifstream::failbit|std::ifstream::badbit|std::ifstream::eofbit);
   fs.open(file, std::ios::binary);
 
+  Loader l(fs);
+
   size_t abi_version = 0;
-  fs.read(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
+  l.load(abi_version);
   if (abi_version != DB_ABI_VERSION)
     throw std::runtime_error("Database ABI version mismatch");
 
-  for (auto pool : pools)
-    Loader(fs).load(*pool);
-
-  for (auto table : tables)
-    table->load(fs);
+  for (auto p : pools) l.load(*p);
+  for (auto t : tables) l.load(*t);
 }
 
 void Database :: save(const std::string& file) {
   std::ofstream fs;
   fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
   fs.open(file, std::ios::binary);
-
-  size_t abi_version = DB_ABI_VERSION;
-  fs.write(reinterpret_cast<char*>(&abi_version), sizeof(abi_version));
-
-  for (auto p : pools)
-    Dumper(fs).dump(*p);
-
-  for (auto table : tables)
-    table->save(fs);
+  Dumper d(fs);
+  d.dump(DB_ABI_VERSION);
+  for (auto p : pools) d.dump(*p);
+  for (auto t : tables) d.dump(*t);
 }
 
 void Database :: shrink_to_fit() {
@@ -221,16 +228,6 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 /* ============================================================================
  * Database :: Table
  * ==========================================================================*/
-
-void Database :: Table :: load(std::ifstream& fs) {
-  for (auto* col : columns)
-    Loader(fs).load(*col);
-}
-
-void Database :: Table :: save(std::ofstream& fs) {
-  for (auto* col : columns)
-    Dumper(fs).dump(*col);
-}
 
 /* Find a record by its URL or create one if it could not be found */
 template<typename TTable>
@@ -467,9 +464,10 @@ int main () {
   // Duplication succeded
   assert(equals(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
 
-  // Sorting succeeded
   std::sort(track_titles.begin(), track_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
-  tracks.order_by((Database::ColumnID) Database::TRACK_TITLE, Database::ASCENDING);
+  std::sort(tracks.begin(), tracks.end(), Database::OrderBy(Database::TRACK_TITLE));
+
+  // Sorting succeeded
   assert(equals(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
 
 
@@ -481,12 +479,14 @@ int main () {
   // Duplication succeded
   assert(equals(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
 
-  // Sorting succeeded
   std::sort(album_titles.begin(), album_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
-  tracks.order_by((Database::ColumnID) Database::ALBUM_TITLE, Database::ASCENDING);
+  std::sort(tracks.begin(), tracks.end(), Database::OrderBy(Database::ALBUM_TITLE));
+
+  // Sorting succeeded
   assert(equals(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
 
 
+#if 0 // TODO
   /* Test: WHERE ALBUM_TITLE =============================================== */
   tracks.where((Database::ColumnID) Database::ALBUM_TITLE, Database::EQUAL, "Interbeing");
   assert(tracks.size());
@@ -497,6 +497,7 @@ int main () {
   tracks.where((Database::ColumnID) Database::TRACK_TITLE, Database::EQUAL, "Satori");
   assert(tracks.size() == 1);
   assert(streq(tracks[0].title(), "Satori"));
+#endif
 
   /* Test: Failing to load a invalid database ============================== */
   except(db.load("/non-existent"));

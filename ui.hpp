@@ -59,7 +59,7 @@ public:
   {
   }
 
-#if PEDANTIC_FREE
+#ifndef NDEBUG
   virtual ~Widget() {};
 #endif
 };
@@ -72,7 +72,7 @@ public:
     getmaxyx(win, size.height, size.width);
   }
 
-#if PEDANTIC_FREE
+#ifndef NDEBUG
  ~Window() {
    delwin(win);
  }
@@ -112,7 +112,7 @@ public:
     pad_mincol = 0;
   }
 
-#if PEDANTIC_FREE
+#ifndef NDEBUG
  ~Pad() {
    delwin(win);
  }

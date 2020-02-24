@@ -13,13 +13,12 @@ class GenericIterator
 {
 public:
   using iterator_category = std::random_access_iterator_tag;
-  using value_type = typename TContainer::reference;
-  using difference_type = std::ptrdiff_t;
-  using pointer = typename TContainer::reference*;
-  using reference = typename TContainer::reference;//&;
+  using value_type        = typename TContainer::reference;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = typename TContainer::reference;//*;
+  using reference         = typename TContainer::reference;//&;
 
   typedef GenericIterator iterator;
-  //typedef typename TContainer::reference reference;
 
   GenericIterator() : container(NULL), idx(0) {}
   GenericIterator(TContainer& container, size_t idx) : container(&container), idx(idx) {}
