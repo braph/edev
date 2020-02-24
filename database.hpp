@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 #include "generic.hpp"
-#include "strpool.hpp"
+#include "stringpool.hpp"
 #include "packedvector.hpp"
 
 #include <array>

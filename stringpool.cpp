@@ -1,4 +1,4 @@
-#include "strpool.hpp"
+#include "stringpool.hpp"
 
 #include <cstring>
 #include <climits>
@@ -58,7 +58,7 @@ size_t StringPool :: count() const {
   return n;
 }
 
-#if TEST_STRPOOL
+#if TEST_STRINGPOOL
 #include "test.hpp"
 
 #define TEST_DATA \

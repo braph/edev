@@ -11,7 +11,7 @@ CXXFLAGS   := -std=$(STD) -Og -g $(WARNINGS)
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
-application: filesystem.o config.o shellsplit.o colors.o strpool.o database.o theme.o browsepage.o updater.o \
+application: filesystem.o config.o shellsplit.o colors.o stringpool.o database.o theme.o browsepage.o updater.o \
 	ui/container.o views/splash.o views/playinginfo.o views/progressbar.o views/tabbar.o views/mainwindow.o \
 	views/help.o views/info.o views/playlist.o player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o common.o \
 	packedvector.o
@@ -46,23 +46,23 @@ test_progressbar: config.o shellsplit.o filesystem.o colors.o theme.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PROGRESSBAR views/progressbar.cpp $^
 	echo "Widgets cannot be tested in Make"
 
-test_database: strpool.o packedvector.o
+test_database: stringpool.o packedvector.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
 	./a.out
 
-test_updater: browsepage.o database.o strpool.o downloads.o ektoplayer.o packedvector.o
+test_updater: browsepage.o database.o stringpool.o downloads.o ektoplayer.o packedvector.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
-test_trackloader: database.o strpool.o downloads.o ektoplayer.o
+test_trackloader: database.o stringpool.o downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TRACKLOADER trackloader.cpp $^
 	perf stat ./a.out
 
 test_tabbar: config.o theme.o filesystem.o colors.o shellsplit.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TABBAR views/tabbar.cpp $^
 
-test_strpool:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRPOOL strpool.cpp
+test_stringpool:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGPOOL stringpool.cpp
 	./a.out
 
 test_common:
@@ -89,7 +89,7 @@ test_theme: colors.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_THEME theme.cpp $^
 	./a.out
 
-test_playinginfo: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o
+test_playinginfo: colors.o theme.o config.o filesystem.o shellsplit.o database.o stringpool.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/playinginfo.cpp $^
 	echo "Widgets cannot be tested in Make"
 
@@ -100,7 +100,7 @@ test_packedvector:
 	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
 	./a.out
 
-test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o database.o strpool.o packedvector.o common.o
+test_playlist: colors.o theme.o config.o filesystem.o shellsplit.o database.o stringpool.o packedvector.o common.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
 	echo "Widgets cannot be tested in Make"
 
