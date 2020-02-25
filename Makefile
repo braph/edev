@@ -93,9 +93,6 @@ test_playinginfo: colors.o theme.o config.o filesystem.o shellsplit.o database.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/playinginfo.cpp $^
 	echo "Widgets cannot be tested in Make"
 
-test: test_filesystem test_ektoplayer test_config
-	echo foo
-
 test_packedvector:
 	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
 	./a.out
@@ -130,5 +127,10 @@ test_xml:
 
 test_browsepage:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp
+	valgrind ./a.out
+
+# XXX TODO REMOVE ME
+test:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) test.cpp
 	valgrind ./a.out
 

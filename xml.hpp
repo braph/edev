@@ -58,7 +58,8 @@ public:
   inline operator     xmlNode*()   const { return m_node; }
   inline operator     bool()       const { return m_node; }
   inline bool         valid()      const { return m_node; }
-  inline const char*  name()       const { return reinterpret_cast<const char*>(m_node->name); }
+  inline const char*  name()       const { return reinterpret_cast<const char*>(m_node->name);    }
+  inline const char*  content()    const { return reinterpret_cast<const char*>(m_node->content); }
   inline int          type()       const { return m_node->type;               }
   inline XmlNode      next()       const { return XmlNode(m_node->next);      }
   inline XmlNode      children()   const { return XmlNode(m_node->children);  }

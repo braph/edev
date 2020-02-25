@@ -2,6 +2,7 @@
 #define _COMMON_HPP
 
 #include <string>
+#include <ctime>
 #include <cstring>
 #include <cassert>
 #include <initializer_list>
@@ -17,6 +18,18 @@ wchar_t* toWideString(const char* s, size_t* len = NULL);
 
 static inline wchar_t* toWideString(const std::string& s, size_t* len = NULL) {
   return toWideString(s.c_str(), len);
+}
+
+char* toNarrowString(const wchar_t* s, size_t* len = NULL);
+
+static inline char* toNarrowString(const std::wstring& s, size_t* len = NULL) {
+  return toNarrowString(s.c_str(), len);
+}
+
+static inline char* time_format(time_t t, const char* fmt, char* buf, size_t bufsz) {
+  struct tm* st = localtime(&t);
+  strftime(buf, bufsz, fmt, st);
+  return buf;
 }
 
 // If `*s` starts with `prefix` advance the pointer beyond the prefix and return TRUE

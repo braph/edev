@@ -1,33 +1,84 @@
 #include "updater.hpp"
 
-#include "ektoplayer.hpp"
+#include "xml.hpp"
 #include "database.hpp"
-#include "browsepage.hpp"
 #include "downloads.hpp"
+#include "ektoplayer.hpp"
+#include "browsepage.hpp"
 
 #include <iostream>
 
-static std::string& clean_description(std::string& desc) {
-  size_t pos;
+struct Html2Markup {
+  std::string result;
 
-  /* Strip those garbage attributes off the description. */
-  for (const char* search : { "href=\"/cdn-cgi/l/email", "class=\"__cf_email__", "data-cfemail=\""}) {
-    while (std::string::npos != (pos = desc.find(search))) {
-      size_t end = desc.find('"', pos+std::strlen(search));
-      if (end != std::string::npos)
-        desc.erase(pos, end-pos+1);
+  static std::string convert(const std::string& html) {
+    // XXX We need UTF-8 input here! XXX
+    XmlDoc doc = HtmlDoc::readDoc(html.c_str(), NULL, "UTF-8", HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
+    XmlNode root = doc.getRootElement();
+    Html2Markup p;
+    p.parse(root);
+    return p.result;
+  }
+
+  void parse(const XmlNode& _node) {
+    const char* s;
+    XmlNode node = _node;
+
+    for (; node; node = node.next()) {
+      switch (node.type()) {
+        case XML_ELEMENT_NODE:
+          s = node.name();
+
+          if (!strcmp(s, "a")) {
+            write("((");
+            parse(node.children());
+            write("))[[");
+            if (std::string::npos != node["href"].find("email-protec"))
+              write("email protected"); // XXX Replace useless large URLs
+            else
+              write(node["href"]);
+            write("]]");
+          }
+          else if (!strcmp(s, "strong") || !strcmp(s, "b")) {
+            write("**");
+            parse(node.children());
+            write("**");
+          }
+          else if (!strcmp(s, "em") || !strcmp(s, "i")) {
+            write("__");
+            parse(node.children());
+            write("__");
+          }
+          else if (!strcmp(s, "br")) {
+            write("\n");
+          }
+          else {
+            parse(node.children());
+          }
+
+          break;
+
+        case XML_TEXT_NODE:
+          write(node.content());
+          parse(node.children());
+          break;
+
+        default:
+          parse(node.children());
+      }
     }
   }
 
-  /* Save space by using shorter tags and trimming whitespace */
-  for (const char* search : {"strong>\0b>", "em>\0i>", "  \0 ", " >\0>"}) {
-    size_t search_len = strlen(search);
-    const char* replace = search + search_len + 1;
-    while (std::string::npos != (pos = desc.find(search)))
-      desc.replace(pos, search_len, replace);
+  template<typename T> inline void write(T value) {
+    result += value;
   }
+};
 
-  return desc;
+static std::string& clean_str(std::string& s) {
+  size_t pos = 0;
+  while (std::string::npos != (pos = s.find("  ", pos)))
+    s.erase(pos, 1);
+  return s;
 }
 
 /* ============================================================================
@@ -105,13 +156,13 @@ void Updater :: insert_album(Album& album) {
 
   Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL, NULL);
   Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-  clean_description(album.description);
+  album.description = Html2Markup::convert(album.description);
 
   auto a = db.albums.find(album.url.c_str(), true);
-  a.title(album.title.c_str());
-  a.artist(album.artist.c_str());
-  a.cover_url(album.cover_url.c_str());
-  a.description(album.description.c_str());
+  a.title(clean_str(album.title).c_str());
+  a.artist(clean_str(album.artist).c_str());
+  a.cover_url(clean_str(album.cover_url).c_str());
+  a.description(clean_str(album.description).c_str());
   a.date(album.date);
   a.rating(album.rating);
   a.votes(album.votes);
@@ -138,9 +189,9 @@ void Updater :: insert_album(Album& album) {
 
     auto t = db.tracks.find(track.url.c_str(), true);
     t.album_id(a.id);
-    t.title(track.title.c_str());
-    t.artist(track.artist.c_str());
-    t.remix(track.remix.c_str());
+    t.title(clean_str(track.title).c_str());
+    t.artist(clean_str(track.artist).c_str());
+    t.remix(clean_str(track.remix).c_str());
     t.number(track.number);
     t.bpm(track.bpm);
   }

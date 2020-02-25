@@ -12,7 +12,7 @@ MainWindow :: MainWindow(Database &db)
 , windows()
 , splash()
 , playlist()
-, info()
+, info(db)
 , help()
 {
   for (auto w : Config::main_widgets) {

@@ -5,7 +5,7 @@
 
 #include <string>
 
-#define VERSION                    "0.0.1"
+#define VERSION                    "0.0.0"
 #define GITHUB_URL                 "https://github.com/braph/ektoplayer"
 #define EKTOPLAZM_URL              "https://ektoplazm.com"
 #define EKTOPLAZM_BROWSE_URL       EKTOPLAZM_URL "/section/free-music"

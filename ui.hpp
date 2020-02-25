@@ -123,6 +123,41 @@ public:
         pos.y + size.height - 1, pos.x + size.width - 1);
   }
 
+  inline Pad& operator<<(char c) {
+    waddch(win, c);
+    return *this;
+  }
+
+  inline Pad& operator<<(char* s) {
+    waddstr(win, s);
+    return *this;
+  }
+
+  inline Pad& operator<<(const char* s) {
+    waddstr(win, s);
+    return *this;
+  }
+
+  inline Pad& operator<<(wchar_t* s) {
+    waddwstr(win, s);
+    return *this;
+  }
+
+  inline Pad& operator<<(const wchar_t* s) {
+    waddwstr(win, s);
+    return *this;
+  }
+
+  inline Pad& operator<<(const std::string& s) {
+    waddstr(win, s.c_str());
+    return *this;
+  }
+
+  template<typename T>
+  inline Pad& operator<<(T value) {
+    return (*this << std::to_string(value));
+  }
+
   WINDOW *active_win() { return win; }
 
 protected:

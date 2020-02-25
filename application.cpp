@@ -196,6 +196,7 @@ MAINLOOP:
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
   mainwindow.playingInfo.setState(player.getState());
   mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem()); //XXX bounds
+  mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
   mainwindow.noutrefresh();
   doupdate();
 
@@ -290,7 +291,7 @@ int main() {
     Application app;
     app.run();
   }
-  catch (const std::exception &e) {
+  catch (const std::runtime_error &e) {
     endwin();
     std::cout << e.what() << std::endl;
     return 1;
