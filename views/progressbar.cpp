@@ -36,19 +36,16 @@ void ProgressBar :: layout(Pos pos, Size size) {
     fading = fading_8;
 
   int i;
-  wchar_t c;
   auto fader = SpanView<ArrayView<const short>>(fading);
 
-  c = Config::progressbar_progress_char;
   for (i = 0; i < size.width; ++i) {
-    wattron(win, UI::Colors::set(fader.get(size.width, i), -1, 0));
-    waddnwstr(win, &c, 1);
+    wattrset(win, UI::Colors::set(fader.get(size.width, i), -1, 0));
+    *this << Config::progressbar_progress_char;
   }
   
-  c = Config::progressbar_rest_char;
   wattrset(win, Theme::get(Theme::PROGRESSBAR_REST));
   for (; i < size.width * 2; ++i)
-    waddnwstr(win, &c, 1);
+    *this << Config::progressbar_rest_char;
 }
 
 void ProgressBar :: setPercent(float percent) {

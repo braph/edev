@@ -99,14 +99,14 @@ void PlayingInfo :: draw() {
 #include "rm_trackstr.cpp"
 
 void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
-  unsigned int sum = 0;
+  size_t sum = 0;
 
   for (const auto &fmt : format) {
     size_t len;
     if (fmt.text.length())
-      toWideString(fmt.text, &len);
+      (void*) toWideString(fmt.text, &len);
     else
-      toWideString(trackField(track, fmt.tag), &len);
+      (void*) toWideString(trackField(track, fmt.tag), &len);
     sum += len;
   }
 
@@ -114,9 +114,9 @@ void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   for (const auto &fmt : format) {
     wattrset(win, UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())
-      waddwstr(win, toWideString(fmt.text));
+      *this << toWideString(fmt.text);
     else
-      waddwstr(win, toWideString(trackField(track, fmt.tag)));
+      *this << toWideString(trackField(track, fmt.tag));
   }
 }
 

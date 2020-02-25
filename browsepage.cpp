@@ -85,7 +85,7 @@ void BrowsePage :: parse_src(const std::string &src) {
     for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
       std::string url = a["href"];
       if (! url.empty())
-        album.styles.push_back(Style(url, a.text()));
+        album.styles.push_back(Style(url, a.nearestContent()));
     }
 
     // === Description ===
@@ -100,11 +100,11 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // === Download count ===
     std::string download_count = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
-    if (! download_count.empty()) { // TODO!
+    if (! download_count.empty()) {
       std::string v = download_count;
       for (size_t pos; (pos = v.find(',')) != std::string::npos;)
         v.erase(pos, 1);
-      album.download_count = std::stoi(v);
+      album.download_count = std::atoi(v.c_str());
     }
 
     // === Album title and URL ===
@@ -124,10 +124,8 @@ void BrowsePage :: parse_src(const std::string &src) {
     // === Rating, Voting count ===
     // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong> 
     auto strongs = xpath.query(".//p[@class = 'postmetadata']//span[@class = 'd']//strong", post);
-    try { album.rating = std::stof(strongs[0].text()); }
-    catch (...) { /* XXX: handle_error("album.rating"); */ }
-    try { album.votes = std::stoi(strongs[1].text()); }
-    catch (...) { /* XXX: handle_error("album.votes");  */ }
+    album.rating = std::atof(strMayNULL(strongs[0].nearestContent()));
+    album.votes = std::atoi(strMayNULL(strongs[1].nearestContent()));
 
     // === Direct mp3 track URLs ===
     // <script type="text/javascript"> (...) soundFile:"(...)"
@@ -142,11 +140,8 @@ void BrowsePage :: parse_src(const std::string &src) {
         text = base64_decode(text);
         boost::split(tracks, text, boost::is_any_of(","));
 
-        if (tracks.size()) {
-          for (auto &url : tracks)
-            url.erase(0, url.rfind('/')+1); // basename
+        if (tracks.size())
           break;
-        }
       }
     }
 
@@ -164,19 +159,14 @@ void BrowsePage :: parse_src(const std::string &src) {
                     }
                     if (trackit != trackend) {
                       track.url    = *trackit++;
-                      track.number = std::stoi(span.text());
+                      track.number = std::atoi(strMayNULL(span.nearestContent()));
                     }
                     break;
-          case 't': track.title  = span.text(); boost::trim(track.title);  break;
-          case 'r': track.remix  = span.text(); boost::trim(track.remix);  break;
-          case 'a': track.artist = span.text(); boost::trim(track.artist); break;
-          case 'd': try {
-                      std::string bpm = span.text(); // "(134 BPM)"
-                      bpm.erase(0, bpm.find_first_of("0123456789"));
-                      track.bpm = std::stoi(bpm);
-                    } catch (const std::exception &e) {
-                      // XXX handle_error(e);
-                    }
+          case 't': track.title  = boost::trim_copy(span.text()); break;
+          case 'r': track.remix  = boost::trim_copy(span.text()); break;
+          case 'a': track.artist = boost::trim_copy(span.text()); break;
+          case 'd': const char* s = span.nearestContent(); // "(134 BPM)"
+                    std::sscanf(strMayNULL(s), "%*[^0-9]%hu", &track.bpm);
                     break;
         }
       }

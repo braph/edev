@@ -50,7 +50,9 @@ public:
   }
 
   void draw() {
-    wclear(win);
+    redrawwin(win);
+    wmove(win, 0,0);
+
     if (! m_list) return;
     m_cursor    = clamp(m_cursor,    0, size.height - 1);
     m_active    = clamp(m_active,    0, m_list->size() - 1);

@@ -24,11 +24,10 @@
 using namespace Ektoplayer;
 namespace fs = boost::filesystem;
 
-static volatile int have_SIGWINCH;
-static volatile int have_SIGTERM;
-static void on_SIGWINCH(int) { have_SIGWINCH = 1; }
-static void on_SIGINT(int)   { have_SIGTERM = 1;  }
-static void on_SIGTERM(int)  { have_SIGTERM = 1;  }
+static volatile int have_SIGNAL;
+static void on_SIGWINCH(int) { have_SIGNAL = SIGWINCH; }
+static void on_SIGINT(int)   { have_SIGNAL = SIGINT;   }
+static void on_SIGTERM(int)  { have_SIGNAL = SIGTERM;  }
 static void printDBStats(Database&);
 
 class Application {
@@ -182,15 +181,15 @@ void Application :: run() {
   mainwindow.playlist.playlist = database.getTracks();
 
 WINDOW_RESIZE:
-  have_SIGWINCH = false;
+  have_SIGNAL = 0;
   mainwindow.layout({0,0}, {LINES,COLS});
   mainwindow.draw();
 
 MAINLOOP:
-  if (have_SIGWINCH)
-    goto WINDOW_RESIZE;
-  if (have_SIGTERM)
+  if (have_SIGNAL == SIGTERM || have_SIGNAL == SIGINT)
     return;
+  else if (have_SIGNAL == SIGWINCH)
+    goto WINDOW_RESIZE;
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
@@ -247,13 +246,6 @@ MAINLOOP:
     else if (c == 'x') {
       database.shrink_to_fit();
       mainwindow.playlist.playlist = database.getTracks();
-      goto MAINLOOP;
-    }
-    else if (c == 'i') {
-      std::cerr << mainwindow.playlist.getItem().title() << std::endl;
-      std::cerr << mainwindow.playlist.getItem().album().archive_mp3_url() << std::endl;
-      std::cerr << mainwindow.playlist.getItem().album().archive_wav_url() << std::endl;
-      std::cerr << mainwindow.playlist.getItem().album().description() << std::endl;
       goto MAINLOOP;
     }
     else

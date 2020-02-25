@@ -3,22 +3,23 @@
 
 #include <string>
 
+/* First string of the pool is always an empty string "" with ID 0 */
 class StringPool {
 public:
-  StringPool() : storage("", 1) {}
+  StringPool() : storage(1, '\0') {}
 
   /* Adds string `s` to the stringpool. If `force_append` is true, no attempts
    * are made to return an existing string in the string pool. */
   size_t add(const char* s, bool force_append = false);
 
   /* A pool is optimized when it it sorted by length (descending). */
-  bool isOptimized()const;
+  bool isOptimized() const;
 
   /* Return the number of NUL terminated strings */
   size_t count() const;
 
   /* Returns the ID for string `s`.
-   * If the string is empty or it could not be found, 0 is returned.  */
+   * If the string is empty or it could not be found, 0 is returned. */
   size_t find(const char *s) const;
 
   inline const char*  get(size_t id)   const { return storage.c_str() + id; }

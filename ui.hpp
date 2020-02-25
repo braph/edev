@@ -64,19 +64,54 @@ public:
 #endif
 };
 
-class Window : public Widget {
+/* Drawable: Windows and Pads, they share the same functionality */
+struct WidgetDrawable : public Widget {
+  WINDOW *win;
+
+#ifndef NDEBUG
+  ~WidgetDrawable()
+  { delwin(win); }
+#endif
+
+  WINDOW *active_win()
+  { return win; }
+
+  inline WidgetDrawable& operator<<(char c)
+  { waddch(win, c); return *this; }
+
+  inline WidgetDrawable& operator<<(char* s)
+  { waddstr(win, s); return *this; }
+
+  inline WidgetDrawable& operator<<(const char* s)
+  { waddstr(win, s); return *this; }
+
+  inline WidgetDrawable& operator<<(wchar_t c)
+  { waddnwstr(win, &c, 1); return *this; }
+
+  inline WidgetDrawable& operator<<(wchar_t* s)
+  { waddwstr(win, s); return *this; }
+
+  inline WidgetDrawable& operator<<(const wchar_t* s)
+  { waddwstr(win, s); return *this; }
+
+  inline WidgetDrawable& operator<<(const std::string& s)
+  { waddstr(win, s.c_str()); return *this; }
+
+  inline WidgetDrawable& operator<<(const std::wstring& s)
+  { waddwstr(win, s.c_str()); return *this; }
+
+  template<typename T>
+  inline WidgetDrawable& operator<<(T value)
+  { return (*this << std::to_string(value)); }
+};
+
+class Window : public WidgetDrawable {
 public:
   Window() {
     win = newwin(0, 0, 0, 0);
     keypad(win, true);
     getmaxyx(win, size.height, size.width);
   }
-
-#ifndef NDEBUG
- ~Window() {
-   delwin(win);
- }
-#endif
 
   void layout(Pos pos, Size size) {
     if (size != this->size) {
@@ -93,14 +128,9 @@ public:
   void noutrefresh() {
     wnoutrefresh(win);
   }
-
-  WINDOW *active_win() { return win; }
-
-protected:
-  WINDOW *win;
 };
 
-class Pad : public Widget {
+class Pad : public WidgetDrawable {
 public:
   Pad() {
     win = newpad(1,1);
@@ -112,58 +142,14 @@ public:
     pad_mincol = 0;
   }
 
-#ifndef NDEBUG
- ~Pad() {
-   delwin(win);
- }
-#endif
-
   void noutrefresh() {
     pnoutrefresh(win, pad_minrow, pad_mincol, pos.y, pos.x,
         pos.y + size.height - 1, pos.x + size.width - 1);
   }
 
-  inline Pad& operator<<(char c) {
-    waddch(win, c);
-    return *this;
-  }
-
-  inline Pad& operator<<(char* s) {
-    waddstr(win, s);
-    return *this;
-  }
-
-  inline Pad& operator<<(const char* s) {
-    waddstr(win, s);
-    return *this;
-  }
-
-  inline Pad& operator<<(wchar_t* s) {
-    waddwstr(win, s);
-    return *this;
-  }
-
-  inline Pad& operator<<(const wchar_t* s) {
-    waddwstr(win, s);
-    return *this;
-  }
-
-  inline Pad& operator<<(const std::string& s) {
-    waddstr(win, s.c_str());
-    return *this;
-  }
-
-  template<typename T>
-  inline Pad& operator<<(T value) {
-    return (*this << std::to_string(value));
-  }
-
-  WINDOW *active_win() { return win; }
-
 protected:
-  WINDOW *win;
-  int  pad_minrow;
-  int  pad_mincol;
+  int pad_minrow;
+  int pad_mincol;
 };
 
 } // namespace UI

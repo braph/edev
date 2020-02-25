@@ -64,6 +64,19 @@ public:
   inline XmlNode      next()       const { return XmlNode(m_node->next);      }
   inline XmlNode      children()   const { return XmlNode(m_node->children);  }
   inline XmlAttribute attributes() const { return XmlAttribute(m_node->properties); }
+
+  const char* nearestContent() {
+    const char* s = content();
+    if (s)
+      return s;
+
+    for (XmlNode node = children(); node; node = node.next())
+      if ((s = node.content()))
+        return s;
+
+    return NULL;
+  }
+
   inline std::string  text()       const { 
     std::string value;
     xmlChar* _ = xmlNodeListGetString(m_node->doc, m_node->xmlChildrenNode, 1);

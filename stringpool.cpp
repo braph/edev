@@ -22,8 +22,7 @@ size_t StringPool :: find(const char *s) const {
   if (!*s)
     return 0;
 
-  const size_t len_with_0 = std::strlen(s) + 1;
-  const size_t pos = storage.find(s, 1, len_with_0);
+  size_t pos = storage.find(s, 1 /* Skip empty string */, std::strlen(s) + 1);
   if (pos != std::string::npos)
     return pos;
 
