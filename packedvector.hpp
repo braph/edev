@@ -157,9 +157,9 @@ private:
 public:
   DynamicPackedVector() : _vec(1) { }
 
-  typedef GenericReference<DynamicPackedVector> reference;
-  typedef GenericIterator<DynamicPackedVector> iterator;
-  typedef int value_type;
+  using reference  = GenericReference<DynamicPackedVector>;
+  using iterator   = GenericIterator<DynamicPackedVector>;
+  using value_type = int;
 
   reference operator[](size_t index) { return reference(*this, index); }
   iterator  begin()                  { return iterator(*this, 0);      }
