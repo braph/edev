@@ -212,7 +212,7 @@ void Updater :: insert_browsepage(BrowsePage& page) {
     insert_album(album);
 }
 
-#if TEST_UPDATER
+#ifdef TEST_UPDATER
 
 #if PERFORMANCE_TEST
 #include <fstream>

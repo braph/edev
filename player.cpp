@@ -195,14 +195,14 @@ void Mpg123Player :: toggle() {
     *process << "P\n";
 }
 
-#if USE_VOLUME
+#ifdef USE_VOLUME
 void Mpg123Player :: volume(int volume) {
   if (process && process->running())
     *process << "VOLUME " << volume << '\n';
 }
 #endif
 
-#if TEST_PLAYER
+#ifdef TEST_PLAYER
 #include "test.hpp"
 
 int main() {

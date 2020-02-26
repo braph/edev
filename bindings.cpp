@@ -45,7 +45,7 @@ void init() {
 
 } // namespace Bindings
 
-#if NUR_ZUR_UEBERSICHT
+#ifdef NUR_ZUR_UEBERSICHT
   // nav: help, info, browser, playlist
    @bindings[:playlist] = {
       # selection

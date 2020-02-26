@@ -106,7 +106,7 @@ void Splash :: draw() {
   }
 }
 
-#if TEST_SPLASH
+#ifdef TEST_SPLASH
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

@@ -408,7 +408,7 @@ DB::Field TRACK::operator[](DB::ColumnID id) const {
 
 
 // ============================================================================
-#if TEST_DATABASE
+#ifdef TEST_DATABASE
 #include "test.hpp"
 
 template<typename T1, typename T2>

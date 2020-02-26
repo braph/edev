@@ -43,7 +43,7 @@ void Help :: draw() {
   }
 }
 
-#if TEST_HELP
+#ifdef TEST_HELP
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

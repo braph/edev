@@ -238,7 +238,7 @@ bool Info :: handleMouse(MEVENT& m) {
   return false;
 }
 
-#if TEST_INFO
+#ifdef TEST_INFO
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

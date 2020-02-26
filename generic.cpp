@@ -1,6 +1,6 @@
 #include "generic.hpp"
 
-#if TEST_GENERIC
+#ifdef TEST_GENERIC
 #include "test.hpp"
 #include <vector>
 

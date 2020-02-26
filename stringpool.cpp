@@ -57,7 +57,7 @@ size_t StringPool :: count() const {
   return n;
 }
 
-#if TEST_STRINGPOOL
+#ifdef TEST_STRINGPOOL
 #include "test.hpp"
 
 #define TEST_DATA \

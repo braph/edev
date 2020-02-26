@@ -219,7 +219,7 @@ std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   return widgets;
 }
 
-#if TEST_OPTIONS
+#ifdef TEST_OPTIONS
 int main() {
   UI::Color::init();
   std::vector<PlaylistColumnFormat> r = parse_playlist_format(DEFAULT_PLAYLIST_FORMAT);

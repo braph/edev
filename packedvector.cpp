@@ -157,7 +157,7 @@ void DynamicPackedVector :: shrink_to_fit() {
     _vec = PackedVector(max_bits, size(), _vec.begin(), _vec.end());
 }
 
-#if TEST_PACKEDVECTOR
+#ifdef TEST_PACKEDVECTOR
 #include "test.hpp"
 #include <vector>
 int main() {

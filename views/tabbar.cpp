@@ -69,7 +69,7 @@ bool TabBar :: handleMouse(MEVENT& m) {
   return false;
 }
 
-#if TEST_TABBAR
+#ifdef TEST_TABBAR
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

@@ -7,7 +7,7 @@
 #include <new>
 #include <memory>
 
-#if DEBUG_VECTOR
+#ifdef DEBUG_VECTOR
 #include <cstdio>
 static int call_level = 0;
 #define __enter__(FMT, ...) \

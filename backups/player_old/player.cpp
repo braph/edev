@@ -175,7 +175,7 @@ void Mpg123Player :: toggle() {
 
 //in << "VOLUME 0.1" << ENDL; // XXX
 
-#if TEST_PLAYER
+#ifdef TEST_PLAYER
 #include <unistd.h>
 #include <iostream>
 #include <cassert>

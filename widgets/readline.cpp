@@ -84,7 +84,7 @@ void ReadlineWidget :: _getch() {
   }
 }
 
-#if TEST_READLINE
+#ifdef TEST_READLINE
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

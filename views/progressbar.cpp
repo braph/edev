@@ -61,7 +61,7 @@ bool ProgressBar :: handleMouse(MEVENT& m) {
   return false;
 }
 
-#if TEST_PROGRESSBAR
+#ifdef TEST_PROGRESSBAR
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

@@ -91,7 +91,7 @@ int Colors :: set(short fg, short bg, int attributes) {
   return COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
 }
 
-#if TEST_COLORS
+#ifdef TEST_COLORS
 #include "test.hpp"
 int main() {
   TEST_BEGIN();

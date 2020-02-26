@@ -18,7 +18,7 @@ void testRender(WINDOW *win, int width, const TItem &item, int index, bool curso
   waddnstr(win, ss.str().c_str(), width - 1);
 }
 
-#if TEST_LISTWIDGET
+#ifdef TEST_LISTWIDGET
 #include "../test.hpp"
 #include <string>
 #include <vector>

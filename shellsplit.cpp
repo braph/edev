@@ -49,7 +49,7 @@ read_word:
   return words;
 }
 
-#if TEST_SHELLSPLIT
+#ifdef TEST_SHELLSPLIT
 #include <cassert>
 #include <iostream>
 

@@ -80,7 +80,7 @@ Playlist :: Playlist()
   this->attachList(&this->playlist);
 }
 
-#if TEST_PLAYLIST
+#ifdef TEST_PLAYLIST
 #include "../test.hpp"
 
 int main() {

@@ -120,7 +120,7 @@ void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   }
 }
 
-#if TEST_PLAYINGINFO
+#ifdef TEST_PLAYINGINFO
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();

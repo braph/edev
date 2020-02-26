@@ -172,7 +172,7 @@ void Theme :: loadTheme(unsigned int theme) {
   }
 }
 
-#if TEST_THEME
+#ifdef TEST_THEME
 #include "test.hpp"
 int main() {
 }

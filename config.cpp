@@ -281,7 +281,7 @@ void Config :: read(const std::string &file) {
   }
 }
 
-#if TEST_CONFIG
+#ifdef TEST_CONFIG
 #include "test.hpp"
 #include "colors.hpp"
 int main() {

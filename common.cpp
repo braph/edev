@@ -19,7 +19,7 @@ char* toNarrowString(const wchar_t* s, size_t* len) {
   return buffer.narrow;
 }
 
-#if TEST_COMMON
+#ifdef TEST_COMMON
 #include "test.hpp"
 
 int main() {

@@ -54,7 +54,7 @@ size_t dir_size(const boost::filesystem::path& path) {
 
 } // namespace Filesystem
 
-#if TEST_FILESYSTEM
+#ifdef TEST_FILESYSTEM
 #include <cassert>
 #include <iostream>
 #define NOT_REACHED assert(!"Not reached")
