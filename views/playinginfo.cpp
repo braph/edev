@@ -104,9 +104,9 @@ void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   for (const auto &fmt : format) {
     size_t len;
     if (fmt.text.length())
-      (void*) toWideString(fmt.text, &len);
+      /*void*/ toWideString(fmt.text, &len);
     else
-      (void*) toWideString(trackField(track, fmt.tag), &len);
+      /*void*/ toWideString(trackField(track, fmt.tag), &len);
     sum += len;
   }
 

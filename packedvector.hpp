@@ -25,6 +25,35 @@ static inline int bitlength_32(uint32_t n) {
 }
 
 /* ============================================================================
+ * TinyPackedArray - PackedVector's little brother
+ * ==========================================================================*/
+
+template<typename TItem, typename TStorage>
+union TinyPackedArray {
+  TItem    array[sizeof(TStorage)/sizeof(TItem)];
+  TStorage value;
+
+  TinyPackedArray() : value(0) {}
+  TinyPackedArray(TStorage v) : value(v) {}
+
+  inline bool add(TItem v) {
+    for (size_t i = 0; i < capacity(); ++i)
+      if (! array[i]) {
+        array[i] = v;
+        return true;
+      }
+    return false;
+  }
+
+  inline operator TItem()        { return value;                            }
+  inline size_t capacity() const { return sizeof(TStorage) / sizeof(TItem); }
+  inline size_t size()     const { return sizeof(TStorage) / sizeof(TItem); }
+  inline TItem* begin()          { return array;                            }
+  inline TItem* end()            { return array + capacity();               }
+  inline TItem& operator[](size_t i) { return array[i];                     }
+};
+
+/* ============================================================================
  * PackedVector
  * ==========================================================================*/
 

@@ -1,11 +1,8 @@
 TODAY:
 - Config: Themes set()
-- Style::styles() shall return an array of strings
-- Styles: Bitfields in the right order, maybe we get 3 bytes -> sorted
 - SpanView, gener.cpp
 - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
-- views/info.cpp
-
+- fork silent
 - XML: text() -> alltext()
 
 ===============================================================================
@@ -29,3 +26,5 @@ TODAY:
       color = UI::Colors.get("list.item_even");
     else
       color = UI::Colors.get("list.item_odd");
+
+- Style::styles() shall return an array of strings: abgelehnt.

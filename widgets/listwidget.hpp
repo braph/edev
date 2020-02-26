@@ -55,9 +55,9 @@ public:
 
     if (! m_list) return;
     m_cursor    = clamp(m_cursor,    0, size.height - 1);
-    m_active    = clamp(m_active,    0, m_list->size() - 1);
-    m_top_index = clamp(m_top_index, 0, m_list->size() - 1);
-    m_top_index = clamp(m_top_index, 0, m_list->size() - size.height);
+    m_active    = clamp(m_active,    0, containerSize() - 1);
+    m_top_index = clamp(m_top_index, 0, containerSize() - 1);
+    m_top_index = clamp(m_top_index, 0, containerSize() - size.height);
 
     int line   = 0;
     size_t idx = m_top_index;
@@ -175,6 +175,9 @@ private:
   int m_active;
   int m_top_index;
   TContainer* m_list;
+
+  /* Since curses coordinates are ints, we do casting here TODO */
+  inline int containerSize() { return static_cast<int>(m_list ? m_list->size() : 0); }
 };
 
 // === Testing ================================================================

@@ -11,6 +11,7 @@
 #include "playlist.hpp"
 #include "tabbar.hpp"
 
+#include "../player.hpp"
 #include "../database.hpp"
 #include "../ui.hpp"
 #include "../ui/container.hpp"
@@ -27,7 +28,7 @@ public:
   Views::Playlist       playlist;
   Views::Info           info;
   Views::Help           help;
-  MainWindow(Database&);
+  MainWindow(Database&, Mpg123Player&);
   void layout(UI::Pos, UI::Size);
 };
 

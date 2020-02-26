@@ -5,14 +5,14 @@
 using namespace UI;
 using namespace Views;
 
-MainWindow :: MainWindow(Database &db)
+MainWindow :: MainWindow(Database& db, Mpg123Player& player)
 : playingInfo(db)
 , progressBar()
 , tabBar()
 , windows()
 , splash()
 , playlist()
-, info(db)
+, info(db, player)
 , help()
 {
   for (auto w : Config::main_widgets) {

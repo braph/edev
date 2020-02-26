@@ -14,7 +14,8 @@
 #include <utility>
 #include <algorithm>
 
-#define DB_ABI_VERSION 1
+#define DB_ABI_VERSION  1
+#define DB_ENDIANNESS_CHECK 0xFEFF
 
 /* ============================================================================
  * Metadata Database
@@ -54,17 +55,19 @@
  *
  * XXX NOTE XXX
  * The `Album::styles` field stores at max 4 styles...
- * Records with ID = 0 (first ROW) are used for representing a NULL value.
+ * Records with ID = 0 (first row) are used for representing a NULL value.
  * The row count of a table will therefore be off by one.
  * It is easier to do a `-1` on the return value of Table::size() than applying
  * this -1 logic all over the place. this won't be fixed.
- *
- * The reason for that is also the implementation of the Album::styles(). //XXX
  */
 
 class Database {
 public:
   typedef const char* ccstr;
+
+  // === Column ===============================================================
+  //using Column = std::vector<int>;
+  using Column = DynamicPackedVector;
 
   /* ==========================================================================
    * ColumnIDs
@@ -165,10 +168,6 @@ public:
       }
     }
   };
-
-  // === Column ===============================================================
-  //using Column = std::vector<int>;
-  using Column = DynamicPackedVector;
 
   // === Base class for all tables ============================================
   struct Table {

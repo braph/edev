@@ -1,10 +1,14 @@
-WARNINGS = -Wall -Wpedantic -pedantic # -Wextra -Winit-self -Wold-style-cast -Woverloaded-virtual -Wuninitialized -Wmissing-declarations
-#WARNINGS = -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wno-unused
-# -Wundef -Wshadow -Wswitch-default -Wstrict-overflow=5 
-#WARNINGS += -Wsign-conversion
-#WARNINGS += -Werror 
+WARNINGS = -Wall -Wpedantic -pedantic -Winit-self -Woverloaded-virtual -Wuninitialized -Wmissing-declarations -Wredundant-decls 
+#WARNINGS = -Wextra -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wstrict-null-sentinel 
+# -Wshadow -Wswitch-default -Wstrict-overflow=5 
+WARNINGS += -Wundef
+WARNINGS += -Wlogical-op 
+WARNINGS += -Wold-style-cast -Wcast-align -Wcast-qual -Wnoexcept -Wno-unused
+WARNINGS += -Wsign-promo # -Wsign-conversion
+WARNINGS += -Werror 
 
-STD = c++14
+#-D_GLIBCXX_ASSERTIONS
+STD = c++11
 
 CXXFLAGS   := -std=$(STD) -Og -g $(WARNINGS)
 #CXXFLAGS   := -std=$(STD) -O2 -DNDEBUG

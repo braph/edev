@@ -6,9 +6,9 @@
 #include <climits>
 #include <cstring>
 #include <unordered_map>
+#include <iostream>
 
 #define  streq(a,b) (!strcmp(a,b))
-#define  bitsOf(T) (CHAR_BIT*sizeof(T))
 
 typedef const char* ccstr;
 
@@ -28,20 +28,23 @@ typedef const char* ccstr;
 struct Dumper {
   Dumper(std::ofstream& fs) : fs(fs) {}
 
-  void dump(size_t value)
+  inline void dump(size_t value)
   { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  void dump(StringPool& p)
-  { dump(bitsOf(char), p.size(), reinterpret_cast<char*>(p.data())); }
+  inline void dump(uint16_t value)
+  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  void dump(DynamicPackedVector& v)
+  inline void dump(StringPool& p)
+  { dump(BITSOF(char), p.size(), reinterpret_cast<char*>(p.data())); }
+
+  inline void dump(DynamicPackedVector& v)
   { dump(v.bits(), v.size(), reinterpret_cast<char*>(v.data())); }
 
   template<typename T>
-  void dump(std::vector<T>& v)
-  { dump(bitsOf(T), v.size(), reinterpret_cast<char*>(v.data())); }
+  inline void dump(std::vector<T>& v)
+  { dump(BITSOF(T), v.size(), reinterpret_cast<char*>(v.data())); }
 
-  void dump(Database::Table& t)
+  inline void dump(Database::Table& t)
   { for (auto col : t.columns) { dump(*col); } }
 
 private:
@@ -58,11 +61,14 @@ private:
 struct Loader {
   Loader(std::ifstream& fs) : fs(fs) {}
 
-  void load(size_t& value)
+  inline void load(size_t& value)
+  { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
+
+  inline void load(uint16_t& value)
   { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
 
   void load(StringPool& pool) {
-    readHeader(bitsOf(char));
+    readHeader(BITSOF(char));
     pool.resize(elem_count);
     readData(reinterpret_cast<char*>(pool.data()));
   }
@@ -76,7 +82,7 @@ struct Loader {
 
   template<typename T>
   void load(std::vector<T>& v) {
-    readHeader(bitsOf(T));
+    readHeader(BITSOF(T));
     v.resize(elem_count);
     readData(reinterpret_cast<char*>(v.data()));
   }
@@ -140,18 +146,21 @@ Database :: Database()
 }
 
 void Database :: load(const std::string& file) {
+  uint16_t check;
   std::ifstream fs;
   fs.exceptions(std::ifstream::failbit|std::ifstream::badbit|std::ifstream::eofbit);
   fs.open(file, std::ios::binary);
 
   Loader l(fs);
+  l.load(check);
+  if (check != DB_ENDIANNESS_CHECK)
+    throw std::runtime_error("Database endianess mismatch");
 
-  size_t abi_version = 0;
-  l.load(abi_version);
-  if (abi_version != DB_ABI_VERSION)
+  l.load(check);
+  if (check != DB_ABI_VERSION)
     throw std::runtime_error("Database ABI version mismatch");
 
-  for (auto p : pools) l.load(*p);
+  for (auto p : pools)  l.load(*p);
   for (auto t : tables) l.load(*t);
 }
 
@@ -160,8 +169,9 @@ void Database :: save(const std::string& file) {
   fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
   fs.open(file, std::ios::binary);
   Dumper d(fs);
-  d.dump(DB_ABI_VERSION);
-  for (auto p : pools) d.dump(*p);
+  d.dump(static_cast<uint16_t>(DB_ENDIANNESS_CHECK));
+  d.dump(static_cast<uint16_t>(DB_ABI_VERSION));
+  for (auto p : pools)  d.dump(*p);
   for (auto t : tables) d.dump(*t);
 }
 
@@ -180,7 +190,6 @@ void Database :: shrink_to_fit() {
     table->shrink_to_fit();
 }
 
-#include <iostream>
 void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
   std::cerr << " shrinking pool ...";
   if (pool.isOptimized()) {
@@ -200,20 +209,20 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
     for (auto id : *col)
       idRemap[id] = 0;
 
-  using id_with_length = std::pair<unsigned int, unsigned int>;
+  using IDAndLength = std::pair<unsigned int, unsigned int>;
 
   // Sort the IDs, longest strings first
-  std::vector<id_with_length> idSortedByLength;
+  std::vector<IDAndLength> idSortedByLength;
   idSortedByLength.reserve(idRemap.size());
   for (auto& pair : idRemap)
-    idSortedByLength.push_back(id_with_length(pair.first, strlen(pool.get(pair.first))));
+    idSortedByLength.push_back(IDAndLength(pair.first, strlen(pool.get(pair.first))));
 
   std::sort(idSortedByLength.begin(), idSortedByLength.end(),
-      [](auto& a, auto& b){ return a.second > b.second; });
+      [](const IDAndLength& a, const IDAndLength& b){ return a.second > b.second; });
 
   // Add strings in the right order to the stringpool and store the new ID
-  for (auto id_with_length : idSortedByLength)
-    idRemap[id_with_length.first] = newPool.add(pool.get(id_with_length.first));
+  for (auto IDAndLength : idSortedByLength)
+    idRemap[IDAndLength.first] = newPool.add(pool.get(IDAndLength.first));
 
   // Replace the IDs from the old pool by the IDs from the new pool
   for (auto column : columns)
@@ -336,7 +345,7 @@ DB::Field _::operator[](DB::ColumnID id) const {
   case DB::ALBUM_COVER_URL:       return DB::Field(cover_url());
   case DB::ALBUM_TITLE:           return DB::Field(title());
   case DB::ALBUM_ARTIST:          return DB::Field(artist());
-  case DB::ALBUM_STYLES:          return DB::Field(styles()); // TODO!
+  case DB::ALBUM_STYLES:          return DB::Field(styles());
   case DB::ALBUM_DESCRIPTION:     return DB::Field(description());
   case DB::ALBUM_DATE:            return DB::Field(date());
   case DB::ALBUM_RATING:          return DB::Field(rating());

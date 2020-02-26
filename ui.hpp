@@ -1,27 +1,51 @@
 #ifndef _UI_HPP
 #define _UI_HPP
 
-#include "unistd.h"
+#include "unistd.h" // XXX
 #include "curses.h"
 
-#include <iostream> // XXX
+#include <vector>
+#include <iostream>
+#include <algorithm>
 
 namespace UI {
 
+struct Pos {
+  int y;
+  int x;
+  inline Pos() : y(0), x(0) {}
+  inline Pos(int y, int x) : y(y), x(x) {}
+  inline Pos(const MEVENT& m) : y(m.y), x(m.x) {}
+  inline bool operator==(const Pos& p) const { return y == p.y && x == p.x; }
+  inline bool operator!=(const Pos& p) const { return y != p.y || x != p.x; }
+  inline bool operator>=(const Pos& p) const { return y >= p.y && x >= p.x; }
+  inline bool operator<=(const Pos& p) const { return y <= p.y && x <= p.x; }
+  inline bool operator< (const Pos& p) const { return y <  p.y && x <  p.x; }
+  inline bool operator> (const Pos& p) const { return y <  p.y && x <  p.x; }
+
+  inline friend std::ostream& operator<<(std::ostream& os, const UI::Pos& p) {
+    os << "UI::Pos(" << p.y << ',' << p.x << ')';
+    return os;
+  }
+};
+
 struct Size {
   enum { KEEP = -1 };
+
   int height;
   int width;
 
-  Size()                      : height(0),      width(0)     { }
-  Size(int height, int width) : height(height), width(width) { }
+  Size() : height(0), width(0) {}
+  Size(int height, int width) : height(height), width(width) {}
 
-  bool operator==(const Size& s) const { return s.height == height && s.width == width; }
-  bool operator!=(const Size& s) const { return s.height != height || s.width != width; }
+  inline bool operator==(const Size& s) const
+  { return s.height == height && s.width == width; }
 
-  Size calc(int height, int width) {
-    return Size(this->height + height, this->width + width);
-  }
+  inline bool operator!=(const Size& s) const
+  { return s.height != height || s.width != width; }
+
+  Size calc(int height, int width)
+  { return Size(this->height + height, this->width + width); }
 
   Size duplicate(int height, int width = KEEP) {
     return Size(
@@ -29,18 +53,42 @@ struct Size {
         width  == KEEP ? this->width  : width
     );
   }
-  //def to_s;  "[(Size) height=#{height}, width=#{width}]"  end
+
+  inline friend std::ostream& operator<<(std::ostream& os, const UI::Size& s) {
+    os << "UI::Size(" << s.height << ',' << s.width << ')';
+    return os;
+  }
 };
 
-struct Pos {
-  int y;
-  int x;
+template<typename T>
+struct MouseEvents {
+  struct Rectangle  {
+    UI::Pos start, stop;
+    inline Rectangle(const UI::Pos& start, const UI::Pos& stop) : start(start), stop(stop) {}
+  };
 
-  bool operator==(const Pos& p) const { return p.y == y && p.x == x; }
-  bool operator!=(const Pos& p) const { return p.y != y || p.x != x; }
-  // TODO: is rhs right?
-  //bool operator>=(const Pos& p) const { return x >= p.x && y >= p.y; }
-  //bool operator<=(const Pos& p) const { return x <= p.x && y <= p.y; }
+  struct MouseEvent {
+    Rectangle section;
+    T data;
+    inline MouseEvent(const Rectangle& section, const T& data) : section(section), data(data) {}
+  };
+
+  std::vector<MouseEvent> events;
+
+  using iterator = typename std::vector<MouseEvent>::iterator;
+
+  inline iterator begin() { return events.begin(); }
+  inline iterator end()   { return events.end();   }
+  inline void     clear() { events.clear();        }
+
+  iterator find(const Pos& mousePos) {
+    return std::find_if(begin(), end(), [&](const MouseEvent& event) {
+        return mousePos >= event.section.start && mousePos <= event.section.stop; });
+  }
+
+  void add(const Pos& start, const Pos& stop, const T& data) {
+    events.push_back(MouseEvent(Rectangle(start, stop), data));
+  }
 };
 
 class Widget {
@@ -48,6 +96,7 @@ public:
   Pos  pos;
   Size size;
   bool visible;
+
   virtual void    draw() = 0;
   virtual void    layout(Pos pos, Size size) = 0;
   virtual void    noutrefresh() = 0;
@@ -76,20 +125,19 @@ struct WidgetDrawable : public Widget {
   WINDOW *active_win()
   { return win; }
 
+  inline UI::Pos cursorPos()
+  { UI::Pos pos; getyx(win, pos.y, pos.x); return pos; }
+
+  // Char
   inline WidgetDrawable& operator<<(char c)
   { waddch(win, c); return *this; }
-
-  inline WidgetDrawable& operator<<(char* s)
-  { waddstr(win, s); return *this; }
-
-  inline WidgetDrawable& operator<<(const char* s)
-  { waddstr(win, s); return *this; }
 
   inline WidgetDrawable& operator<<(wchar_t c)
   { waddnwstr(win, &c, 1); return *this; }
 
-  inline WidgetDrawable& operator<<(wchar_t* s)
-  { waddwstr(win, s); return *this; }
+  // String
+  inline WidgetDrawable& operator<<(const char* s)
+  { waddstr(win, s); return *this; }
 
   inline WidgetDrawable& operator<<(const wchar_t* s)
   { waddwstr(win, s); return *this; }
@@ -100,9 +148,21 @@ struct WidgetDrawable : public Widget {
   inline WidgetDrawable& operator<<(const std::wstring& s)
   { waddwstr(win, s.c_str()); return *this; }
 
+  // Integer types
+  inline WidgetDrawable& operator<<(int i)
+  { wprintw(win, "%d", i); return *this; }
+
+  inline WidgetDrawable& operator<<(size_t s)
+  { wprintw(win, "%lu", s); return *this; }
+
+  inline WidgetDrawable& operator<<(float f)
+  { wprintw(win, "%f", f); return *this; }
+
+#if 0
   template<typename T>
   inline WidgetDrawable& operator<<(T value)
   { return (*this << std::to_string(value)); }
+#endif
 };
 
 class Window : public WidgetDrawable {

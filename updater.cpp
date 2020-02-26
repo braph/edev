@@ -142,58 +142,68 @@ bool Updater :: start(int pages) {
 }
 
 void Updater :: insert_album(Album& album) {
-  int32_t styles = 0;
-
+  // Album Styles =============================================================
+  TinyPackedArray<uint8_t, uint32_t> albumStyleIDs;
   for (auto &style : album.styles) {
-    Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL, NULL);
-
-    auto row = db.styles.find(style.url.c_str(), true);
-    if (! *(row.name()))
-      row.name(style.name.c_str());
-    styles <<= 8; // TODO: move assignment logic got Database.cpp
-    styles += row.id;
+    Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL);
+    auto styleRecord = db.styles.find(style.url.c_str(), true);
+    if (! *(styleRecord.name()))
+      styleRecord.name(style.name.c_str());
+    albumStyleIDs.add(styleRecord.id);
   }
+  // Move large IDs to the end, this compresses bitwidth of styleIDs.value
+  std::sort(albumStyleIDs.begin(), albumStyleIDs.end(), std::greater<uint8_t>());
 
-  Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL, NULL);
+  // Album ====================================================================
+  Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL);
   Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
   album.description = Html2Markup::convert(album.description);
+  clean_str(album.title);
+  clean_str(album.artist);
+  clean_str(album.cover_url);
+  clean_str(album.description);
 
-  auto a = db.albums.find(album.url.c_str(), true);
-  a.title(clean_str(album.title).c_str());
-  a.artist(clean_str(album.artist).c_str());
-  a.cover_url(clean_str(album.cover_url).c_str());
-  a.description(clean_str(album.description).c_str());
-  a.date(album.date);
-  a.rating(album.rating);
-  a.votes(album.votes);
-  a.download_count(album.download_count);
-  a.styles(styles);
+  auto albumRecord = db.albums.find(album.url.c_str(), true);
+  albumRecord.title(album.title.c_str());
+  albumRecord.artist(album.artist.c_str());
+  albumRecord.cover_url(album.cover_url.c_str());
+  albumRecord.description(album.description.c_str());
+  albumRecord.date(album.date);
+  albumRecord.rating(album.rating);
+  albumRecord.votes(album.votes);
+  albumRecord.download_count(album.download_count);
+  albumRecord.styles(albumStyleIDs.value);
 
+  // Album archive URLs =======================================================
   for (auto &u : album.archive_urls) {
     if (std::string::npos != u.rfind("MP3.zip")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "MP3.zip");
-      a.archive_mp3_url(u.c_str());
+      albumRecord.archive_mp3_url(u.c_str());
     }
     else if (std::string::npos != u.rfind("WAV.rar")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "WAV.rar");
-      a.archive_wav_url(u.c_str());
+      albumRecord.archive_wav_url(u.c_str());
     }
     else if (std::string::npos != u.rfind("FLAC.zip")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "FLAC.zip");
-      a.archive_flac_url(u.c_str());
+      albumRecord.archive_flac_url(u.c_str());
     }
   }
 
+  // Tracks ===================================================================
   for (auto &track : album.tracks) {
     Ektoplayer::url_shrink(track.url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
+    clean_str(track.title);
+    clean_str(track.artist);
+    clean_str(track.remix);
 
-    auto t = db.tracks.find(track.url.c_str(), true);
-    t.album_id(a.id);
-    t.title(clean_str(track.title).c_str());
-    t.artist(clean_str(track.artist).c_str());
-    t.remix(clean_str(track.remix).c_str());
-    t.number(track.number);
-    t.bpm(track.bpm);
+    auto trackRecord = db.tracks.find(track.url.c_str(), true);
+    trackRecord.album_id(albumRecord.id);
+    trackRecord.title(track.title.c_str());
+    trackRecord.artist(track.artist.c_str());
+    trackRecord.remix(track.remix.c_str());
+    trackRecord.number(track.number);
+    trackRecord.bpm(track.bpm);
   }
 }
 

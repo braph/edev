@@ -16,12 +16,16 @@ using namespace Views;
 #define START_INFO       3
 #define START_INFO_VALUE 26
 
-Info :: Info(Database& db) : db(db), currentTrack(db, 0) {}
+Info :: Info(Database& db, Mpg123Player& p)
+: db(db)
+, player(p)
+, currentTrack(db, 0)
+{}
 
 void Info :: layout(Pos pos, Size size) {
   this->pos  = pos;
   this->size = size;
-  wresize(win, 200, 80);
+  wresize(win, 200, 110);
   pad_minrow = 0;
   pad_mincol = 0;
 }
@@ -52,11 +56,12 @@ void Info :: drawInfo(int y, const char* info) {
   wmove(win, y, START_INFO_VALUE);
 }
 
-void Info :: drawURL(const char* url, const char* title = NULL) {
-  if (! title)
-    title = url;
+void Info :: drawURL(const std::string& url, const std::string &title, bool saveURL = true) {
   wattrset(win, Theme::get(Theme::URL));
-  waddstr(win, title);
+  UI::Pos start = cursorPos();
+  waddwstr(win, toWideString(title));
+  if (saveURL)
+    clickableURLs.add(start, cursorPos(), UrlAndTitle(url, title));
 }
 
 struct MarkupParser {
@@ -98,55 +103,88 @@ struct MarkupParser {
 };
 
 void Info :: draw() {
+  clickableURLs.clear();
   wclear(win);
   int y = 1;
 
-  using url_and_title = std::pair<std::string, std::string>;
-  std::vector<url_and_title> urls;
-  
   if (currentTrack) {
     const size_t bufsz = 64;
     std::string buffer('\0', bufsz);
     char* cbuf = const_cast<char*>(buffer.c_str());
 
-    Database::Tracks::Track track = currentTrack;
-    Database::Albums::Album album = currentTrack.album();
+    auto track = currentTrack;
+    auto album = currentTrack.album();
 
+    // Track ==================================================================
     drawHeading(y++, "Current track");
-    drawTag(y++, "Title");  *this << toWideString(track.title()) << ' ' << toWideString(track.remix());
-    drawTag(y++, "Artist"); *this << toWideString(track.artist());
-    drawTag(y++, "Number"); *this << track.number(); // %02d
-    drawTag(y++, "BPM");    *this << track.bpm();
-  //drawTag(y++, "Length"); wprintw(win, "%02d:%02d", player.getsomething());
-    y++;
-    drawHeading(y++, "Current album");
-    drawTag(y++, "Album");     *this << toWideString(album.title()); // Album URL clickale, album artist
-    drawTag(y++, "Artist");    *this << toWideString(album.artist());
-    drawTag(y++, "Date");      *this << time_format(album.date(), "%B %d, %Y", cbuf, bufsz);
-  //drawTag(y++, "Styles");    track.album().styles();
-    drawTag(y++, "Downloads"); *this << album.download_count();
-    drawTag(y++, "Rating");    wprintw(win, "%2.2f%% (%d Votes)", album.rating(), album.votes());
-    drawTag(y++, "Cover");
-    std::string cover_url = album.cover_url();
-    Ektoplayer::url_expand(cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-    urls.push_back(url_and_title(cover_url, "Cover"));
-    drawURL(cover_url.c_str(), "Cover");
-    y++;
+    drawTag(y++, "Title");
+    *this << toWideString(track.title()) << ' ' << toWideString(track.remix());
 
+    drawTag(y++, "Artist");
+    *this << toWideString(track.artist());
+
+    drawTag(y++, "Number");
+    wprintw(win, "%02d", track.number());
+
+    drawTag(y++, "BPM");
+    *this << track.bpm();
+
+    drawTag(y++, "Length");
+    wprintw(win, "%02d:%02d", player.length()/60, player.length()%60);
+
+    y++; // Newline
+
+    // Album ==================================================================
+    drawHeading(y++, "Current album");
+
+    drawTag(y++, "Album");
+    buffer = album.url();
+    Ektoplayer::url_expand(buffer, EKTOPLAZM_ALBUM_BASE_URL);
+    drawURL(buffer, album.title());
+
+    drawTag(y++, "Artist");
+    *this << toWideString(album.artist());
+
+    drawTag(y++, "Date");
+    *this << time_format(album.date(), "%B %d, %Y", cbuf, bufsz);
+
+    drawTag(y++, "Styles");
+    TinyPackedArray<uint8_t, uint32_t> styleIDs(album.styles());
+    auto beg = styleIDs.begin();
+    auto end = styleIDs.end();
+    if (*beg)
+      *this << track.db.styles[*beg++].name();
+    while (beg != end && *beg)
+      *this << ", " << track.db.styles[*beg++].name();
+      
+    drawTag(y++, "Downloads");
+    *this << album.download_count();
+
+    drawTag(y++, "Rating");
+    wprintw(win, "%2.2f%% (%d Votes)", album.rating(), album.votes());
+
+    drawTag(y++, "Cover");
+    buffer = album.cover_url();
+    Ektoplayer::url_expand(buffer, EKTOPLAZM_COVER_BASE_URL, ".jpg");
+    drawURL(buffer, "Cover");
+
+    y++; // Newline
+
+    // Description ============================================================
     drawHeading(y++, "Description");
     wmove(win, y, START_TAG);
     MarkupParser::Type type;
     MarkupParser markupParser(album.description());
+    std::string urlText;
     while (markupParser.getText(buffer, type)) {
       int attr = Theme::get(Theme::INFO_VALUE);
       switch (type) {
       case MarkupParser::NORMAL:    break;
       case MarkupParser::BOLD:      attr |= A_BOLD; break;
       case MarkupParser::ITALIC:    attr |= A_UNDERLINE; break;
-      case MarkupParser::URL_TEXT:  attr = Theme::get(Theme::URL);
-                                    urls.push_back(url_and_title("", buffer));
-                                    break;
-      case MarkupParser::URL:       urls.back().first = buffer;
+      case MarkupParser::URL_TEXT:  urlText = buffer;
+                                    continue; // URL follows
+      case MarkupParser::URL:       drawURL(buffer, urlText);
                                     continue;
       }
       wattrset(win, attr);
@@ -154,22 +192,50 @@ void Info :: draw() {
     }
 
     y = getcury(win) + 2;
+
+    // URLs ===================================================================
     drawHeading(y++, "URLs");
-    for (const auto& url_and_title : urls) {
-      drawInfo(y++, url_and_title.second.c_str()); *this << url_and_title.first.c_str();
+    for (auto event : clickableURLs) { // TODO wideString
+      drawInfo(y++, event.data.second.c_str()); *this << event.data.first.c_str();
     }
     y++;
   }
 
+  // Player ===================================================================
   drawHeading(y++, "Player");
-  drawInfo(y++, "Version");             *this << VERSION;
-  drawInfo(y++, "Tracks in database");  *this << db.tracks.size();
-  drawInfo(y++, "Albums in database");  *this << db.albums.size();
-  drawInfo(y++, "Tracks in playlist");  *this << 0; // TODO
-  drawInfo(y++, "Cache dir size");      *this << Filesystem::dir_size(Config::cache_dir) / 1024 / 1024 << "MB";
-  drawInfo(y++, "Archive dir size");    *this << Filesystem::dir_size(Config::archive_dir) / 1024 / 1024 << "MB";
-  drawInfo(y++, "Ektoplazm URL");       drawURL(EKTOPLAZM_URL);
-  drawInfo(y++, "Github URL");          drawURL(GITHUB_URL);
+  drawInfo(y++, "Version");
+  *this << VERSION;
+
+  drawInfo(y++, "Tracks in database");
+  *this << db.tracks.size();
+
+  drawInfo(y++, "Albums in database");
+  *this << db.albums.size();
+
+  drawInfo(y++, "Tracks in playlist");
+  *this << 0; // TODO
+
+  drawInfo(y++, "Cache dir size");
+  *this << Filesystem::dir_size(Config::cache_dir) / 1024 / 1024 << "MB";
+
+  drawInfo(y++, "Archive dir size");
+  *this << Filesystem::dir_size(Config::archive_dir) / 1024 / 1024 << "MB";
+
+  drawInfo(y++, "Ektoplazm URL");
+  drawURL(EKTOPLAZM_URL, EKTOPLAZM_URL, false);
+
+  drawInfo(y++, "Github URL");
+  drawURL(GITHUB_URL, GITHUB_URL, false);
+}
+
+bool Info :: handleMouse(MEVENT& m) {
+  if (wmouse_trafo(win, &m.y, &m.x, false)) {
+    auto event = clickableURLs.find(m);
+    if (event != clickableURLs.end())
+      open_url(event->data.first);
+    return true;
+  }
+  return false;
 }
 
 #if TEST_INFO

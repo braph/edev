@@ -55,7 +55,7 @@ static inline std::string browse_url(int page = 1) {
  *
  *  "Obri - Afterglow - 2018 - "
  */
-std::string& url_shrink(std::string&, const char*, const char*);
+std::string& url_shrink(std::string&, const char*, const char* suffix = NULL);
 
 /* Unshrink a previously shrinked ektoplazm URL
  * - Add prefix and suffix
@@ -66,7 +66,7 @@ std::string& url_shrink(std::string&, const char*, const char*);
  *
  *  "https://ektoplazm.com/files/Obri%20-%20Afterglow%20-%202018%20-%20FLAC.zip"
  */
-std::string& url_expand(std::string&, const char*, const char*);
+std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 
 } // namespace Ektoplayer
 

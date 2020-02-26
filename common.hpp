@@ -7,6 +7,9 @@
 #include <cassert>
 #include <initializer_list>
 
+#include <boost/algorithm/string.hpp>
+
+#define BITSOF(T)     (CHAR_BIT*sizeof(T))
 #define STRLEN(S)     (sizeof(S)-1)
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
 #define REPORT_BUG    "REPORT A BUG, PLEASE!"
@@ -14,7 +17,9 @@
 #define NOT_REACHED 0
 #define assert_not_reached() assert(NOT_REACHED)
 
-// === String functions =======================================================
+/* ============================================================================
+ * String functions
+ * ==========================================================================*/
 
 wchar_t* toWideString(const char* s, size_t* len = NULL);
 
@@ -48,18 +53,39 @@ static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
   return false;
 }
 
-// ============================================================================
+/* ============================================================================
+ * Fork()
+ * ==========================================================================*/
 
-static inline size_t size_for_bits(size_t bits, unsigned storage_size = 1) {
-  storage_size *= 8 /* bits */;
-  return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
+static inline void fork_silent() {
+
 }
 
-inline int clamp(int value, int lower, int upper) {
-  if (value < lower) return lower;
-  if (value > upper) return upper;
-  return value;
+static inline void open_image(const std::string& url) {
+  if (fork() == 0) {
+    execlp("feh", "feh", url.c_str(), NULL);
+    execlp("display", "display", url.c_str(), NULL);
+    execlp("xdg-open", "xdg-open", url.c_str(), NULL);
+    exit(0);
+  }
 }
+
+static inline void open_url(const std::string& url) {
+  std::string lower = boost::algorithm::to_lower_copy(url);
+  if (boost::algorithm::ends_with(lower, ".png") ||
+      boost::algorithm::ends_with(lower, ".jpg") ||
+      boost::algorithm::ends_with(lower, ".jpeg"))
+    open_image(url);
+  else
+    if (fork() == 0) {
+      execlp("xdg-open", "xdg-open", url.c_str(), NULL);
+      exit(0);
+    }
+}
+
+/* ============================================================================
+ * Algorithm
+ * ==========================================================================*/
 
 template<typename T> inline bool in_list(const T &elem, const std::initializer_list<T> &list) {
   for (const auto &i : list)
@@ -68,19 +94,16 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
   return false;
 }
 
-#if TODO_BLAH
-#define LOG()
-//def self.log(from, *msgs)
-inline void log(const char *file, const char *func, const char *__LINE__, const std::exception &ex) {
-  struct tm tm = {0};
-  localtime_r(time(NULL), &tm);
-  char buf[32];
-  ::strftime(buf, sizeof(buf), "%Y-%m-%d 00:00:00 ", &tm);
-  std::cerr << buf << from /*<< func*/ << ": " << e.what() << /*msgs.join()*/ std::endl;
+template<typename TVal, typename TLower, typename TUpper>
+inline TVal clamp(TVal value, TLower lower, TUpper upper) {
+  if (value < lower) return lower;
+  if (value > upper) return upper;
+  return value;
 }
 
-inline void log(const char *from, const char*) {
+static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
+  storage_size *= CHAR_BIT;
+  return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
 }
-#endif
 
 #endif
