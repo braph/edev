@@ -145,6 +145,10 @@ void BrowsePage :: parse_src(const std::string &src) {
       }
     }
 
+    // This should only happen on [...]/dj-basilisk-the-colours-of-ektoplazm
+    if (! tracks.size())
+      continue;
+
     // === Assign metadata to track urls
     // - There may be multiple tracklists (evidence url?)
     auto trackit  = tracks.cbegin();
