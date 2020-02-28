@@ -69,6 +69,9 @@ public:
   //using Column = std::vector<int>;
   using Column = DynamicPackedVector;
 
+  // === Styles ===============================================================
+  using StylesArray = TinyPackedArray<5, uint32_t>;
+
   /* ==========================================================================
    * ColumnIDs
    *

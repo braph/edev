@@ -12,7 +12,7 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
     case Database::Field::INTEGER:
       if (static_cast<Database::AlbumColumnID>(id) == Database::ALBUM_STYLES) {
         *s = '\0';
-        TinyPackedArray<uint8_t, uint32_t> styleIDs(f.value.i);
+        Database::StylesArray styleIDs(f.value.i);
         for (auto id : styleIDs) {
           if (! id)
             break;

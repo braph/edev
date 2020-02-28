@@ -66,10 +66,10 @@ void Info :: drawURL(const std::string& url, const std::string &title, bool save
 
 struct MarkupParser {
   const char* it;
-  enum Type : char { NORMAL, BOLD, ITALIC, URL, URL_TEXT };
+  enum Type : char { NORMAL, BOLD, ITALIC, URL, URL_TEXT } type;
   MarkupParser(const char* s) : it(s) {}
 
-  bool getText(std::string& buffer, Type& type) {
+  bool getText(std::string& buffer) {
     buffer.clear();
     
     const struct { char start, stop; Type type; } markupPairs[] = {
@@ -118,7 +118,9 @@ void Info :: draw() {
     // Track ==================================================================
     drawHeading(y++, "Current track");
     drawTag(y++, "Title");
-    *this << toWideString(track.title()) << ' ' << toWideString(track.remix());
+    *this << toWideString(track.title());
+    if (*(track.remix()))
+      *this << " (" << toWideString(track.remix()) << ')';
 
     drawTag(y++, "Artist");
     *this << toWideString(track.artist());
@@ -149,14 +151,14 @@ void Info :: draw() {
     *this << time_format(album.date(), "%B %d, %Y", cbuf, bufsz);
 
     drawTag(y++, "Styles");
-    TinyPackedArray<uint8_t, uint32_t> styleIDs(album.styles());
-    auto beg = styleIDs.begin();
-    auto end = styleIDs.end();
-    if (*beg)
-      *this << track.db.styles[*beg++].name();
-    while (beg != end && *beg)
-      *this << ", " << track.db.styles[*beg++].name();
-      
+    Database::StylesArray styleIDs(album.styles());
+    const char* comma = "";
+    for (auto id : styleIDs)
+      if (id) {
+        *this << comma << track.db.styles[id].name();
+        comma = ", ";
+      }
+
     drawTag(y++, "Downloads");
     *this << album.download_count();
 
@@ -173,12 +175,11 @@ void Info :: draw() {
     // Description ============================================================
     drawHeading(y++, "Description");
     wmove(win, y, START_TAG);
-    MarkupParser::Type type;
     MarkupParser markupParser(album.description());
     std::string urlText;
-    while (markupParser.getText(buffer, type)) {
+    while (markupParser.getText(buffer)) {
       int attr = Theme::get(Theme::INFO_VALUE);
-      switch (type) {
+      switch (markupParser.type) {
       case MarkupParser::NORMAL:    break;
       case MarkupParser::BOLD:      attr |= A_BOLD; break;
       case MarkupParser::ITALIC:    attr |= A_UNDERLINE; break;
