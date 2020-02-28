@@ -94,6 +94,46 @@ struct GenericReference {
   }
 };
 
+/* Like std::array, but is able to `shrink/grow` */
+template<typename T, size_t N>
+class DynamicArray {
+  T      _data[N];
+  size_t _size;
+public:
+  inline DynamicArray() : _size(0) {}
+  inline bool     empty()               { return _size == 0;      }
+  inline size_t   size()                { return _size;           }
+  inline size_t   max_size()            { return N;               }
+  inline T*       begin()               { return &_data[0];       }
+  inline T*       end()                 { return &_data[size()];  }
+  inline T&       operator[](size_t i)  { return _data[i];        }
+  inline T&       front()               { return _data[0];        }
+  inline T&       back()                { return _data[size()-1]; }
+  inline T*       data()                { return &_data[0];       }
+//-----------------------------------------------------------------
+  inline size_t   capacity()            { return N;               }
+
+  template<typename TIterator>
+  inline DynamicArray(TIterator beg, TIterator end) : _size(0) {
+    while (beg != end)
+      push_back(*beg++);
+  }
+
+  inline void push_back(const T& e) {
+    if (size() == max_size()) throw std::length_error("DynamicArray");
+    _data[_size++] = e;
+  }
+
+  inline void resize(size_t n) {
+    if (n > max_size()) throw std::length_error("DynamicArray");
+    _size = n;
+  }
+
+  inline void resize(size_t n, const T& e) {
+    while (_size < n) push_back(e);
+  }
+};
+
 /* Holds a reference + size of an array */
 template<typename T>
 struct ArrayView {

@@ -1,12 +1,14 @@
 WARNINGS = -Wall -Wextra -Wpedantic -pedantic -Wmissing-declarations -Wredundant-decls
-WARNINGS += -Winit-self -Woverloaded-virtual -Wctor-dtor-privacy -Wstrict-null-sentinel
+#WARNINGS += -Winit-self -Woverloaded-virtual -Wctor-dtor-privacy -Wstrict-null-sentinel
+#WARNINGS += -Wundef -Wuninitialized
+#WARNINGS += -Wlogical-op
+#WARNINGS += -Wold-style-cast -Wcast-align -Wcast-qual -Wnoexcept -Wno-unused
+#WARNINGS += -Wsign-promo #-Wsign-conversion
+#WARNINGS += -Werror
+#WARNINGS += -Wfatal-errors # Stop on first error
+
 #WARNINGS = -Wdisabled-optimization -Wformat=2 -Wmissing-include-dirs
 # -Wshadow -Wswitch-default -Wstrict-overflow=5 
-WARNINGS += -Wundef -Wuninitialized
-WARNINGS += -Wlogical-op
-WARNINGS += -Wold-style-cast -Wcast-align -Wcast-qual -Wnoexcept -Wno-unused
-WARNINGS += -Wsign-promo #-Wsign-conversion
-WARNINGS += -Werror
 #-D_GLIBCXX_ASSERTIONS
 
 STD = c++11

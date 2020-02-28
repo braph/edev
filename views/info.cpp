@@ -15,6 +15,8 @@ using namespace Views;
 #define START_TAG_VALUE  20
 #define START_INFO       3
 #define START_INFO_VALUE 26
+#define TRY_LINE_BREAK   70 // Try to break the line on next space
+#define FORCE_LINE_BREAK 85 // Forces line breaks even in words
 
 Info :: Info(Database& db, Mpg123Player& p)
 : db(db)
@@ -51,12 +53,12 @@ void Info :: drawTag(int y, const char* tag) {
 
 void Info :: drawInfo(int y, const char* info) {
   wattrset(win, Theme::get(Theme::INFO_TAG));
-  mvwaddstr(win, y, START_INFO, info);
+  mvwaddwstr(win, y, START_INFO, toWideString(info));
   wattrset(win, Theme::get(Theme::INFO_VALUE));
   wmove(win, y, START_INFO_VALUE);
 }
 
-void Info :: drawURL(const std::string& url, const std::string &title, bool saveURL = true) {
+void Info :: drawLink(const std::string& url, const std::string &title, bool saveURL = true) {
   wattrset(win, Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
   waddwstr(win, toWideString(title));
@@ -66,39 +68,30 @@ void Info :: drawURL(const std::string& url, const std::string &title, bool save
 
 struct MarkupParser {
   const char* it;
-  enum Type : char { NORMAL, BOLD, ITALIC, URL, URL_TEXT } type;
-  MarkupParser(const char* s) : it(s) {}
+  enum Type { BOLD = 1, ITALIC = 2, LINK_TEXT = 4, LINK_URL = 8 };
+  int type;
+  MarkupParser(const char* s) : it(s), type(0) {}
 
-  bool getText(std::string& buffer) {
-    buffer.clear();
-    
-    const struct { char start, stop; Type type; } markupPairs[] = {
-      {'*', '*', BOLD},
-      {'_', '_', ITALIC},
-      {'(', ')', URL_TEXT},
-      {'[', ']', URL}
-    };
+  wchar_t nextChar() {
+    wchar_t c;
+    size_t read;
+    while ((read = mbtowc(&c, it, 6)) > 0) {
+      it += read;
 
-    for (const auto& pair : markupPairs) {
-      if (haveDouble(pair.start)) {
-        it += 2;
-        type = pair.type;
-        while (*it)
-          if (haveDouble(pair.stop)) { it+=2; break; }
-          else buffer.push_back(*it++);
-        return true;
-      }
+      if (c == *it) // doubled char
+        switch (*it) {
+          case '*': type ^= BOLD;      it++; continue;
+          case '_': type ^= ITALIC;    it++; continue;
+          case '(': type |= LINK_TEXT; it++; continue;
+          case ')': type &=~LINK_TEXT; it++; continue;
+          case '[': type |= LINK_URL;  it++; continue;
+          case ']': type &=~LINK_URL;  it++; continue;
+        }
+
+      return c;
     }
 
-    type = NORMAL;
-    while (*it && ((*it != '*' && *it != '_' && *it != '(' && *it != '[') || !haveDouble(*it)))
-      buffer.push_back(*it++);
-
-    return !buffer.empty();
-  }
-
-  inline bool haveDouble(char c) {
-    return (*it == c && *(it+1) == c);
+    return 0;
   }
 };
 
@@ -108,9 +101,7 @@ void Info :: draw() {
   int y = 1;
 
   if (currentTrack) {
-    const size_t bufsz = 64;
-    std::string buffer('\0', bufsz);
-    char* cbuf = const_cast<char*>(buffer.c_str());
+    std::string buffer;
 
     auto track = currentTrack;
     auto album = currentTrack.album();
@@ -142,13 +133,13 @@ void Info :: draw() {
     drawTag(y++, "Album");
     buffer = album.url();
     Ektoplayer::url_expand(buffer, EKTOPLAZM_ALBUM_BASE_URL);
-    drawURL(buffer, album.title());
+    drawLink(buffer, album.title());
 
     drawTag(y++, "Artist");
     *this << toWideString(album.artist());
 
     drawTag(y++, "Date");
-    *this << time_format(album.date(), "%B %d, %Y", cbuf, bufsz);
+    *this << time_format(album.date(), "%B %d, %Y");
 
     drawTag(y++, "Styles");
     Database::StylesArray styleIDs(album.styles());
@@ -168,7 +159,7 @@ void Info :: draw() {
     drawTag(y++, "Cover");
     buffer = album.cover_url();
     Ektoplayer::url_expand(buffer, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-    drawURL(buffer, "Cover");
+    drawLink(buffer, "Cover");
 
     y++; // Newline
 
@@ -176,28 +167,47 @@ void Info :: draw() {
     drawHeading(y++, "Description");
     wmove(win, y, START_TAG);
     MarkupParser markupParser(album.description());
-    std::string urlText;
-    while (markupParser.getText(buffer)) {
+    std::string linkURL;
+    std::string linkText;
+    wchar_t c;
+    while ((c = markupParser.nextChar())) {
       int attr = Theme::get(Theme::INFO_VALUE);
-      switch (markupParser.type) {
-      case MarkupParser::NORMAL:    break;
-      case MarkupParser::BOLD:      attr |= A_BOLD; break;
-      case MarkupParser::ITALIC:    attr |= A_UNDERLINE; break;
-      case MarkupParser::URL_TEXT:  urlText = buffer;
-                                    continue; // URL follows
-      case MarkupParser::URL:       drawURL(buffer, urlText);
-                                    continue;
+      if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
+      if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
+
+      if (markupParser.type & MarkupParser::LINK_TEXT) {
+        linkText.append(toNarrowChar(c));
+        continue;
       }
+
+      if (markupParser.type & MarkupParser::LINK_URL) {
+        linkURL.append(toNarrowChar(c));
+        continue;
+      }
+
+      int x;
+      getyx(win, y, x);
+      if (x < 3)                                wmove(win, y,   START_TAG);
+      else if (x >= FORCE_LINE_BREAK)           wmove(win, y+1, START_TAG);
+      else if (x >= TRY_LINE_BREAK && c == ' ') wmove(win, y+1, START_TAG-1);
+
+      if (!linkText.empty() && !linkURL.empty()) {
+        drawLink(linkURL, linkText);
+        linkURL.clear();
+        linkText.clear();
+      }
+
       wattrset(win, attr);
-      waddwstr(win, toWideString(buffer));
+      *this << c;
     }
 
     y = getcury(win) + 2;
 
     // URLs ===================================================================
     drawHeading(y++, "URLs");
-    for (auto event : clickableURLs) { // TODO wideString
-      drawInfo(y++, event.data.second.c_str()); *this << event.data.first.c_str();
+    for (auto event : clickableURLs) {
+      drawInfo(y++, event.data.second.c_str());
+      *this << toWideString(event.data.first.c_str());
     }
     y++;
   }
@@ -223,10 +233,10 @@ void Info :: draw() {
   *this << Filesystem::dir_size(Config::archive_dir) / 1024 / 1024 << "MB";
 
   drawInfo(y++, "Ektoplazm URL");
-  drawURL(EKTOPLAZM_URL, EKTOPLAZM_URL, false);
+  drawLink(EKTOPLAZM_URL, EKTOPLAZM_URL, false);
 
   drawInfo(y++, "Github URL");
-  drawURL(GITHUB_URL, GITHUB_URL, false);
+  drawLink(GITHUB_URL, GITHUB_URL, false);
 }
 
 bool Info :: handleMouse(MEVENT& m) {

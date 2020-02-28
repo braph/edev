@@ -21,6 +21,8 @@
  * String functions
  * ==========================================================================*/
 
+char* toNarrowChar(wchar_t);
+
 wchar_t* toWideString(const char* s, size_t* len = NULL);
 
 char* toNarrowString(const wchar_t* s, size_t* len = NULL);
@@ -33,11 +35,7 @@ static inline char* toNarrowString(const std::wstring& s, size_t* len = NULL) {
   return toNarrowString(s.c_str(), len);
 }
 
-static inline char* time_format(time_t t, const char* fmt, char* buf, size_t bufsz) {
-  struct tm* st = localtime(&t);
-  strftime(buf, bufsz, fmt, st);
-  return buf;
-}
+char* time_format(time_t t, const char* fmt);
 
 static inline const char* strMayNULL(const char* s) {
   return (s ? s : "");
@@ -57,24 +55,29 @@ static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
  * Fork()
  * ==========================================================================*/
 
-static inline void fork_silent() {
-
-}
-
 static inline void open_image(const std::string& url) {
-  if (fork() == 0) {
-    execlp("feh", "feh", url.c_str(), NULL);
-    execlp("display", "display", url.c_str(), NULL);
-    execlp("xdg-open", "xdg-open", url.c_str(), NULL);
+  if (fork() == 0) { // TODO: can be made better...
+    execl("/bin/sh", "sh", "-c",
+      "URL=$1; shift;"
+      "for CMD; do :|$CMD \"$URL\" && break;"
+      "done >/dev/null 2>/dev/null", 
+
+      "open_image",
+      // $URL
+      url.c_str(),
+      // $CMD's
+      "feh",
+      "display",
+      "xdg-open",
+      NULL);
     exit(0);
   }
 }
 
 static inline void open_url(const std::string& url) {
-  std::string lower = boost::algorithm::to_lower_copy(url);
-  if (boost::algorithm::ends_with(lower, ".png") ||
-      boost::algorithm::ends_with(lower, ".jpg") ||
-      boost::algorithm::ends_with(lower, ".jpeg"))
+  if (boost::algorithm::iends_with(url, ".png") ||
+      boost::algorithm::iends_with(url, ".jpg") ||
+      boost::algorithm::iends_with(url, ".jpeg"))
     open_image(url);
   else
     if (fork() == 0) {
@@ -104,6 +107,10 @@ inline TVal clamp(TVal value, TLower lower, TUpper upper) {
 static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
   storage_size *= CHAR_BIT;
   return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
+}
+
+static inline constexpr size_t elements_fit_in_bits(size_t bits, size_t storage_bits) {
+  return (storage_bits%bits ? storage_bits/bits : storage_bits/bits);
 }
 
 #endif

@@ -143,14 +143,16 @@ bool Updater :: start(int pages) {
 
 void Updater :: insert_album(Album& album) {
   // Album Styles =============================================================
-  TinyPackedArray<uint8_t, uint32_t> albumStyleIDs;
+  Database::StylesArray albumStyleIDs;
   for (auto &style : album.styles) {
     Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL);
     auto styleRecord = db.styles.find(style.url.c_str(), true);
     if (! *(styleRecord.name()))
       styleRecord.name(style.name.c_str());
-    albumStyleIDs.add(styleRecord.id);
+    albumStyleIDs.push_back(styleRecord.id);
   }
+  if (albumStyleIDs.size() > 3)
+    std::cerr << album.url << std::endl;
   // Move large IDs to the end, this compresses bitwidth of styleIDs.value
   std::sort(albumStyleIDs.begin(), albumStyleIDs.end(), std::greater<uint8_t>());
 
@@ -172,7 +174,7 @@ void Updater :: insert_album(Album& album) {
   albumRecord.rating(album.rating);
   albumRecord.votes(album.votes);
   albumRecord.download_count(album.download_count);
-  albumRecord.styles(albumStyleIDs.value);
+  albumRecord.styles(albumStyleIDs.data());
 
   // Album archive URLs =======================================================
   for (auto &u : album.archive_urls) {

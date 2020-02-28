@@ -154,7 +154,7 @@ void Application :: run() {
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
-  //player.audio_system = Config::audio_system;
+  //player.audio_system = Config::audio_system; TODO
   Views::MainWindow mainwindow(database, player);
   Actions actions(mainwindow, database, player, trackloader);
 

@@ -1,8 +1,5 @@
-TODAY:
 - Config: Themes set()
-- SpanView, gener.cpp
 - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
-- fork silent
 - XML: text() -> alltext()
 
 ===============================================================================
@@ -26,5 +23,3 @@ TODAY:
       color = UI::Colors.get("list.item_even");
     else
       color = UI::Colors.get("list.item_odd");
-
-- Style::styles() shall return an array of strings: abgelehnt.

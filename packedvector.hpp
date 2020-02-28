@@ -6,6 +6,7 @@
 
 #include <new>
 #include <memory>
+#include <iterator>
 
 #ifdef DEBUG_VECTOR
 #include <cstdio>
@@ -20,38 +21,242 @@ static int call_level = 0;
 #define debug() (void)0
 #endif
 
+/* ============================================================================
+ * Static helper functions
+ * ==========================================================================*/
+
+template<typename TUIntType>
+static inline TUIntType replace_bits(TUIntType src, TUIntType val, unsigned offset, unsigned len) {
+  /* Example for replace_bits<uint_16t>(18, 7, 3, 3)
+   *
+   * BIT_COUNT: 16
+   * 0xFFFF:    11111111 11111111 -- TUIntType with all bits set
+   * src:       00000000 00010010 -- Initial value that is going to be altered
+   * val:       00000000 00000111 -- Value to to insert
+   * offset:                 ^---------- where to put the value
+   * len:                  ^------------ length of the value
+   * mask:      00000000 11100000 <--- gives mask
+   *
+   * clearing `src` with `& ~mask`:
+   *            00000000 00010010
+   *            00000000 00000010
+   */
+
+  enum { BIT_COUNT = CHAR_BIT * sizeof(TUIntType) };
+  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
+
+  // We are replacing the whole `src` -- TODO: what about offset?!?!
+  if (len == BIT_COUNT)
+    return val;
+
+  TUIntType mask = (~(OxFFFF << len)) << offset;
+  return (src & ~mask) | (val << offset);
+}
+
+template<typename TUIntType>
+static inline TUIntType extract_bits(TUIntType src, unsigned offset, unsigned len) {
+  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
+  return (src >> offset) &~(OxFFFF << len);
+}
+
 static inline int bitlength_32(uint32_t n) {
   return (n ? 32 - __builtin_clz(n) : 0);
+}
+
+#include<vector>
+#include<iostream>
+#include<bitset>
+// 0100|0000 0010|0000 
+template<typename TUIntType, typename TIterator>
+TUIntType compress(TIterator _it, TIterator _end, unsigned bitwidth) {
+  if (_it == _end)
+    return 0;
+  DynamicArray<TUIntType, 8> sorted(_it, _end);
+
+  auto it = sorted.begin();
+  auto end = sorted.end();
+  std::sort(it, end, std::greater<TUIntType>());
+
+//std::cout << "First value: " << *it << std::endl;
+  TUIntType result = replace_bits<TUIntType>(0, *it, 0, bitwidth);
+//std::cout << "Result: " << std::bitset<32>(result) << std::endl;
+
+  unsigned offset = bitwidth;
+
+  for (++it; it != end; ++it) {
+//  std::cout << "Inserting " << *it << " on " << offset << " bitwidth: " << bitwidth << std::endl;
+
+    result= replace_bits<TUIntType>(result,*it, offset, bitwidth);
+    offset += bitwidth;
+    bitwidth = bitlength_32(*it);
+
+//  std::cout << "Result: " << std::bitset<32>(result) << std::endl;
+  }
+  return result;
+}
+
+template<typename TUIntType, typename TContainer>
+void uncompress(TContainer& container, TUIntType packed, unsigned bitwidth) {
+  container.clear();
+  TUIntType value = extract_bits<TUIntType>(packed, 0, bitwidth);
+  container.push_back(value);
+//std::cout << "First value: " << value << " (" << std::endl;
+  unsigned offset = bitwidth;
+
+  while ((value = extract_bits<TUIntType>(packed, offset, bitwidth)) > 0) {
+//  std::cout << "push back: " << value << std::endl;
+    container.push_back(value);
+    offset += bitwidth;
+    bitwidth = bitlength_32(value);
+  }
+
+#if 0
+  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
+  TUIntType value = packed &~(OxFFFF << bitwidth);
+  bitwidth = 
+
+  return (src >> offset) &~(OxFFFF << len);
+#endif
 }
 
 /* ============================================================================
  * TinyPackedArray - PackedVector's little brother
  * ==========================================================================*/
 
-template<typename TItem, typename TStorage>
-union TinyPackedArray {
-  TItem    array[sizeof(TStorage)/sizeof(TItem)];
-  TStorage value;
+template<unsigned TBits, typename TStorage>
+struct ArrayReference {
+  TStorage* _storage;
+  size_t    _i;
+  TStorage  _value;
 
-  TinyPackedArray() : value(0) {}
-  TinyPackedArray(TStorage v) : value(v) {}
+  ArrayReference()
+  : _storage(NULL), _i(0), _value(0) {}
 
-  inline bool add(TItem v) {
-    for (size_t i = 0; i < capacity(); ++i)
-      if (! array[i]) {
-        array[i] = v;
-        return true;
-      }
-    return false;
+  ArrayReference(TStorage* storage, size_t index)
+  : _storage(storage), _i(index) {
+    _value = extract_bits<TStorage>(*_storage, TBits * _i, TBits);
   }
 
-  inline operator TItem()        { return value;                            }
-  inline size_t capacity() const { return sizeof(TStorage) / sizeof(TItem); }
-  inline size_t size()     const { return sizeof(TStorage) / sizeof(TItem); }
-  inline TItem* begin()          { return array;                            }
-  inline TItem* end()            { return array + capacity();               }
-  inline TItem& operator[](size_t i) { return array[i];                     }
+  ArrayReference(const ArrayReference& rhs)
+  : _storage(rhs._storage), _i(rhs._i), _value(rhs._value) {}
+
+  ArrayReference& operator=(TStorage value) {
+    *_storage = replace_bits<TStorage>(*_storage, value, TBits * _i, TBits);
+    return *this;
+  }
+
+  operator TStorage()
+  //{ return extract_bits<TStorage>(*_storage, TBits * _i, TBits); }
+  { return _value; }
+  
+  ArrayReference& operator=(const ArrayReference& rhs)
+  { return *this = rhs._value; }
+
+#if 0
+  ArrayReference& operator=(const ArrayReference&& rhs)
+  { return *this = rhs.get(); }
+#endif
+
+#if 0
+  inline TStorage get() const
+  { return extract_bits<TStorage>(*_storage, TBits * _i, TBits); }
+#endif
+
+  void load(TStorage* _storage, size_t _i) {
+    this->_storage = _storage;
+    this->_i = _i;
+    this->_value = extract_bits<TStorage>(*_storage, TBits * _i, TBits);
+  }
 };
+
+template<unsigned TBits, typename TStorage>
+struct ArrayIterator { //: public ArrayReference<TBits, TStorage> {
+  TStorage* _storage;
+  size_t    _i;
+
+  ArrayReference<TBits, TStorage> ref;
+
+  using iterator_category = std::random_access_iterator_tag;
+  using value_type        = ArrayReference<TBits, TStorage>;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = ArrayReference<TBits, TStorage>;//*;
+  using reference         = ArrayReference<TBits, TStorage>&;//&;
+
+  ArrayIterator(TStorage* storage, size_t index)
+  : _storage(storage), _i(index) {}
+
+  ArrayIterator(const ArrayIterator<TBits, TStorage>& rhs)
+  : _storage(rhs._storage), _i(rhs._i) {}
+
+  ArrayIterator& operator=(const ArrayIterator&I)
+  { _i = I._i; return *this; }
+
+  inline bool operator==(const ArrayIterator&I)  { return _i == I._i; }
+  inline bool operator!=(const ArrayIterator&I)  { return _i != I._i; }
+  inline bool operator<=(const ArrayIterator&I)  { return _i <= I._i; }
+  inline bool operator>=(const ArrayIterator&I)  { return _i >= I._i; }
+  inline bool operator< (const ArrayIterator&I)  { return _i <  I._i; }
+  inline bool operator> (const ArrayIterator&I)  { return _i >  I._i; }
+
+  inline ArrayIterator& operator++()             { ++_i; return *this; }
+  inline ArrayIterator& operator--()             { --_i; return *this; }
+  inline ArrayIterator  operator++(int)    { ArrayIterator I = *this; ++_i; return I; }
+  inline ArrayIterator  operator--(int)    { ArrayIterator I = *this; --_i; return I; }
+  inline ArrayIterator& operator+=(ptrdiff_t n)       { _i += n; return *this;            }
+  inline ArrayIterator& operator-=(ptrdiff_t n)       { _i -= n; return *this;            }
+  inline ArrayIterator  operator+ (ptrdiff_t n) const { ArrayIterator I = *this; return I += n; }
+  inline ArrayIterator  operator- (ptrdiff_t n) const { ArrayIterator I = *this; return I -= n; }
+
+  inline ArrayReference<TBits, TStorage>& operator*() {
+    ref.load(_storage, _i);
+    return ref;
+  }
+  inline ArrayReference<TBits, TStorage>& operator[](ptrdiff_t n)       { return *(*this + n);               }
+
+  inline ptrdiff_t operator- (const ArrayIterator&I) const { return _i - I._i; }
+  inline ptrdiff_t operator+ (const ArrayIterator&I) const { return _i + I._i; }
+};
+
+template<unsigned TBits, typename TStorage>
+struct TinyPackedArray {
+  TStorage     _storage;
+  size_t       _size;
+  enum { _capacity = elements_fit_in_bits(TBits, sizeof(TStorage)*8) };
+
+  TinyPackedArray()           : _storage(0), _size(0) {}
+  TinyPackedArray(TStorage v) : _storage(v), _size(_capacity) {}
+
+  inline void push_back(TStorage value) {
+    if (_size < _capacity)
+      (*this)[_size++] = value;
+  }
+
+  using value_type        = ArrayReference<TBits, TStorage>;
+
+  inline size_t     capacity()     const { return _capacity;   }
+  inline size_t     size()         const { return _size;       }
+  inline void       fullSize()           { _size = _capacity;  }
+  inline TStorage&  data()               { return _storage;    }
+  ArrayIterator<TBits, TStorage>   begin()              { return ArrayIterator<TBits, TStorage>(&_storage, 0);      }
+  ArrayIterator<TBits, TStorage>   end()                { return ArrayIterator<TBits, TStorage>(&_storage, size()); }
+  ArrayReference<TBits, TStorage>  operator[](size_t i) { return ArrayReference<TBits, TStorage>(&_storage, i);     }
+};
+
+#include<iostream>
+#if 0
+namespace std{
+#if 0
+  template<typename TBits, typename TStorage>
+  void iter_swap(ArrayIterator<TBits, TStorage> it1, ArrayIterator<TBits, TStorage> it2) {
+  }
+#endif
+
+  template<typename TBits, typename TStorage>
+  void swap(ArrayReference<TBits, TStorage> &a, ArrayReference<TBits, TStorage>& b) {
+    std::cout << "sdfsf" << std::endl;
+  }
+}
+#endif
 
 /* ============================================================================
  * PackedVector
@@ -66,8 +271,8 @@ class PackedVector {
   uint8_t _bits;
 
 public:
-  using iterator = GenericIterator<PackedVector>;
-  using reference = GenericReference<PackedVector>;
+  using iterator   = GenericIterator<PackedVector>;
+  using reference  = GenericReference<PackedVector>;
   using value_type = int;
 
   PackedVector(int bits)
@@ -112,12 +317,12 @@ public:
   iterator  begin()                { return iterator(*this, 0);       }
   iterator  end()                  { return iterator(*this, size());  }
 
-  size_t  size()      const   { return _size;                     }
-  bool    empty()     const   { return _size == 0;                }
-  void    clear()             { _size = 0;                        } 
-  void*   data()              { return static_cast<void*>(_data); }
-  size_t  capacity()  const   { return _capacity;                 }
-  void    shrink_to_fit()     { /* TODO */                        }
+  size_t        size()      const  { return _size;      }
+  bool          empty()     const  { return _size == 0; }
+  void          clear()            { _size = 0;         } 
+  storage_type* data()             { return _data;      }
+  size_t        capacity()  const  { return _capacity;  }
+  void          shrink_to_fit()    { /* TODO */         }
   
   void    push_back(value_type);
   void    reserve(size_t);
@@ -157,22 +362,23 @@ private:
 public:
   DynamicPackedVector() : _vec(1) { }
 
-  using reference  = GenericReference<DynamicPackedVector>;
-  using iterator   = GenericIterator<DynamicPackedVector>;
-  using value_type = int;
+  using storage_type = uint32_t;
+  using reference    = GenericReference<DynamicPackedVector>;
+  using iterator     = GenericIterator<DynamicPackedVector>;
+  using value_type   = int;
 
   reference operator[](size_t index) { return reference(*this, index); }
   iterator  begin()                  { return iterator(*this, 0);      }
   iterator  end()                    { return iterator(*this, size()); }
 
   // Proxy methods to PackedVector ============================================
-  void    clear()                    { _vec.clear();                   }
-  size_t  size()             const   { return _vec.size();             }
-  bool    empty()            const   { return _vec.empty();            }
-  size_t  capacity()         const   { return _vec.capacity();         }
-  void*   data()                     { return _vec.data();             }
-  int     bits()             const   { return _vec.bits();             }
-  value_type get(size_t idx) const   { return _vec.get(idx);           }
+  void            clear()                  { _vec.clear();             }
+  size_t          size()           const   { return _vec.size();       }
+  bool            empty()          const   { return _vec.empty();      }
+  size_t          capacity()       const   { return _vec.capacity();   }
+  storage_type*   data()                   { return _vec.data();       }
+  int             bits()           const   { return _vec.bits();       }
+  value_type      get(size_t idx)  const   { return _vec.get(idx);     }
 
   // Methods that may replace the underlying _vec object
   void reserve(size_t, int bits = 1);
