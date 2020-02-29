@@ -58,11 +58,11 @@ void Info :: drawInfo(int y, const char* info) {
   wmove(win, y, START_INFO_VALUE);
 }
 
-void Info :: drawLink(const std::string& url, const std::string &title, bool saveURL = true) {
+void Info :: drawLink(const std::string& url, const std::string &title, bool addURL = true) {
   wattrset(win, Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
   waddwstr(win, toWideString(title));
-  if (saveURL)
+  if (addURL)
     clickableURLs.add(start, cursorPos(), UrlAndTitle(url, title));
 }
 
@@ -70,12 +70,17 @@ struct MarkupParser {
   const char* it;
   enum Type { BOLD = 1, ITALIC = 2, LINK_TEXT = 4, LINK_URL = 8 };
   int type;
-  MarkupParser(const char* s) : it(s), type(0) {}
+
+  MarkupParser(const char* s) : it(s), type(0) {
+    mbtowc(NULL, NULL, 0); // Clear mbtowc's shift state
+  }
 
   wchar_t nextChar() {
     wchar_t c;
-    size_t read;
-    while ((read = mbtowc(&c, it, 6)) > 0) {
+    for (;;) {
+      size_t read = mbtowc(&c, it, 6);
+      if (read == -1) { it++; continue; } // Skip invalid char
+      if (read == 0)  { return 0;       } // EOF
       it += read;
 
       if (c == *it) // doubled char
@@ -90,8 +95,6 @@ struct MarkupParser {
 
       return c;
     }
-
-    return 0;
   }
 };
 
@@ -192,6 +195,8 @@ void Info :: draw() {
       else if (x >= TRY_LINE_BREAK && c == ' ') wmove(win, y+1, START_TAG-1);
 
       if (!linkText.empty() && !linkURL.empty()) {
+        if (linkURL == "@") // Protected email, see updater.cpp
+          linkURL = "Protected e-mail";
         drawLink(linkURL, linkText);
         linkURL.clear();
         linkText.clear();
@@ -202,14 +207,6 @@ void Info :: draw() {
     }
 
     y = getcury(win) + 2;
-
-    // URLs ===================================================================
-    drawHeading(y++, "URLs");
-    for (auto event : clickableURLs) {
-      drawInfo(y++, event.data.second.c_str());
-      *this << toWideString(event.data.first.c_str());
-    }
-    y++;
   }
 
   // Player ===================================================================
@@ -237,6 +234,14 @@ void Info :: draw() {
 
   drawInfo(y++, "Github URL");
   drawLink(GITHUB_URL, GITHUB_URL, false);
+  y++;
+
+  // URLs ===================================================================
+  drawHeading(y++, "URLs");
+  for (auto event : clickableURLs) {
+    drawInfo(y++, event.data.second.c_str());
+    *this << toWideString(event.data.first.c_str());
+  }
 }
 
 bool Info :: handleMouse(MEVENT& m) {
@@ -248,24 +253,3 @@ bool Info :: handleMouse(MEVENT& m) {
   }
   return false;
 }
-
-#ifdef TEST_INFO
-#include "../test.hpp"
-int main() {
-  TEST_BEGIN();
-  NCURSES_INIT();
-
-  Bindings::init();
-
-  //Theme::current = colors;
-
-  Widget *s = new Views::Info;
-  s->layout({10,10}, {30,80});
-  s->draw();
-  s->noutrefresh();
-  doupdate();
-  wgetch(s->active_win());
-
-  TEST_END();
-}
-#endif

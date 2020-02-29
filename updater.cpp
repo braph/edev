@@ -6,6 +6,8 @@
 #include "ektoplayer.hpp"
 #include "browsepage.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
+
 #include <iostream>
 
 struct Html2Markup {
@@ -13,7 +15,8 @@ struct Html2Markup {
 
   static std::string convert(const std::string& html) {
     // XXX We need UTF-8 input here! XXX
-    XmlDoc doc = HtmlDoc::readDoc(html.c_str(), NULL, "UTF-8", HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
+    XmlDoc doc = HtmlDoc::readDoc(html.c_str(), NULL, "UTF-8",
+        HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
     XmlNode root = doc.getRootElement();
     Html2Markup p;
     p.parse(root);
@@ -33,10 +36,13 @@ struct Html2Markup {
             write("((");
             parse(node.children());
             write("))[[");
-            if (std::string::npos != node["href"].find("email-protec"))
-              write("email protected"); // XXX Replace useless large URLs
-            else
-              write(node["href"]);
+            std::string URL = node["href"];
+            // Drop large email protection URLs, they dont work anyway
+            if (std::string::npos != URL.find("email-protec"))
+              URL = "@";
+            // Removing `www.` maybe corrupts some URLs, but saves 20KB!
+            boost::algorithm::replace_first(URL, "//www.", "//");
+            write(URL);
             write("]]");
           }
           else if (!strcmp(s, "strong") || !strcmp(s, "b")) {
@@ -215,8 +221,9 @@ void Updater :: insert_browsepage(BrowsePage& page) {
 }
 
 #ifdef TEST_UPDATER
+#include "test.hpp"
 
-#if PERFORMANCE_TEST
+#ifdef USE_LOCAL_FILES
 #include <fstream>
 #include <streambuf>
   for (int i = 1; i <= 416; ++i) {
@@ -228,8 +235,6 @@ void Updater :: insert_browsepage(BrowsePage& page) {
     insert_browsepage(browserPage);
   }
 #endif
-
-#include "test.hpp"
 
 void test_warning(const Database::Styles::Style& style, const char* reason) {
   std::cout << "STYLE: " << style.url() << ": " << reason << std::endl;
