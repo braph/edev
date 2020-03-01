@@ -49,7 +49,7 @@ public:
   };
 
   static unsigned short current; // 0 | 8 | 256
-  static void set(unsigned int, const std::string&, short, short, int);
+  static void set(unsigned int, const std::string&, short, short, unsigned int);
   static int  get(ThemeID);
   static void loadTheme(unsigned int);
 

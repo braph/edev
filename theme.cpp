@@ -111,7 +111,7 @@ ThemeDefinition Theme :: themes[3][THEME_ID_COUNT] = {
 };
 #undef _
 
-void Theme :: set(unsigned int theme, const std::string &name, short fg, short bg, int attributes) {
+void Theme :: set(unsigned int theme, const std::string &name, short fg, short bg, unsigned int attributes) {
   const char* names[THEME_ID_COUNT] = {
     "default",
     "url",

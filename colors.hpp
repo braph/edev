@@ -25,13 +25,13 @@ public:
   static mapping attributes[];
 
   static std::string to_string(unsigned int);
-  static int parse(const std::string&);
+  static unsigned int parse(const std::string&);
 };
 
 class Colors {
 public:
   static int create_color_pair(short, short);
-  static int set(short fg, short bg = -1, int attr = 0);
+  static int set(short fg, short bg = -1, unsigned int attributes = 0);
 private:
   static std::vector<std::pair<int32_t, int32_t>> color_pairs;
   static int id;

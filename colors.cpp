@@ -52,7 +52,7 @@ Attribute :: mapping Attribute :: attributes[] = {
   {"underline", A_UNDERLINE}
 };
 
-int Attribute :: parse(const std::string& attribute) {
+unsigned int Attribute :: parse(const std::string& attribute) {
   for (size_t i = 0; i < ARRAY_SIZE(attributes); ++i)
     if (attribute == attributes[i].name)
       return attributes[i].value;
@@ -65,30 +65,29 @@ std::string Attribute :: to_string(unsigned int attribute) {
     if (attribute == attributes[i].value)
       return attributes[i].name;
 
-  throw std::invalid_argument("invalid attribute value"); // TODO
+  throw std::invalid_argument("invalid attribute value");
 }
 
 // === UI::Colors =============================================================
 
-#define SHORTS_TO_INT(A,B) (A + (B<<16))
 std::vector<std::pair<int32_t, int32_t>> Colors :: color_pairs;
 int Colors :: id = 1;
 
 int Colors :: create_color_pair(short fg, short bg) {
-  int32_t fg_bg = SHORTS_TO_INT(fg, bg);
+  union { int16_t in[2]; int32_t combined; } fg_bg = {{fg,bg}};
 
   for (const auto& pair : color_pairs)
-    if (pair.first == fg_bg)
+    if (pair.first == fg_bg.combined)
       return pair.second;
 
   int pair_id = id++;
   init_pair(pair_id, fg, bg);
-  color_pairs.push_back(std::pair<int32_t, int32_t>(fg_bg, pair_id));
+  color_pairs.push_back(std::pair<int32_t, int32_t>(fg_bg.combined, pair_id));
   return pair_id;
 }
 
-int Colors :: set(short fg, short bg, int attributes) {
-  return COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
+int Colors :: set(short fg, short bg, unsigned int attributes) {
+  return static_cast<int>(COLOR_PAIR(create_color_pair(fg, bg)) | attributes);
 }
 
 #ifdef TEST_COLORS
