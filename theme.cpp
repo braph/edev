@@ -13,7 +13,7 @@
 #define yellow     COLOR_YELLOW
 #define magenta    COLOR_MAGENTA
 
-unsigned short Theme :: current;
+int Theme :: current;
 int Theme :: loaded[THEME_ID_COUNT];
 
 #define _ ThemeDefinition
@@ -156,7 +156,7 @@ int Theme :: get(ThemeID id) {
   return loaded[id];
 }
 
-void Theme :: loadTheme(unsigned int theme) {
+void Theme :: loadTheme(int theme) {
   current = theme;
   int theme_idx = (theme >= 256 ? 2 : (theme >= 8 ? 1 : 0));
 
