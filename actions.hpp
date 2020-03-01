@@ -12,6 +12,12 @@ namespace Views { class MainWindow; }
   X(NONE,                   "none")               \
   X(QUIT,                   "quit")               \
   X(REDRAW,                 "redraw")             \
+  X(TOP,                    "top")       \
+  X(BOTTOM,                 "bottom")    \
+  X(UP,                     "up")        \
+  X(DOWN,                   "down")      \
+  X(PAGE_UP,                "page_up")   \
+  X(PAGE_DOWN,              "page_down") \
   X(PLAYER_FORWARD,         "player.forward")     \
   X(PLAYER_BACKWARD,        "player.backward")    \
   X(PLAYER_STOP,            "player.stop")        \
@@ -29,12 +35,6 @@ namespace Views { class MainWindow; }
   X(PLAYLIST_PLAY,          "playlist.play")      \
   X(PLAYLIST_NEXT,          "playlist.next")      \
   X(PLAYLIST_PREV,          "playlist.prev")      \
-  X(PLAYLIST_TOP,           "playlist.top")       \
-  X(PLAYLIST_BOTTOM,        "playlist.bottom")    \
-  X(PLAYLIST_UP,            "playlist.up")        \
-  X(PLAYLIST_DOWN,          "playlist.down")      \
-  X(PLAYLIST_PAGE_UP,       "playlist.page_up")   \
-  X(PLAYLIST_PAGE_DOWN,     "playlist.page_down") \
   X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current") \
 
 class Actions {
@@ -42,16 +42,16 @@ public:
 #define X(ENUM, STR) ENUM,
   enum ActionID : unsigned char { XActions ACTIONID_LAST };
 #undef X
-  Actions(Views::MainWindow&, Database&, Mpg123Player&, TrackLoader&);
+  Actions() {}
   int call(ActionID);
   static ActionID parse(const std::string&);
   static const char* to_string(ActionID);
 
-private:
-  Database &db;
-  Mpg123Player &p;
-  Views::MainWindow &v;
-  TrackLoader &t;
+public:
+  Database *db;
+  Mpg123Player *p;
+  Views::MainWindow *v;
+  TrackLoader *t;
 };
 
 #endif
