@@ -27,7 +27,7 @@ public:
   {
   }
 
-  TContainer* getList() { return m_list; }
+  TContainer* getList() const { return m_list; }
 
   void attachList(TContainer *list) {
     m_list = list;
@@ -44,14 +44,9 @@ public:
     }
   }
 
-  void render_item(int idx, bool cursor) {
-    if (itemRenderer)
-      itemRenderer(win, size.width, (*m_list)[idx], idx, cursor, idx == m_active);
-  }
-
   void draw() {
     redrawwin(win);
-    wmove(win, 0,0);
+    moveCursor(0,0);
 
     if (! m_list) return;
     m_cursor    = clamp(m_cursor,    0, size.height - 1);
@@ -59,22 +54,22 @@ public:
     m_top_index = clamp(m_top_index, 0, containerSize() - 1);
     m_top_index = clamp(m_top_index, 0, containerSize() - size.height);
 
-    int line   = 0;
-    size_t idx = m_top_index;
-    for (; line < size.height && idx < m_list->size(); ++line, ++idx) {
-      wmove(win, line, 0);
+    int line = 0;
+    int idx  = m_top_index;
+    for (; line < size.height && idx < containerSize(); ++line, ++idx) {
+      moveCursor(line, 0);
       render_item(idx, line == m_cursor);
     }
   }
 
   void unselect_item() {
-    wmove(win, m_cursor, 0);
+    moveCursor(m_cursor, 0);
     render_item(m_top_index + m_cursor, false); // Unselect old line
   }
 
   /* Cursor down */
   void down() {
-    if (m_top_index + m_cursor + 1 >= static_cast<int>(m_list->size()))
+    if (m_top_index + m_cursor + 1 >= containerSize())
       return;
 
     unselect_item();
@@ -84,7 +79,7 @@ public:
     } else {
       ++m_cursor;
     }
-    wmove(win, m_cursor, 0);
+    moveCursor(m_cursor, 0);
     render_item(m_top_index + m_cursor, true);
   }
 
@@ -99,23 +94,23 @@ public:
     } else {
       --m_cursor;
     }
-    wmove(win, m_cursor, 0);
+    moveCursor(m_cursor, 0);
     render_item(m_top_index + m_cursor, true);
   }
 
   void scroll_down() {
-    int n = 0.5 * size.height;
+    int n = size.height / 2;
 
     m_top_index += n;
-    if (m_top_index + size.height - 1 >= static_cast<int>(m_list->size())) {
-      m_top_index = m_list->size() - size.height;
+    if (m_top_index + size.height - 1 >= containerSize()) {
+      m_top_index = containerSize() - size.height;
     }
 
     draw();
   }
 
   void scroll_up() {
-    int n = 0.5 * size.height;
+    int n = size.height / 2;
 
     m_top_index -= n;
     if (m_top_index < 0)
@@ -125,12 +120,12 @@ public:
   }
 
   void insert_top() { // XXX rename + mv to UI::Window
-    wmove(win, 0, 0);
+    moveCursor(0, 0);
     winsertln(win);
   }
 
   void append_bottom() { // XXX rename + mv to UI::Window
-    wmove(win, 0, 0);
+    moveCursor(0, 0);
     wdeleteln(win);
   }
 
@@ -162,12 +157,12 @@ public:
     return false;
   }
 
-  int getSelected() { return m_top_index + m_cursor; }
+  int getSelected() const { return m_top_index + m_cursor; }
 
-  value_type getItem() { return (*m_list)[m_top_index+m_cursor]; }
-  value_type getActiveItem() { return (*m_list)[m_active]; }
+  value_type getItem() const { return (*m_list)[m_top_index+m_cursor]; }
+  value_type getActiveItem() const { return (*m_list)[m_active]; }
 
-  int getActiveIndex()         { return m_active; }
+  int getActiveIndex() const   { return m_active; }
   void setActiveIndex(int idx) { m_active = idx; draw(); }
 
 private:
@@ -176,8 +171,13 @@ private:
   int m_top_index;
   TContainer* m_list;
 
-  /* Since curses coordinates are ints, we do casting here TODO */
-  inline int containerSize() { return static_cast<int>(m_list ? m_list->size() : 0); }
+  inline int containerSize() const
+  { return static_cast<int>(m_list ? m_list->size() : 0); }
+
+  inline void render_item(int idx, bool cursor) {
+    if (itemRenderer)
+      itemRenderer(win, size.width, (*m_list)[static_cast<size_t>(idx)], idx, cursor, idx == m_active);
+  }
 };
 
 // === Testing ================================================================
