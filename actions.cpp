@@ -21,12 +21,7 @@ int Actions :: call(ActionID id) {
   case REDRAW: return REDRAW;
 
   // Silence warnings
-  case TOP:
-  case BOTTOM:
-  case UP:
-  case DOWN:
-  case PAGE_UP:
-  case PAGE_DOWN:
+  case TOP: case BOTTOM: case UP: case DOWN: case PAGE_UP: case PAGE_DOWN:
   case ACTIONID_LAST: break;
 
   case PLAYER_FORWARD:     p->seek_forward(10);                             break;
@@ -43,7 +38,10 @@ int Actions :: call(ActionID id) {
   case PLAYLIST_PREV: index = v->playlist.getActiveIndex() - 1; goto PLAYLIST_PLAY;
   case PLAYLIST_PLAY: index = v->playlist.getSelected();
 PLAYLIST_PLAY:        v->playlist.setActiveIndex(index);
-                      p->play(t->getFileForTrack(v->playlist.getActiveItem(), false));
+                      if (! v->playlist.empty() && v->playlist.getActiveIndex() >= 0) {
+                        auto track = v->playlist.getActiveItem();
+                        p->play(t->getFileForTrack(track, false));
+                      }
                       break;
 
   // === Tabs =================================================================
@@ -54,7 +52,8 @@ PLAYLIST_PLAY:        v->playlist.setActiveIndex(index);
   case BROWSER_SHOW:  index = v->windows.indexOf(&v->playlist); goto SELECT_TAB; // TODO
   case INFO_SHOW:     index = v->windows.indexOf(&v->info);     goto SELECT_TAB;
   case HELP_SHOW:     index = v->windows.indexOf(&v->help);     goto SELECT_TAB;
-SELECT_TAB:           index %= v->windows.count();
+SELECT_TAB:           if (index < 0) index = v->windows.count() - 1;
+                      else if (index >= v->windows.count()) index = 0;
                       v->windows.setCurrentIndex(index);
                       v->tabBar.setCurrentIndex(index);
                       break;

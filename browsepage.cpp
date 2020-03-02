@@ -32,7 +32,7 @@ static std::string base64_decode(std::string input)
     size_t num_pad_chars((4 - input.size() % 4) % 4);
     input.append(num_pad_chars, '=');
 
-    size_t pad_chars(std::count(input.begin(), input.end(), '='));
+    auto pad_chars = std::count(input.begin(), input.end(), '=');
     std::replace(input.begin(), input.end(), '=', 'A');
     std::string output(ItBinaryT(input.begin()), ItBinaryT(input.end()));
     output.erase(output.end() - pad_chars, output.end());
@@ -176,7 +176,7 @@ void BrowsePage :: parse_src(const std::string &src) {
             break;
           case 'd':
             const char* s = span.nearestContent(); // "(134 BPM)"
-            std::sscanf(strMayNULL(s), "%*[^0-9]%hu", &track.bpm);
+            std::sscanf(strMayNULL(s), "%*[^0-9]%hd", &track.bpm);
             break;
         }
       }

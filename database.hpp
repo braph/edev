@@ -14,7 +14,7 @@
 #include <utility>
 #include <algorithm>
 
-#define DB_ABI_VERSION  1
+#define DB_ABI_VERSION      1
 #define DB_ENDIANNESS_CHECK 0xFEFF
 
 /* ============================================================================

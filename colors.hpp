@@ -31,9 +31,10 @@ public:
 class Colors {
 public:
   static int create_color_pair(short, short);
-  static int set(short fg, short bg = -1, unsigned int attributes = 0);
+  static unsigned int set(short fg, short bg = -1, unsigned int attributes = 0);
 private:
-  static std::vector<std::pair<int32_t, int32_t>> color_pairs;
+  struct pair_id { short fg; short bg; int id; };
+  static std::vector<pair_id> color_pairs;
   static int id;
 };
 

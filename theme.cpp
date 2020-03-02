@@ -13,11 +13,11 @@
 #define yellow     COLOR_YELLOW
 #define magenta    COLOR_MAGENTA
 
-int Theme :: current;
-int Theme :: loaded[THEME_ID_COUNT];
+int          Theme :: current;
+unsigned int Theme :: loaded[THEME_ID_COUNT];
 
-#define _ ThemeDefinition
-ThemeDefinition Theme :: themes[3][THEME_ID_COUNT] = {
+#define _ Theme :: Definition
+Theme::Definition Theme :: themes[3][THEME_ID_COUNT] = {
   { // ========================= Mono (no colors) ===============
     /* DEFAULT                */ _(-1, -1                       ),
     /* URL                    */ _(defualt, defualt, A_UNDERLINE),
@@ -145,14 +145,14 @@ void Theme :: set(unsigned int theme, const std::string &name, short fg, short b
 
   for (size_t i = 0; i < THEME_ID_COUNT; ++i)
     if (name == names[i]) {
-      themes[theme][i] = ThemeDefinition(fg,bg,attributes);
+      themes[theme][i] = Theme::Definition(fg, bg, attributes);
       return;
     }
 
   throw std::invalid_argument(name + ": invalid theme element");
 }
 
-int Theme :: get(ThemeID id) {
+unsigned int Theme :: get(ThemeID id) {
   return loaded[id];
 }
 
@@ -160,10 +160,10 @@ void Theme :: loadTheme(int theme) {
   current = theme;
   int theme_idx = (theme >= 256 ? 2 : (theme >= 8 ? 1 : 0));
 
-  ThemeDefinition fallback = themes[theme_idx][DEFAULT];
+  Theme::Definition fallback = themes[theme_idx][DEFAULT];
 
   for (size_t i = 0; i < THEME_ID_COUNT; ++i) {
-    ThemeDefinition td = themes[theme_idx][i];
+    Theme::Definition td = themes[theme_idx][i];
     loaded[i] = UI::Colors::set(
       (td.fg == -2 ? fallback.fg : td.fg),
       (td.bg == -2 ? fallback.bg : td.bg),

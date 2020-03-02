@@ -82,10 +82,10 @@ void PlayingInfo :: draw_position_and_length() {
 void PlayingInfo :: draw_track_info() {
   if (! track) {
     wattrset(win, 0);
-    mvwaddstr(win, 1, size.width / 2 - STRLEN(STOPPED_HEADING) / 2, STOPPED_HEADING);
+    mvwaddstr(win, 1, size.width / 2 - int(STRLEN(STOPPED_HEADING) / 2), STOPPED_HEADING);
   } else {
-    wmove(win, 0, 0); print_formatted_strings(*fmt_top);
-    wmove(win, 1, 0); print_formatted_strings(*fmt_bottom);
+    moveCursor(0, 0); print_formatted_strings(*fmt_top);
+    moveCursor(1, 0); print_formatted_strings(*fmt_bottom);
   }
 }
 
@@ -104,13 +104,13 @@ void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   for (const auto &fmt : format) {
     size_t len;
     if (fmt.text.length())
-      /*void*/ toWideString(fmt.text, &len);
+      len = mbstowcs(NULL, fmt.text.c_str(), 0);
     else
-      /*void*/ toWideString(trackField(track, fmt.tag), &len);
-    sum += len;
+      len = mbstowcs(NULL, trackField(track, fmt.tag), 0);
+    sum += len; // TODO: Error handling...
   }
 
-  wmove(win, getcury(win), size.width/2 - sum/2);
+  moveCursor(getcury(win), size.width/2 - int(sum/2));
   for (const auto &fmt : format) {
     wattrset(win, UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())
@@ -133,7 +133,7 @@ int main() {
   
   PlayingInfo p(db);
   p.layout({0,0}, {LINES, COLS});
-  for (int i = 0; i < 100; ++i) {
+  for (size_t i = 0; i < 100; ++i) {
     p.setTrack(db.tracks[i]);
 
     for (int pos = 0; pos < 300; pos+=100) {

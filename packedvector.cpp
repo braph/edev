@@ -65,27 +65,29 @@ PackedVector::value_type PackedVector :: get(size_t index) const {
 
   if (bitOffset + _bits <= 32) {
     uint32_t e = _data[dataIndex];
-    return (e >> bitOffset) &~(0xFFFFFFFFu << _bits);
+    e = (e >> bitOffset) &~(0xFFFFFFFFu << _bits);
+    return value_type(e);
   } else {
     BitShiftHelper store;
     store.u32.u1 = _data[dataIndex];
     store.u32.u2 = _data[dataIndex+1];
-    return (store.u64 >> bitOffset) &~(0xFFFFFFFFu << _bits);
+    uint32_t e = (store.u64 >> bitOffset) &~(0xFFFFFFFFu << _bits);
+    return value_type(e);
   }
 }
 
-void PackedVector :: set(size_t index, int value) {
+void PackedVector :: set(size_t index, value_type value) {
   uint32_t dataIndex   = (index * _bits) / 32;
   uint32_t bitOffset   = (index * _bits) % 32;
 
   if (bitOffset + _bits <= 32) {
     uint32_t e = _data[dataIndex];
-    _data[dataIndex] = replace_bits<uint32_t>(e, value, bitOffset, _bits);
+    _data[dataIndex] = replace_bits<uint32_t>(e, uint32_t(value), int(bitOffset), int(_bits));
   } else {
     BitShiftHelper store;
     store.u32.u1 = _data[dataIndex];
     store.u32.u2 = _data[dataIndex+1];
-    store.u64 = replace_bits<uint64_t>(store.u64, value, bitOffset, _bits);
+    store.u64 = replace_bits<uint64_t>(store.u64, uint32_t(value), int(bitOffset), int(_bits));
     _data[dataIndex] = store.u32.u1;
     _data[dataIndex+1] = store.u32.u2;
   }
@@ -112,7 +114,7 @@ void DynamicPackedVector :: reserve(size_t n, int bits) {
 void DynamicPackedVector :: set(size_t index, value_type value) {
   __enter__("index = %lu, value = %d", index, value);
 
-  reserve(capacity(), bitlength_32(value));
+  reserve(capacity(), bitlength(value));
   _vec.set(index, value);
 
   __leave__();
@@ -127,7 +129,7 @@ void DynamicPackedVector :: push_back(value_type value) {
   else
     new_size = capacity(); // keep capacity!
 
-  reserve(new_size, bitlength_32(value));
+  reserve(new_size, bitlength(value));
   _vec.push_back(value);
 
   __leave__();
@@ -136,7 +138,7 @@ void DynamicPackedVector :: push_back(value_type value) {
 void DynamicPackedVector :: resize(size_t n, value_type value) {
   __enter__("%lu, %d", n, value);
 
-  reserve(n, bitlength_32(value));
+  reserve(n, bitlength(value));
   _vec.resize(n, value);
 
   __leave__();
@@ -148,7 +150,7 @@ void DynamicPackedVector :: shrink_to_fit() {
     if (e > max)
       max = e;
 
-  int max_bits = bitlength_32(max);
+  int max_bits = bitlength(max);
   if (max_bits != 0 && max_bits < _vec.bits())
     _vec = PackedVector(max_bits, size(), _vec.begin(), _vec.end());
 }
@@ -159,14 +161,28 @@ void DynamicPackedVector :: shrink_to_fit() {
 #include <initializer_list>
 
 template<typename TInt>
-void testCompress(const std::initializer_list<TInt>& list, unsigned bitwidth) {
+void testCompress(const std::initializer_list<TInt>& list, int bitwidth) {
   std::vector<TInt> expected(list.begin(), list.end());
   std::sort(expected.begin(), expected.end(), std::greater<TInt>());
 
   TInt compressed = compress<TInt>(list.begin(), list.end(), bitwidth);
+
   std::vector<TInt> uncompressed;
 
-  uncompress<TInt, std::vector<TInt>>(uncompressed, compressed, bitwidth);
+  BitUnpacker<TInt> unpacker(compressed, bitwidth);
+  for (TInt v = unpacker.next(); v; v = unpacker.next())
+    uncompressed.push_back(v);
+
+  /*
+  for (auto v : BitUnpacker<TInt>(compressed, bitwidth)) {
+    std::cout << "pb:"<<static_cast<long>(v)<<std::endl;
+    uncompressed.push_back(v);
+  }*/
+
+  //uncompress<TInt, std::vector<TInt>>(uncompressed, compressed, bitwidth);
+
+  for (auto e : expected)
+    std::cout << "exp:"<<e<<std::endl;
 
   if (expected != uncompressed)
     throw std::runtime_error("FOO");
@@ -180,6 +196,17 @@ int main() {
     testCompress<uint8_t>({1}, 5);
     testCompress<uint8_t>({1,2}, 5);
     testCompress<uint16_t>({3,6,12,10}, 5);
+
+    std::vector<uint32_t> t({5,9,2,13});
+    uint32_t compressed = compress<uint32_t>(t.begin(), t.end(), 5);
+
+#if 0
+    std::cout << "HERESMT"<<std::endl;
+    BitUnpacker<uint32_t> unp(compressed, 5);
+    for (uint32_t v = unp.next(); v; v = unp.next())
+      std::cout << v << std::endl;
+    std::cout << "///HERESMT"<<std::endl;
+#endif
   }
 
   // Test: 32bit
@@ -335,12 +362,12 @@ int main() {
     }
 
     std::cout << "set" << std::endl;
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       v[i] = 2;
     }
 
     std::cout << "get" << std::endl;
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       assert(v[i] == 2);
     }
 
@@ -350,7 +377,7 @@ int main() {
     }
 
     std::cout << "get[33]" << std::endl;
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       assert(v[i] == 33);
     }
   }
@@ -358,7 +385,7 @@ int main() {
   {
     std::cout << "push_back" << std::endl;
     DynamicPackedVector v;
-    for (int i = 0; i < SZ; ++i)
+    for (size_t i = 0; i < SZ; ++i)
       v.push_back(1);
 
     std::cout << "*it = 1024" << std::endl;
@@ -366,7 +393,7 @@ int main() {
       *it = 1024;
 
     std::cout << "v[i] == 1024" << std::endl;
-    for (int i = 0; i < SZ; ++i)
+    for (size_t i = 0; i < SZ; ++i)
       assert(v[i] == 1024);
   }
 

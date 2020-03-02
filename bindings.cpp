@@ -4,6 +4,8 @@ namespace Bindings {
 
 Actions::ActionID global[KEY_MAX];
 Actions::ActionID playlist[KEY_MAX];
+Actions::ActionID info[KEY_MAX];
+Actions::ActionID help[KEY_MAX];
 
 void init() {
 #define _ global
@@ -33,12 +35,12 @@ void init() {
 
 #define _ playlist
   _['\n'] = _['\r']   = _[KEY_ENTER]      = Actions::PLAYLIST_PLAY;
-  _['g']              = _[KEY_HOME]       = Actions::PLAYLIST_TOP;
-  _['G']              = _[KEY_END]        = Actions::PLAYLIST_BOTTOM;
-  _['k']              = _[KEY_UP]         = Actions::PLAYLIST_UP;
-  _['j']              = _[KEY_DOWN]       = Actions::PLAYLIST_DOWN;
-  _[C('u')]           = _[KEY_PPAGE]      = Actions::PLAYLIST_PAGE_UP;
-  _[C('d')]           = _[KEY_NPAGE]      = Actions::PLAYLIST_PAGE_DOWN;
+  _['g']              = _[KEY_HOME]       = Actions::TOP;
+  _['G']              = _[KEY_END]        = Actions::BOTTOM;
+  _['k']              = _[KEY_UP]         = Actions::UP;
+  _['j']              = _[KEY_DOWN]       = Actions::DOWN;
+  _[C('u')]           = _[KEY_PPAGE]      = Actions::PAGE_UP;
+  _[C('d')]           = _[KEY_NPAGE]      = Actions::PAGE_DOWN;
   _['o']                                  = Actions::PLAYLIST_GOTO_CURRENT;
 #undef _
 }

@@ -5,13 +5,13 @@
 using namespace UI;
 using namespace Views;
 
-MainWindow :: MainWindow(Database& db, Mpg123Player& player)
+MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
 : playingInfo(db)
 , progressBar()
 , tabBar()
 , windows()
 , splash()
-, playlist()
+, playlist(actions)
 , info(db, player)
 , help()
 {
@@ -22,6 +22,8 @@ MainWindow :: MainWindow(Database& db, Mpg123Player& player)
     else if (w == "windows")        addWidget(&windows);
     else assert_not_reached();
   }
+
+  setCurrentIndex(indexOf(&windows));
 
   for (auto w : Config::tabs_widgets) {
     /**/ if (w == "splash")   windows.addWidget(&splash);

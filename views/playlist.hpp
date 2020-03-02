@@ -1,6 +1,8 @@
 #ifndef _PLAYLIST_HPP
 #define _PLAYLIST_HPP
 
+#include "../actions.hpp"
+#include "../bindings.hpp"
 #include "../database.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp" // XXX
@@ -37,9 +39,11 @@ private:
 
 class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
-  Playlist();
+  Playlist(Actions&);
   std::vector<Database::Tracks::Track> playlist;
+  bool handleKey(int);
 private:
+  Actions& actions;
   TrackRenderer trackRenderer;
 };
 

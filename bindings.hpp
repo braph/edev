@@ -9,6 +9,8 @@ namespace Bindings {
 void init();
 extern Actions::ActionID global[KEY_MAX];
 extern Actions::ActionID playlist[KEY_MAX];
+extern Actions::ActionID help[KEY_MAX];
+extern Actions::ActionID info[KEY_MAX];
 
 } // namespace Bindings
 

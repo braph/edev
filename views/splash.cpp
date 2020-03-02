@@ -5,8 +5,8 @@
 #include "../common.hpp"
 #include "../generic.hpp"
 
-#define LOGO_WIDTH   78
-#define LOGO_HEIGHT  10
+#define LOGO_WIDTH  78
+#define LOGO_HEIGHT 10
 static const char LOGO[LOGO_HEIGHT][LOGO_WIDTH+1] = {
   {"   ____    _   _     _             ____    _       _____   ______   _ ___ ___"},
   {"  /  __)  ; | | ;   | |           |  _ \\  | |     /___  \\ |____  | | '_  `_  \\"},
@@ -22,14 +22,14 @@ static const char LOGO[LOGO_HEIGHT][LOGO_WIDTH+1] = {
 
 #define SIGNATURE_WIDTH  69
 #define SIGNATURE_HEIGHT 4
-static const char SIGNATURE[SIGNATURE_HEIGHT][SIGNATURE_WIDTH+1] = {
+static const unsigned char SIGNATURE[SIGNATURE_HEIGHT][SIGNATURE_WIDTH+1] = {
   {"  ___                   _   _    _ _                  _   _          "},
   {" / __| ___ _  _ _ _  __| | | |  (_) |__  ___ _ _ __ _| |_(_)___ _ _  "},
   {" \\__ \\/ _ \\ || | ' \\/ _` | | |__| | '_ \\/ -_) '_/ _` |  _| / _ \\ ' \\ "},
   {" |___/\\___/\\_,_|_||_\\__,_| |____|_|_.__/\\___|_| \\__,_|\\__|_\\___/_||_|"},
 };
 
-#define BUBBLES_SIZE ARRAY_SIZE(BUBBLES)
+#define BUBBLES_SIZE 6
 static const char BUBBLES[][2] = {{6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9}};
 
 static const short colorFading_0[]       = {-1};
@@ -79,17 +79,18 @@ void Splash :: draw() {
   }
 
   fader = logoFading;
-  for (size_t i = 0; i < LOGO_HEIGHT; ++i) {
-    wattrset(win, setFG(fader.get(LOGO_HEIGHT, i)));
+  for (int i = 0; i < LOGO_HEIGHT; ++i) {
+    wattrset(win, setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
     mvwaddstr(win, top_pad + i, left_pad, LOGO[i]);
   }
 
   fader = bubbleFading;
-  for (size_t i = 0; i < BUBBLES_SIZE; ++i) {
+  for (int i = 0; i < BUBBLES_SIZE; ++i) {
     const int x = BUBBLES[i][0];
     const int y = BUBBLES[i][1];
-    mvwaddch(win, top_pad + y - 1, left_pad + x + 1, '_'|setFG(fader.get(LOGO_HEIGHT, y - 1)));
-    wattrset(win, setFG(fader.get(LOGO_HEIGHT, y)));
+    mvwaddch(win, top_pad + y - 1, left_pad + x + 1,
+        '_' | setFG(fader.get(LOGO_HEIGHT, unsigned(y - 1))));
+    wattrset(win, setFG(fader.get(LOGO_HEIGHT, unsigned(y))));
     mvwaddstr(win, top_pad + y, left_pad + x, "(_)");
   }
 
@@ -99,9 +100,9 @@ void Splash :: draw() {
   left_pad = w_center - (SIGNATURE_WIDTH / 2);
 
   fader = signatureFading;
-  for (size_t i = 0; i < SIGNATURE_HEIGHT; ++i) {
-    wmove(win, top_pad + i, left_pad);
-    for (size_t j = 0; j < SIGNATURE_WIDTH; ++j)
+  for (int i = 0; i < SIGNATURE_HEIGHT; ++i) {
+    moveCursor(top_pad + i, left_pad);
+    for (unsigned j = 0; j < SIGNATURE_WIDTH; ++j)
       waddch(win, SIGNATURE[i][j] | setFG(fader.get2(SIGNATURE_WIDTH, j)));
   }
 }

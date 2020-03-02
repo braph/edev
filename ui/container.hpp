@@ -10,16 +10,18 @@ public:
   GenericContainer();
   void draw();
   void noutrefresh();
-
-  WINDOW* active_win();
-  void addWidget(Widget*);
-  Widget* currentWidget();
-  int indexOf(Widget*);
-  int currentIndex();
-  void setCurrentIndex(int);
-  size_t count();
-
+  bool handleKey(int);
   bool handleMouse(MEVENT&);
+
+  WINDOW* active_win() const;
+  Widget* currentWidget() const;
+  int     indexOf(Widget*) const;
+  int     currentIndex() const;
+  void    addWidget(Widget*);
+  void    setCurrentIndex(int);
+  bool    empty() const;
+  int     count() const;
+
 protected:
   std::vector<Widget*> _widgets;
   int _current;
@@ -37,9 +39,8 @@ public:
   void draw();
   void noutrefresh();
   void layout(Pos, Size);
-
   bool handleMouse(MEVENT&);
 };
 
-}
+} // namespace UI
 #endif

@@ -89,7 +89,7 @@ void Mpg123Player :: read_output(const char* __buffer, size_t len) {
       _buffer.clear();
     } else {
       parse_line(buffer);
-      len -= (end-buffer)+1;
+      len -= unsigned(end-buffer) + 1;
       buffer = end + 1;
     }
   }
@@ -118,7 +118,6 @@ void Mpg123Player :: parse_line(const char* line) {
 
   // Single char command
   if (line[0] && line[1] == ' ') {
-    float played, remaining;
     line += 2;
     switch (line[-2]) {
       case 'P': /* Playing State */
@@ -139,12 +138,14 @@ void Mpg123Player :: parse_line(const char* line) {
       case 'J': /* Jump */ break;
       case 'R': /* ???? */ break;
       case 'S': /* ???? */ break;
-      case 'F': 
+      case 'F': {
+        float played, remaining;
         std::sscanf(line, "%*d %*d %f %f", /* &d, &d, */ &played, &remaining);
         seconds_played    = played;
         seconds_remaining = remaining;
         seconds_total     = seconds_played + seconds_remaining;
         break;
+      }
       default:
         std::cerr << "parse_output(): " << &line[-2] << std::endl;
     }
@@ -153,14 +154,14 @@ void Mpg123Player :: parse_line(const char* line) {
   else {
     if (cstr_seek(&line, "SAMPLE ")) {
       if (sample_rate) {
-        unsigned int samples_played, samples_total;
-        std::sscanf(line, "%u %u", &samples_played, &samples_total);
+        int samples_played, samples_total;
+        std::sscanf(line, "%d %d", &samples_played, &samples_total);
         seconds_played = samples_played / sample_rate;
         seconds_total  = samples_total  / sample_rate;
       }
     }
     else if (cstr_seek(&line, "FORMAT ")) {
-      std::sscanf(line, "%u %hhu", &sample_rate, &channels);
+      std::sscanf(line, "%d %d", &sample_rate, &channels);
     }
     else if (cstr_seek(&line, "silence ")) {
     }
@@ -169,17 +170,17 @@ void Mpg123Player :: parse_line(const char* line) {
   }
 }
 
-void Mpg123Player :: set_position(unsigned seconds) {
+void Mpg123Player :: set_position(int seconds) {
   if (process && process->running())
     *process << "J " << seconds << "s\n";
 }
 
-void Mpg123Player :: seek_forward(unsigned seconds) {
+void Mpg123Player :: seek_forward(int seconds) {
   if (process && process->running())
     *process << "J +" << seconds << "s\n";
 }
 
-void Mpg123Player :: seek_backward(unsigned seconds) {
+void Mpg123Player :: seek_backward(int seconds) {
   if (process && process->running())
     *process << "J -" << seconds << "s\n";
 }
@@ -209,18 +210,18 @@ int main() {
   TEST_BEGIN();
 
   Mpg123Player player;
-  assert (! player.is_playing());
-  assert (! player.is_paused());
-  assert (  player.is_stopped());
+  assert (! player.isPlaying());
+  assert (! player.isPaused());
+  assert (  player.isStopped());
   assert (! player.position());
   assert (! player.length());
   assert (! player.percent());
   player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
   sleep(3);
-  player.poll();
-  assert (  player.is_playing());
-  assert (! player.is_paused());
-  assert (! player.is_stopped());
+  player.work();
+  assert (  player.isPlaying());
+  assert (! player.isPaused());
+  assert (! player.isStopped());
   assert (  player.position());
   assert (  player.length());
   assert (  player.percent());

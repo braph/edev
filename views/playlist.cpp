@@ -16,8 +16,15 @@ using namespace Views;
  * TrackRenderer - display a track as a row with columns
  * ==========================================================================*/
 
-void TrackRenderer :: operator()(WINDOW *win, int width, const Database::Tracks::Track &item, int index, bool cursor, bool active /* selection */) {
-  int additional_attributes = 0;
+void TrackRenderer :: operator()(
+    WINDOW *win,
+    int width,
+    const Database::Tracks::Track &item,
+    int index,
+    bool cursor,
+    bool active /* selection */
+) {
+  unsigned int additional_attributes = 0;
   if (active) additional_attributes |= A_BOLD;
   if (cursor) additional_attributes |= A_STANDOUT;
   int selection = 0; // XXX: this is a parameter
@@ -26,7 +33,7 @@ void TrackRenderer :: operator()(WINDOW *win, int width, const Database::Tracks:
   int x = 0;
 
   // Substract the space that separates the columns
-  width = width - m_columns.size() + 1;
+  width = width - int(m_columns.size()) + 1;
   // Sum of all relative widths
   int _100Percent = 0;
   for (const auto &column : m_columns) {
@@ -46,7 +53,7 @@ void TrackRenderer :: operator()(WINDOW *win, int width, const Database::Tracks:
 
     size_t len;
     wchar_t* value = toWideString(trackField(item, column.tag), &len);
-    size_t colwidth;
+    int colwidth;
 
     if (column.relative)
       colwidth = width * column.size / _100Percent;
@@ -59,13 +66,13 @@ void TrackRenderer :: operator()(WINDOW *win, int width, const Database::Tracks:
     if (column.justify == PlaylistColumnFormat::Left)
       mvwaddnwstr(win, y, x, value, colwidth);
     else if (column.justify == PlaylistColumnFormat::Right) {
-      if (len < colwidth)
-        mvwaddwstr(win, y, x + colwidth - len, value); // TODO
+      if (int(len) < colwidth)
+        mvwaddwstr(win, y, x + colwidth - int(len), value); // TODO
       else
         mvwaddnwstr(win, y, x, value, colwidth);
     }
 
-    x += colwidth+1;
+    x += colwidth + 1;
   }
 }
 
@@ -73,11 +80,28 @@ void TrackRenderer :: operator()(WINDOW *win, int width, const Database::Tracks:
  * Playlist
  * ==========================================================================*/
 
-Playlist :: Playlist()
-: trackRenderer(Config::playlist_columns)
+Playlist :: Playlist(Actions& actions)
+: actions(actions), trackRenderer(Config::playlist_columns)
 {
   this->itemRenderer = trackRenderer;
   this->attachList(&this->playlist);
+}
+
+bool Playlist :: handleKey(int key) {
+  if (Bindings::playlist[key]) {
+    switch (Bindings::playlist[key]) {
+    case Actions::TOP:       top();        break;
+    case Actions::BOTTOM:    bottom();     break;
+    case Actions::UP:        up();         break;
+    case Actions::DOWN:      down();       break;
+    case Actions::PAGE_UP:   page_up();    break;
+    case Actions::PAGE_DOWN: page_down();  break;
+    default: actions.call(Bindings::playlist[key]);
+    }
+    return true;
+  }
+
+  return false;
 }
 
 #ifdef TEST_PLAYLIST
@@ -91,7 +115,6 @@ int main() {
   Theme::loadTheme(COLORS);
   Database db;
   db.load(TEST_DB);
-  //db.load(Config::database_file);
   assert(db.tracks.size() > 10);
 
   TrackRenderer renderer(Config::playlist_columns);

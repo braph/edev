@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstring>
 #include <cassert>
+#include <iostream> // XXX
 #include <initializer_list>
 
 #include <boost/algorithm/string.hpp>
@@ -97,14 +98,14 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
   return false;
 }
 
-template<typename TVal, typename TLower, typename TUpper>
-inline TVal clamp(TVal value, TLower lower, TUpper upper) {
+template<typename T>
+inline T clamp(T value, T lower, T upper) {
   if (value < lower) return lower;
   if (value > upper) return upper;
   return value;
 }
 
-static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
+static inline int size_for_bits(int bits, int storage_size = 1) {
   storage_size *= CHAR_BIT;
   return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
 }

@@ -3,18 +3,18 @@
 
 #include <string>
 
-struct ThemeDefinition {
-  short fg, bg;
-  unsigned int attributes;
-
-  ThemeDefinition(short fg = -2, short bg = -2, unsigned int attributes = 0)
-    : fg(fg), bg(bg), attributes(attributes)
-  {
-  }
-};
-
 class Theme {
 public:
+  struct Definition {
+    short fg, bg;
+    unsigned int attributes;
+
+    Definition(short fg = -2, short bg = -2, unsigned int attributes = 0)
+      : fg(fg), bg(bg), attributes(attributes)
+    {
+    }
+  };
+
   enum ThemeID {
     DEFAULT,
     URL,
@@ -50,12 +50,12 @@ public:
 
   static int  current; // 0 | 8 | 256
   static void set(unsigned int, const std::string&, short, short, unsigned int);
-  static int  get(ThemeID);
+  static unsigned int get(ThemeID);
   static void loadTheme(int);
 
 private:
-  static ThemeDefinition themes[3][THEME_ID_COUNT];
-  static int loaded[THEME_ID_COUNT];
+  static Definition themes[3][THEME_ID_COUNT];
+  static unsigned int loaded[THEME_ID_COUNT];
 };
 
 #endif

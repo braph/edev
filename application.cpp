@@ -155,8 +155,12 @@ void Application :: run() {
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
   //player.audio_system = Config::audio_system; TODO
-  Views::MainWindow mainwindow(database, player);
-  Actions actions(mainwindow, database, player, trackloader);
+  Actions actions;
+  Views::MainWindow mainwindow(actions, database, player);
+  actions.db = &database;
+  actions.p  = &player;
+  actions.v  = &mainwindow;
+  actions.t  = &trackloader;
 
   // Connecting widgets events
   mainwindow.progressBar.percentChanged = [&](float f) {
@@ -194,8 +198,10 @@ MAINLOOP:
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
   mainwindow.playingInfo.setState(player.getState());
-  mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem()); //XXX bounds
-  mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
+  if (!mainwindow.playlist.empty() && mainwindow.playlist.getActiveIndex() >= 0) {
+    mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem());
+    mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
+  }
   mainwindow.noutrefresh();
   doupdate();
 
@@ -212,11 +218,10 @@ MAINLOOP:
       player.getState() == Mpg123Player::PLAYING &&
       player.length() >= 30 &&
       player.percent() >= 0.5 &&
-      mainwindow.playlist.getList() &&
-      mainwindow.playlist.getList()->size() >= 2
+      mainwindow.playlist.containerSize() >= 2
       ) {
     auto list = mainwindow.playlist.getList();
-    nextTrack = (*list)[(mainwindow.playlist.getActiveIndex() + 1) % list->size()];
+    nextTrack = (*list)[size_t(mainwindow.playlist.getActiveIndex() + 1) % list->size()];
     if (nextTrack != currentPrefetching) {
       trackloader.getFileForTrack(nextTrack);
       currentPrefetching = nextTrack;
@@ -239,10 +244,11 @@ MAINLOOP:
       goto MAINLOOP;
     }
 
+    if (mainwindow.handleKey(c))
+      goto MAINLOOP;
+
     if (Bindings::global[c])
       c = Bindings::global[c];
-    else if (Bindings::playlist[c])
-      c = Bindings::playlist[c];
     else if (c == 'x') {
       database.shrink_to_fit();
       mainwindow.playlist.playlist = database.getTracks();

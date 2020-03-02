@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include "generic.hpp"
+#include "bit_tools.hpp"
 
 #include <new>
 #include <memory>
@@ -20,104 +21,6 @@ static int call_level = 0;
 #define __leave__(...) (void)0
 #define debug() (void)0
 #endif
-
-/* ============================================================================
- * Static helper functions
- * ==========================================================================*/
-
-template<typename TUIntType>
-static inline TUIntType replace_bits(TUIntType src, TUIntType val, unsigned offset, unsigned len) {
-  /* Example for replace_bits<uint_16t>(18, 7, 3, 3)
-   *
-   * BIT_COUNT: 16
-   * 0xFFFF:    11111111 11111111 -- TUIntType with all bits set
-   * src:       00000000 00010010 -- Initial value that is going to be altered
-   * val:       00000000 00000111 -- Value to to insert
-   * offset:                 ^---------- where to put the value
-   * len:                  ^------------ length of the value
-   * mask:      00000000 11100000 <--- gives mask
-   *
-   * clearing `src` with `& ~mask`:
-   *            00000000 00010010
-   *            00000000 00000010
-   */
-
-  enum { BIT_COUNT = CHAR_BIT * sizeof(TUIntType) };
-  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
-
-  // We are replacing the whole `src` -- TODO: what about offset?!?!
-  if (len == BIT_COUNT)
-    return val;
-
-  TUIntType mask = (~(OxFFFF << len)) << offset;
-  return (src & ~mask) | (val << offset);
-}
-
-template<typename TUIntType>
-static inline TUIntType extract_bits(TUIntType src, unsigned offset, unsigned len) {
-  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
-  return (src >> offset) &~(OxFFFF << len);
-}
-
-static inline int bitlength_32(uint32_t n) {
-  return (n ? 32 - __builtin_clz(n) : 0);
-}
-
-#include<vector>
-#include<iostream>
-#include<bitset>
-// 0100|0000 0010|0000 
-template<typename TUIntType, typename TIterator>
-TUIntType compress(TIterator _it, TIterator _end, unsigned bitwidth) {
-  if (_it == _end)
-    return 0;
-  DynamicArray<TUIntType, 8> sorted(_it, _end);
-
-  auto it = sorted.begin();
-  auto end = sorted.end();
-  std::sort(it, end, std::greater<TUIntType>());
-
-//std::cout << "First value: " << *it << std::endl;
-  TUIntType result = replace_bits<TUIntType>(0, *it, 0, bitwidth);
-//std::cout << "Result: " << std::bitset<32>(result) << std::endl;
-
-  unsigned offset = bitwidth;
-
-  for (++it; it != end; ++it) {
-//  std::cout << "Inserting " << *it << " on " << offset << " bitwidth: " << bitwidth << std::endl;
-
-    result= replace_bits<TUIntType>(result,*it, offset, bitwidth);
-    offset += bitwidth;
-    bitwidth = bitlength_32(*it);
-
-//  std::cout << "Result: " << std::bitset<32>(result) << std::endl;
-  }
-  return result;
-}
-
-template<typename TUIntType, typename TContainer>
-void uncompress(TContainer& container, TUIntType packed, unsigned bitwidth) {
-  container.clear();
-  TUIntType value = extract_bits<TUIntType>(packed, 0, bitwidth);
-  container.push_back(value);
-//std::cout << "First value: " << value << " (" << std::endl;
-  unsigned offset = bitwidth;
-
-  while ((value = extract_bits<TUIntType>(packed, offset, bitwidth)) > 0) {
-//  std::cout << "push back: " << value << std::endl;
-    container.push_back(value);
-    offset += bitwidth;
-    bitwidth = bitlength_32(value);
-  }
-
-#if 0
-  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
-  TUIntType value = packed &~(OxFFFF << bitwidth);
-  bitwidth = 
-
-  return (src >> offset) &~(OxFFFF << len);
-#endif
-}
 
 /* ============================================================================
  * TinyPackedArray - PackedVector's little brother
@@ -202,8 +105,8 @@ struct ArrayIterator { //: public ArrayReference<TBits, TStorage> {
   inline ArrayIterator& operator--()             { --_i; return *this; }
   inline ArrayIterator  operator++(int)    { ArrayIterator I = *this; ++_i; return I; }
   inline ArrayIterator  operator--(int)    { ArrayIterator I = *this; --_i; return I; }
-  inline ArrayIterator& operator+=(ptrdiff_t n)       { _i += n; return *this;            }
-  inline ArrayIterator& operator-=(ptrdiff_t n)       { _i -= n; return *this;            }
+  inline ArrayIterator& operator+=(ptrdiff_t n)       { _i += size_t(n); return *this; }
+  inline ArrayIterator& operator-=(ptrdiff_t n)       { _i -= size_t(n); return *this; }
   inline ArrayIterator  operator+ (ptrdiff_t n) const { ArrayIterator I = *this; return I += n; }
   inline ArrayIterator  operator- (ptrdiff_t n) const { ArrayIterator I = *this; return I -= n; }
 
@@ -213,8 +116,11 @@ struct ArrayIterator { //: public ArrayReference<TBits, TStorage> {
   }
   inline ArrayReference<TBits, TStorage>& operator[](ptrdiff_t n)       { return *(*this + n);               }
 
-  inline ptrdiff_t operator- (const ArrayIterator&I) const { return _i - I._i; }
-  inline ptrdiff_t operator+ (const ArrayIterator&I) const { return _i + I._i; }
+  inline ptrdiff_t operator- (const ArrayIterator&I) const
+  { return ptrdiff_t(_i) - ptrdiff_t(I._i); }
+
+  inline ptrdiff_t operator+ (const ArrayIterator&I) const
+  { return ptrdiff_t(_i) + ptrdiff_t(I._i); }
 };
 
 template<unsigned TBits, typename TStorage>
@@ -266,9 +172,9 @@ class PackedVector {
   using storage_type = uint32_t;
 
   storage_type* _data;
-  size_t  _size;     // element count
-  size_t  _capacity; // element count
-  uint8_t _bits;
+  size_t   _size;     // element count
+  size_t   _capacity; // element count
+  uint8_t  _bits;
 
 public:
   using iterator   = GenericIterator<PackedVector>;
@@ -279,8 +185,8 @@ public:
   : _data(NULL)
   , _size(0)
   , _capacity(0)
-  , _bits(bits) {
-    __enter__("bits = %d", bits);
+  , _bits(unsigned(bits)) {
+    __enter__("bits = %u", bits);
     if (bits > 31 || bits < 1)
       throw std::invalid_argument("bits > 31 || bits < 1");
     __leave__();
@@ -338,7 +244,7 @@ public:
 protected:
   // Private copy constructor
   PackedVector(int bits, size_t capacity, iterator begIt, iterator endIt)
-  : _data(new storage_type[size_for_bits(bits*capacity, sizeof(storage_type))])
+  : _data(new storage_type[size_for_bits(unsigned(bits)*capacity, sizeof(storage_type))])
   , _size(0)
   , _capacity(capacity)
   , _bits(bits)

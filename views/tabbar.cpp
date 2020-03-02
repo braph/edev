@@ -15,12 +15,17 @@ void TabBar :: addTab(const std::string &label) {
 }
 
 void TabBar :: setCurrentIndex(int index) {
-  _current = index % _tabs.size();
+  if (index >= 0 && index < count())
+    _current = index;
   draw();
 }
 
-int TabBar :: currentIndex() {
+int TabBar :: currentIndex() const {
   return _current;
+}
+
+int TabBar :: count() const {
+  return int(_tabs.size());
 }
 
 void TabBar :: layout(UI::Pos pos, UI::Size size) {
@@ -37,7 +42,7 @@ void TabBar :: layout(UI::Pos pos, UI::Size size) {
 
 void TabBar :: draw() {
   werase(win);
-  wmove(win, 0, 0);
+  moveCursor(0, 0);
 
   int i = 0;
   for (const auto &label : _tabs) {
@@ -55,7 +60,7 @@ bool TabBar :: handleMouse(MEVENT& m) {
   if (m.y == pos.y /* + size.height - 1 */) {
     int label_x = 0;
     for (size_t index = 0; index < _tabs.size(); ++index) {
-      label_x += _tabs[index].length() + 1;
+      label_x += int(_tabs[index].length()) + 1;
       if (m.x <= label_x) {
         if (indexChanged)
           indexChanged(index);

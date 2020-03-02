@@ -3,12 +3,12 @@
 #include <cstring>
 #include <climits>
 
-size_t StringPool :: add(const char *s, bool force_append) {
+int StringPool :: add(const char *s, bool force_append) {
   if (!*s)
     return 0;
 
   if (! force_append) {
-    size_t existing = find(s);
+    int existing = find(s);
     if (existing)
       return existing;
   }
@@ -18,7 +18,7 @@ size_t StringPool :: add(const char *s, bool force_append) {
   return pos;
 }
 
-size_t StringPool :: find(const char *s) const {
+int StringPool :: find(const char *s) const {
   if (!*s)
     return 0;
 
@@ -31,11 +31,11 @@ size_t StringPool :: find(const char *s) const {
 
 bool StringPool :: isOptimized() const {
   const char* pool_data = storage.data();
-  size_t pool_size = size();
-  size_t last = INT_MAX;
-  size_t len;
+  int pool_size = size();
+  int last = INT_MAX;
+  int len;
 
-  for (size_t i = 1; /* Skip empty string */ i < pool_size;) {
+  for (int i = 1; /* Skip empty string */ i < pool_size;) {
     len = strlen(pool_data + i);
     if (len > last)
       return false;
@@ -46,7 +46,7 @@ bool StringPool :: isOptimized() const {
   return true;
 }
 
-size_t StringPool :: count() const {
+int StringPool :: count() const {
   const char* pool_data = storage.data() + 1;
   const char* pool_end =  storage.data() + storage.size();
 
@@ -70,9 +70,9 @@ int main() {
   assert(! pool.find("non-existent"));
   assert(streq("", pool.get(0)));
   assert(0 == pool.add(""));
-  size_t id0 = pool.add("0substr");
-  size_t id1 = pool.add("substr");
-  size_t id2 = pool.add("substr");
+  int id0 = pool.add("0substr");
+  int id1 = pool.add("substr");
+  int id2 = pool.add("substr");
   assert(streq("0substr", pool.get(id0)));
   assert(streq("substr",  pool.get(id1)));
   assert(streq("substr",  pool.get(id2)));

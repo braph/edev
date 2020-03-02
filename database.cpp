@@ -28,17 +28,15 @@ typedef const char* ccstr;
 struct Dumper {
   Dumper(std::ofstream& fs) : fs(fs) {}
 
-  inline void dump(size_t value)
-  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
-
-  inline void dump(uint16_t value)
-  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
-
   inline void dump(StringPool& p)
   { dump(BITSOF(char), p.size(), reinterpret_cast<char*>(p.data())); }
 
   inline void dump(DynamicPackedVector& v)
   { dump(v.bits(), v.size(), reinterpret_cast<char*>(v.data())); }
+
+  template<typename T> // for integer types
+  inline void dump(T value)
+  { fs.write(reinterpret_cast<char*>(&value), sizeof(value) * T(1)); }
 
   template<typename T>
   inline void dump(std::vector<T>& v)
@@ -49,7 +47,7 @@ struct Dumper {
 
 private:
   std::ofstream& fs;
-  void dump(size_t bits, size_t count, char* data) {
+  void dump(int bits, int count, char* data) {
     dump(bits);
     dump(count);
     fs.write(data, size_for_bits(bits*count));
@@ -117,12 +115,12 @@ private:
  * A bit ugly, but cleans up the code a lot
  * ==========================================================================*/
 
-#define STR_SET(POOL_NAME, ID, S) \
-  if (! streq(db.pool_##POOL_NAME.get(ID), S)) \
-    { ID = db.pool_##POOL_NAME.add(S); }
+#define STR_GET(POOL_NAME, STRING_ID) \
+  db.pool_##POOL_NAME.get(STRING_ID)
 
-#define STR_GET(POOL_NAME, ID) \
-  db.pool_##POOL_NAME.get(ID)
+#define STR_SET(POOL_NAME, STRING_ID, STR) \
+  if (! streq(STR_GET(POOL_NAME, STRING_ID), STR)) \
+    { STRING_ID = db.pool_##POOL_NAME.add(STR); }
 
 /* ============================================================================
  * Database
@@ -198,7 +196,7 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
   }
 
   StringPool newPool;
-  newPool.reserve(pool.size());
+  newPool.reserve(size_t(pool.size()));
 
   // Build the map used for remapping IDs, storing all IDs used in columns
   std::unordered_map<int, int> idRemap;
@@ -209,20 +207,20 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
     for (auto id : *col)
       idRemap[id] = 0;
 
-  using IDAndLength = std::pair<unsigned int, unsigned int>;
+  struct IDAndLength { int id; size_t length; };
 
   // Sort the IDs, longest strings first
   std::vector<IDAndLength> idSortedByLength;
   idSortedByLength.reserve(idRemap.size());
   for (auto& pair : idRemap)
-    idSortedByLength.push_back(IDAndLength(pair.first, strlen(pool.get(pair.first))));
+    idSortedByLength.push_back({pair.first, strlen(pool.get(pair.first))});
 
   std::sort(idSortedByLength.begin(), idSortedByLength.end(),
-      [](const IDAndLength& a, const IDAndLength& b){ return a.second > b.second; });
+      [](const IDAndLength& a, const IDAndLength& b){ return a.length > b.length; });
 
   // Add strings in the right order to the stringpool and store the new ID
   for (auto IDAndLength : idSortedByLength)
-    idRemap[IDAndLength.first] = newPool.add(pool.get(IDAndLength.first));
+    idRemap[IDAndLength.id] = newPool.add(pool.get(IDAndLength.id));
 
   // Replace the IDs from the old pool by the IDs from the new pool
   for (auto column : columns)
@@ -244,13 +242,11 @@ static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, 
   if (!*url)
     return typename TTable::value_type(table.db, 0);
 
-  size_t strId = pool.find(url);
+  int strId = pool.find(url);
   if (strId) {
-    Database::Column::iterator beg = table.url.begin();
-    Database::Column::iterator end = table.url.end();
-    Database::Column::iterator fnd = std::find(beg, end, strId);
-    if (fnd != end)
-      return typename TTable::value_type(table.db, fnd-beg);
+    auto pos = std::find(table.url.begin(), table.url.end(), strId);
+    if (pos != table.url.end())
+      return typename TTable::value_type(table.db, size_t(pos - table.url.begin()));
   }
 
   if (create) {
@@ -376,14 +372,14 @@ TRACK Database::Tracks::find(const char* url, bool create) {
 }
 
 // GETTER
-ccstr TRACK::url()      const { return STR_GET(track_url, db.tracks.url[id]);    }
-ccstr TRACK::title()    const { return STR_GET(meta,      db.tracks.title[id]);  }
-ccstr TRACK::artist()   const { return STR_GET(meta,      db.tracks.artist[id]); }
-ccstr TRACK::remix()    const { return STR_GET(meta,      db.tracks.remix[id]);  }
-int   TRACK::number()   const { return db.tracks.number[id];                  }
-int   TRACK::bpm()      const { return db.tracks.bpm[id];                     }
-int   TRACK::album_id() const { return db.tracks.album_id[id];                }
-ALBUM TRACK::album()    const { return db.albums[db.tracks.album_id[id]];     }
+ccstr TRACK::url()      const { return STR_GET(track_url, db.tracks.url[id]);     }
+ccstr TRACK::title()    const { return STR_GET(meta,      db.tracks.title[id]);   }
+ccstr TRACK::artist()   const { return STR_GET(meta,      db.tracks.artist[id]);  }
+ccstr TRACK::remix()    const { return STR_GET(meta,      db.tracks.remix[id]);   }
+int   TRACK::number()   const { return db.tracks.number[id];                      }
+int   TRACK::bpm()      const { return db.tracks.bpm[id];                         }
+int   TRACK::album_id() const { return db.tracks.album_id[id];                    }
+ALBUM TRACK::album()    const { return db.albums[size_t(db.tracks.album_id[id])]; }
 // SETTER
 void  TRACK::url(ccstr s)     { STR_SET(track_url, db.tracks.url[id],    s);  }
 void  TRACK::title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }

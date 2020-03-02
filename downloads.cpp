@@ -50,8 +50,8 @@ void Download :: cleanup() {
  * BufferDownload
  * ==========================================================================*/
 
-static size_t write_buffer_cb(char *data, size_t size, size_t nmemb, void *p) {
-  static_cast<std::string*>(p)->append(data, size*nmemb);
+static size_t write_buffer_cb(char *data, size_t size, size_t nmemb, void *buffer) {
+  static_cast<std::string*>(buffer)->append(data, size*nmemb);
   return size*nmemb;
 }
 
@@ -70,8 +70,8 @@ std::string& BufferDownload :: getContent() {
  * FileDownload
  * ==========================================================================*/
 
-static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *p) {
-  static_cast<std::ofstream*>(p)->write(data, size*nmemb);
+static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *stream) {
+  static_cast<std::ofstream*>(stream)->write(data, std::streamsize(size*nmemb));
   return size*nmemb;
 }
 

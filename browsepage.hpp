@@ -21,12 +21,12 @@ struct Style {
 };
 
 struct Track {
-  std::string    url;
-  std::string    title;
-  std::string    artist;
-  std::string    remix;
-  unsigned short bpm;
-  unsigned short number;
+  std::string  url;
+  std::string  title;
+  std::string  artist;
+  std::string  remix;
+  short        bpm;
+  short        number;
 
   inline Track()
   : bpm(0)
@@ -52,8 +52,8 @@ struct Album {
   std::string  description;
   std::string  cover_url;
   time_t       date;
-  unsigned int download_count;
-  unsigned int votes;
+  short        download_count;
+  short        votes;
   float        rating;
   std::vector<std::string> archive_urls;
   std::vector<Style> styles;
@@ -93,7 +93,7 @@ struct Album {
 
 class BrowsePage {
 public:
-  unsigned int num_pages;
+  int num_pages;
   std::vector<Album> albums;
 
   BrowsePage()

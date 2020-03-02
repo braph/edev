@@ -78,10 +78,10 @@ struct MarkupParser {
   wchar_t nextChar() {
     wchar_t c;
     for (;;) {
-      size_t read = mbtowc(&c, it, 6);
-      if (read == -1) { it++; continue; } // Skip invalid char
-      if (read == 0)  { return 0;       } // EOF
-      it += read;
+      int n = mbtowc(&c, it, MB_CUR_MAX);
+      if (n == 0)   { return 0;       } // EOF
+      if (n == -1)  { it++; continue; } // Skip invalid char
+      it += n;
 
       if (c == *it) // doubled char
         switch (*it) {
@@ -100,6 +100,7 @@ struct MarkupParser {
 
 void Info :: draw() {
   clickableURLs.clear();
+  wresize(win, 200, 110);
   wclear(win);
   int y = 1;
 
@@ -145,7 +146,7 @@ void Info :: draw() {
     *this << time_format(album.date(), "%B %d, %Y");
 
     drawTag(y++, "Styles");
-    Database::StylesArray styleIDs(album.styles());
+    Database::StylesArray styleIDs(unsigned(album.styles()));
     const char* comma = "";
     for (auto id : styleIDs)
       if (id) {
@@ -174,7 +175,7 @@ void Info :: draw() {
     std::string linkText;
     wchar_t c;
     while ((c = markupParser.nextChar())) {
-      int attr = Theme::get(Theme::INFO_VALUE);
+      unsigned attr = Theme::get(Theme::INFO_VALUE);
       if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
       if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
 
@@ -242,6 +243,8 @@ void Info :: draw() {
     drawInfo(y++, event.data.second.c_str());
     *this << toWideString(event.data.first.c_str());
   }
+
+  wresize(win, y, getmaxx(win)); // shrink
 }
 
 bool Info :: handleMouse(MEVENT& m) {

@@ -2,10 +2,11 @@
 #define _MPG123_PLAYER_HPP
 
 #include <string>
-#include <thread>
-#include <iostream>
 #include <mutex>
 #include <memory>
+#include <thread>
+#include <cstdint>
+#include <iostream>
 #include <functional>
 
 #include <boost/process.hpp>
@@ -13,7 +14,7 @@
 
 class Mpg123Player {
 public:
-  enum State : char {
+  enum State : uint8_t {
     STOPPED = 0, // <-.
     PAUSED  = 1, //    } Mpg123 
     PLAYING = 2, // <-'
@@ -30,18 +31,18 @@ public:
   void stop();
   void pause();
   void toggle();
-  void set_position(unsigned);
-  void seek_forward(unsigned);
-  void seek_backward(unsigned);
+  void set_position(int);
+  void seek_forward(int);
+  void seek_backward(int);
 
-  inline bool isTrackCompleted() { return track_completed;  }
-  inline bool isPaused()         { return state == PAUSED;  }
-  inline bool isStopped()        { return state == STOPPED; }
-  inline bool isPlaying()        { return state == PLAYING; }
-  inline int  getState()         { return state;            }
-  inline unsigned int position() { return seconds_played;   }
-  inline unsigned int length()   { return seconds_total;    }
-  inline float        percent()  { return (length() ? static_cast<float>(position()) / length() : 0); }
+  inline bool  isTrackCompleted() const { return track_completed;  }
+  inline bool  isPaused()         const { return state == PAUSED;  }
+  inline bool  isStopped()        const { return state == STOPPED; }
+  inline bool  isPlaying()        const { return state == PLAYING; }
+  inline int   getState()         const { return state;            }
+  inline int   position()         const { return seconds_played;   }
+  inline int   length()           const { return seconds_total;    }
+  inline float percent() const { return (length() ? static_cast<float>(position()) / length() : 0); }
   inline void  setPostionByPercent(float p) { set_position(length() * p); }
 
   struct Mpg123Process : public TinyProcessLib::Process {
@@ -92,14 +93,14 @@ public:
 private:
   std::string file;
   std::string audio_system;
-  unsigned char failed; // Automatically gives up trying on overflow :3
-  State         state;
-  bool          track_completed;
-  unsigned char channels;
-  unsigned int  sample_rate;
-  unsigned int  seconds_total;
-  unsigned int  seconds_played;
-  unsigned int  seconds_remaining;
+  uint8_t failed; // Automatically gives up trying on overflow :3
+  State   state;
+  bool    track_completed;
+  int     channels;
+  int     sample_rate;
+  int     seconds_total;
+  int     seconds_played;
+  int     seconds_remaining;
   std::unique_ptr<Mpg123Process> process;
 
   void parse_line(const char*);

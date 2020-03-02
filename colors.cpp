@@ -70,24 +70,22 @@ std::string Attribute :: to_string(unsigned int attribute) {
 
 // === UI::Colors =============================================================
 
-std::vector<std::pair<int32_t, int32_t>> Colors :: color_pairs;
+std::vector<Colors::pair_id> Colors :: color_pairs;
 int Colors :: id = 1;
 
 int Colors :: create_color_pair(short fg, short bg) {
-  union { int16_t in[2]; int32_t combined; } fg_bg = {{fg,bg}};
-
   for (const auto& pair : color_pairs)
-    if (pair.first == fg_bg.combined)
-      return pair.second;
+    if (pair.fg == fg && pair.bg == bg)
+      return pair.id;
 
-  int pair_id = id++;
-  init_pair(pair_id, fg, bg);
-  color_pairs.push_back(std::pair<int32_t, int32_t>(fg_bg.combined, pair_id));
-  return pair_id;
+  Colors::pair_id new_pair = {fg, bg, id++};
+  init_pair(new_pair.id, fg, bg);
+  color_pairs.push_back(new_pair);
+  return new_pair.id;
 }
 
-int Colors :: set(short fg, short bg, unsigned int attributes) {
-  return static_cast<int>(COLOR_PAIR(create_color_pair(fg, bg)) | attributes);
+unsigned int Colors :: set(short fg, short bg, unsigned int attributes) {
+  return COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
 }
 
 #ifdef TEST_COLORS

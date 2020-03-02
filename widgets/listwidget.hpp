@@ -16,6 +16,7 @@ template<typename TContainer>
 class ListWidget : public UI::Window {
 public:
   using value_type = typename TContainer::value_type;
+  using size_type  = typename TContainer::size_type;
 
   std::function<void(WINDOW*, int, const value_type&, int, bool, bool)> itemRenderer;
 
@@ -159,20 +160,32 @@ public:
 
   int getSelected() const { return m_top_index + m_cursor; }
 
-  value_type getItem() const { return (*m_list)[m_top_index+m_cursor]; }
-  value_type getActiveItem() const { return (*m_list)[m_active]; }
+  value_type getItem() const {
+    if (! empty())
+      return (*m_list)[static_cast<size_type>(m_top_index+m_cursor)];
+    throw std::out_of_range("getItem()");
+  }
+
+  value_type getActiveItem() const {
+    if (! empty())
+      return (*m_list)[static_cast<size_type>(m_active)];
+    throw std::out_of_range("getActiveItem()");
+  }
 
   int getActiveIndex() const   { return m_active; }
   void setActiveIndex(int idx) { m_active = idx; draw(); }
+
+  inline bool empty() const
+  { return containerSize() == 0; }
+
+  inline int containerSize() const
+  { return static_cast<int>(m_list ? m_list->size() : 0); }
 
 private:
   int m_cursor;
   int m_active;
   int m_top_index;
   TContainer* m_list;
-
-  inline int containerSize() const
-  { return static_cast<int>(m_list ? m_list->size() : 0); }
 
   inline void render_item(int idx, bool cursor) {
     if (itemRenderer)

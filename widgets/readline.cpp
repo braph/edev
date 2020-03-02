@@ -5,83 +5,82 @@
 
 #include <readline/readline.h>
 
+#include <string>
+#include <functional>
+
 class ReadlineWidget : public UI::Window {
 public:
+  ReadlineWidget();
   void draw();
-  void _getch();
+  bool handleKey(int);
+  std::function<void(const std::string&, bool)> onFinish;
+  void setPrompt(const std::string&);
 private:
   std::string prompt;
 };
 
 #endif
 
-void ReadlineWidget :: draw() {
-  werase(win);
-  mvwprintw(win, 0, 0, ">>%s%s", rl_display_prompt, rl_line_buffer);
+// Readline should never attempt to read a char from STDIN.
+static int readline_input_available_dummy(void) { return 0; }
+
+// We don't want any completion
+static char *readline_completion_dummy(const char*, int) { return NULL; }
+
+// The C callbacks need to refer to the widget object
+static ReadlineWidget *widgetInstance;
+
+static void readline_forward_redisplay() {
+  if (widgetInstance)
+    widgetInstance->draw();
 }
 
-static ReadlineWidget *readlineWidget;
-
-static int  input;
-static bool input_avail;
-
-static int readline_getc(FILE*_) {
-  input_avail = false;
-  return input;
+static void readline_forward_finished(char *line) {
+  std::string result;
+  if (line) {
+    result = line;
+    free(line);
+  }
+  if (widgetInstance)
+    if (widgetInstance->onFinish)
+      widgetInstance->onFinish(result, static_cast<bool>(line));
 }
 
-static int readline_input_avail(void) {
-  return input_avail;
-}
+ReadlineWidget :: ReadlineWidget() : UI::Window() {
+  keypad(win, false);
 
-static void readline_redisplay() {
-  if (readlineWidget)
-    readlineWidget->draw();
-}
-
-static void got_command(char *line) {
-  //if (line)
-  //  throw std::runtime_error(line);
-}
-
-static char *readline_NULL_complete(const char *_, int __) {
-  return NULL;
-}
-
-static void initReadline() {
-  // Let ncurses do all terminal and signal handling
+  rl_initialize();
   rl_catch_signals = 0;
   rl_catch_sigwinch = 0;
   rl_deprep_term_function = NULL;
   rl_prep_term_function = NULL;
   rl_change_environment = 0;
-  rl_getc_function = readline_getc;
-  rl_input_available_hook = readline_input_avail;
-  rl_redisplay_function = readline_redisplay;
-  rl_completion_entry_function = readline_NULL_complete;
-  rl_callback_handler_install("> ", got_command);
+  rl_input_available_hook = readline_input_available_dummy;
+  rl_completion_entry_function = readline_completion_dummy;
+  rl_redisplay_function = readline_forward_redisplay;
+  rl_callback_handler_install("", readline_forward_finished);
 }
 
-void ReadlineWidget :: _getch() {
-  readlineWidget = this;
+void ReadlineWidget :: setPrompt(const std::string& s) {
+  prompt = s;
+}
 
-  int c = wgetch(win);
+void ReadlineWidget :: draw() {
+  wclear(win);
+  mvwaddstr(win, 0, 0, prompt.c_str());
+  int x = getcurx(win);
+  waddstr(win, rl_line_buffer);
+  wmove(win, 0, x + rl_point);
+}
 
-  switch (c) {
-    case KEY_RESIZE:
-      //resize();
-      break;
-
-    case '\f': // ^L
-      clearok(curscr, TRUE);
-      //resize();
-      break;
-
-    default:
-      input = c;
-      input_avail = true;
-      rl_callback_read_char();
-  }
+bool ReadlineWidget :: handleKey(int key) {
+  widgetInstance = this;
+  wtimeout(win, 0);
+  rl_stuff_char(key);
+  while ((key = wgetch(win)) != ERR)
+    rl_stuff_char(key);
+  rl_callback_read_char();
+  return true;
 }
 
 #ifdef TEST_READLINE
@@ -95,11 +94,21 @@ int main() {
   nonl();
 
   ReadlineWidget w;
-
-  initReadline();
+  w.layout({0,0}, {LINES, COLS});
+  w.setPrompt("> ");
+  w.onFinish = [](const std::string& s, bool notEOF) {
+    if (notEOF)
+      std::cerr << "Line: " << s << std::endl;
+    else
+      std::cerr << "EOF" << std::endl;
+  };
 
   for (;;) {
-    w._getch();
+    wtimeout(w.active_win(), 1000);
+    int key = wgetch(w.active_win());
+    if (key == ERR)
+      continue;
+    w.handleKey(key);
     w.draw();
     w.noutrefresh();
     doupdate();

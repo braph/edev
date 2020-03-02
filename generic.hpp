@@ -49,8 +49,11 @@ public:
   iterator  operator+ (ptrdiff_t n) const { iterator i = *this; return i += n; }
   iterator  operator- (ptrdiff_t n) const { iterator i = *this; return i -= n; }
 
-  ptrdiff_t operator- (const iterator&it) const { return idx - it.idx; }
-  ptrdiff_t operator+ (const iterator&it) const { return idx + it.idx; }
+  ptrdiff_t operator- (const iterator&it) const
+  { return static_cast<ptrdiff_t>(idx) - static_cast<ptrdiff_t>(it.idx); }
+
+  ptrdiff_t operator+ (const iterator&it) const
+  { return static_cast<ptrdiff_t>(idx) + static_cast<ptrdiff_t>(it.idx); }
 
   inline friend std::ostream& operator<<(std::ostream& os, const iterator& it) {
     os << "Iterator(" << it.idx << ")";

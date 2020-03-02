@@ -14,14 +14,12 @@ public:
   TabBar();
   void draw();
   void layout(UI::Pos, UI::Size);
+  bool handleMouse(MEVENT&);
 
   void   addTab(const std::string&);
-  int    currentIndex();
   void   setCurrentIndex(int);
-  size_t count();
-
-  // Mouse
-  bool handleMouse(MEVENT&);
+  int    currentIndex() const;
+  int    count() const;
   std::function<void(int)> indexChanged;
 private:
   std::vector<std::string> _tabs;

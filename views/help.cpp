@@ -6,6 +6,10 @@
 #include "../bindings.hpp"
 #include "../actions.hpp"
 
+#define KEYS_START          3
+#define COMMANDS_START      18
+#define DESCRIPTIONS_START  45
+
 #define FG(COLOR) UI::Colors::set(COLOR, -1, 0)
 using namespace UI;
 using namespace Views;
@@ -50,8 +54,7 @@ int main() {
   NCURSES_INIT();
 
   Bindings::init();
-
-  //Theme::current = colors;
+  //Theme::current = COLORS;
 
   Widget *s = new Views::Help;
   s->layout({10,10}, {30,80});

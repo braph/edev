@@ -145,7 +145,7 @@ public:
   inline unsigned int size() const {
     if (xmlXPathNodeSetIsEmpty(m_xpathobject->nodesetval))
       return 0;
-    return m_xpathobject->nodesetval->nodeNr;
+    return static_cast<unsigned>(m_xpathobject->nodesetval->nodeNr);
   }
 
   // XmlXPathResult is wrong in this template instatioation

@@ -26,7 +26,7 @@ void ProgressBar :: layout(Pos pos, Size size) {
 
   wresize(win, size.height, size.width * 2);
   mvwin(win, pos.y, pos.x);
-  wmove(win, 0, 0);
+  moveCursor(0, 0);
 
   ArrayView<const short> fading(fading_0);
 
@@ -35,16 +35,17 @@ void ProgressBar :: layout(Pos pos, Size size) {
   else if (Theme::current == 8)
     fading = fading_8;
 
-  int i;
+  size_t i;
+  const size_t width = size_t(size.width);
   auto fader = SpanView<ArrayView<const short>>(fading);
 
-  for (i = 0; i < size.width; ++i) {
-    wattrset(win, UI::Colors::set(fader.get(size.width, i), -1, 0));
+  for (i = 0; i < width; ++i) {
+    wattrset(win, UI::Colors::set(fader.get(width, i), -1, 0));
     *this << Config::progressbar_progress_char;
   }
   
   wattrset(win, Theme::get(Theme::PROGRESSBAR_REST));
-  for (; i < size.width * 2; ++i)
+  for (; i < width * 2; ++i)
     *this << Config::progressbar_rest_char;
 }
 
@@ -55,7 +56,7 @@ void ProgressBar :: setPercent(float percent) {
 bool ProgressBar :: handleMouse(MEVENT& m) {
   if (m.y == pos.y /* + size.height - 1 */) {
     if (percentChanged)
-      percentChanged(static_cast<float>(m.x+1) / size.width);
+      percentChanged(float(m.x + 1) / size.width);
     return true;
   }
   return false;
