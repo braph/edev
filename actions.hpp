@@ -12,12 +12,15 @@ namespace Views { class MainWindow; }
   X(NONE,                   "none")               \
   X(QUIT,                   "quit")               \
   X(REDRAW,                 "redraw")             \
-  X(TOP,                    "top")       \
-  X(BOTTOM,                 "bottom")    \
-  X(UP,                     "up")        \
-  X(DOWN,                   "down")      \
-  X(PAGE_UP,                "page_up")   \
-  X(PAGE_DOWN,              "page_down") \
+  X(TOP,                    "top")                \
+  X(BOTTOM,                 "bottom")             \
+  X(UP,                     "up")                 \
+  X(DOWN,                   "down")               \
+  X(PAGE_UP,                "page_up")            \
+  X(PAGE_DOWN,              "page_down")          \
+  X(SEARCH,                 "search")             \
+  X(SEARCH_NEXT,            "search.next")        \
+  X(SEARCH_PREV,            "search.prev")        \
   X(PLAYER_FORWARD,         "player.forward")     \
   X(PLAYER_BACKWARD,        "player.backward")    \
   X(PLAYER_STOP,            "player.stop")        \

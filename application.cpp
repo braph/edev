@@ -89,6 +89,7 @@ void Application :: init() {
   use_default_colors();
   curs_set(0);
   mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
+  wresize(stdscr, 1, 1); // Save some bytes...
 
   error = REPORT_BUG;
   Config::init();

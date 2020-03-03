@@ -26,5 +26,5 @@ PlayingInfoFormat             Config :: playinginfo_format_top /* will be initia
 PlayingInfoFormat             Config :: playinginfo_format_bottom /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_top_256 /* will be initialized later */;
 PlayingInfoFormat             Config :: playinginfo_format_bottom_256 /* will be initialized later */;
-std::vector<std::string>      Config :: main_widgets = {"playinginfo","tabbar","windows","progressbar"};
+std::vector<std::string>      Config :: main_widgets = {"playinginfo","tabbar","readline","windows","progressbar"};
 std::vector<std::string>      Config :: tabs_widgets = {"splash","playlist","browser","info","help"};

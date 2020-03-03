@@ -196,8 +196,8 @@ options = [
         }),
     ('main.widgets', {
         type: 'std::vector<std::string>', set: 'opt_parse_main_widgets',
-        default: '"playinginfo,tabbar,windows,progressbar"',
-        c_default: '{"playinginfo","tabbar","windows","progressbar"}',
+        default: '"playinginfo,tabbar,readline,windows,progressbar"',
+        c_default: '{"playinginfo","tabbar","readline","windows","progressbar"}',
         help: 'Specify widgets to show (up to down)',
     }),
 ]

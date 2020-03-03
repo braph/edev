@@ -5,10 +5,8 @@
 #include <cstdlib>
 #include <climits>
 #include <cstring>
-#include <unordered_map>
 #include <iostream>
-
-#define  streq(a,b) (!strcmp(a,b))
+#include <unordered_map>
 
 typedef const char* ccstr;
 
@@ -28,15 +26,17 @@ typedef const char* ccstr;
 struct Dumper {
   Dumper(std::ofstream& fs) : fs(fs) {}
 
+  inline void dump(size_t value)
+  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
+
+  inline void dump(uint16_t value)
+  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
+
   inline void dump(StringPool& p)
-  { dump(BITSOF(char), p.size(), reinterpret_cast<char*>(p.data())); }
+  { dump(BITSOF(char), size_t(p.size()), reinterpret_cast<char*>(p.data())); }
 
   inline void dump(DynamicPackedVector& v)
-  { dump(v.bits(), v.size(), reinterpret_cast<char*>(v.data())); }
-
-  template<typename T> // for integer types
-  inline void dump(T value)
-  { fs.write(reinterpret_cast<char*>(&value), sizeof(value) * T(1)); }
+  { dump(size_t(v.bits()), v.size(), reinterpret_cast<char*>(v.data())); }
 
   template<typename T>
   inline void dump(std::vector<T>& v)
@@ -47,10 +47,10 @@ struct Dumper {
 
 private:
   std::ofstream& fs;
-  void dump(int bits, int count, char* data) {
+  void dump(size_t bits, size_t count, char* data) {
     dump(bits);
     dump(count);
-    fs.write(data, size_for_bits(bits*count));
+    fs.write(data, std::streamsize(size_for_bits(bits*count)));
     dump(bits);
     dump(count);
   }
@@ -103,7 +103,7 @@ private:
 
   void readData(char* buf) {
     size_t check_bits = 0xDEAD, check_count = 0;
-    fs.read(buf, size_for_bits(elem_bits*elem_count));
+    fs.read(buf, std::streamsize(size_for_bits(elem_bits*elem_count)));
     fs.read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
     fs.read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
     if (check_bits != elem_bits || check_count != elem_count)
@@ -112,14 +112,14 @@ private:
 };
 
 /* ============================================================================
- * A bit ugly, but cleans up the code a lot
+ * A bit ugly, but it shortens up the code a lot
  * ==========================================================================*/
 
 #define STR_GET(POOL_NAME, STRING_ID) \
   db.pool_##POOL_NAME.get(STRING_ID)
 
 #define STR_SET(POOL_NAME, STRING_ID, STR) \
-  if (! streq(STR_GET(POOL_NAME, STRING_ID), STR)) \
+  if (0 != std::strcmp(STR_GET(POOL_NAME, STRING_ID), STR)) \
     { STRING_ID = db.pool_##POOL_NAME.add(STR); }
 
 /* ============================================================================
@@ -213,7 +213,7 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
   std::vector<IDAndLength> idSortedByLength;
   idSortedByLength.reserve(idRemap.size());
   for (auto& pair : idRemap)
-    idSortedByLength.push_back({pair.first, strlen(pool.get(pair.first))});
+    idSortedByLength.push_back({pair.first, std::strlen(pool.get(pair.first))});
 
   std::sort(idSortedByLength.begin(), idSortedByLength.end(),
       [](const IDAndLength& a, const IDAndLength& b){ return a.length > b.length; });
@@ -316,24 +316,24 @@ ccstr  _::archive_mp3_url()  const { return STR_GET(archive_url, db.albums.archi
 ccstr  _::archive_wav_url()  const { return STR_GET(archive_url, db.albums.archive_wav[id]); }
 ccstr  _::archive_flac_url() const { return STR_GET(archive_url, db.albums.archive_flac[id]);}
 time_t _::date()             const { return EXPAND_DATE(db.albums.date[id]);                 }
-float  _::rating()           const { return static_cast<float>(db.albums.rating[id]) / 100;  }
+float  _::rating()           const { return float(db.albums.rating[id]) / 100;               }
 int    _::votes()            const { return db.albums.votes[id];                             }
 int    _::download_count()   const { return db.albums.download_count[id];                    }
 int    _::styles()           const { return db.albums.styles[id];                            }
 // SETTER
-void   _::url(ccstr s)              { STR_SET(album_url,    db.albums.url[id],         s); }
-void   _::title(ccstr s)            { STR_SET(meta,         db.albums.title[id],       s); }
-void   _::artist(ccstr s)           { STR_SET(meta,         db.albums.artist[id],      s); }
-void   _::cover_url(ccstr s)        { STR_SET(cover_url,    db.albums.cover_url[id],   s); }
-void   _::description(ccstr s)      { STR_SET(desc,         db.albums.description[id], s); }
-void   _::archive_mp3_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s); }
-void   _::archive_wav_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s); }
-void   _::archive_flac_url(ccstr s) { STR_SET(archive_url, db.albums.archive_flac[id], s); }
-void   _::date(time_t t)            { db.albums.date[id]   = SHRINK_DATE(t);               }
-void   _::rating(float i)           { db.albums.rating[id] = i * 100;                      }
-void   _::votes(int i)              { db.albums.votes[id]  = i;                            }
-void   _::download_count(int i)     { db.albums.download_count[id] = i;                    }
-void   _::styles(int i)             { db.albums.styles[id] = i;                            }
+void   _::url(ccstr s)              { STR_SET(album_url,    db.albums.url[id],         s);  }
+void   _::title(ccstr s)            { STR_SET(meta,         db.albums.title[id],       s);  }
+void   _::artist(ccstr s)           { STR_SET(meta,         db.albums.artist[id],      s);  }
+void   _::cover_url(ccstr s)        { STR_SET(cover_url,    db.albums.cover_url[id],   s);  }
+void   _::description(ccstr s)      { STR_SET(desc,         db.albums.description[id], s);  }
+void   _::archive_mp3_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s);  }
+void   _::archive_wav_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s);  }
+void   _::archive_flac_url(ccstr s) { STR_SET(archive_url,  db.albums.archive_flac[id], s); }
+void   _::date(time_t t)            { db.albums.date[id]   = SHRINK_DATE(t);                }
+void   _::rating(float i)           { db.albums.rating[id] = i * 100;                       }
+void   _::votes(int i)              { db.albums.votes[id]  = i;                             }
+void   _::download_count(int i)     { db.albums.download_count[id] = i;                     }
+void   _::styles(int i)             { db.albums.styles[id] = i;                             }
 // INDEX
 DB::Field _::operator[](DB::ColumnID id) const {
   switch (static_cast<DB::AlbumColumnID>(id)) {
@@ -372,22 +372,22 @@ TRACK Database::Tracks::find(const char* url, bool create) {
 }
 
 // GETTER
-ccstr TRACK::url()      const { return STR_GET(track_url, db.tracks.url[id]);     }
-ccstr TRACK::title()    const { return STR_GET(meta,      db.tracks.title[id]);   }
-ccstr TRACK::artist()   const { return STR_GET(meta,      db.tracks.artist[id]);  }
-ccstr TRACK::remix()    const { return STR_GET(meta,      db.tracks.remix[id]);   }
-int   TRACK::number()   const { return db.tracks.number[id];                      }
-int   TRACK::bpm()      const { return db.tracks.bpm[id];                         }
-int   TRACK::album_id() const { return db.tracks.album_id[id];                    }
-ALBUM TRACK::album()    const { return db.albums[size_t(db.tracks.album_id[id])]; }
+ccstr _::url()      const { return STR_GET(track_url, db.tracks.url[id]);     }
+ccstr _::title()    const { return STR_GET(meta,      db.tracks.title[id]);   }
+ccstr _::artist()   const { return STR_GET(meta,      db.tracks.artist[id]);  }
+ccstr _::remix()    const { return STR_GET(meta,      db.tracks.remix[id]);   }
+int   _::number()   const { return db.tracks.number[id];                      }
+int   _::bpm()      const { return db.tracks.bpm[id];                         }
+int   _::album_id() const { return db.tracks.album_id[id];                    }
+ALBUM _::album()    const { return db.albums[size_t(db.tracks.album_id[id])]; }
 // SETTER
-void  TRACK::url(ccstr s)     { STR_SET(track_url, db.tracks.url[id],    s);  }
-void  TRACK::title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }
-void  TRACK::artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s);  }
-void  TRACK::remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s);  }
-void  TRACK::number(int i)    { db.tracks.number[id] = i;                     }
-void  TRACK::bpm(int i)       { db.tracks.bpm[id] = (i & 0xFF /* max 255 */); }
-void  TRACK::album_id(int i)  { db.tracks.album_id[id] = i;                   }
+void  _::url(ccstr s)     { STR_SET(track_url, db.tracks.url[id],    s);  }
+void  _::title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }
+void  _::artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s);  }
+void  _::remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s);  }
+void  _::number(int i)    { db.tracks.number[id] = i;                     }
+void  _::bpm(int i)       { db.tracks.bpm[id] = (i & 0xFF /* max 255 */); }
+void  _::album_id(int i)  { db.tracks.album_id[id] = i;                   }
 // INDEX
 DB::Field TRACK::operator[](DB::ColumnID id) const {
   switch (static_cast<DB::TrackColumnID>(id)) {

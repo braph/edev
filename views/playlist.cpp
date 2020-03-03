@@ -1,11 +1,13 @@
 #include "playlist.hpp"
 
 #include "../widgets/listwidget.hpp"
-#include "rm_trackstr.cpp"
+#include "mainwindow.hpp"
+#include "rm_trackstr.cpp" //XXX
 #include "../config.hpp"
 #include "../colors.hpp"
 #include "../theme.hpp"
 #include "../database.hpp"
+#include "../common.hpp"
 
 #include <cstring>
 
@@ -77,11 +79,57 @@ void TrackRenderer :: operator()(
 }
 
 /* ============================================================================
+ * TrackSearch - Circular search through what is displayed by the TrackRenderer
+ * ==========================================================================*/
+
+TrackSearch :: TrackSearch(const PlaylistColumns& columns) : m_columns(columns), list(NULL) { }
+
+bool TrackSearch :: next() {
+  if (list) {
+    for (index = clamp<size_t>(index + 1, 0, list->size() - 1); index < list->size(); ++index)
+      if (indexMatchesCriteria())
+        return true;
+
+    index = std::numeric_limits<size_t>::max();
+  }
+  return false;
+}
+
+bool TrackSearch :: prev() {
+  if (list) {
+    for (index = clamp<size_t>(index - 1, 0, list->size() - 1); index; --index)
+      if (indexMatchesCriteria())
+        return true;
+
+//    if (index == 0)
+//      index = list->size();
+  }
+  return false;
+}
+
+
+bool TrackSearch :: indexMatchesCriteria() {
+  for (const auto &column : m_columns)
+    if (boost::algorithm::icontains(trackField((*list)[index], column.tag), query))
+      return true;
+  return false;
+}
+
+void TrackSearch :: startSearch(const std::string& q, std::vector<Database::Tracks::Track>* l) {
+  list = l;
+  query = q;
+  index = std::numeric_limits<size_t>::max();
+}
+
+/* ============================================================================
  * Playlist
  * ==========================================================================*/
 
-Playlist :: Playlist(Actions& actions)
-: actions(actions), trackRenderer(Config::playlist_columns)
+Playlist :: Playlist(Actions& actions, Views::MainWindow& mainwindow)
+: actions(actions)
+, mainwindow(mainwindow)
+, trackRenderer(Config::playlist_columns)
+, trackSearch(Config::playlist_columns)
 {
   this->itemRenderer = trackRenderer;
   this->attachList(&this->playlist);
@@ -96,6 +144,19 @@ bool Playlist :: handleKey(int key) {
     case Actions::DOWN:      down();       break;
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
+    case Actions::SEARCH:    mainwindow.readline("Search: ", [&](const std::string& line, bool notEOF) {
+                                 trackSearch.startSearch(line, &this->playlist);
+                                 if (trackSearch.next())
+                                   setSelected(trackSearch.getIndex());
+                               });
+                             break;
+    case Actions::SEARCH_NEXT: if (trackSearch.next())
+                                 setSelected(trackSearch.getIndex());
+                               break;
+    case Actions::SEARCH_PREV: if (trackSearch.prev())
+                                 setSelected(trackSearch.getIndex());
+                               break;
+
     default: actions.call(Bindings::playlist[key]);
     }
     return true;

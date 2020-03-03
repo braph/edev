@@ -4,7 +4,7 @@
 #include <climits>
 
 int StringPool :: add(const char *s, bool force_append) {
-  if (!*s)
+  if (! *s)
     return 0;
 
   if (! force_append) {
@@ -19,7 +19,7 @@ int StringPool :: add(const char *s, bool force_append) {
 }
 
 int StringPool :: find(const char *s) const {
-  if (!*s)
+  if (! *s)
     return 0;
 
   size_t pos = storage.find(s, 1 /* Skip empty string */, std::strlen(s) + 1);
@@ -31,15 +31,14 @@ int StringPool :: find(const char *s) const {
 
 bool StringPool :: isOptimized() const {
   const char* pool_data = storage.data();
-  int pool_size = size();
-  int last = INT_MAX;
+  int last_len = INT_MAX;
   int len;
 
-  for (int i = 1; /* Skip empty string */ i < pool_size;) {
-    len = strlen(pool_data + i);
-    if (len > last)
+  for (int i = 1 /* Skip empty string */; i < size();) {
+    len = std::strlen(pool_data + i);
+    if (len > last_len)
       return false;
-    last = len;
+    last_len = len;
     i += len + 1;
   }
 
@@ -52,7 +51,7 @@ int StringPool :: count() const {
 
   size_t n = 0;
   while (pool_data < pool_end)
-    pool_data += strlen(pool_data) + 1, ++n;
+    pool_data += std::strlen(pool_data) + 1, ++n;
 
   return n;
 }
@@ -82,7 +81,7 @@ int main() {
     assert(streq(s, pool.get(pool.add(s))));
 
   assert(pool.count() == 7);
-  assert(!pool.isOptimized());
+  assert(! pool.isOptimized());
 
   StringPool optimized;
   optimized.add("longstring");

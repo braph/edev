@@ -105,7 +105,7 @@ inline T clamp(T value, T lower, T upper) {
   return value;
 }
 
-static inline int size_for_bits(int bits, int storage_size = 1) {
+static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
   storage_size *= CHAR_BIT;
   return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
 }

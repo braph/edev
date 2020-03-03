@@ -11,7 +11,7 @@ WARNINGS += -Wsign-promo -Wsign-compare -Wsign-conversion
 # -Wshadow -Wswitch-default -Wstrict-overflow=5 
 #-D_GLIBCXX_ASSERTIONS
 
-STD = c++17
+STD = c++11
 
 CXXFLAGS   := -std=$(STD) -Og -g $(WARNINGS)
 #CXXFLAGS   := -std=$(STD) -O2 -DNDEBUG
@@ -22,6 +22,7 @@ CONFIG.deps   = shellsplit.o filesystem.o common.o xml.o
 DATABASE.deps = stringpool.o packedvector.o common.o generic.hpp
 THEME.deps    = colors.o
 VIEWS         = $(addprefix views/, splash.o playinginfo.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
+VIEWS        += widgets/listwidget.hpp widgets/readline.o
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
 	browsepage.o updater.o $(VIEWS) ui/container.o \

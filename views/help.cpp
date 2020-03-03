@@ -7,44 +7,60 @@
 #include "../actions.hpp"
 
 #define KEYS_START          3
-#define COMMANDS_START      18
+#define COMMANDS_START      30
 #define DESCRIPTIONS_START  45
 
-#define FG(COLOR) UI::Colors::set(COLOR, -1, 0)
 using namespace UI;
 using namespace Views;
 
 void Help :: layout(Pos pos, Size size) {
   this->pos  = pos;
   this->size = size;
-  wresize(win, 20, size.width);
+  wresize(win, 120, size.width);
   pad_minrow = 0;
   pad_mincol = 0;
 }
 
 void Help :: draw() {
   wclear(win);
-  wmove(win, 0, 0);
-  waddstr(win, "Global");
-  wmove(win, 1, 0);
 
-  for (int id = 1; id < Actions::ACTIONID_LAST; ++id) {
-    int nkeys = 0;
+  struct {
+    const char* name;
+    const Actions::ActionID* bindings;
+  }
+  widgets[] = {
+    {"Global",   Bindings::global},
+    {"Playlist", Bindings::playlist}
+  };
 
-    for (size_t i = 0; i < KEY_MAX; ++i) {
-      if (Bindings::global[i] == id) {
-        if (nkeys++)
-          waddstr(win, ", ");
-        waddstr(win, keyname(i));
+  int y = 0;
+
+  for (const auto& widget : widgets) {
+    wattrset(win, Theme::get(Theme::HELP_WIDGET_NAME));
+    mvwaddstr(win, ++y, 1, widget.name);
+    moveCursor(++y, KEYS_START);
+
+    for (int id = 1; id < Actions::ACTIONID_LAST; ++id) {
+      int nkeys = 0;
+
+      wattrset(win, Theme::get(Theme::HELP_KEY_NAME));
+      for (int i = 0; i < KEY_MAX; ++i) {
+        if (widget.bindings[i] == id) {
+          if (nkeys++)
+            *this << ", ";
+          *this << keyname(i);
+        }
+      }
+
+      if (nkeys) {
+        wattrset(win, Theme::get(Theme::HELP_COMMAND_NAME));
+        mvwaddstr(win, y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
+        moveCursor(++y, KEYS_START);
       }
     }
-
-    if (nkeys) {
-      mvwaddstr(win, getcury(win), 30, Actions::to_string(static_cast<Actions::ActionID>(id)));
-      wmove(win, getcury(win) + 1, 0);
-      //waddch(win, '\n');
-    }
   }
+
+  wresize(win, y, size.width);
 }
 
 #ifdef TEST_HELP
@@ -54,7 +70,7 @@ int main() {
   NCURSES_INIT();
 
   Bindings::init();
-  //Theme::current = COLORS;
+  Theme::current = COLORS;
 
   Widget *s = new Views::Help;
   s->layout({10,10}, {30,80});

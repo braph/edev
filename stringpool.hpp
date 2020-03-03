@@ -12,7 +12,7 @@ public:
    * are made to return an existing string in the string pool. */
   int add(const char* s, bool force_append = false);
 
-  /* A pool is optimized when it it sorted by length (descending). */
+  /* A pool is optimized when it it sorted by length in descending order. */
   bool isOptimized() const;
 
   /* Return the number of NUL terminated strings */

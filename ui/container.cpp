@@ -73,7 +73,7 @@ void GenericContainer :: setCurrentIndex(int index) {
 }
 
 int GenericContainer :: count() const {
-  return static_cast<int>(_widgets.size());
+  return int(_widgets.size());
 }
 
 bool GenericContainer :: empty() const {
@@ -93,12 +93,11 @@ void VerticalContainer :: layout(Pos pos, Size size) {
   this->pos  = pos;
   this->size = size;
 
-  for (auto w : _widgets) {
+  for (auto w : _widgets)
     if (w->visible) {
-      w->layout(pos, w->size.duplicate(UI::Size::KEEP, size.width));
+      w->layout(pos, UI::Size(w->size.height, size.width));
       pos.y += w->size.height;
     }
-  }
 }
 
 /* ============================================================================

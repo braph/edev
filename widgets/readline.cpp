@@ -1,25 +1,4 @@
-#ifndef _READLINE_WIDGET_CPP
-#define _READLINE_WIDGET_CPP
-
-#include "../ui.hpp"
-
-#include <readline/readline.h>
-
-#include <string>
-#include <functional>
-
-class ReadlineWidget : public UI::Window {
-public:
-  ReadlineWidget();
-  void draw();
-  bool handleKey(int);
-  std::function<void(const std::string&, bool)> onFinish;
-  void setPrompt(const std::string&);
-private:
-  std::string prompt;
-};
-
-#endif
+#include "readline.hpp"
 
 // Readline should never attempt to read a char from STDIN.
 static int readline_input_available_dummy(void) { return 0; }
@@ -27,7 +6,7 @@ static int readline_input_available_dummy(void) { return 0; }
 // We don't want any completion
 static char *readline_completion_dummy(const char*, int) { return NULL; }
 
-// The C callbacks need to refer to the widget object
+// The C callbacks need to refer to a widget object
 static ReadlineWidget *widgetInstance;
 
 static void readline_forward_redisplay() {
@@ -61,6 +40,18 @@ ReadlineWidget :: ReadlineWidget() : UI::Window() {
   rl_callback_handler_install("", readline_forward_finished);
 }
 
+void ReadlineWidget :: layout(UI::Pos pos, UI::Size size) {
+  size.height = 1;
+  if (size != this->size) {
+    this->size = size;
+    wresize(win, size.height, size.width);
+  }
+  if (pos != this->pos) {
+    this->pos = pos;
+    mvwin(win, pos.y, pos.x);
+  }
+}
+
 void ReadlineWidget :: setPrompt(const std::string& s) {
   prompt = s;
 }
@@ -87,11 +78,7 @@ bool ReadlineWidget :: handleKey(int key) {
 #include "../test.hpp"
 int main() {
   TEST_BEGIN();
-
-  initscr();
-  cbreak();
-  noecho();
-  nonl();
+  NCURSES_INIT();
 
   ReadlineWidget w;
   w.layout({0,0}, {LINES, COLS});

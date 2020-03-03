@@ -41,6 +41,9 @@ void init() {
   _['j']              = _[KEY_DOWN]       = Actions::DOWN;
   _[C('u')]           = _[KEY_PPAGE]      = Actions::PAGE_UP;
   _[C('d')]           = _[KEY_NPAGE]      = Actions::PAGE_DOWN;
+  _['/']                                  = Actions::SEARCH;
+  _['n']                                  = Actions::SEARCH_NEXT;
+  _['N']                                  = Actions::SEARCH_PREV;
   _['o']                                  = Actions::PLAYLIST_GOTO_CURRENT;
 #undef _
 }

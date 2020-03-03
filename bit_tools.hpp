@@ -69,7 +69,7 @@ inline TUIntType replace_bits(TUIntType src, TUIntType val, int offset, int len)
   const TUIntType OxFFFF = std::numeric_limits<TUIntType>::max();
 
   // We are replacing the whole `src`
-  if (!offset && len == BIT_COUNT)
+  if (! offset && len == BIT_COUNT)
     return val;
 
   TUIntType mask = (~(OxFFFF << len)) << offset;

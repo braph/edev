@@ -159,6 +159,11 @@ public:
   }
 
   int getSelected() const { return m_top_index + m_cursor; }
+  void setSelected(int idx) {
+    m_cursor = size.height / 2;
+    m_top_index = idx - m_cursor;
+    draw();
+  }
 
   value_type getItem() const {
     if (! empty())

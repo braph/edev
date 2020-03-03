@@ -43,7 +43,7 @@ Theme::Definition Theme :: themes[3][THEME_ID_COUNT] = {
     /* PLAYINGINFO_POSITION   */ _(                             ),
     /* PLAYINGINFO_STATE      */ _(                             ),
 
-    /* HELP_WIDGET_NAME       */ _(                             ),
+    /* HELP_WIDGET_NAME       */ _(defualt, defualt, A_BOLD     ),
     /* HELP_KEY_NAME          */ _(                             ),
     /* HELP_COMMAND_NAME      */ _(                             ),
     /* HELP_COMMAND_DESC      */ _(                             )
@@ -103,7 +103,7 @@ Theme::Definition Theme :: themes[3][THEME_ID_COUNT] = {
     /* PLAYINGINFO_POSITION   */ _(97                           ),
     /* PLAYINGINFO_STATE      */ _(37                           ),
 
-    /* HELP_WIDGET_NAME       */ _(33                           ),
+    /* HELP_WIDGET_NAME       */ _(33, defualt, A_BOLD          ),
     /* HELP_KEY_NAME          */ _(75                           ),
     /* HELP_COMMAND_NAME      */ _(68                           ),
     /* HELP_COMMAND_DESC      */ _(29                           )

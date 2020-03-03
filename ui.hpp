@@ -3,7 +3,6 @@
 
 #include "common.hpp"
 
-#include "unistd.h" // XXX
 #include "curses.h"
 
 #include <vector>
@@ -35,8 +34,6 @@ struct Size {
   int height;
   int width;
 
-  enum { KEEP = -1 };
-
   Size() : height(0), width(0) {}
   Size(int height, int width) : height(height), width(width) {}
 
@@ -46,15 +43,8 @@ struct Size {
   inline bool operator!=(const Size& s) const
   { return s.height != height || s.width != width; }
 
-  Size calc(int height, int width)
+  inline Size calc(int height, int width) const
   { return Size(this->height + height, this->width + width); }
-
-  Size duplicate(int height, int width = KEEP) const {
-    return Size(
-        height == KEEP ? this->height : height,
-        width  == KEEP ? this->width  : width
-    );
-  }
 
   inline friend std::ostream& operator<<(std::ostream& os, const UI::Size& s) {
     os << "UI::Size(" << s.height << ',' << s.width << ')';

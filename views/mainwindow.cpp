@@ -9,16 +9,20 @@ MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
 : playingInfo(db)
 , progressBar()
 , tabBar()
+, readlineWidget()
 , windows()
 , splash()
-, playlist(actions)
+, playlist(actions, *this)
 , info(db, player)
 , help()
 {
+  readlineWidget.visible = false;
+
   for (auto w : Config::main_widgets) {
     /**/ if (w == "playinginfo")    addWidget(&playingInfo);
     else if (w == "progressbar")    addWidget(&progressBar);
     else if (w == "tabbar")         addWidget(&tabBar);
+    else if (w == "readline")       addWidget(&readlineWidget);
     else if (w == "windows")        addWidget(&windows);
     else assert_not_reached();
   }
@@ -36,6 +40,24 @@ MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
   }
 }
 
+void MainWindow :: readline(const std::string& prompt, ReadlineWidget::onFinishFunction callback) {
+  readlineWidget.visible = true;
+  readlineWidget.setPrompt(prompt);
+  int oldWidget = currentIndex();
+  setCurrentIndex(indexOf(&readlineWidget));
+  readlineWidget.onFinish = [=](const std::string& line, bool notEOF) {
+    callback(line, notEOF);
+    readlineWidget.visible = false;
+    setCurrentIndex(oldWidget);
+    layout(pos, size); // TODO: is this an design error?
+    draw();
+    noutrefresh();
+  };
+  layout(pos, size); // TODO: dito ^
+  draw();
+  noutrefresh();
+}
+
 void MainWindow :: layout(Pos pos, Size size) {
   this->pos = pos;
   this->size = size;
@@ -43,10 +65,12 @@ void MainWindow :: layout(Pos pos, Size size) {
   tabBar.layout(pos, size);
   progressBar.layout(pos, size);
   playingInfo.layout(pos, size);
+  readlineWidget.layout(pos, size);
 
-  if (tabBar.visible)       size.height -= tabBar.size.height;
-  if (progressBar.visible)  size.height -= progressBar.size.height;
-  if (playingInfo.visible)  size.height -= playingInfo.size.height;
+  if (tabBar.visible)         size.height -= tabBar.size.height;
+  if (progressBar.visible)    size.height -= progressBar.size.height;
+  if (playingInfo.visible)    size.height -= playingInfo.size.height;
+  if (readlineWidget.visible) size.height -= readlineWidget.size.height;
 
   windows.layout(pos, size);
   

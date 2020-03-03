@@ -22,7 +22,7 @@ int Actions :: call(ActionID id) {
 
   // Silence warnings
   case TOP: case BOTTOM: case UP: case DOWN: case PAGE_UP: case PAGE_DOWN:
-  case ACTIONID_LAST: break;
+  case SEARCH: case SEARCH_PREV: case SEARCH_NEXT: case ACTIONID_LAST: break;
 
   case PLAYER_FORWARD:     p->seek_forward(10);                             break;
   case PLAYER_BACKWARD:    p->seek_backward(10);                            break;

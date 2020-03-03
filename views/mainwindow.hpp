@@ -16,6 +16,7 @@
 #include "../database.hpp"
 #include "../ui.hpp"
 #include "../ui/container.hpp"
+#include "../widgets/readline.hpp"
 
 namespace Views {
 
@@ -24,6 +25,7 @@ public:
   Views::PlayingInfo    playingInfo;
   Views::ProgressBar    progressBar;
   Views::TabBar         tabBar;
+  ReadlineWidget        readlineWidget;
   UI::StackedContainer  windows;
   Views::Splash         splash;
   Views::Playlist       playlist;
@@ -31,6 +33,7 @@ public:
   Views::Help           help;
   MainWindow(Actions&, Database&, Mpg123Player&);
   void layout(UI::Pos, UI::Size);
+  void readline(const std::string&, ReadlineWidget::onFinishFunction);
 };
 
 } // namespace Views
