@@ -80,18 +80,18 @@ void Splash :: draw() {
 
   fader = logoFading;
   for (int i = 0; i < LOGO_HEIGHT; ++i) {
-    wattrset(win, setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
-    mvwaddstr(win, top_pad + i, left_pad, LOGO[i]);
+    attrSet(setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
+    mvAddStr(top_pad + i, left_pad, LOGO[i]);
   }
 
   fader = bubbleFading;
   for (int i = 0; i < BUBBLES_SIZE; ++i) {
     const int x = BUBBLES[i][0];
     const int y = BUBBLES[i][1];
-    mvwaddch(win, top_pad + y - 1, left_pad + x + 1,
+    mvAddCh(top_pad + y - 1, left_pad + x + 1,
         '_' | setFG(fader.get(LOGO_HEIGHT, unsigned(y - 1))));
-    wattrset(win, setFG(fader.get(LOGO_HEIGHT, unsigned(y))));
-    mvwaddstr(win, top_pad + y, left_pad + x, "(_)");
+    attrSet(setFG(fader.get(LOGO_HEIGHT, unsigned(y))));
+    mvAddStr(top_pad + y, left_pad + x, "(_)");
   }
 
   if (! draw_signature) return;
@@ -103,7 +103,7 @@ void Splash :: draw() {
   for (int i = 0; i < SIGNATURE_HEIGHT; ++i) {
     moveCursor(top_pad + i, left_pad);
     for (unsigned j = 0; j < SIGNATURE_WIDTH; ++j)
-      waddch(win, SIGNATURE[i][j] | setFG(fader.get2(SIGNATURE_WIDTH, j)));
+      addCh(SIGNATURE[i][j] | setFG(fader.get2(SIGNATURE_WIDTH, j)));
   }
 }
 

@@ -10,24 +10,20 @@
 #include "theme.hpp"
 #include "views/mainwindow.hpp"
 
-#include <unistd.h>
-#include <signal.h>
-#include <glob.h>
-
 #include <libxml/xmlversion.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem/operations.hpp>
 
 #include <locale>
 #include <fstream>
+#include <csignal>
 
 using namespace Ektoplayer;
 namespace fs = boost::filesystem;
 
 static volatile int have_SIGNAL;
-static void on_SIGWINCH(int) { have_SIGNAL = SIGWINCH; }
-static void on_SIGINT(int)   { have_SIGNAL = SIGINT;   }
-static void on_SIGTERM(int)  { have_SIGNAL = SIGTERM;  }
+static void on_SIGNAL(int sig) { have_SIGNAL = sig; }
 static void printDBStats(Database&);
 
 class Application {
@@ -269,22 +265,20 @@ goto MAINLOOP;
 }
 
 void Application :: cleanup_files() {
-  glob_t globbuf;
-  char pattern[8192];
-  sprintf(pattern, "%s" PATH_SEP "~ekto-*", Config::temp_dir.c_str());
-  glob(pattern, GLOB_NOSORT|GLOB_NOESCAPE, NULL, &globbuf);
-  for (size_t i = 0; i < globbuf.gl_pathc; ++i)
-    unlink(globbuf.gl_pathv[i]);
-#ifndef NDEBUG
-  globfree(&globbuf);
-#endif
+  if (! boost::filesystem::is_directory(Config::temp_dir))
+    return;
+
+  boost::system::error_code e;
+  for (auto& f : boost::filesystem::directory_iterator(Config::temp_dir))
+    if (boost::algorithm::starts_with(f.path().filename().string(), "~ekto-"))
+      boost::filesystem::remove(f.path(), e);
 }
 
 int main() {
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
-  signal(SIGWINCH, on_SIGWINCH);
-  signal(SIGINT,   on_SIGINT);
-  signal(SIGTERM,  on_SIGTERM);
+  std::signal(SIGWINCH, on_SIGNAL);
+  std::signal(SIGINT,   on_SIGNAL);
+  std::signal(SIGTERM,  on_SIGNAL);
 
   try {
     Application app;

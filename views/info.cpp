@@ -41,12 +41,12 @@ void Info :: setCurrentTrack(Database::Tracks::Track track) {
 
 void Info :: drawHeading(int y, const char* heading) {
   wattrset(win, Theme::get(Theme::INFO_HEAD));
-  mvwaddstr(win, y, START_HEADING, heading);
+  mvAddStr(y, START_HEADING, heading);
 }
 
 void Info :: drawTag(int y, const char* tag) {
   wattrset(win, Theme::get(Theme::INFO_TAG));
-  mvwaddstr(win, y, START_TAG, tag);
+  mvAddStr(y, START_TAG, tag);
   wattrset(win, Theme::get(Theme::INFO_VALUE));
   wmove(win, y, START_TAG_VALUE);
 }

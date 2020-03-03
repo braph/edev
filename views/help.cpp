@@ -37,7 +37,7 @@ void Help :: draw() {
 
   for (const auto& widget : widgets) {
     wattrset(win, Theme::get(Theme::HELP_WIDGET_NAME));
-    mvwaddstr(win, ++y, 1, widget.name);
+    mvAddStr(++y, 1, widget.name);
     moveCursor(++y, KEYS_START);
 
     for (int id = 1; id < Actions::ACTIONID_LAST; ++id) {
@@ -54,7 +54,7 @@ void Help :: draw() {
 
       if (nkeys) {
         wattrset(win, Theme::get(Theme::HELP_COMMAND_NAME));
-        mvwaddstr(win, y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
+        mvAddStr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
         moveCursor(++y, KEYS_START);
       }
     }

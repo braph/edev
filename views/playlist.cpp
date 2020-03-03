@@ -100,13 +100,9 @@ bool TrackSearch :: prev() {
     for (index = clamp<size_t>(index - 1, 0, list->size() - 1); index; --index)
       if (indexMatchesCriteria())
         return true;
-
-//    if (index == 0)
-//      index = list->size();
   }
   return false;
 }
-
 
 bool TrackSearch :: indexMatchesCriteria() {
   for (const auto &column : m_columns)

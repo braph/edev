@@ -33,7 +33,7 @@ std::string expand(const std::string &path) {
   return new_path;
 }
 
-//filesystem_error;
+//TODO: filesystem_error;
 size_t dir_size(const boost::filesystem::path& path) {
   boost::system::error_code e;
   size_t s;

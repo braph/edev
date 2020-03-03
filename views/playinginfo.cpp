@@ -69,7 +69,7 @@ void PlayingInfo :: layout(Pos pos, Size size) {
 
 void PlayingInfo :: draw_state() {
   wattrset(win, Theme::get(Theme::PLAYINGINFO_STATE));
-  mvwaddstr(win, 0, size.width - STATE_LEN, state_to_string[state]);
+  mvAddStr(0, size.width - STATE_LEN, state_to_string[state]);
 }
 
 void PlayingInfo :: draw_position_and_length() {
@@ -82,7 +82,7 @@ void PlayingInfo :: draw_position_and_length() {
 void PlayingInfo :: draw_track_info() {
   if (! track) {
     wattrset(win, 0);
-    mvwaddstr(win, 1, size.width / 2 - int(STRLEN(STOPPED_HEADING) / 2), STOPPED_HEADING);
+    mvAddStr(1, size.width / 2 - int(STRLEN(STOPPED_HEADING) / 2), STOPPED_HEADING);
   } else {
     moveCursor(0, 0); print_formatted_strings(*fmt_top);
     moveCursor(1, 0); print_formatted_strings(*fmt_bottom);

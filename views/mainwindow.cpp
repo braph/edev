@@ -49,7 +49,7 @@ void MainWindow :: readline(const std::string& prompt, ReadlineWidget::onFinishF
     callback(line, notEOF);
     readlineWidget.visible = false;
     setCurrentIndex(oldWidget);
-    layout(pos, size); // TODO: is this an design error?
+    layout(pos, size); // TODO: is this an design error? draw on setC,
     draw();
     noutrefresh();
   };
@@ -74,5 +74,5 @@ void MainWindow :: layout(Pos pos, Size size) {
 
   windows.layout(pos, size);
   
-  VerticalContainer::layout(pos, size);
+  VerticalContainer::layout(this->pos, this->size);
 }

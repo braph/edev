@@ -151,8 +151,23 @@ struct WidgetDrawable : public Widget {
   inline WidgetDrawable& operator<<(float f)
   { wprintw(win, "%f", f); return *this; }
 
-  inline bool moveCursor(int y, int x)
+  // add-methods ==============================================================
+  inline int addCh(chtype c)
+  { return waddch(win, c); }
+
+  // mv-methods ===============================================================
+  inline int moveCursor(int y, int x)
   { return wmove(win, y, x); }
+
+  inline int mvAddStr(int y, int x, const char* s)
+  { return mvwaddstr(win, y, x, s); }
+
+  inline int mvAddCh(int y, int x, chtype c)
+  { return mvwaddch(win, y, x, c); }
+
+  // attr-methods =============================================================
+  inline int attrSet(unsigned int attrs)
+  { return wattrset(win, attrs); }
 };
 
 class Window : public WidgetDrawable {
