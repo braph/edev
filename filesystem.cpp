@@ -6,57 +6,52 @@
 
 namespace Filesystem {
 
-std::string home() {
-  static std::string _home;
+const char* home() {
+  static const char* _home = NULL;
 
-  if (_home.empty()) {
-    const char *s = getenv("HOME");
+  if (!_home) {
+    _home = getenv("HOME");
 
-    if (s && *s)
-      _home = s;
-    else {
+    if (!_home || !*_home) {
       struct passwd *pwd = getpwuid(getuid());
       if (pwd)
         _home = pwd->pw_dir;
     }
   }
 
+  if (!_home)
+    _home = "";
+
   return _home;
 }
 
-std::string expand(const std::string &path) {
-  std::string new_path = path;
-
-  if (path.length() >= 1 && path[0] == '~')
-    new_path.replace(0, 1, home());
-
-  return new_path;
+std::string expand(std::string path) {
+  if (!path.empty() && path[0] == '~')
+    path.replace(0, 1, home());
+  return path;
 }
 
-//TODO: filesystem_error;
 size_t dir_size(const boost::filesystem::path& path) {
   boost::system::error_code e;
-  size_t s;
+  size_t s = 0;
 
   if (boost::filesystem::is_regular_file(path)) {
     s = boost::filesystem::file_size(path, e);
-    return (e ? 0 : s);
+    if (e)
+      s = 0;
   }
   else if (boost::filesystem::is_directory(path)) {
-    size_t s = 0;
-    for (boost::filesystem::directory_entry& f : boost::filesystem::directory_iterator(path))
-      s += file_size(f.path());
-    return s;
+    for (auto& f : boost::filesystem::directory_iterator(path, e))
+      s += dir_size(f.path());
   }
 
-  return 0;
+  return s;
 }
 
 } // namespace Filesystem
 
 #ifdef TEST_FILESYSTEM
-#include <cassert>
-#include <iostream>
+#include "test.hpp"
 #define NOT_REACHED assert(!"Not reached")
 int main() {
   assert( Filesystem::exists("/"));
@@ -80,6 +75,4 @@ int main() {
   Filesystem::mkdir_p ("/this/is/a/test/");
 }
 #endif
-
-
 

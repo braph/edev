@@ -26,9 +26,15 @@ public:
   const char* lastURL();
 
   template<typename T>
-  CURLcode setopt(CURLoption option, T value) {
+  inline CURLcode setopt(CURLoption option, T value) {
     return curl_easy_setopt(curl_easy, option, value);
   }
+
+  template<typename T>
+  inline CURLcode getinfo(CURLINFO info, T& value) {
+    return curl_easy_getinfo(curl_easy, info, &value);
+  }
+
 private:
   friend class Downloads;
   CURL *curl_easy;
@@ -41,10 +47,9 @@ private:
 class BufferDownload : public Download {
 public:
   BufferDownload(const std::string&);
-  std::string& getContent();
+  std::string& buffer();
 private:
-  std::string buffer;
-  std::ofstream stream;
+  std::string _buffer;
 };
 
 /* ============================================================================
@@ -54,10 +59,10 @@ private:
 class FileDownload : public Download {
 public:
   FileDownload(const std::string&, const std::string&);
-  const std::string& getFilename();
+  const std::string& filename();
 private:
-  std::string filename;
-  std::ofstream stream;
+  std::string _filename;
+  std::ofstream _stream;
 };
 
 /* ============================================================================

@@ -30,13 +30,14 @@ CURLcode Download :: perform() {
 
 int Download :: httpCode() {
   long code = 0;
-  curl_easy_getinfo(curl_easy, CURLINFO_RESPONSE_CODE, &code);
+  getinfo(CURLINFO_RESPONSE_CODE, code);
   return code;
 }
 
 const char* Download :: lastURL() {
-  const char *url = "<UNKNOWN URL>";
-  curl_easy_getinfo(curl_easy, CURLINFO_EFFECTIVE_URL, &url);
+  char *url = NULL;
+  if (CURLE_OK != getinfo(CURLINFO_EFFECTIVE_URL, url))
+    return "<UNKNOWN URL>";
   return url;
 }
 
@@ -59,11 +60,11 @@ BufferDownload :: BufferDownload(const std::string &url)
 : Download(url)
 {
   setopt(CURLOPT_WRITEFUNCTION, write_buffer_cb);
-  setopt(CURLOPT_WRITEDATA, &buffer);
+  setopt(CURLOPT_WRITEDATA, &_buffer);
 }
 
-std::string& BufferDownload :: getContent() {
-  return buffer;
+std::string& BufferDownload :: buffer() {
+  return _buffer;
 }
 
 /* ============================================================================
@@ -76,16 +77,16 @@ static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *strea
 }
 
 FileDownload :: FileDownload(const std::string &url, const std::string &file)
-: Download(url), filename(file)
+: Download(url), _filename(file)
 {
-  stream.exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  stream.open(file, std::ios::binary);
+  _stream.exceptions(std::ofstream::failbit|std::ofstream::badbit);
+  _stream.open(file, std::ios::binary);
   setopt(CURLOPT_WRITEFUNCTION, write_stream_cb);
-  setopt(CURLOPT_WRITEDATA, &stream);
+  setopt(CURLOPT_WRITEDATA, &_stream);
 }
 
-const std::string& FileDownload :: getFilename() {
-  return filename;
+const std::string& FileDownload :: filename() {
+  return _filename;
 }
 
 /* ============================================================================
@@ -130,7 +131,7 @@ int Downloads :: work() {
   }
 
   CURLMsg *msg;
-  int msgs_left = -1;
+  int msgs_left;
   while ((msg = curl_multi_info_read(curl_multi, &msgs_left))) {
     CURL *curl_easy = msg->easy_handle;
     assert(curl_easy);

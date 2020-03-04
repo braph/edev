@@ -71,19 +71,19 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
     boost::system::error_code e;
     if (curl_e == CURLE_OK && dl.httpCode() == 200) {
       if (Config::use_cache) {
-        boost::filesystem::rename(dl.getFilename(), file_in_cache, e);
+        boost::filesystem::rename(dl.filename(), file_in_cache, e);
         if (e) {
-          boost::filesystem::copy(dl.getFilename(), file_in_cache, e);
-          boost::filesystem::remove(dl.getFilename(), e);
+          boost::filesystem::copy(dl.filename(), file_in_cache, e);
+          boost::filesystem::remove(dl.filename(), e);
         }
       }
     } else {
-      boost::filesystem::remove(dl.getFilename(), e);
+      boost::filesystem::remove(dl.filename(), e);
     }
   };
 
   downloads.addDownload(fileDownload, Downloads::HIGH);
-  return fileDownload->getFilename();
+  return fileDownload->filename();
 }
 
 #if 0

@@ -6,7 +6,7 @@
 #include "trackloader.hpp"
 #include "views/mainwindow.hpp"
 
-#include <signal.h>
+#include <csignal>
 
 static const char *action_strings[Actions::ACTIONID_LAST] = {
 #define X(ENUM, STR) STR,
@@ -19,11 +19,11 @@ int Actions :: call(ActionID id) {
 
   switch (id) {
   case NONE:   break;
-  case QUIT:   raise(SIGTERM);  break;
-  case REDRAW: raise(SIGWINCH); break;
+  case QUIT:   std::raise(SIGTERM);  break;
+  case REDRAW: std::raise(SIGWINCH); break;
 
   // Silence warnings
-  case TOP: case BOTTOM: case UP: case DOWN: case PAGE_UP: case PAGE_DOWN:
+  case UP: case DOWN: case PAGE_UP: case PAGE_DOWN: case TOP: case BOTTOM: 
   case SEARCH: case SEARCH_PREV: case SEARCH_NEXT: case ACTIONID_LAST: break;
 
   case PLAYER_FORWARD:     p->seek_forward(10);                             break;
@@ -54,8 +54,10 @@ PLAYLIST_PLAY:        v->playlist.setActiveIndex(index);
   case BROWSER_SHOW:  index = v->windows.indexOf(&v->playlist); goto SELECT_TAB; // TODO
   case INFO_SHOW:     index = v->windows.indexOf(&v->info);     goto SELECT_TAB;
   case HELP_SHOW:     index = v->windows.indexOf(&v->help);     goto SELECT_TAB;
-SELECT_TAB:           if (index < 0) index = v->windows.count() - 1;
-                      else if (index >= v->windows.count()) index = 0;
+SELECT_TAB:           if (index < 0)
+                        index = v->windows.count() - 1;
+                      else if (index >= v->windows.count())
+                        index = 0;
                       v->windows.setCurrentIndex(index);
                       v->tabBar.setCurrentIndex(index);
                       break;

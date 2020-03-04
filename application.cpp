@@ -68,12 +68,14 @@ Application :: ~Application() {
     std::cout << "Error saving database to file: " << e.what() << std::endl;
   }
 
-  std::cerr << "Terminated gracefully." << std::endl;
+  std::cerr << "Terminated gracefully.\n";
 }
 
 void Application :: init() {
-  // Set terminal title
-  std::cout << "\033]0;ektoplayer\007" << std::endl;
+  std::cout // Set terminal title
+    << "\033]0;ektoplayer\007" // *xterm
+    << "\033kektoplayer\033\\" // screen/tmux
+    << "\r";
 
   // Use the locale from the environment?!
   std::locale::global(std::locale(""));
@@ -89,8 +91,8 @@ void Application :: init() {
   wresize(stdscr, 1, 1); // Save some bytes...
 
   error = REPORT_BUG;
-  Config::init();
   Bindings::init();
+  Config::init();
 
   error = "Error while reading configuration file";
   if (fs::exists(Ektoplayer::config_file()))
@@ -171,8 +173,8 @@ void Application :: run() {
     mainwindow.windows.setCurrentIndex(index);
   };
 
-  int c;
-  int timeOut = 0;
+  int key;
+  int timeOut;
   int downloading;
   WINDOW *win;
   MEVENT mouse;
@@ -193,10 +195,30 @@ MAINLOOP:
     case SIGWINCH: goto WINDOW_RESIZE;
   }
 
-  // Poll the player, then do the downloading work. In the time that is spent
-  // in downloads.work() the player can update its properties.
+  // First thing we do is asking the player do update its properties.
+  // Since that update is done in a seperate thread using async I/O, we want
+  // to do as much other work as possible before accessing the properties.
   player.work();
-  for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
+
+  for (downloading = 0; downloads.work() && ++downloading < 50;);
+
+  // Song prefetching
+  if (Config::prefetch
+      && player.getState() == Mpg123Player::PLAYING
+      && player.length() >= 30
+      && player.percent() >= 0.5
+      && mainwindow.playlist.containerSize() >= 2)
+  {
+    auto list = mainwindow.playlist.getList();
+    nextTrack = (*list)[size_t(mainwindow.playlist.getActiveIndex() + 1) % list->size()];
+    if (nextTrack != currentPrefetching) {
+      trackloader.getFileForTrack(nextTrack);
+      currentPrefetching = nextTrack;
+    }
+  }
+
+  if (player.isTrackCompleted())
+    actions.call(Actions::PLAYLIST_NEXT);
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
@@ -208,24 +230,6 @@ MAINLOOP:
   mainwindow.noutrefresh();
   doupdate();
 
-  if (player.isTrackCompleted())
-    actions.call(Actions::PLAYLIST_NEXT);
-
-  // Song prefetching
-  if (Config::prefetch &&
-      player.getState() == Mpg123Player::PLAYING &&
-      player.length() >= 30 &&
-      player.percent() >= 0.5 &&
-      mainwindow.playlist.containerSize() >= 2
-      ) {
-    auto list = mainwindow.playlist.getList();
-    nextTrack = (*list)[size_t(mainwindow.playlist.getActiveIndex() + 1) % list->size()];
-    if (nextTrack != currentPrefetching) {
-      trackloader.getFileForTrack(nextTrack);
-      currentPrefetching = nextTrack;
-    }
-  }
-
   if (downloading)
     timeOut = 100; // Set a short timeout if the mainloop handles downloads
   else if (player.getState() == Mpg123Player::STOPPED || player.getState() == Mpg123Player::PAUSED)
@@ -235,25 +239,22 @@ MAINLOOP:
 
   win = mainwindow.getWINDOW();
   wtimeout(win, timeOut);
-  switch ((c = wgetch(win))) {
+  switch ((key = wgetch(win))) {
     case ERR: break;
     case KEY_MOUSE:
       if (OK == getmouse(&mouse))
         mainwindow.handleMouse(mouse);
       break;
     default:
-      mainwindow.handleKey(c);
+      mainwindow.handleKey(key);
   }
 
-goto MAINLOOP;
+  goto MAINLOOP;
 }
 
 void Application :: cleanup_files() {
-  if (! boost::filesystem::is_directory(Config::temp_dir))
-    return;
-
   boost::system::error_code e;
-  for (auto& f : boost::filesystem::directory_iterator(Config::temp_dir))
+  for (auto& f : boost::filesystem::directory_iterator(Config::temp_dir, e))
     if (boost::algorithm::starts_with(f.path().filename().string(), "~ekto-"))
       boost::filesystem::remove(f.path(), e);
 }
@@ -275,22 +276,19 @@ int main() {
   std::signal(SIGTERM,  on_SIGNAL);
 
 #ifndef NDEBUG
-  std::cerr << "Running in DEBUG mode!\n";
+  std::cerr << "Running a DEBUG build!\n";
 #endif
 
   try {
     Application app;
     app.run();
   }
-  catch (const std::runtime_error &e) {
+  catch (const std::exception &e) {
     endwin();
     std::cout << e.what() << std::endl;
     return 1;
   }
 
-#ifndef NDEBUG
-  delwin(stdscr);
-#endif
   return 0;
 }
 

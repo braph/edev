@@ -103,7 +103,7 @@ bool Updater :: start(int pages) {
   std::function<void(Download&, CURLcode)> cb = [this](Download& _dl, CURLcode code) {
     BufferDownload &dl = static_cast<BufferDownload&>(_dl);
     if (code == CURLE_OK && dl.httpCode() == 200) {
-      BrowsePage page(dl.getContent());
+      BrowsePage page(dl.buffer());
       this->insert_browsepage(page);
     }
   };
@@ -117,7 +117,7 @@ bool Updater :: start(int pages) {
     return false;
   }
 
-  BrowsePage page(dl.getContent());
+  BrowsePage page(dl.buffer());
   int num_pages = page.num_pages;
   int firstPage, lastPage;
 

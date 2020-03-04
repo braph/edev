@@ -30,7 +30,7 @@
 namespace Ektoplayer {
 
 static inline std::string config_dir() {
-  return Filesystem::home() + PATH_SEP ".config" PATH_SEP "ektoplayer";
+  return std::string(Filesystem::home()) + PATH_SEP ".config" PATH_SEP "ektoplayer";
 }
 
 static inline std::string config_file() {

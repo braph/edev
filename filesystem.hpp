@@ -8,8 +8,8 @@
 #define PATH_SEP "/"
 
 namespace Filesystem {
-  std::string home();
-  std::string expand(const std::string&);
+  const char* home();
+  std::string expand(std::string);
   size_t      dir_size(const boost::filesystem::path&);
 }
 

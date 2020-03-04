@@ -10,14 +10,12 @@ namespace Views { class MainWindow; }
 
 #define XActions \
   X(NONE,                   "none")               \
-  X(QUIT,                   "quit")               \
-  X(REDRAW,                 "redraw")             \
-  X(TOP,                    "top")                \
-  X(BOTTOM,                 "bottom")             \
   X(UP,                     "up")                 \
   X(DOWN,                   "down")               \
   X(PAGE_UP,                "page_up")            \
   X(PAGE_DOWN,              "page_down")          \
+  X(TOP,                    "top")                \
+  X(BOTTOM,                 "bottom")             \
   X(SEARCH,                 "search")             \
   X(SEARCH_NEXT,            "search.next")        \
   X(SEARCH_PREV,            "search.prev")        \
@@ -39,6 +37,8 @@ namespace Views { class MainWindow; }
   X(PLAYLIST_NEXT,          "playlist.next")      \
   X(PLAYLIST_PREV,          "playlist.prev")      \
   X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current") \
+  X(REDRAW,                 "redraw")             \
+  X(QUIT,                   "quit")               \
 
 class Actions {
 public:
