@@ -1,6 +1,6 @@
 a.out
 *.o
-backups
-vgcore.*
-ektoplayer
 *.gch
+vgcore.*
+backups
+ektoplayer

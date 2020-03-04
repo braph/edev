@@ -7,15 +7,15 @@
  * ==========================================================================*/
 
 template<typename TItem>
-void testRender(WINDOW *win, int width, const TItem &item, int index, bool cursor, bool active) { // marked, selection
+void testRender(WINDOW *_win, int width, const TItem &item, int index, bool cursor, bool active) { // marked, selection
   // A primitive default renderer for testing purposes
   std::stringstream ss; ss << item;
   char marker = ' ';
   if (cursor && active) marker = 'X';
   else if (cursor)      marker = '>';
   else if (active)      marker = 'x';
-  waddch(win, marker);
-  waddnstr(win, ss.str().c_str(), width - 1);
+  waddch(_win, marker);
+  waddnstr(_win, ss.str().c_str(), width - 1);
 }
 
 #ifdef TEST_LISTWIDGET

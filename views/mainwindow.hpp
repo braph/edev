@@ -22,6 +22,7 @@ namespace Views {
 
 class MainWindow : public UI::VerticalContainer {
 public:
+  Actions&              actions;
   Views::PlayingInfo    playingInfo;
   Views::ProgressBar    progressBar;
   Views::TabBar         tabBar;
@@ -33,6 +34,7 @@ public:
   Views::Help           help;
   MainWindow(Actions&, Database&, Mpg123Player&);
   void layout(UI::Pos, UI::Size);
+  bool handleKey(int);
   void readline(const std::string&, ReadlineWidget::onFinishFunction);
 };
 

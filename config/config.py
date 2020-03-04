@@ -2,9 +2,9 @@
 
 import sys, os
 
-default = object()
+default   = object()
 c_default = object()
-lateinit = object()
+lateinit  = object()
 
 # Parameters:
 # - type: The C storage type of the option
@@ -12,7 +12,7 @@ lateinit = object()
 # - help: Option description
 # - default: String that is passed to the `set` function
 # - c_default: Default value converted to the C storage type
-# - lateinit:  If set to True, set(default) is called to initialize the value
+# - lateinit:  If set to True, $set($default) is called to initialize the value
 
 DEFAULT_PLAYINGINFO_FORMAT_TOP = '''"\
   '<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"'''

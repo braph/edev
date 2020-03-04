@@ -16,51 +16,6 @@ using namespace Views;
  * BrowserItemRenderer - display a track as a row with columns
  * ==========================================================================*/
 
-void BrowserItemRenderer :: operator()(
-    WINDOW *win,
-    int width,
-    const BrowserItem &item,
-    int index,
-    bool cursor,
-    bool active /* selection */
-) {
-  int additional_attributes = 0;
-  if (active) additional_attributes |= A_BOLD;
-  if (cursor) additional_attributes |= A_STANDOUT;
-  int selection = 0; // XXX: this is a parameter
-
-  int y = getcury(win);
-  int x = 0;
-
-  if (selection)
-    wattrset(win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
-  else
-    wattrset(win, Colors::set(column.fg, column.bg, additional_attributes));
-
-  size_t len;
-  wchar_t* value = toWideString(trackField(item, column.tag), &len);
-  size_t colwidth;
-
-  if (column.relative)
-    colwidth = width * column.size / _100Percent;
-  else
-    colwidth = column.size;
-
-  // Clear the column field with spaces
-  mvwhline(win, y, x, ' ', colwidth + 1);
-
-  if (column.justify == PlaylistColumnFormat::Left)
-    mvwaddnwstr(win, y, x, value, colwidth);
-  else if (column.justify == PlaylistColumnFormat::Right) {
-    if (len < colwidth)
-      mvwaddwstr(win, y, x + colwidth - len, value); // TODO
-    else
-      mvwaddnwstr(win, y, x, value, colwidth);
-  }
-
-  x += colwidth+1;
-}
-
 /* ============================================================================
  * Playlist
  * ==========================================================================*/

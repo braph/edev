@@ -98,7 +98,7 @@ Downloads :: Downloads(int parallel)
   curl_global_init(CURL_GLOBAL_ALL);
   if (! (curl_multi = curl_multi_init()))
     throw std::runtime_error("curl_multi_init()");
-  curl_multi_setopt(curl_multi, CURLMOPT_MAXCONNECTS, static_cast<long>(parallel));
+  curl_multi_setopt(curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
 }
 
 Downloads :: ~Downloads() {

@@ -6,7 +6,8 @@ using namespace UI;
 using namespace Views;
 
 MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
-: playingInfo(db)
+: actions(actions)
+, playingInfo(db)
 , progressBar()
 , tabBar()
 , readlineWidget()
@@ -75,4 +76,10 @@ void MainWindow :: layout(Pos pos, Size size) {
   windows.layout(pos, size);
   
   VerticalContainer::layout(this->pos, this->size);
+}
+
+bool MainWindow :: handleKey(int key) {
+  if (! VerticalContainer::handleKey(key))
+    actions.call(Bindings::global[key]);
+  return true;
 }

@@ -41,18 +41,18 @@ void TabBar :: layout(UI::Pos pos, UI::Size size) {
 }
 
 void TabBar :: draw() {
-  werase(win);
+  erase();
   moveCursor(0, 0);
 
   int i = 0;
   for (const auto &label : _tabs) {
     if (i++ == _current)
-      wattrset(win, Theme::get(Theme::TABBAR_SELECTED));
+      attrSet(Theme::get(Theme::TABBAR_SELECTED));
     else
-      wattrset(win, Theme::get(Theme::TABBAR_UNSELECTED));
+      attrSet(Theme::get(Theme::TABBAR_UNSELECTED));
 
-    waddch(win, ' ');
-    waddstr(win, label.c_str());
+    addCh(' ');
+    addStr(label.c_str());
   }
 }
 

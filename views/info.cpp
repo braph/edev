@@ -40,28 +40,28 @@ void Info :: setCurrentTrack(Database::Tracks::Track track) {
 }
 
 void Info :: drawHeading(int y, const char* heading) {
-  wattrset(win, Theme::get(Theme::INFO_HEAD));
+  attrSet(Theme::get(Theme::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
 
 void Info :: drawTag(int y, const char* tag) {
-  wattrset(win, Theme::get(Theme::INFO_TAG));
+  attrSet(Theme::get(Theme::INFO_TAG));
   mvAddStr(y, START_TAG, tag);
-  wattrset(win, Theme::get(Theme::INFO_VALUE));
-  wmove(win, y, START_TAG_VALUE);
+  attrSet(Theme::get(Theme::INFO_VALUE));
+  moveCursor(y, START_TAG_VALUE);
 }
 
 void Info :: drawInfo(int y, const char* info) {
-  wattrset(win, Theme::get(Theme::INFO_TAG));
-  mvwaddwstr(win, y, START_INFO, toWideString(info));
-  wattrset(win, Theme::get(Theme::INFO_VALUE));
-  wmove(win, y, START_INFO_VALUE);
+  attrSet(Theme::get(Theme::INFO_TAG));
+  mvAddStr(y, START_INFO, toWideString(info));
+  attrSet(Theme::get(Theme::INFO_VALUE));
+  moveCursor(y, START_INFO_VALUE);
 }
 
 void Info :: drawLink(const std::string& url, const std::string &title, bool addURL = true) {
-  wattrset(win, Theme::get(Theme::URL));
+  attrSet(Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
-  waddwstr(win, toWideString(title));
+  addStr(toWideString(title));
   if (addURL)
     clickableURLs.add(start, cursorPos(), UrlAndTitle(url, title));
 }
@@ -101,7 +101,7 @@ struct MarkupParser {
 void Info :: draw() {
   clickableURLs.clear();
   wresize(win, 200, 110);
-  wclear(win);
+  clear();
   int y = 1;
 
   if (currentTrack) {
@@ -121,13 +121,13 @@ void Info :: draw() {
     *this << toWideString(track.artist());
 
     drawTag(y++, "Number");
-    wprintw(win, "%02d", track.number());
+    printW("%02d", track.number());
 
     drawTag(y++, "BPM");
     *this << track.bpm();
 
     drawTag(y++, "Length");
-    wprintw(win, "%02d:%02d", player.length()/60, player.length()%60);
+    printW("%02d:%02d", player.length()/60, player.length()%60);
 
     y++; // Newline
 
@@ -158,7 +158,7 @@ void Info :: draw() {
     *this << album.download_count();
 
     drawTag(y++, "Rating");
-    wprintw(win, "%2.2f%% (%d Votes)", album.rating(), album.votes());
+    printW("%2.2f%% (%d Votes)", album.rating(), album.votes());
 
     drawTag(y++, "Cover");
     buffer = album.cover_url();
@@ -169,7 +169,7 @@ void Info :: draw() {
 
     // Description ============================================================
     drawHeading(y++, "Description");
-    wmove(win, y, START_TAG);
+    moveCursor(y, START_TAG);
     MarkupParser markupParser(album.description());
     std::string linkURL;
     std::string linkText;
@@ -191,9 +191,9 @@ void Info :: draw() {
 
       int x;
       getyx(win, y, x);
-      if (x < 3)                                wmove(win, y,   START_TAG);
-      else if (x >= FORCE_LINE_BREAK)           wmove(win, y+1, START_TAG);
-      else if (x >= TRY_LINE_BREAK && c == ' ') wmove(win, y+1, START_TAG-1);
+      if (x < 3)                                moveCursor(y,   START_TAG);
+      else if (x >= FORCE_LINE_BREAK)           moveCursor(y+1, START_TAG);
+      else if (x >= TRY_LINE_BREAK && c == ' ') moveCursor(y+1, START_TAG-1);
 
       if (!linkText.empty() && !linkURL.empty()) {
         if (linkURL == "@") // Protected email, see updater.cpp
@@ -203,7 +203,7 @@ void Info :: draw() {
         linkText.clear();
       }
 
-      wattrset(win, attr);
+      attrSet(attr);
       *this << c;
     }
 

@@ -22,17 +22,39 @@ public:
 
   ListWidget()
   : m_cursor(0)
-  , m_active(0)
+  , m_active(-1)
   , m_top_index(0)
   , m_list(NULL)
   {
   }
 
+  // Getter ===================================================================
   TContainer* getList() const { return m_list; }
+  int getCursorIndex()  const { return empty() ? -1 : m_top_index + m_cursor; }
+  int getActiveIndex()  const { return m_active; }
 
-  void attachList(TContainer *list) {
-    m_list = list;
+  value_type getCursorItem() const {
+    if (empty())
+      throw std::out_of_range("getCursorItem()");
+    return (*m_list)[size_type(m_top_index+m_cursor)];
   }
+
+  value_type getActiveItem() const {
+    if (! empty())
+      return (*m_list)[static_cast<size_type>(m_active)];
+    throw std::out_of_range("getActiveItem()");
+  }
+
+  // Setter ==================================================================
+  void attachList(TContainer *list) { m_list = list; }
+
+  void setCursorIndex(int idx) {
+    m_cursor = size.height / 2;
+    m_top_index = idx - m_cursor;
+    draw();
+  }
+
+  void setActiveIndex(int idx) { m_active = idx; draw(); }
 
   void layout(UI::Pos pos, UI::Size size) {
     if (size != this->size) {
@@ -51,7 +73,7 @@ public:
 
     if (! m_list) return;
     m_cursor    = clamp(m_cursor,    0, size.height - 1);
-    m_active    = clamp(m_active,    0, containerSize() - 1);
+    m_active    = clamp(m_active,   -1, containerSize() - 1);
     m_top_index = clamp(m_top_index, 0, containerSize() - 1);
     m_top_index = clamp(m_top_index, 0, containerSize() - size.height);
 
@@ -61,11 +83,6 @@ public:
       moveCursor(line, 0);
       render_item(idx, line == m_cursor);
     }
-  }
-
-  void unselect_item() {
-    moveCursor(m_cursor, 0);
-    render_item(m_top_index + m_cursor, false); // Unselect old line
   }
 
   /* Cursor down */
@@ -158,28 +175,6 @@ public:
     return false;
   }
 
-  int getSelected() const { return m_top_index + m_cursor; }
-  void setSelected(int idx) {
-    m_cursor = size.height / 2;
-    m_top_index = idx - m_cursor;
-    draw();
-  }
-
-  value_type getItem() const {
-    if (! empty())
-      return (*m_list)[static_cast<size_type>(m_top_index+m_cursor)];
-    throw std::out_of_range("getItem()");
-  }
-
-  value_type getActiveItem() const {
-    if (! empty())
-      return (*m_list)[static_cast<size_type>(m_active)];
-    throw std::out_of_range("getActiveItem()");
-  }
-
-  int getActiveIndex() const   { return m_active; }
-  void setActiveIndex(int idx) { m_active = idx; draw(); }
-
   inline bool empty() const
   { return containerSize() == 0; }
 
@@ -195,6 +190,11 @@ private:
   inline void render_item(int idx, bool cursor) {
     if (itemRenderer)
       itemRenderer(win, size.width, (*m_list)[static_cast<size_t>(idx)], idx, cursor, idx == m_active);
+  }
+
+  inline void unselect_item() {
+    moveCursor(m_cursor, 0);
+    render_item(m_top_index + m_cursor, false); // Unselect old line
   }
 };
 
@@ -213,7 +213,7 @@ void testListWidget(
   doupdate();
 
   for (;;) {
-    switch (wgetch(listWidget.active_win())) {
+    switch (wgetch(listWidget.getWINDOW())) {
       case 'k': listWidget.up();        break;
       case 'j': listWidget.down();      break;
       case KEY_PPAGE:

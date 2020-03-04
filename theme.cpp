@@ -79,7 +79,7 @@ Theme::Definition Theme :: themes[3][THEME_ID_COUNT] = {
     /* HELP_COMMAND_DESC      */ _(yellow                       )
   },
   { // ========================= 256 Colors =====================
-    /* DEFAULT                */ _(white, 233                   ),
+    /* DEFAULT                */ _(white, -1                    ), // 233
     /* URL                    */ _(97, defualt, A_UNDERLINE     ),
 
     /* INFO_HEAD              */ _(32, defualt, A_BOLD          ),

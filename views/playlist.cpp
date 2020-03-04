@@ -19,7 +19,7 @@ using namespace Views;
  * ==========================================================================*/
 
 void TrackRenderer :: operator()(
-    WINDOW *win,
+    WINDOW *_win,
     int width,
     const Database::Tracks::Track &item,
     int index,
@@ -31,7 +31,7 @@ void TrackRenderer :: operator()(
   if (cursor) additional_attributes |= A_STANDOUT;
   int selection = 0; // XXX: this is a parameter
 
-  int y = getcury(win);
+  int y = getcury(_win);
   int x = 0;
 
   // Substract the space that separates the columns
@@ -49,9 +49,9 @@ void TrackRenderer :: operator()(
 
   for (const auto &column : m_columns) {
     if (selection)
-      wattrset(win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
+      wattrset(_win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
     else
-      wattrset(win, Colors::set(column.fg, column.bg, additional_attributes));
+      wattrset(_win, Colors::set(column.fg, column.bg, additional_attributes));
 
     size_t len;
     wchar_t* value = toWideString(trackField(item, column.tag), &len);
@@ -63,15 +63,15 @@ void TrackRenderer :: operator()(
       colwidth = column.size;
 
     // Clear the column field with spaces
-    mvwhline(win, y, x, ' ', colwidth + 1);
+    mvwhline(_win, y, x, ' ', colwidth + 1);
 
     if (column.justify == PlaylistColumnFormat::Left)
-      mvwaddnwstr(win, y, x, value, colwidth);
+      mvwaddnwstr(_win, y, x, value, colwidth);
     else if (column.justify == PlaylistColumnFormat::Right) {
       if (int(len) < colwidth)
-        mvwaddwstr(win, y, x + colwidth - int(len), value); // TODO
+        mvwaddwstr(_win, y, x + colwidth - int(len), value); // TODO
       else
-        mvwaddnwstr(win, y, x, value, colwidth);
+        mvwaddnwstr(_win, y, x, value, colwidth);
     }
 
     x += colwidth + 1;
@@ -143,14 +143,14 @@ bool Playlist :: handleKey(int key) {
     case Actions::SEARCH:    mainwindow.readline("Search: ", [&](const std::string& line, bool notEOF) {
                                  trackSearch.startSearch(line, &this->playlist);
                                  if (trackSearch.next())
-                                   setSelected(trackSearch.getIndex());
+                                   setCursorIndex(trackSearch.getIndex());
                                });
                              break;
     case Actions::SEARCH_NEXT: if (trackSearch.next())
-                                 setSelected(trackSearch.getIndex());
+                                 setCursorIndex(trackSearch.getIndex());
                                break;
     case Actions::SEARCH_PREV: if (trackSearch.prev())
-                                 setSelected(trackSearch.getIndex());
+                                 setCursorIndex(trackSearch.getIndex());
                                break;
 
     default: actions.call(Bindings::playlist[key]);

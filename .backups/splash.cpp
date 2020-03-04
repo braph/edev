@@ -1,3 +1,4 @@
+// Splash with pads....
 #include "splash.hpp"
 
 #include "../theme.hpp"
@@ -46,12 +47,9 @@ using namespace UI;
 using namespace Views;
 #define setFG(COLOR) UI::Colors::set(COLOR, -1, 0)
 
-void Splash :: draw() {
-  clear();
-  if (LOGO_HEIGHT > size.height || LOGO_WIDTH > size.width)
-    return;
+Splash :: Splash() : UI::Pad() {
+  wresize(win, LOGO_HEIGHT + 3 + SIGNATURE_HEIGHT, LOGO_WIDTH); //TODO: move to constructor
 
-  // Assume no colors by default
   ArrayView<const short> logoFading(colorFading_0);
   ArrayView<const short> bubbleFading(colorFading_0);
   ArrayView<const short> signatureFading(colorFading_0);
@@ -66,45 +64,57 @@ void Splash :: draw() {
     signatureFading       = signatureFading_8;
   }
 
-  SpanView<ArrayView<const short>> fader;
-  int w_center = size.width / 2;
-  int h_center = size.height / 2;
-  int left_pad = w_center - (LOGO_WIDTH / 2);
-  int top_pad  = h_center - (LOGO_HEIGHT / 2);
-  bool draw_signature = false;
-
-  if (LOGO_HEIGHT + SIGNATURE_HEIGHT + 3 <= size.height) {
-    top_pad -= 3;
-    draw_signature = true;
-  }
-
-  fader = logoFading;
+  SpanView<ArrayView<const short>> fader = logoFading;
   for (int i = 0; i < LOGO_HEIGHT; ++i) {
-    attrSet(setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
-    mvAddStr(top_pad + i, left_pad, LOGO[i]);
+    wattrset(win, setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
+    mvwaddstr(win, i, 0, LOGO[i]);
   }
 
   fader = bubbleFading;
   for (int i = 0; i < BUBBLES_SIZE; ++i) {
     const int x = BUBBLES[i][0];
     const int y = BUBBLES[i][1];
-    mvAddCh(top_pad + y - 1, left_pad + x + 1,
+    mvwaddch(win, y - 1, x + 1,
         '_' | setFG(fader.get(LOGO_HEIGHT, unsigned(y - 1))));
-    attrSet(setFG(fader.get(LOGO_HEIGHT, unsigned(y))));
-    mvAddStr(top_pad + y, left_pad + x, "(_)");
+    wattrset(win, setFG(fader.get(LOGO_HEIGHT, unsigned(y))));
+    mvwaddstr(win, y, x, "(_)");
   }
 
-  if (! draw_signature) return;
-
-  top_pad += LOGO_HEIGHT + 2;
-  left_pad = w_center - (SIGNATURE_WIDTH / 2);
+  const int w_center = LOGO_WIDTH / 2;
+  const int h_center = LOGO_HEIGHT / 2;
+  const int left_pad = w_center - (SIGNATURE_WIDTH / 2);
+  const int top_pad  = LOGO_HEIGHT + 3;
 
   fader = signatureFading;
   for (int i = 0; i < SIGNATURE_HEIGHT; ++i) {
     moveCursor(top_pad + i, left_pad);
     for (unsigned j = 0; j < SIGNATURE_WIDTH; ++j)
-      addCh(SIGNATURE[i][j] | setFG(fader.get2(SIGNATURE_WIDTH, j)));
+      waddch(win, SIGNATURE[i][j] | setFG(fader.get2(SIGNATURE_WIDTH, j)));
   }
+}
+
+void Splash :: layout(UI::Pos pos, UI::Size size) {
+  this->pos = pos;
+  this->size = size;
+}
+
+void Splash :: noutrefresh() {
+  int pad_height = LOGO_HEIGHT; + 3 + SIGNATURE_HEIGHT;
+  int pad_width = LOGO_WIDTH;
+
+  if (pad_height > size.height || pad_width > size.width)
+    return;
+
+  if (pad_height + 3 + SIGNATURE_HEIGHT <= size.height)
+    pad_height += 3 + SIGNATURE_HEIGHT;
+
+  int screen_y = pos.y + size.height / 2 - pad_height / 2;
+  int screen_x = pos.x + size.width / 2 - pad_width / 2;
+
+  pnoutrefresh(win, 0, 0, screen_y, screen_x, screen_y + pad_height, screen_x + pad_width);
+}
+
+void Splash :: draw() {
 }
 
 #ifdef TEST_SPLASH
@@ -113,15 +123,14 @@ int main() {
   TEST_BEGIN();
   NCURSES_INIT();
 
-  Widget *s = new Views::Splash;
-  s->layout({10,10}, {20,80});
-
   for (auto colors : {0,8,256}) {
     Theme::current = colors;
-    s->draw();
-    s->noutrefresh();
+    Views::Splash s;
+    s.layout({10,10}, {40,80}); // TODO
+    s.draw();
+    s.noutrefresh();
     doupdate();
-    wgetch(s->getWINDOW());
+    wgetch(s.active_win());
   }
 
   TEST_END();

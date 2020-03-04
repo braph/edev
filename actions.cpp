@@ -6,6 +6,8 @@
 #include "trackloader.hpp"
 #include "views/mainwindow.hpp"
 
+#include <signal.h>
+
 static const char *action_strings[Actions::ACTIONID_LAST] = {
 #define X(ENUM, STR) STR,
   XActions
@@ -17,8 +19,8 @@ int Actions :: call(ActionID id) {
 
   switch (id) {
   case NONE:   break;
-  case QUIT:   return QUIT;
-  case REDRAW: return REDRAW;
+  case QUIT:   raise(SIGTERM);  break;
+  case REDRAW: raise(SIGWINCH); break;
 
   // Silence warnings
   case TOP: case BOTTOM: case UP: case DOWN: case PAGE_UP: case PAGE_DOWN:
@@ -36,7 +38,7 @@ int Actions :: call(ActionID id) {
   case PLAYLIST_GOTO_CURRENT: v->playlist.gotoSelected(); break;
   case PLAYLIST_NEXT: index = v->playlist.getActiveIndex() + 1; goto PLAYLIST_PLAY;
   case PLAYLIST_PREV: index = v->playlist.getActiveIndex() - 1; goto PLAYLIST_PLAY;
-  case PLAYLIST_PLAY: index = v->playlist.getSelected();
+  case PLAYLIST_PLAY: index = v->playlist.getCursorIndex();
 PLAYLIST_PLAY:        v->playlist.setActiveIndex(index);
                       if (! v->playlist.empty() && v->playlist.getActiveIndex() >= 0) {
                         auto track = v->playlist.getActiveItem();

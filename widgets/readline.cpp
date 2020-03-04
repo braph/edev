@@ -57,11 +57,12 @@ void ReadlineWidget :: setPrompt(const std::string& s) {
 }
 
 void ReadlineWidget :: draw() {
-  wclear(win);
+  clear();
+  attrSet(0);
   mvAddStr(0, 0, prompt.c_str());
   int x = getcurx(win);
-  waddstr(win, rl_line_buffer);
-  wmove(win, 0, x + rl_point);
+  addStr(rl_line_buffer);
+  mvwchgat(win, 0, x + rl_point, 1, A_STANDOUT, 0, NULL);
 }
 
 bool ReadlineWidget :: handleKey(int key) {
@@ -91,8 +92,8 @@ int main() {
   };
 
   for (;;) {
-    wtimeout(w.active_win(), 1000);
-    int key = wgetch(w.active_win());
+    wtimeout(w.getWINDOW(), 1000);
+    int key = wgetch(w.getWINDOW());
     if (key == ERR)
       continue;
     w.handleKey(key);

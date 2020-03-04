@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 
-#include "curses.h"
+#include <curses.h>
 
 #include <vector>
 #include <iostream>
@@ -92,7 +92,7 @@ public:
   virtual void    draw() = 0;
   virtual void    layout(Pos pos, Size size) = 0;
   virtual void    noutrefresh() = 0;
-  virtual WINDOW* active_win() const = 0;
+  virtual WINDOW* getWINDOW() const = 0;
   virtual bool    handleKey(int) {return false;}
   virtual bool    handleMouse(MEVENT &m) { (void)m; return false; }
 
@@ -115,7 +115,7 @@ struct WidgetDrawable : public Widget {
   { delwin(win); }
 #endif
 
-  WINDOW *active_win() const
+  WINDOW *getWINDOW() const
   { return win; }
 
   inline UI::Pos cursorPos()
@@ -155,6 +155,16 @@ struct WidgetDrawable : public Widget {
   inline int addCh(chtype c)
   { return waddch(win, c); }
 
+  inline int addStr(const char* s)
+  { return waddstr(win, s); }
+
+  inline int addStr(const wchar_t* s)
+  { return waddwstr(win, s); }
+
+  template<typename... Args>
+  inline int printW(const char* fmt, Args... args)
+  { return wprintw(win, fmt, args...); }
+
   // mv-methods ===============================================================
   inline int moveCursor(int y, int x)
   { return wmove(win, y, x); }
@@ -162,12 +172,26 @@ struct WidgetDrawable : public Widget {
   inline int mvAddStr(int y, int x, const char* s)
   { return mvwaddstr(win, y, x, s); }
 
+  inline int mvAddStr(int y, int x, const wchar_t* s)
+  { return mvwaddwstr(win, y, x, s); }
+
   inline int mvAddCh(int y, int x, chtype c)
   { return mvwaddch(win, y, x, c); }
+
+  template<typename... Args>
+  inline int mvPrintW(int y, int x, const char* fmt, Args... args)
+  { return mvwprintw(win, y, x, fmt, args...); }
 
   // attr-methods =============================================================
   inline int attrSet(unsigned int attrs)
   { return wattrset(win, attrs); }
+
+  // misc methods =============================================================
+  inline int clear()
+  { return wclear(win); }
+
+  inline int erase()
+  { return werase(win); }
 };
 
 class Window : public WidgetDrawable {

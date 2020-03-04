@@ -40,9 +40,9 @@ void GenericContainer :: addWidget(Widget* widget) {
   _widgets.push_back(widget);
 }
 
-WINDOW* GenericContainer :: active_win() const {
+WINDOW* GenericContainer :: getWINDOW() const {
   if (! empty())
-    return currentWidget()->active_win();
+    return currentWidget()->getWINDOW();
   return NULL;
 }
 

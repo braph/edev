@@ -3,9 +3,7 @@
 - XML: text() -> alltext()
 - keybindings: ^R, maybe even F5 for reloading
 - keybindings: ^S for saving?
-
-- database.cpp
-  - STR_GET, STR_SET - static_cast?
+- pads: fix mouse offset
 
 ===============================================================================
 

@@ -68,20 +68,20 @@ void PlayingInfo :: layout(Pos pos, Size size) {
 }
 
 void PlayingInfo :: draw_state() {
-  wattrset(win, Theme::get(Theme::PLAYINGINFO_STATE));
+  attrSet(Theme::get(Theme::PLAYINGINFO_STATE));
   mvAddStr(0, size.width - STATE_LEN, state_to_string[state]);
 }
 
 void PlayingInfo :: draw_position_and_length() {
-  wattrset(win, Theme::get(Theme::PLAYINGINFO_POSITION));
-  mvwprintw(win, 0, 0, "[%02d:%02d/%02d:%02d]",
+  attrSet(Theme::get(Theme::PLAYINGINFO_POSITION));
+  mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]",
       track_position/60, track_position%60,
       track_length/60, track_length%60);
 }
 
 void PlayingInfo :: draw_track_info() {
   if (! track) {
-    wattrset(win, 0);
+    attrSet(0);
     mvAddStr(1, size.width / 2 - int(STRLEN(STOPPED_HEADING) / 2), STOPPED_HEADING);
   } else {
     moveCursor(0, 0); print_formatted_strings(*fmt_top);
@@ -90,7 +90,7 @@ void PlayingInfo :: draw_track_info() {
 }
 
 void PlayingInfo :: draw() {
-  werase(win);
+  erase();
   draw_position_and_length();
   draw_track_info();
   draw_state();
@@ -112,7 +112,7 @@ void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
 
   moveCursor(getcury(win), size.width/2 - int(sum/2));
   for (const auto &fmt : format) {
-    wattrset(win, UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
+    attrSet(UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())
       *this << toWideString(fmt.text);
     else

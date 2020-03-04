@@ -22,9 +22,8 @@
 using namespace Ektoplayer;
 namespace fs = boost::filesystem;
 
-static volatile int have_SIGNAL;
-static void on_SIGNAL(int sig) { have_SIGNAL = sig; }
-static void printDBStats(Database&);
+static volatile int currentSIGNAL;
+static void on_SIGNAL(int sig) { currentSIGNAL = sig; }
 
 class Application {
 public:
@@ -32,7 +31,6 @@ public:
  ~Application();
   void run();
   void init();
-  void cleanup_files();
 private:
   Database database;
   Downloads downloads;
@@ -40,6 +38,9 @@ private:
   TrackLoader trackloader;
   Mpg123Player player;
   const char* error;
+
+  void printDBStats();
+  void cleanup_files();
 };
 
 Application :: Application()
@@ -84,7 +85,7 @@ void Application :: init() {
   start_color();
   use_default_colors();
   curs_set(0);
-  mousemask(ALL_MOUSE_EVENTS/*|REPORT_MOUSE_POSITION*/, NULL);
+  mousemask(ALL_MOUSE_EVENTS, NULL);
   wresize(stdscr, 1, 1); // Save some bytes...
 
   error = REPORT_BUG;
@@ -117,7 +118,7 @@ void Application :: init() {
 
   error = "Error opening log file";
   std::ios::sync_with_stdio(false);
-  std::ofstream *logfile = new std::ofstream();
+  std::ofstream *logfile = new std::ofstream(); /* "wanted" leak */
   logfile->exceptions(std::ofstream::failbit|std::ofstream::badbit);
   logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
   std::cerr.rdbuf(logfile->rdbuf());
@@ -144,7 +145,7 @@ void Application :: init() {
 }
 
 void Application :: run() {
-  printDBStats(database);
+  printDBStats();
 
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
@@ -160,13 +161,14 @@ void Application :: run() {
   actions.t  = &trackloader;
 
   // Connecting widgets events
-  mainwindow.progressBar.percentChanged = [&](float f) {
-    player.setPostionByPercent(f);
-    mainwindow.progressBar.setPercent(f);
+  mainwindow.progressBar.percentChanged = [&](float percent) {
+    player.setPostionByPercent(percent);
+    mainwindow.progressBar.setPercent(percent);
   };
-  mainwindow.tabBar.indexChanged = [&](int idx) {
-    mainwindow.tabBar.setCurrentIndex(idx);
-    mainwindow.windows.setCurrentIndex(idx);
+
+  mainwindow.tabBar.indexChanged = [&](int index) {
+    mainwindow.tabBar.setCurrentIndex(index);
+    mainwindow.windows.setCurrentIndex(index);
   };
 
   int c;
@@ -176,21 +178,25 @@ void Application :: run() {
   MEVENT mouse;
   Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
   Database::Tracks::Track currentPrefetching(database, 0);
-#define TIMEOUT_PLAYING  1000 // Display refresh rate if playing
-#define TIMEOUT_DOWNLOAD 100  // Timeout working downloads
 
   mainwindow.playlist.playlist = database.getTracks();
 
 WINDOW_RESIZE:
-  have_SIGNAL = 0;
+  currentSIGNAL = 0;
   mainwindow.layout({0,0}, {LINES,COLS});
   mainwindow.draw();
 
 MAINLOOP:
-  if (have_SIGNAL == SIGTERM || have_SIGNAL == SIGINT)
-    return;
-  else if (have_SIGNAL == SIGWINCH)
-    goto WINDOW_RESIZE;
+  switch (currentSIGNAL) {
+    case SIGINT:
+    case SIGTERM: return;
+    case SIGWINCH: goto WINDOW_RESIZE;
+  }
+
+  // Poll the player, then do the downloading work. In the time that is spent
+  // in downloads.work() the player can update its properties.
+  player.work();
+  for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
@@ -202,13 +208,8 @@ MAINLOOP:
   mainwindow.noutrefresh();
   doupdate();
 
-  // Player stuff
-  player.work();
   if (player.isTrackCompleted())
     actions.call(Actions::PLAYLIST_NEXT);
-
-  // Do at max 10 download iterations
-  for (downloading = 0; downloading < 100 && downloads.work(); ++downloading);
 
   // Song prefetching
   if (Config::prefetch &&
@@ -226,39 +227,22 @@ MAINLOOP:
   }
 
   if (downloading)
-    timeOut = TIMEOUT_DOWNLOAD;
+    timeOut = 100; // Set a short timeout if the mainloop handles downloads
   else if (player.getState() == Mpg123Player::STOPPED || player.getState() == Mpg123Player::PAUSED)
-    timeOut += TIMEOUT_PLAYING;
+    timeOut = -1; // Stop the mainloop until user hits a key
   else
-    timeOut = TIMEOUT_PLAYING;
+    timeOut = 1000; // In playing state we need 
 
-  win = mainwindow.active_win();
+  win = mainwindow.getWINDOW();
   wtimeout(win, timeOut);
-  if ((c = wgetch(win)) != ERR) {
-    if (c == KEY_MOUSE) {
+  switch ((c = wgetch(win))) {
+    case ERR: break;
+    case KEY_MOUSE:
       if (OK == getmouse(&mouse))
         mainwindow.handleMouse(mouse);
-      goto MAINLOOP;
-    }
-
-    if (mainwindow.handleKey(c))
-      goto MAINLOOP;
-
-    if (Bindings::global[c])
-      c = Bindings::global[c];
-    else if (c == 'x') {
-      database.shrink_to_fit();
-      mainwindow.playlist.playlist = database.getTracks();
-      goto MAINLOOP;
-    }
-    else
-      c = Actions::NONE;
-
-    c = actions.call(static_cast<Actions::ActionID>(c));
-    if (c == Actions::QUIT)
-      return;
-    else if (c == Actions::REDRAW)
-      goto WINDOW_RESIZE;
+      break;
+    default:
+      mainwindow.handleKey(c);
   }
 
 goto MAINLOOP;
@@ -274,11 +258,25 @@ void Application :: cleanup_files() {
       boost::filesystem::remove(f.path(), e);
 }
 
+void Application :: printDBStats() {
+  std::cerr << "Database statistics:\n";
+  for (auto table : database.tables) {
+    std::cerr << table->name << "(" << table->size() << "): ";
+    for (auto column : table->columns)
+      std::cerr << column->bits() << "|";
+    std::cerr << "\n";
+  }
+}
+
 int main() {
   LIBXML_TEST_VERSION /* Check for ABI mismatch */
   std::signal(SIGWINCH, on_SIGNAL);
   std::signal(SIGINT,   on_SIGNAL);
   std::signal(SIGTERM,  on_SIGNAL);
+
+#ifndef NDEBUG
+  std::cerr << "Running in DEBUG mode!\n";
+#endif
 
   try {
     Application app;
@@ -290,16 +288,9 @@ int main() {
     return 1;
   }
 
+#ifndef NDEBUG
   delwin(stdscr);
+#endif
   return 0;
 }
 
-static void printDBStats(Database& db) {
-  std::cerr << "Database statistics:\n";
-  for (auto table : db.tables) {
-    std::cerr << table->name << "(" << table->size() << "): ";
-    for (auto column : table->columns)
-      std::cerr << column->bits() << "|";
-    std::cerr << "\n";
-  }
-}

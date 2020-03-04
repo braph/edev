@@ -22,7 +22,7 @@ void Help :: layout(Pos pos, Size size) {
 }
 
 void Help :: draw() {
-  wclear(win);
+  clear();
 
   struct {
     const char* name;
@@ -36,14 +36,14 @@ void Help :: draw() {
   int y = 0;
 
   for (const auto& widget : widgets) {
-    wattrset(win, Theme::get(Theme::HELP_WIDGET_NAME));
+    attrSet(Theme::get(Theme::HELP_WIDGET_NAME));
     mvAddStr(++y, 1, widget.name);
     moveCursor(++y, KEYS_START);
 
     for (int id = 1; id < Actions::ACTIONID_LAST; ++id) {
       int nkeys = 0;
 
-      wattrset(win, Theme::get(Theme::HELP_KEY_NAME));
+      attrSet(Theme::get(Theme::HELP_KEY_NAME));
       for (int i = 0; i < KEY_MAX; ++i) {
         if (widget.bindings[i] == id) {
           if (nkeys++)
@@ -53,7 +53,7 @@ void Help :: draw() {
       }
 
       if (nkeys) {
-        wattrset(win, Theme::get(Theme::HELP_COMMAND_NAME));
+        attrSet(Theme::get(Theme::HELP_COMMAND_NAME));
         mvAddStr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
         moveCursor(++y, KEYS_START);
       }
@@ -77,7 +77,7 @@ int main() {
   s->draw();
   s->noutrefresh();
   doupdate();
-  wgetch(s->active_win());
+  wgetch(s->getWINDOW());
 
   TEST_END();
 }

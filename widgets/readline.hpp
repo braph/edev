@@ -19,8 +19,10 @@ public:
   void layout(UI::Pos, UI::Size);
   bool handleKey(int);
   void setPrompt(const std::string&);
+
 private:
   std::string prompt;
+  int oldCursor;
 };
 
 #endif
