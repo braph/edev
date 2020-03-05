@@ -45,54 +45,9 @@ public:
   inline float percent() const { return (length() ? static_cast<float>(position()) / length() : 0); }
   inline void  setPostionByPercent(float p) { set_position(length() * p); }
 
-  struct Mpg123Process : public TinyProcessLib::Process {
-    using TinyProcessLib::Process::Process;
-
-    template<size_t LEN>
-    Mpg123Process& operator<<(const char (&s)[LEN]) {
-      write(s, LEN-1);
-      return *this;
-    }
-
-    Mpg123Process& operator<<(const std::string& s) {
-      write(s);
-      return *this;
-    }
-
-    template<typename T>
-    Mpg123Process& operator<<(T v) {
-      write(std::to_string(v));
-      return *this;
-    }
-
-    bool running() {
-      int retcode;
-      return !try_get_exit_status(retcode);
-    }
-  };
-
-#if 0
-  struct Mpg123Process {
-      proc = boost::process::child (
-        boost::process::search_path("mpg123"),
-        "-o", "jack,pulse,alsa,oss", "--fuzzy", "-R",
-        boost::process::std_in  < in,
-        boost::process::std_out > out,
-        boost::process::std_err > boost::process::null
-      );
-    }
-
-    Mpg123Process& operator<<(bar e) {
-      std::lock_guard<std::mutex> lock(in_mutex);
-      try { in << std::endl; } catch (...) { }
-      return *this;
-    }
-  };
-#endif
-
+  std::string audio_system; // TODO
 private:
   std::string file;
-  std::string audio_system;
   uint8_t failed; // Automatically gives up trying on overflow :3
   State   state;
   bool    track_completed;
@@ -101,10 +56,11 @@ private:
   int     seconds_total;
   int     seconds_played;
   int     seconds_remaining;
-  std::unique_ptr<Mpg123Process> process;
+  std::unique_ptr<Process> process;
+  std::string stdout_buffer;
 
   void parse_line(const char*);
-  void read_output(const char*, size_t);
+  void read_output();
 };
 
 #endif

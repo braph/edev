@@ -2,7 +2,6 @@
 
 #include "common.hpp"
 #include "process.cpp"
-#include "process_unix.cpp"
 
 #include <unistd.h>
 
@@ -45,12 +44,15 @@ void Mpg123Player :: play() {
 
 void Mpg123Player :: stop() {
   if (process) {
-    process->close_stdin();
+    process->stdin_pipe.close();
     process->get_exit_status();
     process = nullptr;
   }
 
   state = STOPPED;
+  seconds_total = 0;
+  seconds_played = 0;
+  seconds_remaining = 0;
 }
 
 void Mpg123Player :: work() {
@@ -59,13 +61,15 @@ void Mpg123Player :: work() {
 
   // Start process if he died (or wasn't even started yet)
   if (!process || !process->running()) {
-    process = std::unique_ptr<Mpg123Process>(new Mpg123Process(
-        "/bin/mpg123 -o pulse -R", "", // TODO: -o audio_system --fuzzy
-        [&](const char* buffer, size_t n) { read_output(buffer, n); },
-        [&](const char*       , size_t  ) { failed++;               },
-        true, 4096 /* Buffer size */));
+    process = std::unique_ptr<Process>(
+        new Process([&](){
+          execlp("mpg123", "mp123", "-o", audio_system.c_str(), "--fuzzy", "-R", NULL);
+        },
+        true));
     *process << "SILENCE\n";
   }
+
+  read_output();
 
   if (state == LOADING)
     *process << "L " << file << "\n";
@@ -74,38 +78,27 @@ void Mpg123Player :: work() {
     *process << "FORMAT\n";
 
   *process << "SAMPLE\n";
+
+  char buffer[4192];
+  ssize_t n = process->stderr_pipe.read(buffer, 4192);
+  if (n > 0) ++failed;
+
+  read_output();
 }
 
-static std::string _buffer; // TODO
-void Mpg123Player :: read_output(const char* __buffer, size_t len) {
-  char* buffer = const_cast<char*>(__buffer); // We know we can change the buffer
-  char* end;
+void Mpg123Player :: read_output() {
+  char buffer[4192];
+  ssize_t len = process->stdout_pipe.read(buffer, sizeof(buffer));
+  if (len <= 0)
+    return;
 
-  while ((end = static_cast<char*>(std::memchr(buffer, '\n', len)))) {
-    *end = '\0';
-    if (_buffer.size()) {
-      _buffer.append(buffer);
-      parse_line(_buffer.c_str());
-      _buffer.clear();
-    } else {
-      parse_line(buffer);
-      len -= unsigned(end-buffer) + 1;
-      buffer = end + 1;
+  for (ssize_t i = 0; i < len; ++i)
+    if (buffer[i] != '\n')
+      stdout_buffer.push_back(buffer[i]);
+    else {
+      parse_line(stdout_buffer.c_str());
+      stdout_buffer.clear();
     }
-  }
-
-  if (len)
-    _buffer.append(buffer, len);
-
-#if 0
-  if (!_buffer.size())
-
-  while (std::string::npos != (len = _buffer.find('\n'))) {
-    _buffer[len] = '\0';
-    parse_line(_buffer.c_str());
-    _buffer.erase(0, len+1);
-  }
-#endif
 }
 
 /* Parse Mpg123's output:

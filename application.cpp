@@ -144,6 +144,8 @@ void Application :: init() {
 
   // All colors are beautiful
   Theme::loadTheme(Config::use_colors != -1 ? Config::use_colors : COLORS);
+
+  player.audio_system = Config::audio_system;
 }
 
 void Application :: run() {
@@ -154,7 +156,6 @@ void Application :: run() {
   else if (Config::small_update_pages > 0)
     updater.start(-Config::small_update_pages); // Fetch last N pages
 
-  //player.audio_system = Config::audio_system; TODO
   Actions actions;
   Views::MainWindow mainwindow(actions, database, player);
   actions.db = &database;
