@@ -183,4 +183,54 @@ private:
   TContainer* _container;
 };
 
+#include "common.hpp"
+#include <iostream>
+template<typename TContainer>
+class SteppableSearch {
+  using value_type = typename TContainer::value_type;
+  using size_type  = typename TContainer::size_type;
+public:
+  SteppableSearch() : _list(NULL), _index(0), _predicate(nullptr) {}
+
+  bool next() {
+    if (_list && _predicate) {
+      _index = clamp<size_type>(_index, 0, _list->size() - 1);
+
+      while (++_index < _list->size())
+        if (_predicate((*_list)[_index]))
+          return true;
+
+      _index = 0;
+    }
+    return false;
+  }
+
+  bool prev() {
+    if (_list && _predicate) {
+      _index = clamp<size_type>(_index, 0, _list->size() - 1);
+
+      while (--_index > 0)
+        if (_predicate((*_list)[_index]))
+          return true;
+
+      _index = _list->size();
+    }
+    return false;
+  }
+
+  void startSearch(const TContainer& list, std::function<bool(const value_type&)> predicate) {
+    _index = 0;
+    _list = &list;
+    _predicate = predicate;
+  }
+
+  inline size_type index() const          { return _index;  }
+  inline void      index(size_type index) { _index = index; }
+
+private:
+  const TContainer* _list;
+  size_type _index;
+  std::function<bool(const value_type&)> _predicate;
+};
+
 #endif

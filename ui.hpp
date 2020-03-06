@@ -69,6 +69,7 @@ struct MouseEvents {
 
   using iterator = typename std::vector<MouseEvent>::iterator;
 
+  inline size_t   size()  { return events.size();  }
   inline iterator begin() { return events.begin(); }
   inline iterator end()   { return events.end();   }
   inline void     clear() { events.clear();        }

@@ -38,23 +38,6 @@ private:
   const PlaylistColumns& m_columns;
 };
 
-class TrackSearch {
-public:
-  TrackSearch(const PlaylistColumns& columns);
-  bool next();
-  bool prev();
-  inline size_t getIndex() { return index; }
-  void startSearch(const std::string&, std::vector<Database::Tracks::Track>*);
-
-private:
-  const PlaylistColumns& m_columns;
-  std::vector<Database::Tracks::Track>* list;
-  std::string query;
-  size_t index;
-
-  bool indexMatchesCriteria();
-};
-
 class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
   Playlist(Actions&, Views::MainWindow&);
@@ -64,7 +47,7 @@ private:
   Actions& actions;
   Views::MainWindow& mainwindow;
   TrackRenderer trackRenderer;
-  TrackSearch trackSearch;
+  SteppableSearch<std::vector<Database::Tracks::Track>> trackSearch;
 };
 
 } // namespace Views

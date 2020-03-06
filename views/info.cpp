@@ -58,12 +58,11 @@ void Info :: drawInfo(int y, const char* info) {
   moveCursor(y, START_INFO_VALUE);
 }
 
-void Info :: drawLink(const std::string& url, const std::string &title, bool addURL = true) {
+void Info :: drawLink(const std::string& url, const std::string &title) {
   attrSet(Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
   addStr(toWideString(title));
-  if (addURL)
-    clickableURLs.add(start, cursorPos(), UrlAndTitle(url, title));
+  clickableURLs.add(start, cursorPos(), UrlAndTitle(url, title));
 }
 
 struct MarkupParser {
@@ -233,17 +232,20 @@ void Info :: draw() {
   *this << Filesystem::dir_size(Config::archive_dir) / 1024 / 1024 << "MB";
 
   drawInfo(y++, "Ektoplazm URL");
-  drawLink(EKTOPLAZM_URL, EKTOPLAZM_URL, false);
+  drawLink(EKTOPLAZM_URL, EKTOPLAZM_URL);
 
   drawInfo(y++, "Github URL");
-  drawLink(GITHUB_URL, GITHUB_URL, false);
+  drawLink(GITHUB_URL, GITHUB_URL);
   y++;
 
   // URLs ===================================================================
   drawHeading(y++, "URLs");
+  int urlCount = clickableURLs.size();
   for (auto event : clickableURLs) {
-    drawInfo(y++, event.data.second.c_str());
-    *this << toWideString(event.data.first.c_str());
+    if (--urlCount >= 2) {
+      drawInfo(y++, event.data.second.c_str());
+      *this << toWideString(event.data.first.c_str());
+    }
   }
 
   wresize(win, y, getmaxx(win)); // shrink
@@ -251,6 +253,8 @@ void Info :: draw() {
 
 bool Info :: handleMouse(MEVENT& m) {
   if (wmouse_trafo(win, &m.y, &m.x, false)) {
+    m.y += pad_minrow;
+    m.x += pad_mincol;
     auto event = clickableURLs.find(m);
     if (event != clickableURLs.end())
       open_url(event->data.first);

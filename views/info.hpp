@@ -27,7 +27,7 @@ private:
   using UrlAndTitle = std::pair<std::string, std::string>;
   UI::MouseEvents<UrlAndTitle> clickableURLs;
 
-  void drawLink(const std::string&, const std::string&, bool);
+  void drawLink(const std::string&, const std::string&);
   void drawHeading(int, const char*);
   void drawTag(int, const char*);
   void drawInfo(int, const char*);

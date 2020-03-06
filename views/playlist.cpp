@@ -79,45 +79,6 @@ void TrackRenderer :: operator()(
 }
 
 /* ============================================================================
- * TrackSearch - Circular search through what is displayed by the TrackRenderer
- * ==========================================================================*/
-
-TrackSearch :: TrackSearch(const PlaylistColumns& columns) : m_columns(columns), list(NULL) { }
-
-bool TrackSearch :: next() {
-  if (list) {
-    for (index = clamp<size_t>(index + 1, 0, list->size() - 1); index < list->size(); ++index)
-      if (indexMatchesCriteria())
-        return true;
-
-    index = std::numeric_limits<size_t>::max();
-  }
-  return false;
-}
-
-bool TrackSearch :: prev() {
-  if (list) {
-    for (index = clamp<size_t>(index - 1, 0, list->size() - 1); index; --index)
-      if (indexMatchesCriteria())
-        return true;
-  }
-  return false;
-}
-
-bool TrackSearch :: indexMatchesCriteria() {
-  for (const auto &column : m_columns)
-    if (boost::algorithm::icontains(trackField((*list)[index], column.tag), query))
-      return true;
-  return false;
-}
-
-void TrackSearch :: startSearch(const std::string& q, std::vector<Database::Tracks::Track>* l) {
-  list = l;
-  query = q;
-  index = std::numeric_limits<size_t>::max();
-}
-
-/* ============================================================================
  * Playlist
  * ==========================================================================*/
 
@@ -125,7 +86,6 @@ Playlist :: Playlist(Actions& actions, Views::MainWindow& mainwindow)
 : actions(actions)
 , mainwindow(mainwindow)
 , trackRenderer(Config::playlist_columns)
-, trackSearch(Config::playlist_columns)
 {
   this->itemRenderer = trackRenderer;
   this->attachList(&this->playlist);
@@ -140,17 +100,25 @@ bool Playlist :: handleKey(int key) {
     case Actions::DOWN:      down();       break;
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
-    case Actions::SEARCH:    mainwindow.readline("Search: ", [&](const std::string& line, bool notEOF) {
-                                 trackSearch.startSearch(line, &this->playlist);
-                                 if (trackSearch.next())
-                                   setCursorIndex(trackSearch.getIndex());
-                               });
-                             break;
+    case Actions::SEARCH:
+       mainwindow.readline("Search: ", [&](const std::string& line, bool notEOF) {
+           trackSearch.startSearch(this->playlist,
+             [=](const Database::Tracks::Track& track) {
+                for (const auto &column : Config::playlist_columns)
+                  if (boost::algorithm::icontains(trackField(track, column.tag), line))
+                    return true;
+                return false;
+            });
+
+           if (trackSearch.next())
+             cursorIndex(trackSearch.index());
+         });
+       break;
     case Actions::SEARCH_NEXT: if (trackSearch.next())
-                                 setCursorIndex(trackSearch.getIndex());
+                                 cursorIndex(trackSearch.index());
                                break;
     case Actions::SEARCH_PREV: if (trackSearch.prev())
-                                 setCursorIndex(trackSearch.getIndex());
+                                 cursorIndex(trackSearch.index());
                                break;
 
     default: actions.call(Bindings::playlist[key]);

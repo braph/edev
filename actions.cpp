@@ -36,11 +36,11 @@ int Actions :: call(ActionID id) {
 
   // === Playlist =============================================================
   case PLAYLIST_GOTO_CURRENT: v->playlist.gotoSelected(); break;
-  case PLAYLIST_NEXT: index = v->playlist.getActiveIndex() + 1; goto PLAYLIST_PLAY;
-  case PLAYLIST_PREV: index = v->playlist.getActiveIndex() - 1; goto PLAYLIST_PLAY;
-  case PLAYLIST_PLAY: index = v->playlist.getCursorIndex();
-PLAYLIST_PLAY:        v->playlist.setActiveIndex(index);
-                      if (! v->playlist.empty() && v->playlist.getActiveIndex() >= 0) {
+  case PLAYLIST_NEXT: index = v->playlist.activeIndex() + 1; goto PLAYLIST_PLAY;
+  case PLAYLIST_PREV: index = v->playlist.activeIndex() - 1; goto PLAYLIST_PLAY;
+  case PLAYLIST_PLAY: index = v->playlist.cursorIndex();
+PLAYLIST_PLAY:        v->playlist.activeIndex(index);
+                      if (! v->playlist.empty() && v->playlist.activeIndex() >= 0) {
                         auto track = v->playlist.getActiveItem();
                         p->play(t->getFileForTrack(track, false));
                       }

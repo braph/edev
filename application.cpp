@@ -45,7 +45,7 @@ private:
 
 Application :: Application()
 : database()
-, downloads(10)
+, downloads(20)
 , updater(database, downloads)
 , trackloader(downloads)
 , player()
@@ -72,10 +72,10 @@ Application :: ~Application() {
 }
 
 void Application :: init() {
-  std::cout // Set terminal title
-    << "\033]0;ektoplayer\007" // *xterm
-    << "\033kektoplayer\033\\" // screen/tmux
-    << "\r";
+  std::cout << // Set terminal title
+    "\033]0;ektoplayer\007" // *xterm
+    "\033kektoplayer\033\\" // screen/tmux
+    "\r";
 
   // Use the locale from the environment?!
   std::locale::global(std::locale(""));
@@ -194,22 +194,18 @@ MAINLOOP:
     case SIGWINCH: goto WINDOW_RESIZE;
   }
 
-  // First thing we do is asking the player do update its properties.
-  // Since that update is done in a seperate thread using async I/O, we want
-  // to do as much other work as possible before accessing the properties.
   player.work();
-
   for (downloading = 0; downloads.work() && ++downloading < 50;);
 
   // Song prefetching
   if (Config::prefetch
-      && player.state() == Mpg123Player::PLAYING
+      && player.isPlaying()
       && player.length() >= 30
       && player.percent() >= 0.5
       && mainwindow.playlist.containerSize() >= 2)
   {
     auto list = mainwindow.playlist.getList();
-    nextTrack = (*list)[size_t(mainwindow.playlist.getActiveIndex() + 1) % list->size()];
+    nextTrack = (*list)[size_t(mainwindow.playlist.activeIndex() + 1) % list->size()];
     if (nextTrack != currentPrefetching) {
       trackloader.getFileForTrack(nextTrack);
       currentPrefetching = nextTrack;
@@ -222,7 +218,7 @@ MAINLOOP:
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
   mainwindow.playingInfo.setState(player.state());
-  if (!mainwindow.playlist.empty() && mainwindow.playlist.getActiveIndex() >= 0) {
+  if (!mainwindow.playlist.empty() && mainwindow.playlist.activeIndex() >= 0) {
     mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem());
     mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
   }
@@ -231,10 +227,10 @@ MAINLOOP:
 
   if (downloading)
     timeOut = 100; // Set a short timeout if the mainloop handles downloads
-  else if (player.state() == Mpg123Player::STOPPED || player.state() == Mpg123Player::PAUSED)
+  else if (player.isStopped() || player.isPaused())
     timeOut = -1; // Stop the mainloop until user hits a key
   else
-    timeOut = 1000; // In playing state we need 
+    timeOut = 900; // In playing state we need 
 
   win = mainwindow.getWINDOW();
   wtimeout(win, timeOut);
@@ -269,7 +265,7 @@ void Application :: printDBStats() {
 }
 
 int main() {
-  LIBXML_TEST_VERSION /* Check for ABI mismatch */
+  LIBXML_TEST_VERSION;
   std::signal(SIGWINCH, on_SIGNAL);
   std::signal(SIGINT,   on_SIGNAL);
   std::signal(SIGTERM,  on_SIGNAL);

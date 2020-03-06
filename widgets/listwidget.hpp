@@ -30,8 +30,17 @@ public:
 
   // Getter ===================================================================
   TContainer* getList() const { return m_list; }
-  int getCursorIndex()  const { return empty() ? -1 : m_top_index + m_cursor; }
-  int getActiveIndex()  const { return m_active; }
+  void attachList(TContainer *list) { m_list = list; }
+
+  int cursorIndex() const { return empty() ? -1 : m_top_index + m_cursor; }
+  void cursorIndex(int idx) {
+    m_cursor = size.height / 2;
+    m_top_index = idx - m_cursor;
+    draw();
+  }
+
+  int activeIndex() const { return m_active; }
+  void activeIndex(int idx) { m_active = idx; draw(); }
 
   value_type getCursorItem() const {
     if (empty())
@@ -46,15 +55,6 @@ public:
   }
 
   // Setter ==================================================================
-  void attachList(TContainer *list) { m_list = list; }
-
-  void setCursorIndex(int idx) {
-    m_cursor = size.height / 2;
-    m_top_index = idx - m_cursor;
-    draw();
-  }
-
-  void setActiveIndex(int idx) { m_active = idx; draw(); }
 
   void layout(UI::Pos pos, UI::Size size) {
     if (size != this->size) {
