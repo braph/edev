@@ -18,6 +18,7 @@ struct Html2Markup {
         HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
     XmlNode root = doc.getRootElement();
     Html2Markup p;
+    p.result.reserve(html.size() / 4);
     p.parse(root);
     return p.result;
   }
@@ -49,7 +50,7 @@ struct Html2Markup {
             write("__");
           }
           else if (!strcmp(tag, "br")) {
-            write("\n");
+            write('\n');
           }
           else {
             parse(node.children());
@@ -84,9 +85,9 @@ static std::string makeMarkup(const std::string& description) {
   std::string s = Html2Markup::convert(description, "UTF-8");
 
   // Removing `www.` *may* corrupt some URLs, but saves 20KB!
-  boost::algorithm::replace_all(s, "www.", "");
-  boost::algorithm::replace_all(s, "http://", "");
-  boost::algorithm::replace_all(s, "https://", "");
+  boost::algorithm::erase_all(s, "www.");
+  boost::algorithm::erase_all(s, "http://");
+  boost::algorithm::erase_all(s, "https://");
 
   // Replace protected email links:
   //  /cdn-cgi/l/email-protection#284b47444146684747474c06464d5c
@@ -136,7 +137,7 @@ bool Updater :: start(int pages) {
   int num_pages = page.num_pages;
   int firstPage, lastPage;
 
-#define LAST_PAGE_FALLBACK 450
+#define LAST_PAGE_FALLBACK 450 // TODO
 
   if (pages > 0) { // Count from first page
     firstPage = pages;
