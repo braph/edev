@@ -26,8 +26,8 @@ int Actions :: call(ActionID id) {
   case UP: case DOWN: case PAGE_UP: case PAGE_DOWN: case TOP: case BOTTOM: 
   case SEARCH: case SEARCH_PREV: case SEARCH_NEXT: case ACTIONID_LAST: break;
 
-  case PLAYER_FORWARD:     p->seek_forward(10);                             break;
-  case PLAYER_BACKWARD:    p->seek_backward(10);                            break;
+  case PLAYER_FORWARD:     p->seekForward(10);                              break;
+  case PLAYER_BACKWARD:    p->seekBackward(10);                             break;
   case PLAYER_STOP:        p->stop();                                       break;
   case PLAYER_TOGGLE:      p->toggle();                                     break;
   case TABBAR_TOGGLE:      v->tabBar.visible      = !v->tabBar.visible;      return REDRAW;

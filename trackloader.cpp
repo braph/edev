@@ -53,17 +53,17 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   }
 
   if (boost::filesystem::exists(file_in_temp)) {
-    std::cerr << " -> TEMP: " << file_in_temp << std::endl;
+    std::cerr << " -> TEMP: " << file_in_temp << "\n";
     return file_in_temp.string();
   }
 
   if (boost::filesystem::exists(file_in_cache)) {
-    std::cerr << " -> CACHE: " << file_in_cache << std::endl;
+    std::cerr << " -> CACHE: " << file_in_cache << "\n";
     return file_in_cache.string();
   }
 
   Ektoplayer::url_expand(track_url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
-  std::cerr << " -> DOWNLOAD: " << track_url << std::endl;
+  std::cerr << " -> DOWNLOAD: " << track_url << "\n";
 
   FileDownload* fileDownload = new FileDownload(track_url, file_in_temp.string());
   fileDownload->onFinished = [=](Download& _dl, CURLcode curl_e) {
@@ -80,6 +80,7 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
     } else {
       boost::filesystem::remove(dl.filename(), e);
     }
+    std::cerr << dl.lastURL() << ": " << curl_easy_strerror(curl_e) << " [" << dl.httpCode() << "]\n";
   };
 
   downloads.addDownload(fileDownload, Downloads::HIGH);

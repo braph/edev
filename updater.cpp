@@ -13,9 +13,8 @@
 struct Html2Markup {
   std::string result;
 
-  static std::string convert(const std::string& html) {
-    // XXX We need UTF-8 input here! XXX
-    XmlDoc doc = HtmlDoc::readDoc(html.c_str(), NULL, "UTF-8",
+  static std::string convert(const std::string& html, const char* encoding) {
+    XmlDoc doc = HtmlDoc::readDoc(html.c_str(), NULL, encoding,
         HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
     XmlNode root = doc.getRootElement();
     Html2Markup p;
@@ -24,38 +23,32 @@ struct Html2Markup {
   }
 
   void parse(const XmlNode& _node) {
-    const char* s;
+    const char* tag;
     XmlNode node = _node;
 
     for (; node; node = node.next()) {
       switch (node.type()) {
         case XML_ELEMENT_NODE:
-          s = node.name();
+          tag = node.name();
 
-          if (!strcmp(s, "a")) {
+          if (!strcmp(tag, "a")) {
             write("((");
             parse(node.children());
             write("))[[");
-            std::string URL = node["href"];
-            // Drop large email protection URLs, they dont work anyway
-            if (std::string::npos != URL.find("email-protec"))
-              URL = "@";
-            // Removing `www.` maybe corrupts some URLs, but saves 20KB!
-            boost::algorithm::replace_first(URL, "//www.", "//");
-            write(URL);
+            write(node["href"]);
             write("]]");
           }
-          else if (!strcmp(s, "strong") || !strcmp(s, "b")) {
+          else if (!strcmp(tag, "strong") || !strcmp(tag, "b")) {
             write("**");
             parse(node.children());
             write("**");
           }
-          else if (!strcmp(s, "em") || !strcmp(s, "i")) {
+          else if (!strcmp(tag, "em") || !strcmp(tag, "i")) {
             write("__");
             parse(node.children());
             write("__");
           }
-          else if (!strcmp(s, "br")) {
+          else if (!strcmp(tag, "br")) {
             write("\n");
           }
           else {
@@ -87,6 +80,27 @@ static std::string& clean_str(std::string& s) {
   return s;
 }
 
+static std::string makeMarkup(const std::string& description) {
+  std::string s = Html2Markup::convert(description, "UTF-8");
+
+  // Removing `www.` *may* corrupt some URLs, but saves 20KB!
+  boost::algorithm::replace_all(s, "www.", "");
+  boost::algorithm::replace_all(s, "http://", "");
+  boost::algorithm::replace_all(s, "https://", "");
+
+  // Replace protected email links:
+  //  /cdn-cgi/l/email-protection#284b47444146684747474c06464d5c
+  const char* protectedLink = "[[/cdn-cgi/l/email";
+  size_t pos;
+  while (std::string::npos != (pos = s.find(protectedLink))) {
+    size_t end = s.find(']', pos+std::strlen(protectedLink));
+    if (end != std::string::npos)
+      s.replace(pos, end-pos, "[[@");
+  }
+
+  return s;
+}
+
 /* ============================================================================
  * Updater
  * ==========================================================================*/
@@ -98,7 +112,9 @@ Updater :: Updater(Database &db, Downloads &downloads)
 }
 
 bool Updater :: start(int pages) {
-  // TODO: dont start the download multiple times
+  // Not the best way to determine if we're already updating, but sufficient...
+  if (downloads.queue().size() > 30)
+    return true;
 
   std::function<void(Download&, CURLcode)> cb = [this](Download& _dl, CURLcode code) {
     BufferDownload &dl = static_cast<BufferDownload&>(_dl);
@@ -106,16 +122,15 @@ bool Updater :: start(int pages) {
       BrowsePage page(dl.buffer());
       this->insert_browsepage(page);
     }
+    std::cerr << dl.lastURL() << ": " << curl_easy_strerror(code) << " [" << dl.httpCode() << "]\n";
   };
 
   // Retrieve the first page
   BufferDownload dl(Ektoplayer::browse_url(1));
   dl.onFinished = cb;
   CURLcode e = dl.perform();
-  if (e != CURLE_OK) {
-    std::cerr << __func__ << "E: " << curl_easy_strerror(e) << std::endl;
+  if (e != CURLE_OK)
     return false;
-  }
 
   BrowsePage page(dl.buffer());
   int num_pages = page.num_pages;
@@ -165,7 +180,7 @@ void Updater :: insert_album(Album& album) {
   // Album ====================================================================
   Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL);
   Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-  album.description = Html2Markup::convert(album.description);
+  album.description = makeMarkup(album.description);
   clean_str(album.title);
   clean_str(album.artist);
   clean_str(album.cover_url);

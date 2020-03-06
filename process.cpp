@@ -1,13 +1,15 @@
 #include "process.hpp"
 
-#include <cstdlib>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
+
+#include <cstdlib>
 #include <stdexcept>
 
 Process::Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
-: closed(true)
-, pid(-1)
+: pid(-1)
+, closed(true)
 {
   assert(function);
   open(function, pipe_stdin, pipe_stdout, pipe_stderr);
@@ -73,7 +75,7 @@ Process::id_type Process::open(std::function<void()> function, bool pipe_stdin, 
 }
 
 int Process::get_exit_status() noexcept {
-  if (pid<= 0)
+  if (pid <= 0)
     return -1;
 
   int exit_status;
@@ -118,18 +120,7 @@ void Process::close_fds() noexcept {
   stdin_pipe.close();
   stdout_pipe.close();
   stderr_pipe.close();
-#if 0
-  if (stdout_fd) {
-    if (pid > 0)
-      close(*stdout_fd);
-    stdout_fd.reset();
-  }
-  if (stderr_fd) {
-    if (pid > 0)
-      close(*stderr_fd);
-    stderr_fd.reset();
-  }
-#endif
+  // if (pid > 0) ?!
 }
 
 void Process::kill(bool force) noexcept {
@@ -140,16 +131,6 @@ void Process::kill(bool force) noexcept {
     else
       ::kill(-pid, SIGINT);
   }
-}
-
-void Process::kill(id_type id, bool force) noexcept {
-  if (id<= 0)
-    return;
-
-  if (force)
-    ::kill(-id, SIGTERM);
-  else
-    ::kill(-id, SIGINT);
 }
 
 Process::~Process() noexcept {

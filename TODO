@@ -3,7 +3,7 @@
 - XML: text() -> alltext()
 - keybindings: ^R, maybe even F5 for reloading
 - keybindings: ^S for saving?
-- pads: fix mouse offset
+- pads: fix mouse offset // ui.hpp mincol etc...
 
 ===============================================================================
 

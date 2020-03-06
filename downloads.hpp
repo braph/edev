@@ -78,10 +78,11 @@ public:
   void addDownload(Download*, Priority);
   int work();
 
+  inline std::deque<Download*>& queue() { return _queue; }
 private:
-  CURLM *curl_multi;
-  std::deque<Download*> queue;
-  int parallel;
+  CURLM* _curl_multi;
+  std::deque<Download*> _queue;
+  int _parallel;
 };
 
 #endif

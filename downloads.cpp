@@ -1,7 +1,6 @@
 #include "downloads.hpp"
 #include "common.hpp"
 #include <stdexcept>
-#include <iostream>
 
 /* ============================================================================
  * Download
@@ -94,45 +93,45 @@ const std::string& FileDownload :: filename() {
  * ==========================================================================*/
 
 Downloads :: Downloads(int parallel)
-: parallel(parallel)
+: _parallel(parallel)
 {
   curl_global_init(CURL_GLOBAL_ALL);
-  if (! (curl_multi = curl_multi_init()))
+  if (! (_curl_multi = curl_multi_init()))
     throw std::runtime_error("curl_multi_init()");
-  curl_multi_setopt(curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
+  curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
 }
 
 Downloads :: ~Downloads() {
-  for (auto* dl : queue)
+  for (auto* dl : _queue)
     delete dl;
-  curl_multi_cleanup(curl_multi);
+  curl_multi_cleanup(_curl_multi);
   curl_global_cleanup();
 }
 
 void Downloads :: addDownload(Download* dl, Priority priority) {
   if (priority == LOW)
-    queue.push_back(dl);
+    _queue.push_back(dl);
   else
-    queue.push_front(dl);
+    _queue.push_front(dl);
 }
 
 int Downloads :: work() {
-  //curl_multi_wait(curl_multi, extra, extra_nfds, 10, &running_handles);
+  //curl_multi_wait(_curl_multi, extra, extra_nfds, 10, &running_handles);
   //if (! running_handles)
   //  return 0; XXX
 
   int running_handles;
-  curl_multi_perform(curl_multi, &running_handles);
-  while (running_handles < parallel && queue.size()) {
+  curl_multi_perform(_curl_multi, &running_handles);
+  while (running_handles < _parallel && _queue.size()) {
     ++running_handles;
-    Download *dl = queue.front();
-    queue.pop_front();
-    curl_multi_add_handle(curl_multi, dl->curl_easy);
+    Download *dl = _queue.front();
+    _queue.pop_front();
+    curl_multi_add_handle(_curl_multi, dl->curl_easy);
   }
 
   CURLMsg *msg;
   int msgs_left;
-  while ((msg = curl_multi_info_read(curl_multi, &msgs_left))) {
+  while ((msg = curl_multi_info_read(_curl_multi, &msgs_left))) {
     CURL *curl_easy = msg->easy_handle;
     assert(curl_easy);
 
@@ -141,14 +140,9 @@ int Downloads :: work() {
     const char *url = dl->lastURL();
 
     if (msg->msg == CURLMSG_DONE) {
-      if (msg->data.result == CURLE_OK)
-        std::cerr << url << ": " << dl->httpCode() << std::endl;
-      else
-        std::cerr << url << ": " << curl_easy_strerror(msg->data.result) << std::endl;
-
       if (dl->onFinished)
         dl->onFinished(*dl, msg->data.result);
-      curl_multi_remove_handle(curl_multi, curl_easy);
+      curl_multi_remove_handle(_curl_multi, curl_easy);
       delete dl;
     }
     else assert_not_reached();

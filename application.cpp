@@ -144,8 +144,6 @@ void Application :: init() {
 
   // All colors are beautiful
   Theme::loadTheme(Config::use_colors != -1 ? Config::use_colors : COLORS);
-
-  player.audio_system = Config::audio_system;
 }
 
 void Application :: run() {
@@ -165,7 +163,7 @@ void Application :: run() {
 
   // Connecting widgets events
   mainwindow.progressBar.percentChanged = [&](float percent) {
-    player.setPostionByPercent(percent);
+    player.percent(percent);
     mainwindow.progressBar.setPercent(percent);
   };
 
@@ -205,7 +203,7 @@ MAINLOOP:
 
   // Song prefetching
   if (Config::prefetch
-      && player.getState() == Mpg123Player::PLAYING
+      && player.state() == Mpg123Player::PLAYING
       && player.length() >= 30
       && player.percent() >= 0.5
       && mainwindow.playlist.containerSize() >= 2)
@@ -223,7 +221,7 @@ MAINLOOP:
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
-  mainwindow.playingInfo.setState(player.getState());
+  mainwindow.playingInfo.setState(player.state());
   if (!mainwindow.playlist.empty() && mainwindow.playlist.getActiveIndex() >= 0) {
     mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem());
     mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
@@ -233,7 +231,7 @@ MAINLOOP:
 
   if (downloading)
     timeOut = 100; // Set a short timeout if the mainloop handles downloads
-  else if (player.getState() == Mpg123Player::STOPPED || player.getState() == Mpg123Player::PAUSED)
+  else if (player.state() == Mpg123Player::STOPPED || player.state() == Mpg123Player::PAUSED)
     timeOut = -1; // Stop the mainloop until user hits a key
   else
     timeOut = 1000; // In playing state we need 

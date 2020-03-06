@@ -198,6 +198,8 @@ void Info :: draw() {
       if (!linkText.empty() && !linkURL.empty()) {
         if (linkURL == "@") // Protected email, see updater.cpp
           linkURL = "Protected e-mail";
+        else
+          linkURL = "http://" + linkURL; // http?s stripped off, updater.cpp
         drawLink(linkURL, linkText);
         linkURL.clear();
         linkText.clear();
