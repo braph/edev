@@ -3,9 +3,7 @@
 #include "config.hpp"
 #include "downloads.hpp"
 #include "ektoplayer.hpp"
-
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
+#include "filesystem.hpp"
 
 #include <iostream>
 
@@ -19,10 +17,10 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   std::string archive_mp3_url = track.archive_mp3_url();
 
   if (archive_mp3_url.empty()) {
-    boost::filesystem::path archive = archive_mp3_url;
+    Filesystem::path archive = archive_mp3_url;
 
     archive = archive.filename().stem();
-    boost::filename::path full_path = Config::archive_dir;
+    Filesystem::path full_path = Config::archive_dir;
     full_path /= archive;
 
     //album_files = Dir.glob(File.join(track_info['album_path'], '*.mp3'))
@@ -34,30 +32,30 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   std::cerr << "Track " << track.title();
 
   std::string track_url = track.url();
-  boost::filesystem::path track_file = track_url;
+  Filesystem::path track_file = track_url;
   track_file += ".mp3";
 
   // $cache_dir/$track_file
-  boost::filesystem::path file_in_cache = Config::cache_dir;
+  Filesystem::path file_in_cache = Config::cache_dir;
   file_in_cache /= track_file;
 
   // $temp_dir/~ekto-$track_file
-  boost::filesystem::path file_in_temp  = Config::temp_dir;
+  Filesystem::path file_in_temp  = Config::temp_dir;
   file_in_temp /= "~ekto-";
   file_in_temp += track_file;
 
   if (force_download) {
     boost::system::error_code e;
-    boost::filesystem::remove(file_in_temp, e);
-    boost::filesystem::remove(file_in_cache, e);
+    Filesystem::remove(file_in_temp, e);
+    Filesystem::remove(file_in_cache, e);
   }
 
-  if (boost::filesystem::exists(file_in_temp)) {
+  if (Filesystem::exists(file_in_temp)) {
     std::cerr << " -> TEMP: " << file_in_temp << "\n";
     return file_in_temp.string();
   }
 
-  if (boost::filesystem::exists(file_in_cache)) {
+  if (Filesystem::exists(file_in_cache)) {
     std::cerr << " -> CACHE: " << file_in_cache << "\n";
     return file_in_cache.string();
   }
@@ -71,14 +69,14 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
     boost::system::error_code e;
     if (curl_e == CURLE_OK && dl.httpCode() == 200) {
       if (Config::use_cache) {
-        boost::filesystem::rename(dl.filename(), file_in_cache, e);
+        Filesystem::rename(dl.filename(), file_in_cache, e);
         if (e) {
-          boost::filesystem::copy(dl.filename(), file_in_cache, e);
-          boost::filesystem::remove(dl.filename(), e);
+          Filesystem::copy(dl.filename(), file_in_cache, e);
+          Filesystem::remove(dl.filename(), e);
         }
       }
     } else {
-      boost::filesystem::remove(dl.filename(), e);
+      Filesystem::remove(dl.filename(), e);
     }
     std::cerr << dl.lastURL() << ": " << curl_easy_strerror(curl_e) << " [" << dl.httpCode() << "]\n";
   };

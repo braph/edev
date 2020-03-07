@@ -29,12 +29,12 @@
 
 namespace Ektoplayer {
 
-static inline std::string config_dir() {
-  return std::string(Filesystem::home()) + PATH_SEP ".config" PATH_SEP "ektoplayer";
+static inline Filesystem::path config_dir() {
+  return Filesystem::path(Filesystem::home()) / ".config" / "ektoplayer";
 }
 
-static inline std::string config_file() {
-  return config_dir() + PATH_SEP "ektoplayer.rc";
+static inline Filesystem::path config_file() {
+  return config_dir() / "ektoplayer.rc";
 }
 
 static inline std::string browse_url(int page = 1) {

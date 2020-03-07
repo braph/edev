@@ -1,4 +1,5 @@
 
+          //track.artist = track.artist.erase(0, idx + dash_len);
 struct LocaleSetter {
   LocaleSetter(const std::locale& loc) : _old(std::locale::global(loc)) {}
  ~LocaleSetter() { std::locale::global(_old); }

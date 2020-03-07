@@ -2,5 +2,6 @@ a.out
 *.o
 *.gch
 vgcore.*
+massif.out.*
 backups
 ektoplayer

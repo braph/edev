@@ -104,19 +104,15 @@ public:
   {
   }
 
-#ifndef NDEBUG
   virtual ~Widget() {};
-#endif
 };
 
 /* Drawable: Windows and Pads, they share the same functionality */
 struct WidgetDrawable : public Widget {
   WINDOW *win;
 
-#ifndef NDEBUG
   ~WidgetDrawable()
-  { delwin(win); }
-#endif
+  { if (win) delwin(win); }
 
   WINDOW *getWINDOW() const
   { return win; }

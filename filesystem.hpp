@@ -5,12 +5,12 @@
 
 #include <string>
 
-#define PATH_SEP "/"
-
 namespace Filesystem {
-  const char* home();
-  std::string expand(std::string);
-  size_t      dir_size(const boost::filesystem::path&);
+  using namespace boost::filesystem;
+
+  const char* home() noexcept;
+  std::string expand(std::string) noexcept;
+  size_t      dir_size(const path&) noexcept;
 }
 
 #endif

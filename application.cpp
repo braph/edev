@@ -12,15 +12,13 @@
 
 #include <libxml/xmlversion.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <locale>
 #include <fstream>
 #include <csignal>
 
-using namespace Ektoplayer;
-namespace fs = boost::filesystem;
+namespace fs = Filesystem;
 
 static volatile int currentSIGNAL;
 static void on_SIGNAL(int sig) { currentSIGNAL = sig; }
@@ -96,7 +94,7 @@ void Application :: init() {
 
   error = "Error while reading configuration file";
   if (fs::exists(Ektoplayer::config_file()))
-    Config::read(Ektoplayer::config_file());
+    Config::read(Ektoplayer::config_file().string());
 
   error = "Could not create config directory";
   fs::create_directories(Ektoplayer::config_dir());
@@ -254,9 +252,9 @@ HANDLE_KEY:
 
 void Application :: cleanup_files() {
   boost::system::error_code e;
-  for (auto& f : boost::filesystem::directory_iterator(Config::temp_dir, e))
+  for (auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
     if (boost::algorithm::starts_with(f.path().filename().string(), "~ekto-"))
-      boost::filesystem::remove(f.path(), e);
+      Filesystem::remove(f.path(), e);
 }
 
 void Application :: printDBStats() {

@@ -77,7 +77,7 @@ public:
     return NULL;
   }
 
-  inline std::string  text()       const { 
+  inline std::string text() const {
     std::string value;
     xmlChar* _ = xmlNodeListGetString(m_node->doc, m_node->xmlChildrenNode, 1);
     if (_) {

@@ -47,7 +47,7 @@ static std::string base64_decode(std::string input)
 void BrowsePage :: parse_src(const std::string &src) {
   XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
-  std::string result, &url = result;
+  std::string result;
   std::vector<std::string> tracks;
 
 #if 0
@@ -95,9 +95,9 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // Styles
     for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
-      url = a["href"];
+      std::string url = a["href"];
       if (! url.empty())
-        album.styles.push_back(Style(url, a.nearestContent()));
+        album.styles.push_back(Style(std::move(url), a.nearestContent()));
     }
 
     // Description (first <p> </p>)
@@ -117,9 +117,9 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // Archive URLs (<span class="dll"><a href="...zip">MP3 Download</a>)
     for (auto a : xpath.query(".//span[@class = 'dll']//a", post)) {
-      url = a["href"];
+      std::string url = a["href"];
       if (! url.empty())
-        album.archive_urls.push_back(url);
+        album.archive_urls.push_back(std::move(url));
     }
 
     // Direct mp3 track URLs
@@ -137,7 +137,7 @@ void BrowsePage :: parse_src(const std::string &src) {
       if (! (base64_end = std::strchr(base64_begin, '"')))
         continue;
 
-      result = std::string(base64_begin, base64_end-base64_begin);
+      result = std::string(base64_begin, size_t(base64_end-base64_begin));
       result = base64_decode(result);
       boost::split(tracks, result, boost::is_any_of(","));
 

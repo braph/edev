@@ -13,8 +13,8 @@ WARNINGS += -Wsign-promo -Wsign-compare -Wsign-conversion
 
 STD = c++11
 
-#CXXFLAGS   := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
-CXXFLAGS   := -std=$(STD) -fno-rtti -O2 -DNDEBUG
+CXXFLAGS   := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
+#CXXFLAGS   := -std=$(STD) -fno-rtti -O2 -DNDEBUG
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
