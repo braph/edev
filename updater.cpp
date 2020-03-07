@@ -92,9 +92,9 @@ static std::string makeMarkup(const std::string& description) {
   // Replace protected email links:
   //  /cdn-cgi/l/email-protection#284b47444146684747474c06464d5c
   const char* protectedLink = "[[/cdn-cgi/l/email";
-  size_t pos;
-  while (std::string::npos != (pos = s.find(protectedLink))) {
-    size_t end = s.find(']', pos+std::strlen(protectedLink));
+  size_t pos = 0;
+  while (std::string::npos != (pos = s.find(protectedLink, pos))) {
+    size_t end = s.find(']', pos);
     if (end != std::string::npos)
       s.replace(pos, end-pos, "[[@");
   }
@@ -155,7 +155,7 @@ bool Updater :: start(int pages) {
   std::string url;
   while (firstPage <= lastPage) {
     url = Ektoplayer::browse_url(firstPage++);
-    Download* dl = new BufferDownload(url);
+    BufferDownload* dl = new BufferDownload(url);
     dl->onFinished = cb;
     downloads.addDownload(dl, Downloads::LOW);
   }
@@ -174,7 +174,7 @@ void Updater :: insert_album(Album& album) {
     albumStyleIDs.push_back(styleRecord.id);
   }
   if (albumStyleIDs.size() > 3)
-    std::cerr << album.url << std::endl;
+    std::cerr << album.url << '\n';
   // Move large IDs to the end, this compresses bitwidth of styleIDs.value
   std::sort(albumStyleIDs.begin(), albumStyleIDs.end(), std::greater<uint8_t>());
 
@@ -253,15 +253,15 @@ void Updater :: insert_browsepage(BrowsePage& page) {
 #endif
 
 void test_warning(const Database::Styles::Style& style, const char* reason) {
-  std::cout << "STYLE: " << style.url() << ": " << reason << std::endl;
+  std::cout << "STYLE: " << style.url() << ": " << reason << '\n';
 }
 
 void test_warning(const Database::Albums::Album& album, const char *reason) {
-  std::cout << "ALBUM: " << album.url() << ": " << reason << std::endl;
+  std::cout << "ALBUM: " << album.url() << ": " << reason << '\n';
 }
 
 void test_warning(const Database::Tracks::Track& track, const char* reason) {
-  std::cout << "TRACK: " << track.url() << " in album " << track.album().url() << ": " << reason << std::endl;
+  std::cout << "TRACK: " << track.url() << " in album " << track.album().url() << ": " << reason << '\n';
 }
 
 int main() {
@@ -271,7 +271,7 @@ int main() {
 #if DO_UPDATE
   // This also covers some testing of the Database class ======================
   unlink(TEST_DB);
-  std::cout << TEST_DB << std::endl;
+  std::cout << TEST_DB << '\n';
   size_t tracks_size;
   size_t albums_size;
   std::string track_url;
@@ -286,8 +286,8 @@ int main() {
     albums_size = db.albums.size();
     track_url   = db.tracks[tracks_size-1].url();
     album_desc  = db.albums[albums_size-1].description();
-    std::cout << "Inserted " << tracks_size << " tracks." << std::endl;
-    std::cout << "Inserted " << albums_size << " albums." << std::endl;
+    std::cout << "Inserted " << tracks_size << " tracks." << '\n';
+    std::cout << "Inserted " << albums_size << " albums." << '\n';
     db.save(TEST_DB); // Test saving the database
   }
 #endif
@@ -357,14 +357,14 @@ int main() {
     char* data = pair.second->data();
     for (size_t i = pair.second->size() - 1; i--;)
       if (data[i] == '\0')
-        std::cout << pair.first << ':' << &data[i+1] << std::endl;
+        std::cout << pair.first << ':' << &data[i+1] << '\n';
   }
 #endif
 
   std::cout
-    << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << std::endl
-    << "#define EKTOPLAZM_ALBUM_COUNT " << db.albums.size() << std::endl
-    << "#define EKTOPLAZM_TRACK_COUNT " << db.tracks.size() << std::endl;
+    << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << '\n';
+    << "#define EKTOPLAZM_ALBUM_COUNT " << db.albums.size() << '\n';
+    << "#define EKTOPLAZM_TRACK_COUNT " << db.tracks.size() << '\n';
 
   for (auto pair : pools) {
     size_t n_strings = 0;
@@ -374,7 +374,7 @@ int main() {
 
     std::cout
       << "#define EKTOPLAZM_" << pair.first << "_SIZE " << pair.second->size()
-      << " // average lenth: " << pair.second->size() / n_strings << std::endl;
+      << " // average lenth: " << pair.second->size() / n_strings << '\n';
   }
 
   TEST_END();

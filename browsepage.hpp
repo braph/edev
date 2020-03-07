@@ -10,7 +10,7 @@ struct Style {
   std::string url;
   std::string name;
 
-  inline Style(const std::string& url, const std::string& name)
+  Style(const std::string& url, const std::string& name)
   : url(url), name(name)
   {
   }
@@ -28,7 +28,7 @@ struct Track {
   short        bpm;
   short        number;
 
-  inline Track()
+  Track()
   : bpm(0)
   , number(0)
   {}
@@ -59,7 +59,7 @@ struct Album {
   std::vector<Style> styles;
   std::vector<Track> tracks;
 
-  inline Album()
+  Album()
   : date(0)
   , download_count(0)
   , votes(0)

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 
 #include <cstdlib>
+#include <cassert>
 #include <stdexcept>
 
 Process::Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
@@ -48,7 +49,7 @@ Process::id_type Process::open(std::function<void()> function, bool pipe_stdin, 
   
     //Based on http://stackoverflow.com/a/899533/3808293
     int fd_max=static_cast<int>(sysconf(_SC_OPEN_MAX)); // truncation is safe
-    for(int fd=3;fd<fd_max;fd++)
+    for (int fd = 3; fd < fd_max; fd++)
       close(fd);
   
     setpgid(0, 0);

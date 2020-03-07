@@ -1,63 +1,102 @@
 #include "shellsplit.hpp"
 
-#include <stdexcept>
+namespace ShellSplit {
 
-std::vector<std::string> shellsplit(const std::string &s) {
+static inline void
+readSingleQuoted(const char*& s, std::string& word, Warning& w)
+{
+  while (*++s)
+    if (*s == '\'')
+      return;
+    else
+      word.push_back(*s);
+  w = UNMATCHED_SINGLE_QUOTE;
+}
+
+static inline void
+readDoubleQuoted(const char*& s, std::string& word, Warning& w)
+{
+  bool escaped = false;
+  while (*++s)
+    if (escaped) {
+      word.push_back(*s);
+      escaped = false;
+    } else if (*s == '"')
+      return;
+    else if (*s == '\\')
+      escaped = true;
+    else
+      word.push_back(*s);
+  w = UNMATCHED_DOUBLE_QUOTE;
+}
+
+std::vector<std::string>
+split(const std::string& s, Warning& w)
+{
   std::string word;
   std::vector<std::string> words;
-  const char *it = s.c_str();
+  const char* it = s.c_str();
+  bool havingWord = false;
+  bool escaped = false;
 
-  for (;;) {
-    while (isspace(*it)) { ++it;  } /* Skip whitespace */
-    if (*it == '\0')     { break; } /* No more words   */
-
-read_word:
-    switch (*it) {
-      case '\'':
-        for (;;)
-          switch (*++it) {
-            case '\0':  throw std::invalid_argument("missing terminating single quote");
-            case '\'':  ++it; goto read_word;
-            default:    word += *it;
+  while (*it) {
+    if (escaped) {
+      escaped = false;
+      word.push_back(*it);
+    } else {
+      switch (*it) {
+        case '\'':
+          havingWord = true;
+          readSingleQuoted(it, word, w);
+          break;
+        case '"':
+          havingWord = true;
+          readDoubleQuoted(it, word, w);
+          break;
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+        case '\v':
+        case '\f':
+          if (havingWord) {
+            havingWord = false;
+            words.push_back(std::move(word));
           }
+          break;
 
-      case '"':
-        for (;;)
-          switch (*++it) {
-            case '\0':  throw std::invalid_argument("missing terminating double quote");
-            case '"':   ++it; goto read_word;
-            case '\\':  ++it; /* FALLTHROUGH */
-            default:    word += *it;
-          }
+        case '\\':
+          escaped = true;
+          break;
 
-      case ' ':
-      case '\t':
-      case '\n':
-      case '\0':
-        break;
-
-      case '\\': ++it; /* FALLTHROUGH */
-      default:
-        word += *it++;
-        goto read_word;
+        default:
+          havingWord = true;
+          word.push_back(*it);
+      }
     }
 
-    words.push_back(word);
-    word.clear();
+    ++it;
   }
+
+  if (havingWord)
+    words.push_back(std::move(word));
+
+  if (escaped)
+    w = UNMATCHED_BACKSLASH;
 
   return words;
 }
 
+} // ShellSplit
+
 #ifdef TEST_SHELLSPLIT
-#include <cassert>
-#include <iostream>
+#include "test.hpp"
 
 #define test(LINE, ...) \
-  assert(shellsplit(LINE) == std::vector<std::string>(__VA_ARGS__))
+  assert(ShellSplit::split(LINE) == std::vector<std::string>(__VA_ARGS__))
 
 void dump(const std::string &s) {
-  std::vector<std::string> result = shellsplit(s);
+  std::vector<std::string> result = ShellSplit::split(s);
   for (auto it = result.cbegin(); it != result.cend(); ++it)
     std::cout << "<<" << *it << ">>" << std::endl;
 }
@@ -74,6 +113,9 @@ int main() {
   test("\"1\"",   {"1"});
   test("' 1 '",   {" 1 "});
   test("\" 1 \"", {" 1 "});
+  test("'a''b'",  {"ab"});
+  test("\"a\'\"", {"a\'"});
+  test("\'\\\'",  {"\\"});
   // TODO: test escape; test nested quotes
   //dump("1 2");
 }

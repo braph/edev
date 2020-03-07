@@ -3,62 +3,69 @@
 
 #include <unistd.h>
 
+#include <string>
+
 struct PipeStream {
   int fd;
 
-  PipeStream() : fd(-1) {}
-  PipeStream(int filedes) : fd(filedes) {}
- ~PipeStream() { close(); }
+  PipeStream() noexcept
+    : fd(-1) {}
 
-  inline operator bool()  const { return fd >= 0; }
-  inline bool operator!() const { return fd <  0; }
+  PipeStream(int filedes) noexcept
+    : fd(filedes) {}
 
-  inline void open(int filedes) {
+ ~PipeStream()
+  { close(); }
+
+  operator bool()  const noexcept { return fd >= 0; }
+  bool operator!() const noexcept { return fd <  0; }
+
+  void open(int filedes) noexcept {
     close();
     fd = filedes;
   }
 
-  inline void close() {
+  void close() noexcept {
     if (*this)
       ::close(fd);
     fd = -1;
   }
 
   // Read =====================================================================
-  inline ssize_t read(void* buf, size_t nbyte) {
+  ssize_t read(void* buf, size_t nbyte) noexcept {
     return ::read(fd, buf, nbyte);
   }
 
-  inline ssize_t read(char* buf, size_t nbyte) {
+  ssize_t read(char* buf, size_t nbyte) noexcept {
     return ::read(fd, buf, nbyte);
   }
 
   // Write ====================================================================
-  inline ssize_t write(const void* buf, size_t nbyte) {
+  ssize_t write(const void* buf, size_t nbyte) noexcept {
     return ::write(fd, buf, nbyte);
   }
 
-  inline ssize_t write(const char* buf, size_t nbyte) {
+  ssize_t write(const char* buf, size_t nbyte) noexcept {
     return ::write(fd, buf, nbyte);
   }
 
-  inline ssize_t write(const std::string& buf) {
-    return write(buf.c_str(), buf.size());
+  ssize_t write(const std::string& buf) noexcept {
+    return ::write(fd, buf.c_str(), buf.size());
   }
 
   template<size_t LEN>
-  inline PipeStream& operator<<(const char (&s)[LEN]) {
-    write(s, LEN-1);
+  PipeStream& operator<<(const char (&s)[LEN]) noexcept {
+    ::write(fd, s, LEN-1);
     return *this;
   }
 
-  inline PipeStream& operator<<(const std::string& s) {
-    write(s);
+  PipeStream& operator<<(const std::string& s) noexcept {
+    ::write(fd, s.c_str(), s.size());
     return *this;
   }
 
   template<typename T>
-  inline PipeStream& operator<<(T v) {
+  PipeStream& operator<<(T v) noexcept {
     write(std::to_string(v));
     return *this;
   }

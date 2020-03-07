@@ -4,6 +4,7 @@
 - keybindings: ^R, maybe even F5 for reloading
 - keybindings: ^S for saving?
 - pads: fix mouse offset // ui.hpp mincol etc...
+- noexcept on noutrefresh etc.
 
 ===============================================================================
 

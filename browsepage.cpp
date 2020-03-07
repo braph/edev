@@ -47,6 +47,7 @@ static std::string base64_decode(std::string input)
 void BrowsePage :: parse_src(const std::string &src) {
   XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
+  std::string result, &url = result;
   std::vector<std::string> tracks;
 
 #if 0
@@ -59,14 +60,12 @@ void BrowsePage :: parse_src(const std::string &src) {
 #endif
 
   // Find number of pages (XXX Strange, this query fails with [0] ...)
-  std::string result = xpath.query_string("string(//span[@class = 'pages']/text())");
+  result = xpath.query_string("string(//span[@class = 'pages']/text())");
   if (! result.empty()) {
     // <span class='pages'>Page 1 of 31</span>
-    std::string pages = result;
-    auto p = pages.find_last_not_of("0123456789");
-    if (p != std::string::npos) {
-      num_pages = std::stoi(pages.substr(p + 1));
-    }
+    auto p = result.find_last_not_of("0123456789");
+    if (p != std::string::npos)
+      num_pages = std::atoi(result.c_str() + p);
   }
 
   // Collect albums
@@ -74,16 +73,29 @@ void BrowsePage :: parse_src(const std::string &src) {
     Album album;
 
     // Date
-    std::string date = xpath.query_string("string(.//span[@class = 'd']/text())", post);
-    if (! date.empty()) {
+    result = xpath.query_string("string(.//span[@class = 'd']/text())", post);
+    if (! result.empty()) {
       struct tm tm = {0,0,0,0,0,0,0,0,0,0,0};
-      ::strptime(date.c_str(), "%B %d, %Y", &tm);
+      ::strptime(result.c_str(), "%B %d, %Y", &tm);
       album.date = ::mktime(&tm);
     }
 
+    // Download count
+    result = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
+    if (! result.empty()) {
+      boost::algorithm::erase_all(result, ",");
+      album.download_count = std::atoi(result.c_str());
+    }
+
+    // Rating, Voting count
+    // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong> 
+    auto strongs = xpath.query(".//p[@class = 'postmetadata']//span[@class = 'd']//strong", post);
+    album.rating = std::atof(strMayNULL(strongs[0].nearestContent()));
+    album.votes  = std::atoi(strMayNULL(strongs[1].nearestContent()));
+
     // Styles
     for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
-      std::string url = a["href"];
+      url = a["href"];
       if (! url.empty())
         album.styles.push_back(Style(url, a.nearestContent()));
     }
@@ -97,15 +109,6 @@ void BrowsePage :: parse_src(const std::string &src) {
     // Cover URL
     album.cover_url = xpath.query(".//img[@class = 'cover']", post)[0]["src"];
 
-    // Download count
-    std::string download_count = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
-    if (! download_count.empty()) {
-      std::string v = download_count;
-      for (size_t pos; (pos = v.find(',')) != std::string::npos;)
-        v.erase(pos, 1);
-      album.download_count = std::atoi(v.c_str());
-    }
-
     // Album title and URL
     auto a_title = xpath.query(".//h1/a", post)[0];
     album.url   = a_title["href"];
@@ -114,33 +117,32 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // Archive URLs (<span class="dll"><a href="...zip">MP3 Download</a>)
     for (auto a : xpath.query(".//span[@class = 'dll']//a", post)) {
-      std::string url = a["href"];
+      url = a["href"];
       if (! url.empty())
         album.archive_urls.push_back(url);
     }
 
-    // Rating, Voting count
-    // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong> 
-    auto strongs = xpath.query(".//p[@class = 'postmetadata']//span[@class = 'd']//strong", post);
-    album.rating = std::atof(strMayNULL(strongs[0].nearestContent()));
-    album.votes  = std::atoi(strMayNULL(strongs[1].nearestContent()));
-
     // Direct mp3 track URLs
     // <script type="text/javascript"> soundFile:"..."
     tracks.clear();
-    tracks.reserve(10);
     for (auto script : xpath.query(".//script", post)) {
-      std::string text = script.text();
-      size_t idx = text.find('"', text.find("soundFile:")); // soundFile:.*"
-      if (idx != std::string::npos) {
-        text = text.substr(idx + 1);
-        text = text.substr(0, text.find('"'));
-        text = base64_decode(text);
-        boost::split(tracks, text, boost::is_any_of(","));
+      const char *base64_begin, *base64_end;
+      if (! (base64_begin = script.nearestContent()))
+        continue;
+      if (! (base64_begin = std::strstr(base64_begin, "soundFile:")))
+        continue;
+      if (! (base64_begin = std::strchr(base64_begin, '"')))
+        continue;
+      base64_begin++;
+      if (! (base64_end = std::strchr(base64_begin, '"')))
+        continue;
 
-        if (tracks.size())
-          break;
-      }
+      result = std::string(base64_begin, base64_end-base64_begin);
+      result = base64_decode(result);
+      boost::split(tracks, result, boost::is_any_of(","));
+
+      if (tracks.size())
+        break;
     }
 
     // This should only happen on `.../dj-basilisk-the-colours-of-ektoplazm`
@@ -149,30 +151,30 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // Assign metadata to track urls
     // - There may be multiple tracklists (evidence url?)
-    auto trackit  = tracks.cbegin();
-    auto trackend = tracks.cend();
+    auto track_urls_iter = tracks.begin();
+    auto track_urls_end  = tracks.end();
     for (auto tracklist : xpath.query(".//div[@class = 'tl']", post)) {
       Track track;
       for (auto span : xpath.query(".//span", tracklist)) {
         switch (span["class"][0]) {
           case 'n':
             if (! track.url.empty()) {
-              album.tracks.push_back(track);
+              album.tracks.push_back(std::move(track));
               track = Track();
             }
-            if (trackit != trackend) {
-              track.url    = *trackit++;
+            if (track_urls_iter != track_urls_end) {
+              track.url    = std::move(*track_urls_iter++);
               track.number = std::atoi(strMayNULL(span.nearestContent()));
             }
             break;
           case 't':
-            track.title  = boost::trim_copy(span.text());
+            boost::trim((track.title = span.text()));
             break;
           case 'r':
-            track.remix  = boost::trim_copy_if(span.text(), boost::is_any_of("\t ()"));
+            boost::trim_if((track.remix = span.text()), boost::is_any_of("\t ()"));
             break;
           case 'a':
-            track.artist = boost::trim_copy(span.text());
+            boost::trim((track.artist = span.text()));
             break;
           case 'd':
             const char* s = span.nearestContent(); // "(134 BPM)"
@@ -182,7 +184,7 @@ void BrowsePage :: parse_src(const std::string &src) {
       }
 
       if (! track.url.empty())
-        album.tracks.push_back(track);
+        album.tracks.push_back(std::move(track));
     }
 
     // Extract the artist name from the album title ("artist - album_name")
@@ -218,7 +220,7 @@ void BrowsePage :: parse_src(const std::string &src) {
       }
 
     // Push back album
-    albums.push_back(album);
+    albums.push_back(std::move(album));
   }
 }
 

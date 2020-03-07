@@ -19,27 +19,27 @@ public:
   Mpg123Player();
  ~Mpg123Player();
 
-  void work();
+  void work() noexcept;
 
-  void play();
-  void play(const std::string&);
-  void stop();
-  void pause();
-  void toggle();
-  void position(int);
-  void seekForward(int);
-  void seekBackward(int);
+  void play() noexcept;
+  void play(const std::string&) noexcept;
+  void stop() noexcept;
+  void pause() noexcept;
+  void toggle() noexcept;
+  void position(int) noexcept;
+  void seekForward(int) noexcept;
+  void seekBackward(int) noexcept;
 
-  inline bool  isTrackCompleted() const { return _track_completed;  }
-  inline bool  isPaused()         const { return _state == PAUSED;  }
-  inline bool  isStopped()        const { return _state == STOPPED; }
-  inline bool  isPlaying()        const { return _state == PLAYING; }
-  inline bool  isLoading()        const { return _state == LOADING; }
-  inline int   state()            const { return _state;            }
-  inline int   position()         const { return _seconds_played;   }
-  inline int   length()           const { return _seconds_total;    }
-  inline float percent()          const { return (length() ? float(position()) / length() : 0); }
-  inline void  percent(float p)         { position(length() * p); }
+  bool  isTrackCompleted() const noexcept { return _track_completed;  }
+  bool  isStopped()        const noexcept { return _state == STOPPED; }
+  bool  isPlaying()        const noexcept { return _state == PLAYING; }
+  bool  isPaused()         const noexcept { return _state == PAUSED;  }
+  bool  isLoading()        const noexcept { return _state == LOADING; }
+  int   state()            const noexcept { return _state;            }
+  int   position()         const noexcept { return _seconds_played;   }
+  int   length()           const noexcept { return _seconds_total;    }
+  float percent()          const noexcept { return (length() ? float(position()) / length() : 0); }
+  void  percent(float p)         noexcept { position(length() * p);   }
 
 private:
   std::string _file;
@@ -54,9 +54,10 @@ private:
   std::unique_ptr<Process> _process;
   std::string _stdout_buffer;
 
-  void reset();
-  void parse_line(const char*);
-  void read_output();
+  void reset() noexcept;
+  void read_stderr() noexcept;
+  void read_stdout() noexcept;
+  void parse_stdout_line(const char*) noexcept;
 };
 
 #endif

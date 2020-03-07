@@ -1,7 +1,7 @@
 #include "player.hpp"
 
 #include "common.hpp"
-#include "process.cpp"
+#include "process.hpp"
 
 #include <memory>
 #include <cstdio>
@@ -17,13 +17,14 @@ Mpg123Player :: Mpg123Player()
 , _seconds_remaining(0)
 , _process(nullptr)
 {
+  _stdout_buffer.reserve(256);
 }
 
 Mpg123Player :: ~Mpg123Player() {
   stop();
 }
 
-void Mpg123Player :: reset() {
+void Mpg123Player :: reset() noexcept {
   _state = STOPPED;
   _channels = 0;
   _sample_rate = 0;
@@ -33,7 +34,7 @@ void Mpg123Player :: reset() {
   _track_completed = false;
 }
 
-void Mpg123Player :: play(const std::string &file) {
+void Mpg123Player :: play(const std::string &file) noexcept {
   if (_file != file) {
     _file = file;
     _sample_rate = 0;
@@ -42,13 +43,13 @@ void Mpg123Player :: play(const std::string &file) {
   play();
 }
 
-void Mpg123Player :: play() {
+void Mpg123Player :: play() noexcept {
   reset();
   _state = LOADING;
   work();
 }
 
-void Mpg123Player :: stop() {
+void Mpg123Player :: stop() noexcept {
   if (_process) {
     _process->stdin_pipe.close();
     _process->get_exit_status();
@@ -57,7 +58,7 @@ void Mpg123Player :: stop() {
   reset();
 }
 
-void Mpg123Player :: work() {
+void Mpg123Player :: work() noexcept {
   if (_state == STOPPED)
     return;
 
@@ -69,32 +70,35 @@ void Mpg123Player :: work() {
     *_process << "SILENCE\n";
   }
 
-  read_output();
+  read_stdout();
 
   if (_state == LOADING)
-    *_process << "L " << _file << "\n";
+    *_process << "L " << _file << '\n';
 
-  if (!_sample_rate)
+  if (! _sample_rate)
     *_process << "FORMAT\n";
 
   *_process << "SAMPLE\n";
 
-  char buffer[1024];
-  ssize_t n = _process->stderr_pipe.read(buffer, sizeof(buffer));
-  if (n > 0) ++_failed;
-
-  read_output();
+  read_stdout();
+  read_stderr();
 }
 
-void Mpg123Player :: read_output() {
-  char buffer[4096];
+void Mpg123Player :: read_stderr() noexcept {
+  char buffer[128];
+  ssize_t n = _process->stderr_pipe.read(buffer, sizeof(buffer));
+  if (n > 0) ++_failed;
+}
+
+void Mpg123Player :: read_stdout() noexcept {
+  char buffer[1024];
   ssize_t len = _process->stdout_pipe.read(buffer, sizeof(buffer));
 
   for (ssize_t i = 0; i < len; ++i)
     if (buffer[i] != '\n')
       _stdout_buffer.push_back(buffer[i]);
     else {
-      parse_line(_stdout_buffer.c_str());
+      parse_stdout_line(_stdout_buffer.c_str());
       _stdout_buffer.clear();
     }
 }
@@ -103,7 +107,7 @@ void Mpg123Player :: read_output() {
  *   @FORMAT 44100 2
  *   @E Unknown command or no arguments: foo
  */
-void Mpg123Player :: parse_line(const char* line) {
+void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
   if (*line++ != '@')
     return;
 
@@ -155,42 +159,40 @@ void Mpg123Player :: parse_line(const char* line) {
     else if (cstr_seek(&line, "FORMAT ")) {
       std::sscanf(line, "%d %d", &_sample_rate, &_channels);
     }
-    else if (cstr_seek(&line, "silence ")) {
-    }
     else {
       //std::cerr << "parse_output(): " << line << std::endl;
     }
   }
 }
 
-void Mpg123Player :: position(int seconds) {
+void Mpg123Player :: position(int seconds) noexcept {
   if (_process && _process->running())
     *_process << "J " << seconds << "s\n";
 }
 
-void Mpg123Player :: seekForward(int seconds) {
+void Mpg123Player :: seekForward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << "J +" << seconds << "s\n";
 }
 
-void Mpg123Player :: seekBackward(int seconds) {
+void Mpg123Player :: seekBackward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << "J -" << seconds << "s\n";
 }
 
-void Mpg123Player :: pause() {
+void Mpg123Player :: pause() noexcept {
   if (_process && _process->running())
     if (_state == PLAYING)
       *_process << "P\n";
 }
 
-void Mpg123Player :: toggle() {
+void Mpg123Player :: toggle() noexcept {
   if (_process && _process->running())
     *_process << "P\n";
 }
 
 #ifdef USE_VOLUME
-void Mpg123Player :: volume(int volume) {
+void Mpg123Player :: volume(int volume) noexcept {
   if (_process && _process->running())
     *_process << "VOLUME " << volume << '\n';
 }

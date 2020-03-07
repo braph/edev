@@ -251,7 +251,7 @@ void Config :: read(const std::string &file) {
     while (getline(infile, line)) {
       ++no;
 
-      std::vector<std::string> args = shellsplit(line);
+      std::vector<std::string> args = ShellSplit::split(line);
       if (! args.size() || args[0][0] == '#')
         continue;
 

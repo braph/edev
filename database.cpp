@@ -229,7 +229,7 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
     //for (auto& id : *column)
     //  id = idRemap[id];
 
-  pool = newPool;
+  pool = std::move(newPool);
 }
 
 /* ============================================================================

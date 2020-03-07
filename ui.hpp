@@ -14,15 +14,15 @@ namespace UI {
 struct Pos {
   int y;
   int x;
-  inline Pos() : y(0), x(0) {}
-  inline Pos(int y, int x) : y(y), x(x) {}
-  inline Pos(const MEVENT& m) : y(m.y), x(m.x) {}
-  inline bool operator==(const Pos& p) const { return y == p.y && x == p.x; }
-  inline bool operator!=(const Pos& p) const { return y != p.y || x != p.x; }
-  inline bool operator>=(const Pos& p) const { return y >= p.y && x >= p.x; }
-  inline bool operator<=(const Pos& p) const { return y <= p.y && x <= p.x; }
-  inline bool operator< (const Pos& p) const { return y <  p.y && x <  p.x; }
-  inline bool operator> (const Pos& p) const { return y <  p.y && x <  p.x; }
+  Pos() : y(0), x(0) {}
+  Pos(int y, int x) : y(y), x(x) {}
+  Pos(const MEVENT& m) : y(m.y), x(m.x) {}
+  bool operator==(const Pos& p) const noexcept { return y == p.y && x == p.x; }
+  bool operator!=(const Pos& p) const noexcept { return y != p.y || x != p.x; }
+  bool operator>=(const Pos& p) const noexcept { return y >= p.y && x >= p.x; }
+  bool operator<=(const Pos& p) const noexcept { return y <= p.y && x <= p.x; }
+  bool operator< (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
+  bool operator> (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
 
   inline friend std::ostream& operator<<(std::ostream& os, const UI::Pos& p) {
     os << "UI::Pos(" << p.y << ',' << p.x << ')';
@@ -37,13 +37,13 @@ struct Size {
   Size() : height(0), width(0) {}
   Size(int height, int width) : height(height), width(width) {}
 
-  inline bool operator==(const Size& s) const
+  bool operator==(const Size& s) const noexcept
   { return s.height == height && s.width == width; }
 
-  inline bool operator!=(const Size& s) const
+  bool operator!=(const Size& s) const noexcept
   { return s.height != height || s.width != width; }
 
-  inline Size calc(int height, int width) const
+  Size calc(int height, int width) const noexcept
   { return Size(this->height + height, this->width + width); }
 
   inline friend std::ostream& operator<<(std::ostream& os, const UI::Size& s) {
@@ -56,25 +56,27 @@ template<typename T>
 struct MouseEvents {
   struct Rectangle  {
     UI::Pos start, stop;
-    inline Rectangle(const UI::Pos& start, const UI::Pos& stop) : start(start), stop(stop) {}
+    Rectangle(const UI::Pos& start, const UI::Pos& stop) : start(start), stop(stop) {}
   };
 
   struct MouseEvent {
     Rectangle section;
     T data;
-    inline MouseEvent(const Rectangle& section, const T& data) : section(section), data(data) {}
+    MouseEvent(const Rectangle& section, const T& data) : section(section), data(data) {}
   };
 
   std::vector<MouseEvent> events;
 
   using iterator = typename std::vector<MouseEvent>::iterator;
 
-  inline size_t   size()  { return events.size();  }
-  inline iterator begin() { return events.begin(); }
-  inline iterator end()   { return events.end();   }
-  inline void     clear() { events.clear();        }
+  size_t   size()   noexcept { return events.size();  }
+  iterator begin()  noexcept { return events.begin(); }
+  iterator end()    noexcept { return events.end();   }
+  iterator cbegin() noexcept { return events.begin(); }
+  iterator cend()   noexcept { return events.end();   }
+  void     clear()  noexcept { events.clear();        }
 
-  iterator find(const Pos& mousePos) {
+  iterator find(const Pos& mousePos) noexcept {
     return std::find_if(begin(), end(), [&](const MouseEvent& event) {
         return mousePos >= event.section.start && mousePos <= event.section.stop; });
   }
@@ -119,79 +121,79 @@ struct WidgetDrawable : public Widget {
   WINDOW *getWINDOW() const
   { return win; }
 
-  inline UI::Pos cursorPos()
+  UI::Pos cursorPos() const noexcept
   { UI::Pos pos; getyx(win, pos.y, pos.x); return pos; }
 
   // Char
-  inline WidgetDrawable& operator<<(char c)
+  WidgetDrawable& operator<<(char c) noexcept
   { waddch(win, static_cast<chtype>(c)); return *this; }
 
-  inline WidgetDrawable& operator<<(wchar_t c)
+  WidgetDrawable& operator<<(wchar_t c) noexcept
   { waddnwstr(win, &c, 1); return *this; }
 
   // String
-  inline WidgetDrawable& operator<<(const char* s)
+  WidgetDrawable& operator<<(const char* s) noexcept
   { waddstr(win, s); return *this; }
 
-  inline WidgetDrawable& operator<<(const wchar_t* s)
+  WidgetDrawable& operator<<(const wchar_t* s) noexcept
   { waddwstr(win, s); return *this; }
 
-  inline WidgetDrawable& operator<<(const std::string& s)
+  WidgetDrawable& operator<<(const std::string& s) noexcept
   { waddstr(win, s.c_str()); return *this; }
 
-  inline WidgetDrawable& operator<<(const std::wstring& s)
+  WidgetDrawable& operator<<(const std::wstring& s) noexcept
   { waddwstr(win, s.c_str()); return *this; }
 
   // Integer types
-  inline WidgetDrawable& operator<<(int i)
+  WidgetDrawable& operator<<(int i) noexcept
   { wprintw(win, "%d", i); return *this; }
 
-  inline WidgetDrawable& operator<<(size_t s)
+  WidgetDrawable& operator<<(size_t s) noexcept
   { wprintw(win, "%lu", s); return *this; }
 
-  inline WidgetDrawable& operator<<(float f)
+  WidgetDrawable& operator<<(float f) noexcept
   { wprintw(win, "%f", f); return *this; }
 
   // add-methods ==============================================================
-  inline int addCh(chtype c)
+  int addCh(chtype c) noexcept
   { return waddch(win, c); }
 
-  inline int addStr(const char* s)
+  int addStr(const char* s) noexcept
   { return waddstr(win, s); }
 
-  inline int addStr(const wchar_t* s)
+  int addStr(const wchar_t* s) noexcept
   { return waddwstr(win, s); }
 
   template<typename... Args>
-  inline int printW(const char* fmt, Args... args)
+  int printW(const char* fmt, Args... args) noexcept
   { return wprintw(win, fmt, args...); }
 
   // mv-methods ===============================================================
-  inline int moveCursor(int y, int x)
+  int moveCursor(int y, int x) noexcept
   { return wmove(win, y, x); }
 
-  inline int mvAddStr(int y, int x, const char* s)
+  int mvAddStr(int y, int x, const char* s) noexcept
   { return mvwaddstr(win, y, x, s); }
 
-  inline int mvAddStr(int y, int x, const wchar_t* s)
+  int mvAddStr(int y, int x, const wchar_t* s) noexcept
   { return mvwaddwstr(win, y, x, s); }
 
-  inline int mvAddCh(int y, int x, chtype c)
+  int mvAddCh(int y, int x, chtype c) noexcept
   { return mvwaddch(win, y, x, c); }
 
   template<typename... Args>
-  inline int mvPrintW(int y, int x, const char* fmt, Args... args)
+  int mvPrintW(int y, int x, const char* fmt, Args... args) noexcept
   { return mvwprintw(win, y, x, fmt, args...); }
 
   // attr-methods =============================================================
-  inline int attrSet(unsigned int attrs)
+  int attrSet(unsigned int attrs) noexcept
   { return wattrset(win, attrs); }
 
   // misc methods =============================================================
-  inline int clear()
+  int clear() noexcept
   { return wclear(win); }
 
-  inline int erase()
+  int erase() noexcept
   { return werase(win); }
 };
 
@@ -201,8 +203,11 @@ public:
   {
     pos = UI::Pos(0,0);
     size = UI::Size(1,1);
-    if (! (win = newwin(1, 1, 0, 0)))
+    win = newwin(1, 1, 0, 0);
+#ifdef __cpp_exceptions
+    if (! win)
       throw std::runtime_error("newwin()");
+#endif
     keypad(win, true);
   }
 
@@ -228,8 +233,11 @@ public:
   Pad() {
     pos = UI::Pos(0,0);
     size = UI::Size(1,1);
-    if (! (win = newpad(1, 1)))
+    win = newpad(1, 1);
+#ifdef __cpp_exceptions
+    if (! win)
       throw std::runtime_error("newpad()");
+#endif
     keypad(win, true);
     pad_minrow = 0;
     pad_mincol = 0;

@@ -13,20 +13,21 @@ WARNINGS += -Wsign-promo -Wsign-compare -Wsign-conversion
 
 STD = c++11
 
-CXXFLAGS   := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
-#CXXFLAGS   := -std=$(STD) -O2 -DNDEBUG
+#CXXFLAGS   := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
+CXXFLAGS   := -std=$(STD) -fno-rtti -O2 -DNDEBUG
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 CONFIG.deps   = shellsplit.o filesystem.o common.o xml.o
 DATABASE.deps = stringpool.o packedvector.o common.o generic.hpp
 THEME.deps    = colors.o
+PLAYER.deps   = process.o
 VIEWS         = $(addprefix views/, splash.o playinginfo.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 VIEWS        += widgets/listwidget.hpp widgets/readline.o
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
 	browsepage.o updater.o $(VIEWS) ui/container.o \
-	 player.o actions.o bindings.o downloads.o ektoplayer.o trackloader.o
+	 player.o $(PLAYER.deps) actions.o bindings.o downloads.o ektoplayer.o trackloader.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) application.cpp $^
 
 clean:
@@ -37,6 +38,11 @@ clean:
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
+noexcept_objs = stringpool.o player.o process.o bindings.o ektoplayer.o filesystem.o \
+								$(addprefix views/, splash.o )
+$(noexcept_objs): %.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -fno-exceptions -c $< -o $@
 
 # ============================================================================
 # Views

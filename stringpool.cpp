@@ -18,7 +18,7 @@ int StringPool :: add(const char *s, bool force_append) {
   return pos;
 }
 
-int StringPool :: find(const char *s) const {
+int StringPool :: find(const char *s) const noexcept {
   if (! *s)
     return 0;
 
@@ -29,31 +29,31 @@ int StringPool :: find(const char *s) const {
   return 0;
 }
 
-bool StringPool :: isOptimized() const {
-  const char* pool_data = storage.data();
+bool StringPool :: isOptimized() const noexcept {
   int last_len = INT_MAX;
-  int len;
+  int len = 0;
 
-  for (int i = 1 /* Skip empty string */; i < size();) {
-    len = std::strlen(pool_data + i);
-    if (len > last_len)
-      return false;
-    last_len = len;
-    i += len + 1;
+  for (auto it = storage.cbegin()+1; it != storage.cend(); ++it) {
+    if (!*it) {
+      if (len > last_len)
+        return false;
+      last_len = len;
+      len = 0;
+    }
+    else {
+      len++;
+    }
   }
 
   return true;
 }
 
-int StringPool :: count() const {
-  const char* pool_data = storage.data() + 1;
-  const char* pool_end =  storage.data() + storage.size();
-
-  size_t n = 0;
-  while (pool_data < pool_end)
-    pool_data += std::strlen(pool_data) + 1, ++n;
-
-  return n;
+int StringPool :: count() const noexcept {
+  int n = 0;
+  for (auto c : storage)
+    if (!c)
+      ++n;
+  return n-1;
 }
 
 #ifdef TEST_STRINGPOOL
@@ -89,6 +89,16 @@ int main() {
   assert(optimized.isOptimized());
   optimized.add("longstring", true);
   assert(! optimized.isOptimized());
+
+#ifdef PERFORMANCE_TEST
+  StringPool perf;
+  for (int i = 0; i < 99999; ++i) perf.add("performance", true);
+  for (int i = 0; i < 99999; ++i) perf.add("test", true);
+  for (int i = 0; i < 1000; ++i) {
+    perf.count();
+    perf.isOptimized();
+  }
+#endif
 
   TEST_END();
 }
