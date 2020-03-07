@@ -173,8 +173,6 @@ void Application :: run() {
   };
 
   int key;
-  int timeOut;
-  int downloading;
   WINDOW *win;
   MEVENT mouse;
   Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
@@ -195,7 +193,6 @@ MAINLOOP:
   }
 
   player.work();
-  for (downloading = 0; downloads.work() && ++downloading < 50;);
 
   // Song prefetching
   if (Config::prefetch
@@ -225,16 +222,24 @@ MAINLOOP:
   mainwindow.noutrefresh();
   doupdate();
 
-  if (downloading)
-    timeOut = 100; // Set a short timeout if the mainloop handles downloads
-  else if (player.isStopped() || player.isPaused())
-    timeOut = -1; // Stop the mainloop until user hits a key
-  else
-    timeOut = 900; // In playing state we need 
-
   win = mainwindow.getWINDOW();
-  wtimeout(win, timeOut);
-  switch ((key = wgetch(win))) {
+
+  // Do as much download work as possible, be only interrupted by the user
+  wtimeout(win, 0);
+  while (downloads.work())
+    if ((key = wgetch(win) != ERR))
+      goto HANDLE_KEY;
+
+  if (downloads.runningHandles())
+    wtimeout(win, 100); // Short timeout, want to continue downloading soon
+  else if (player.isStopped() || player.isPaused())
+    wtimeout(win, -1); // We have *nothing* to do, wait until user hits a key
+  else
+    wtimeout(win, 900); // In playing state we need some UI refreshes
+
+  key = wgetch(win);
+HANDLE_KEY:
+  switch (key) {
     case ERR: break;
     case KEY_MOUSE:
       if (OK == getmouse(&mouse))

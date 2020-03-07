@@ -27,20 +27,20 @@ CURLcode Download :: perform() {
   return e;
 }
 
-int Download :: httpCode() {
+int Download :: httpCode() const noexcept {
   long code = 0;
   getinfo(CURLINFO_RESPONSE_CODE, code);
   return code;
 }
 
-const char* Download :: lastURL() {
+const char* Download :: lastURL() const noexcept {
   char *url = NULL;
   if (CURLE_OK != getinfo(CURLINFO_EFFECTIVE_URL, url))
     return "<UNKNOWN URL>";
   return url;
 }
 
-void Download :: cleanup() {
+void Download :: cleanup() noexcept {
   if (curl_easy)
     curl_easy_cleanup(curl_easy);
   curl_easy = NULL;
@@ -62,10 +62,6 @@ BufferDownload :: BufferDownload(const std::string &url)
   setopt(CURLOPT_WRITEDATA, &_buffer);
 }
 
-std::string& BufferDownload :: buffer() {
-  return _buffer;
-}
-
 /* ============================================================================
  * FileDownload
  * ==========================================================================*/
@@ -84,16 +80,12 @@ FileDownload :: FileDownload(const std::string &url, const std::string &file)
   setopt(CURLOPT_WRITEDATA, &_stream);
 }
 
-const std::string& FileDownload :: filename() {
-  return _filename;
-}
-
 /* ============================================================================
  * Downloads
  * ==========================================================================*/
 
 Downloads :: Downloads(int parallel)
-: _parallel(parallel)
+: _parallel(parallel), _running_handles(0)
 {
   curl_global_init(CURL_GLOBAL_ALL);
   if (! (_curl_multi = curl_multi_init()))
@@ -115,15 +107,10 @@ void Downloads :: addDownload(Download* dl, Priority priority) {
     _queue.push_front(dl);
 }
 
-int Downloads :: work() {
-  //curl_multi_wait(_curl_multi, extra, extra_nfds, 10, &running_handles);
-  //if (! running_handles)
-  //  return 0; XXX
-
-  int running_handles;
-  curl_multi_perform(_curl_multi, &running_handles);
-  while (running_handles < _parallel && _queue.size()) {
-    ++running_handles;
+int Downloads :: work() noexcept {
+  curl_multi_perform(_curl_multi, &_running_handles);
+  while (_running_handles < _parallel && _queue.size()) {
+    ++_running_handles;
     Download *dl = _queue.front();
     _queue.pop_front();
     curl_multi_add_handle(_curl_multi, dl->curl_easy);
@@ -148,5 +135,7 @@ int Downloads :: work() {
     else assert_not_reached();
   }
 
-  return running_handles;
+  int ready_filedescriptors = 0;
+  curl_multi_wait(_curl_multi, NULL, 0, 10, &ready_filedescriptors);
+  return ready_filedescriptors;
 }

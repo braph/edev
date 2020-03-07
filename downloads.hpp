@@ -4,7 +4,6 @@
 #include <curl/curl.h>
 
 #include <deque>
-#include <vector>
 #include <string>
 #include <fstream>
 #include <functional>
@@ -19,19 +18,21 @@ class Download {
 public:
   Download(const std::string&);
   virtual ~Download();
+
   std::function<void(Download&, CURLcode)> onFinished;
+
   CURLcode perform();
-  void cleanup();
-  int httpCode();
-  const char* lastURL();
+  void cleanup() noexcept;
+  int httpCode() const noexcept;
+  const char* lastURL() const noexcept;
 
   template<typename T>
-  inline CURLcode setopt(CURLoption option, T value) {
+  CURLcode setopt(CURLoption option, T value) noexcept {
     return curl_easy_setopt(curl_easy, option, value);
   }
 
   template<typename T>
-  inline CURLcode getinfo(CURLINFO info, T& value) {
+  CURLcode getinfo(CURLINFO info, T& value) const noexcept {
     return curl_easy_getinfo(curl_easy, info, &value);
   }
 
@@ -47,7 +48,9 @@ private:
 class BufferDownload : public Download {
 public:
   BufferDownload(const std::string&);
-  std::string& buffer();
+
+  std::string& buffer() noexcept { return _buffer; }
+
 private:
   std::string _buffer;
 };
@@ -59,7 +62,9 @@ private:
 class FileDownload : public Download {
 public:
   FileDownload(const std::string&, const std::string&);
-  const std::string& filename();
+
+  const std::string& filename() const noexcept { return _filename; }
+
 private:
   std::string _filename;
   std::ofstream _stream;
@@ -76,13 +81,16 @@ public:
   Downloads(int);
  ~Downloads();
   void addDownload(Download*, Priority);
-  int work();
+  int work() noexcept;
 
-  inline std::deque<Download*>& queue() { return _queue; }
+  std::deque<Download*>& queue() noexcept { return _queue; }
+  int runningHandles() const noexcept     { return _running_handles; }
+
 private:
   CURLM* _curl_multi;
   std::deque<Download*> _queue;
   int _parallel;
+  int _running_handles;
 };
 
 #endif
