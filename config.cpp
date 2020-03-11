@@ -8,8 +8,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <cinttypes>
 #include <fstream>
+#include <cinttypes>
 
 using namespace Views;
 
@@ -229,7 +229,21 @@ void Config :: init() {
 #include "config/options.initialize.cpp"
 }
 
-void Config :: set(const std::string &option, const std::string &value) {
+#define TOO_MANY_ARGUMENTS "Too many arguments"
+#define MISSING_ARGUMENTS  "Missing arguments"
+
+static inline void checkArgCount(const std::vector<std::string>& args, size_t min, size_t max) {
+  if (args.size() < min)
+    throw std::invalid_argument(MISSING_ARGUMENTS);
+  if (args.size() > max)
+    throw std::invalid_argument(TOO_MANY_ARGUMENTS);
+}
+
+void Config :: set(const std::vector<std::string>& args) {
+  checkArgCount(args, 3, 3);
+  const std::string& option = args[1];
+  const std::string& value  = args[2];
+
   try {
     if (0) {}
 #include "config/options.set.cpp"
@@ -239,44 +253,71 @@ void Config :: set(const std::string &option, const std::string &value) {
   }
 }
 
+void Config :: color(const std::vector<std::string>& args) {
+  checkArgCount(args, 3, INT_MAX);
+
+#if /*TODO*/ 0
+  int theme; // XXX use enum?
+  unsigned int attrs;
+  short fg;
+  short bg;
+  if (args[0] == "color_mono")
+    theme = 0;
+  else if (args[0] == "color")
+    theme = 1;
+  else if (args[0] == "color_256")
+    theme = 2;
+
+  const std::string& themeElement = args[1];
+  auto it = std::next(args.cbegin(), 2);
+
+  for (
+#endif
+}
+
+void Config :: bind(const std::vector<std::string>& args) {
+  abort();
+}
+
+void Config :: unbind(const std::vector<std::string>& args) {
+  abort();
+}
+
+void Config :: unbind_all(const std::vector<std::string>& args) {
+  abort();
+}
+
 void Config :: read(const std::string &file) {
   std::ifstream infile;
   infile.exceptions(std::ifstream::badbit|std::ifstream::failbit);
   infile.open(file);
-  std::string   line;
-  std::string   command;
-  unsigned int  no = 0;
+  std::string line;
+  std::vector<std::string> args;
+  unsigned int no = 0;
 
   try {
     while (getline(infile, line)) {
       ++no;
-
-      std::vector<std::string> args = ShellSplit::split(line);
+      ShellSplit::split(line, args);
       if (! args.size() || args[0][0] == '#')
         continue;
-
-      command = args[0];
-#define on(STR) else if (command == STR)
-      if (0) {}
-      on("set")        { set(args[1], args[2]);     }
-      /*
-      on("bind")       { bindings.bind(...);        }
-      on("unbind")     { bindings.unbind(...);      }
-      on("unbind_all") { bindings.unbind_all(...);  }
-      on("color")      { theme.color(...);          }
-      on("color_256")  { theme.color_256(...);      }
-      on("color_mono") { theme.color_mono(...);     }
-      */
-      else             { throw std::invalid_argument("unknown command"); }
+      else if (args[0] == "set")        { Config::set(args);        }
+      else if (args[0] == "color")      { Config::color(args);      }
+      else if (args[0] == "color_256")  { Config::color(args);      }
+      else if (args[0] == "color_mono") { Config::color(args);      }
+      else if (args[0] == "bind")       { Config::bind(args);       }
+      else if (args[0] == "unbind")     { Config::unbind(args);     }
+      else if (args[0] == "unbind_all") { Config::unbind_all(args); }
+      else throw std::invalid_argument("unknown command");
     }
   }
-  catch (const std::ifstream::failure &e) {
+  catch (const std::ifstream::failure&) {
     if (! infile.eof())
       throw;
   }
   catch (const std::exception &e) {
     char _[1024];
-    snprintf(_, sizeof(_), "%s:%u: %s: %s", file.c_str(), no, command.c_str(), e.what());
+    snprintf(_, sizeof(_), "%s:%u: %s: %s", file.c_str(), no, args[0].c_str(), e.what());
     throw std::invalid_argument(_);
   }
 }
@@ -290,18 +331,18 @@ int main() {
   Config::init();
 
   // === Primitives ===
-  assert(opt_parse_int("1")       == 1);
+  assert(opt_parse_int("1") == 1);
   except(opt_parse_int(""));
   except(opt_parse_int("-"));
   except(opt_parse_int("1a"));
   except(opt_parse_int("a1"));
 
-  assert(opt_parse_bool("true")   == true);
-  assert(opt_parse_bool("false")  == false);
+  assert(opt_parse_bool("true") == true);
+  assert(opt_parse_bool("false") == false);
   except(opt_parse_bool(""));
   except(opt_parse_bool("-"));
 
-  assert(opt_parse_char("c")      == 'c');
+  assert(opt_parse_char("c") == 'c');
   except(opt_parse_char(""));
   except(opt_parse_char("12"));
 

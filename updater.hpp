@@ -10,7 +10,10 @@ class Updater {
 public:
   Updater(Database&, Downloads&);
   bool start(int pages); // 0->all, N=>from start, -N=>from end
+
+#ifndef TEST_UPDATER
 private:
+#endif
   Database &db;
   Downloads &downloads;
   void insert_album(Album&);

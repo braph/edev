@@ -12,7 +12,7 @@
 
 static inline size_t find_dash(const std::string& s, size_t &dash_len) {
   size_t pos;
-  for (const auto dash : { "–" /* Unicode */, "-" /* ASCII */ })
+  for (const auto dash : { "–" /* Unicode (precedence!) */, "-" /* ASCII */ })
     if (std::string::npos != (pos = s.find(dash))) {
       dash_len = std::strlen(dash);
       return pos;
@@ -112,7 +112,7 @@ void BrowsePage :: parse_src(const std::string &src) {
     // Album title and URL
     auto a_title = xpath.query(".//h1/a", post)[0];
     album.url   = a_title["href"];
-    album.title = a_title.text();
+    album.title = a_title.nearestContent();
     boost::trim(album.title);
 
     // Archive URLs (<span class="dll"><a href="...zip">MP3 Download</a>)
@@ -149,6 +149,10 @@ void BrowsePage :: parse_src(const std::string &src) {
     if (tracks.empty())
       continue;
 
+    // Some albums only have one MP3 url for multiple tracks
+    if (tracks.size() == 1)
+      album.isSingleURL = true;
+
     // Assign metadata to track urls
     // - There may be multiple tracklists (evidence url?)
     auto track_urls_iter = tracks.begin();
@@ -162,19 +166,24 @@ void BrowsePage :: parse_src(const std::string &src) {
               album.tracks.push_back(std::move(track));
               track = Track();
             }
-            if (track_urls_iter != track_urls_end) {
-              track.url    = std::move(*track_urls_iter++);
-              track.number = std::atoi(strMayNULL(span.nearestContent()));
-            }
+
+            track.number = std::atoi(strMayNULL(span.nearestContent()));
+            if (album.isSingleURL)
+              track.url = *track_urls_iter;
+            else if (track_urls_iter != track_urls_end)
+              track.url = std::move(*track_urls_iter++);
             break;
           case 't':
-            boost::trim((track.title = span.text()));
+            track.title = strMayNULL(span.nearestContent());
+            boost::trim(track.title);
             break;
           case 'r':
-            boost::trim_if((track.remix = span.text()), boost::is_any_of("\t ()"));
+            track.remix = strMayNULL(span.nearestContent());
+            boost::trim_if(track.remix, boost::is_any_of("\t ()"));
             break;
           case 'a':
-            boost::trim((track.artist = span.text()));
+            track.artist = strMayNULL(span.nearestContent());
+            boost::trim(track.artist);
             break;
           case 'd':
             const char* s = span.nearestContent(); // "(134 BPM)"
@@ -187,37 +196,36 @@ void BrowsePage :: parse_src(const std::string &src) {
         album.tracks.push_back(std::move(track));
     }
 
-    // Extract the artist name from the album title ("artist - album_name")
-    // and set the artist on tracks that dont have it yet.
-    size_t dash_len;
-    size_t idx = find_dash(album.title, dash_len);
-    if (idx != std::string::npos) {
-      album.artist = album.title.substr(0, idx);
-      album.title  = album.title.substr(idx + dash_len);
-      boost::trim(album.title);
-      boost::trim(album.artist);
-      for (auto &track : album.tracks)
-        if (track.artist.empty())
-          track.artist = album.artist;
-    } else {
-      for (auto &track : album.tracks)
-        if (track.artist.empty())
-          track.artist = "Unknown Artist";
-    }
+    size_t idx, dash_len;
 
-    // Fix missing track titles:
-    // Sometimes the track title is merged into the track artist. ("artist - track")
-    // Example: https://ektoplazm.com/free-music/gods-food
+    // Sometimes the track title is merged into the track artist.
+    // ("artist - track") -> https://ektoplazm.com/free-music/gods-food
     for (auto &track : album.tracks)
       if (track.title.empty()) {
-        size_t idx = find_dash(track.artist, dash_len);
+        idx = find_dash(track.artist, dash_len);
         if (idx != std::string::npos) {
-          track.title  = track.artist.substr(0, idx);
-          track.artist = track.artist.substr(idx + dash_len);
+          track.title = track.artist.substr(idx + dash_len);
+          track.artist.erase(idx);
           boost::trim(track.title);
           boost::trim(track.artist);
         }
       }
+
+    // Extract the artist name from the album title ("album_artist - album_title")
+    idx = find_dash(album.title, dash_len);
+    if (idx != std::string::npos) {
+      album.artist = album.title.substr(0, idx);
+      album.title.erase(0, idx + dash_len);
+      boost::trim(album.title);
+      boost::trim(album.artist);
+    } else {
+      album.artist = "Unknown Artist";
+    }
+
+    // Use album.artist if track.artist is empty
+    for (auto &track : album.tracks)
+      if (track.artist.empty())
+        track.artist = album.artist;
 
     // Push back album
     albums.push_back(std::move(album));

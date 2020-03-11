@@ -26,23 +26,23 @@ typedef const char* ccstr;
 struct Dumper {
   Dumper(std::ofstream& fs) : fs(fs) {}
 
-  inline void dump(size_t value)
+  void dump(size_t value)
   { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  inline void dump(uint16_t value)
+  void dump(uint16_t value)
   { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  inline void dump(StringPool& p)
+  void dump(StringPool& p)
   { dump(BITSOF(char), size_t(p.size()), reinterpret_cast<char*>(p.data())); }
 
-  inline void dump(DynamicPackedVector& v)
+  void dump(DynamicPackedVector& v)
   { dump(size_t(v.bits()), v.size(), reinterpret_cast<char*>(v.data())); }
 
   template<typename T>
-  inline void dump(std::vector<T>& v)
+  void dump(std::vector<T>& v)
   { dump(BITSOF(T), v.size(), reinterpret_cast<char*>(v.data())); }
 
-  inline void dump(Database::Table& t)
+  void dump(Database::Table& t)
   { for (auto col : t.columns) { dump(*col); } }
 
 private:
@@ -59,10 +59,10 @@ private:
 struct Loader {
   Loader(std::ifstream& fs) : fs(fs) {}
 
-  inline void load(size_t& value)
+  void load(size_t& value)
   { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  inline void load(uint16_t& value)
+  void load(uint16_t& value)
   { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
 
   void load(StringPool& pool) {
@@ -419,6 +419,8 @@ bool equals(T1& result, DB::ColumnID id, T2& vec) {
   return true;
 }
 
+/* Tests should be done on a newly created database from update.cpp.
+ * Tests won't modify the original database! */
 int main () {
   TEST_BEGIN();
   Database db;
@@ -460,6 +462,17 @@ int main () {
   assert (std::strlen(styles[styles.size() - 1].url()));
   assert (std::strlen(albums[albums.size() - 1].url()));
   assert (std::strlen(tracks[tracks.size() - 1].url()));
+
+  /* Test: shrink_to_fit() ================================================= */
+  {
+    Database db2;
+    db2.load(TEST_DB);
+    db2.shrink_to_fit();
+    for (size_t i = 0; i < db.tracks.size(); ++i)
+      assert(streq(db.tracks[i].title(), db2.tracks[i].title()));
+    for (size_t i = 0; i < db.albums.size(); ++i)
+      assert(streq(db.albums[i].title(), db2.albums[i].title()));
+  }
 
   /* Test: ORDER BY TRACK_TITLE ============================================ */
   std::vector<const char*> track_titles;

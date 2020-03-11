@@ -16,7 +16,7 @@ Process::Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdo
   open(function, pipe_stdin, pipe_stdout, pipe_stderr);
 }
 
-Process::id_type Process::open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept {
+pid_t Process::open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept {
   int stdin_p[2], stdout_p[2], stderr_p[2];
   
   if (pipe_stdin && pipe(stdin_p) != 0)
@@ -93,10 +93,10 @@ int Process::get_exit_status() noexcept {
 }
 
 bool Process::try_get_exit_status(int &exit_status) noexcept {
-  if (pid<= 0)
+  if (pid <= 0)
     return false;
 
-  id_type p = waitpid(pid, &exit_status, WNOHANG);
+  pid_t p = waitpid(pid, &exit_status, WNOHANG);
   if (p == 0)
     return false;
 
@@ -106,8 +106,8 @@ bool Process::try_get_exit_status(int &exit_status) noexcept {
   }
   close_fds();
 
-  if (exit_status>=256)
-    exit_status=exit_status>>8;
+  if (exit_status >= 256)
+    exit_status = exit_status >> 8;
 
   return true;
 }
@@ -138,7 +138,7 @@ Process::~Process() noexcept {
   close_fds();
 }
 
-Process::id_type Process::get_id() const noexcept {
+pid_t Process::get_id() const noexcept {
   return pid;
 }
 

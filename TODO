@@ -5,6 +5,7 @@
 - keybindings: ^S for saving?
 - pads: fix mouse offset // ui.hpp mincol etc...
 - noexcept on noutrefresh etc.
+- boost::system::error_code is available in C++11
 
 ===============================================================================
 

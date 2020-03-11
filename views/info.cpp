@@ -71,7 +71,7 @@ struct MarkupParser {
   int type;
 
   MarkupParser(const char* s) : it(s), type(0) {
-    mbtowc(NULL, NULL, 0); // Clear mbtowc's shift state
+    mbtowc(NULL, NULL, 0); // Reset internal state
   }
 
   wchar_t nextChar() {
@@ -82,13 +82,18 @@ struct MarkupParser {
       if (n == -1)  { it++; continue; } // Skip invalid char
       it += n;
 
-      if (c == *it) // doubled char
+      bool haveDouble = (c == *it); // `Having ((double`
+      bool haveMore   = (haveDouble && c == *(it+1)); // `Having (((more`
+
+      if (haveDouble)
         switch (*it) {
           case '*': type ^= BOLD;      it++; continue;
           case '_': type ^= ITALIC;    it++; continue;
-          case '(': type |= LINK_TEXT; it++; continue;
+          case '(': if (haveMore) break;
+                    type |= LINK_TEXT; it++; continue;
           case ')': type &=~LINK_TEXT; it++; continue;
-          case '[': type |= LINK_URL;  it++; continue;
+          case '[': if (haveMore) break;
+                    type |= LINK_URL;  it++; continue;
           case ']': type &=~LINK_URL;  it++; continue;
         }
 

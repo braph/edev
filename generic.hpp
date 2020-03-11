@@ -1,6 +1,8 @@
 #ifndef _GENERIC_HPP
 #define _GENERIC_HPP
 
+#include "common.hpp"
+
 #include <ostream>
 #include <iterator>
 
@@ -24,35 +26,35 @@ public:
   GenericIterator(TContainer& container, size_t idx) : container(&container), idx(idx) {}
   GenericIterator(const GenericIterator& rhs) : container(rhs.container), idx(rhs.idx) {}
 
-  iterator& operator=(const iterator&it) {
+  iterator& operator=(const iterator&it) noexcept {
     container = it.container;
     idx = it.idx;
     return *this;
   } 
 
-  bool operator==(const iterator&it) const { return idx == it.idx; }
-  bool operator!=(const iterator&it) const { return idx != it.idx; }
-  bool operator< (const iterator&it) const { return idx <  it.idx; }
-  bool operator> (const iterator&it) const { return idx >  it.idx; }
-  bool operator<=(const iterator&it) const { return idx <= it.idx; }
-  bool operator>=(const iterator&it) const { return idx >= it.idx; }
+  bool operator==(const iterator&it) const noexcept { return idx == it.idx; }
+  bool operator!=(const iterator&it) const noexcept { return idx != it.idx; }
+  bool operator< (const iterator&it) const noexcept { return idx <  it.idx; }
+  bool operator> (const iterator&it) const noexcept { return idx >  it.idx; }
+  bool operator<=(const iterator&it) const noexcept { return idx <= it.idx; }
+  bool operator>=(const iterator&it) const noexcept { return idx >= it.idx; }
 
   reference operator*()              const { return (*container)[idx]; }
   reference operator[](ptrdiff_t n)  const { return *(*this + n);      }
 
-  iterator& operator++()                  { ++idx; return *this; }
-  iterator& operator--()                  { --idx; return *this; }
-  iterator  operator++(int)         { iterator old = *this; ++idx; return old; }
-  iterator  operator--(int)         { iterator old = *this; --idx; return old; }
-  iterator& operator+=(ptrdiff_t n)       { idx += n; return *this;            }
-  iterator& operator-=(ptrdiff_t n)       { idx -= n; return *this;            }
-  iterator  operator+ (ptrdiff_t n) const { iterator i = *this; return i += n; }
-  iterator  operator- (ptrdiff_t n) const { iterator i = *this; return i -= n; }
+  iterator& operator++() noexcept    { ++idx; return *this; }
+  iterator& operator--() noexcept    { --idx; return *this; }
+  iterator  operator++(int) noexcept { iterator old = *this; ++idx; return old; }
+  iterator  operator--(int) noexcept { iterator old = *this; --idx; return old; }
+  iterator& operator+=(ptrdiff_t n) noexcept       { idx += n; return *this;            }
+  iterator& operator-=(ptrdiff_t n) noexcept       { idx -= n; return *this;            }
+  iterator  operator+ (ptrdiff_t n) const noexcept { iterator i = *this; return i += n; }
+  iterator  operator- (ptrdiff_t n) const noexcept { iterator i = *this; return i -= n; }
 
-  ptrdiff_t operator- (const iterator&it) const
+  ptrdiff_t operator- (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) - static_cast<ptrdiff_t>(it.idx); }
 
-  ptrdiff_t operator+ (const iterator&it) const
+  ptrdiff_t operator+ (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) + static_cast<ptrdiff_t>(it.idx); }
 
   inline friend std::ostream& operator<<(std::ostream& os, const iterator& it) {
@@ -97,43 +99,45 @@ struct GenericReference {
   }
 };
 
-/* Like std::array, but is able to `shrink/grow` */
+/* Statically allocated vector */
 template<typename T, size_t N>
-class DynamicArray {
+class StaticVector {
   T      _data[N];
   size_t _size;
 public:
-  inline DynamicArray() : _size(0) {}
-  inline bool     empty()               { return _size == 0;      }
-  inline size_t   size()                { return _size;           }
-  inline size_t   max_size()            { return N;               }
-  inline T*       begin()               { return &_data[0];       }
-  inline T*       end()                 { return &_data[size()];  }
-  inline T&       operator[](size_t i)  { return _data[i];        }
-  inline T&       front()               { return _data[0];        }
-  inline T&       back()                { return _data[size()-1]; }
-  inline T*       data()                { return &_data[0];       }
-//-----------------------------------------------------------------
-  inline size_t   capacity()            { return N;               }
+  StaticVector() : _size(0) {}
+  bool     empty()     const     { return _size == 0;      }
+  size_t   size()      const     { return _size;           }
+  size_t   max_size()  const     { return N;               }
+  size_t   capacity()  const     { return N;               }
+  T*       begin()               { return &_data[0];       }
+  T*       end()                 { return &_data[size()];  }
+  T&       operator[](size_t i)  { return _data[i];        }
+  T&       front()               { return _data[0];        }
+  T&       back()                { return _data[size()-1]; }
+  T*       data()                { return &_data[0];       }
 
   template<typename TIterator>
-  inline DynamicArray(TIterator beg, TIterator end) : _size(0) {
+  StaticVector(TIterator beg, TIterator end) : _size(0) {
     while (beg != end)
       push_back(*beg++);
   }
 
-  inline void push_back(const T& e) {
-    if (size() == max_size()) throw std::length_error("DynamicArray");
+  void push_back(const T& e) {
+    if (size() == max_size())
+      throw std::length_error("StaticVector");
     _data[_size++] = e;
   }
 
-  inline void resize(size_t n) {
-    if (n > max_size()) throw std::length_error("DynamicArray");
+  void resize(size_t n) {
+    if (n > max_size())
+      throw std::length_error("StaticVector");
     _size = n;
   }
 
-  inline void resize(size_t n, const T& e) {
-    while (_size < n) push_back(e);
+  void resize(size_t n, const T& e) {
+    while (_size < n)
+      push_back(e);
   }
 };
 
@@ -144,11 +148,11 @@ struct ArrayView {
 
   ArrayView() : _array(NULL), _size(0) {}
 
-  template<size_t size>
-  inline ArrayView(T (&array)[size]) : _array(&array[0]), _size(size) {}
+  template<size_t SIZE>
+  ArrayView(T (&array)[SIZE]) : _array(&array[0]), _size(SIZE) {}
 
-  inline value_type& operator[](size_t index) { return _array[index]; }
-  inline size_t size()                 const  { return _size;         }
+  value_type& operator[](size_t index) { return _array[index]; }
+  size_t size()                 const  { return _size;         }
 
 private:
   T*     _array;
@@ -183,8 +187,6 @@ private:
   TContainer* _container;
 };
 
-#include "common.hpp"
-#include <iostream>
 template<typename TContainer>
 class SteppableSearch {
   using value_type = typename TContainer::value_type;
@@ -224,8 +226,11 @@ public:
     _predicate = predicate;
   }
 
-  inline size_type index() const          { return _index;  }
-  inline void      index(size_type index) { _index = index; }
+  size_type index() const noexcept
+  { return _index; }
+
+  void index(size_type index) noexcept
+  { _index = index; }
 
 private:
   const TContainer* _list;

@@ -2,49 +2,49 @@
 #define _BIT_TOOLS_HPP
 
 // Unsigned ===================================================================
-inline int bitlength(unsigned long long n) {
+static inline int bitlength(unsigned long long n) {
   return (!n ? 0 :
     static_cast<int>(sizeof(long long) * CHAR_BIT) - __builtin_clzll(n));
 }
 
-inline int bitlength(unsigned long n) {
+static inline int bitlength(unsigned long n) {
   return (!n ? 0 :
     static_cast<int>(sizeof(long) * CHAR_BIT) - __builtin_clzl(n));
 }
 
-inline int bitlength(unsigned int n) {
+static inline int bitlength(unsigned int n) {
   return (!n ? 0 :
     static_cast<int>(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
 }
 
-inline int bitlength(unsigned short n) {
+static inline int bitlength(unsigned short n) {
   return (!n ? 0 :
     static_cast<int>(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
 }
 
-inline int bitlength(unsigned char n) {
+static inline int bitlength(unsigned char n) {
   return (!n ? 0 :
     static_cast<int>(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
 }
 
 // Signed =====================================================================
-inline int bitlength(long long n) {
+static inline int bitlength(long long n) {
   return bitlength(static_cast<unsigned long long>(n));
 }
 
-inline int bitlength(long n) {
+static inline int bitlength(long n) {
   return bitlength(static_cast<unsigned long>(n));
 }
 
-inline int bitlength(int n) {
+static inline int bitlength(int n) {
   return bitlength(static_cast<unsigned int>(n));
 }
 
-inline int bitlength(short n) {
+static inline int bitlength(short n) {
   return bitlength(static_cast<unsigned short>(n));
 }
 
-inline int bitlength(char n) {
+static inline int bitlength(char n) {
   return bitlength(static_cast<unsigned char>(n));
 }
 
@@ -90,7 +90,7 @@ template<typename TUIntType, typename TIterator>
 TUIntType compress(TIterator _it, TIterator _end, int bitwidth) {
   if (_it == _end)
     return 0;
-  DynamicArray<TUIntType, 8> sorted(_it, _end);
+  StaticVector<TUIntType, 8> sorted(_it, _end);
 
   auto it = sorted.begin();
   auto end = sorted.end();

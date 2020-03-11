@@ -30,11 +30,10 @@ readDoubleQuoted(const char*& s, std::string& word, Warning& w)
   w = UNMATCHED_DOUBLE_QUOTE;
 }
 
-std::vector<std::string>
-split(const std::string& s, Warning& w)
+void split(const std::string& s, std::vector<std::string>& result, Warning& w)
 {
+  result.clear();
   std::string word;
-  std::vector<std::string> words;
   const char* it = s.c_str();
   bool havingWord = false;
   bool escaped = false;
@@ -61,7 +60,7 @@ split(const std::string& s, Warning& w)
         case '\f':
           if (havingWord) {
             havingWord = false;
-            words.push_back(std::move(word));
+            result.push_back(std::move(word));
           }
           break;
 
@@ -79,12 +78,10 @@ split(const std::string& s, Warning& w)
   }
 
   if (havingWord)
-    words.push_back(std::move(word));
+    result.push_back(std::move(word));
 
   if (escaped)
     w = UNMATCHED_BACKSLASH;
-
-  return words;
 }
 
 } // ShellSplit
@@ -92,16 +89,21 @@ split(const std::string& s, Warning& w)
 #ifdef TEST_SHELLSPLIT
 #include "test.hpp"
 
-#define test(LINE, ...) \
-  assert(ShellSplit::split(LINE) == std::vector<std::string>(__VA_ARGS__))
+std::vector<std::string> result; // Global, for checking if .clear works
 
-void dump(const std::string &s) {
-  std::vector<std::string> result = ShellSplit::split(s);
-  for (auto it = result.cbegin(); it != result.cend(); ++it)
-    std::cout << "<<" << *it << ">>" << std::endl;
+void test(const std::string& line, const std::vector<std::string>& expected) {
+  ShellSplit::split(line, result);
+  if (result != expected) {
+    std::cout << "Result: ";
+    for (const auto& e : result)
+      std::cout << '"' << e << "\",";
+    std::cout << '\n';
+    throw std::runtime_error("Test failed");
+  }
 }
 
 int main() {
+  TEST_BEGIN();
   test("",        {});
   test(" \t",     {});
   test("1",       {"1"});
@@ -117,6 +119,6 @@ int main() {
   test("\"a\'\"", {"a\'"});
   test("\'\\\'",  {"\\"});
   // TODO: test escape; test nested quotes
-  //dump("1 2");
+  TEST_END();
 }
 #endif

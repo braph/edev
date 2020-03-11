@@ -22,39 +22,38 @@ public:
 
   ListWidget()
   : m_cursor(0)
+  , m_selected(0)
   , m_active(-1)
-  , m_top_index(0)
   , m_list(NULL)
   {
+    idlok(win, TRUE);
+    scrollok(win, TRUE);
   }
 
-  // Getter ===================================================================
-  TContainer* getList() const { return m_list; }
-  void attachList(TContainer *list) { m_list = list; }
+  TContainer* list() const noexcept    { return m_list; }
+  void list(TContainer *list) noexcept { m_list = list; }
 
-  int cursorIndex() const { return empty() ? -1 : m_top_index + m_cursor; }
+  int activeIndex() const noexcept   { return m_active; }
+  void activeIndex(int idx) noexcept { m_active = idx; draw(); }
+
+  int cursorIndex() const { return empty() ? -1 : m_selected; }
   void cursorIndex(int idx) {
+    m_selected = idx;
     m_cursor = size.height / 2;
-    m_top_index = idx - m_cursor;
     draw();
   }
-
-  int activeIndex() const { return m_active; }
-  void activeIndex(int idx) { m_active = idx; draw(); }
 
   value_type getCursorItem() const {
     if (empty())
       throw std::out_of_range("getCursorItem()");
-    return (*m_list)[size_type(m_top_index+m_cursor)];
+    return (*m_list)[size_type(m_selected)];
   }
 
   value_type getActiveItem() const {
-    if (! empty())
-      return (*m_list)[static_cast<size_type>(m_active)];
-    throw std::out_of_range("getActiveItem()");
+    if (empty())
+      throw std::out_of_range("getActiveItem()");
+    return (*m_list)[static_cast<size_type>(m_active)];
   }
-
-  // Setter ==================================================================
 
   void layout(UI::Pos pos, UI::Size size) {
     if (size != this->size) {
@@ -67,134 +66,124 @@ public:
     }
   }
 
+  void _clamp() {
+    m_cursor    = clamp(m_cursor,    0, max_cursor());
+    m_cursor    = clamp(m_cursor,    0, containerSize() - 1);
+    m_active    = clamp(m_active,   -1, containerSize() - 1);
+    m_selected  = clamp(m_selected,  0, containerSize() - 1);
+  }
+
   void draw() {
-    redrawwin(win);
-    moveCursor(0,0);
+    erase();
+    _clamp();
 
     if (! m_list) return;
-    m_cursor    = clamp(m_cursor,    0, size.height - 1);
-    m_active    = clamp(m_active,   -1, containerSize() - 1);
-    m_top_index = clamp(m_top_index, 0, containerSize() - 1);
-    m_top_index = clamp(m_top_index, 0, containerSize() - size.height);
 
+    int idx  =  clamp(m_selected - m_cursor, 0, containerSize() - 1); //XXX
     int line = 0;
-    int idx  = m_top_index;
     for (; line < size.height && idx < containerSize(); ++line, ++idx) {
-      moveCursor(line, 0);
-      render_item(idx, line == m_cursor);
+      render_item(idx, line, line == m_cursor);
     }
+
+    redrawwin(win);
   }
 
-  /* Cursor down */
-  void down() {
-    if (m_top_index + m_cursor + 1 >= containerSize())
+  /// Scroll and change cursor position
+  void scroll_cursor(int n) {
+    if (! m_list)
       return;
 
-    unselect_item();
-    if (m_cursor >= size.height - 1) {
-      ++m_top_index;
-      append_bottom();
-    } else {
-      ++m_cursor;
-    }
-    moveCursor(m_cursor, 0);
-    render_item(m_top_index + m_cursor, true);
-  }
+    n = clamp(m_selected + n, 0, containerSize() - 1) - m_selected;
 
-  void up() {
-    if (m_top_index + m_cursor - 1 < 0)
+    render_item(m_selected, m_cursor, false);
+
+    // New cursor resides in the current window
+    if (m_cursor + n >= 0 && m_cursor + n < size.height)
+      goto CHANGE_CURSOR_POSITION;
+
+    if (n > 0) { // Scrolling down
+      m_selected += max_cursor() - m_cursor;
+      n -= max_cursor() - m_cursor;
+      wscrl(win, n);
+      while (n-- > 1)
+        render_item(++m_selected, max_cursor(), false);
+      render_item(++m_selected, max_cursor(), true);
       return;
-
-    unselect_item();
-    if (m_cursor == 0) {
-      --m_top_index;
-      insert_top();
-    } else {
-      --m_cursor;
     }
-    moveCursor(m_cursor, 0);
-    render_item(m_top_index + m_cursor, true);
-  }
-
-  void scroll_down() {
-    int n = size.height / 2;
-
-    m_top_index += n;
-    if (m_top_index + size.height - 1 >= containerSize()) {
-      m_top_index = containerSize() - size.height;
+    else { // Scrolling up
+      m_selected -= m_cursor;
+      n += m_cursor;
+      wscrl(win, n);
+      while (n++ < -1)
+        render_item(--m_selected, 0, false);
+      render_item(--m_selected, 0, true);
+      return;
     }
 
+REDRAW:
+    m_cursor   += n;
+    m_selected += n;
     draw();
+    return;
+CHANGE_CURSOR_POSITION:
+    m_cursor   += n;
+    m_selected += n;
+    render_item(m_selected, m_cursor, true);
   }
 
-  void scroll_up() {
-    int n = size.height / 2;
-
-    m_top_index -= n;
-    if (m_top_index < 0)
-      m_top_index = 0;
-
+  void scroll_items(int n) {
+    m_selected += n;
     draw();
-  }
-
-  void insert_top() { // XXX rename + mv to UI::Window
-    moveCursor(0, 0);
-    winsertln(win);
-  }
-
-  void append_bottom() { // XXX rename + mv to UI::Window
-    moveCursor(0, 0);
-    wdeleteln(win);
   }
 
   // === Navigation === //
-  void top()       { m_cursor = m_top_index = 0;        draw(); }
-  void bottom()    { m_cursor = m_top_index = INT_MAX;  draw(); }
-  void page_up()   { scroll_up(); }
-  void page_down() { scroll_down(); }
+  void up(int n = 1)   { scroll_cursor(-n); }
+  void down(int n = 1) { scroll_cursor(n);  }
+  void top()           { m_cursor = m_selected = 0;        draw(); }
+  void bottom()        { m_cursor = m_selected = INT_MAX;  draw(); }
+  void page_up()       { scroll_items(-size.height / 2); }
+  void page_down()     { scroll_items(size.height / 2); }
   void gotoSelected() {
     m_cursor = size.height / 2;
-    m_top_index = m_active - m_cursor;
+    m_selected = m_active;
     draw();
   }
 
   /*
-  void page_up()   { scroll_up(size.height); }
-  void page_down() { scroll_down(size.height); }
-  void up(N)       { scroll_cursor_up(1);      }
-  void down(N)     { scroll_cursow_down(1);    }
-  //void center()    { force_cursorpos(size.height / 2); }
+  void center()    { force_cursorpos(size.height / 2); }
   */
 
   bool handleMouse(MEVENT& m) {
     if (wmouse_trafo(win, &m.y, &m.x, false)) {
-      m_cursor = m.y;
-      draw();
+      scroll_cursor(m.y - m_cursor);
       return true;
     }
     return false;
   }
 
-  inline bool empty() const
+  bool empty() const noexcept
   { return containerSize() == 0; }
 
-  inline int containerSize() const
+  int containerSize() const noexcept
   { return static_cast<int>(m_list ? m_list->size() : 0); }
 
 private:
   int m_cursor;
+  int m_selected;
   int m_active;
-  int m_top_index;
   TContainer* m_list;
 
-  inline void render_item(int idx, bool cursor) {
-    if (itemRenderer)
-      itemRenderer(win, size.width, (*m_list)[static_cast<size_t>(idx)], idx, cursor, idx == m_active);
+  inline int max_cursor() { return size.height - 1; }
+
+  inline void render_item(int item_idx, int line, bool cursor) {
+    if (! itemRenderer)
+      return;
+    moveCursor(line, 0);
+    itemRenderer(win, size.width, (*m_list)[static_cast<size_t>(item_idx)], item_idx, cursor, item_idx == m_active);
   }
 
   inline void unselect_item() {
-    moveCursor(m_cursor, 0);
-    render_item(m_top_index + m_cursor, false); // Unselect old line
+    render_item(m_selected, m_cursor, false);
   }
 };
 
@@ -206,7 +195,7 @@ void testListWidget(
 ) {
   ListWidget<TContainer> listWidget;
   listWidget.itemRenderer = render;
-  listWidget.attachList(&testData);
+  listWidget.list(&testData);
   listWidget.layout({0,0}, {LINES,COLS});
   listWidget.draw();
   listWidget.noutrefresh();

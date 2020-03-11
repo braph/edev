@@ -52,9 +52,9 @@ void Splash :: draw() {
     return;
 
   // Assume no colors by default
-  ArrayView<const short> logoFading(colorFading_0);
-  ArrayView<const short> bubbleFading(colorFading_0);
-  ArrayView<const short> signatureFading(colorFading_0);
+  auto logoFading      = ArrayView<const short>(colorFading_0);
+  auto bubbleFading    = ArrayView<const short>(colorFading_0);
+  auto signatureFading = ArrayView<const short>(colorFading_0);
 
   if (Theme::current == 256) {
     logoFading            = logoFading_256;
@@ -94,7 +94,8 @@ void Splash :: draw() {
     mvAddStr(top_pad + y, left_pad + x, "(_)");
   }
 
-  if (! draw_signature) return;
+  if (! draw_signature)
+    return;
 
   top_pad += LOGO_HEIGHT + 2;
   left_pad = w_center - (SIGNATURE_WIDTH / 2);

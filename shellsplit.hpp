@@ -13,11 +13,11 @@ enum Warning {
   UNMATCHED_BACKSLASH     // string\ 
 };
 
-std::vector<std::string> split(const std::string &s, Warning &w);
+void split(const std::string&, std::vector<std::string>&, Warning &);
 
-inline std::vector<std::string> split(const std::string &s) {
+inline void split(const std::string& s, std::vector<std::string>& v) {
   Warning w;
-  return split(s, w);
+  split(s, v, w);
 }
 
 } // namespace ShellSplit

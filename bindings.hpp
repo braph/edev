@@ -1,7 +1,8 @@
 #ifndef _BINDINGS_HPP
 #define _BINDINGS_HPP
 
-#include <ncurses.h>
+#include CURSES_INC
+
 #include "actions.hpp"
 
 namespace Bindings {

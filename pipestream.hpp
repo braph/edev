@@ -53,20 +53,24 @@ struct PipeStream {
     return ::write(fd, buf.c_str(), buf.size());
   }
 
-  template<size_t LEN>
-  PipeStream& operator<<(const char (&s)[LEN]) noexcept {
-    ::write(fd, s, LEN-1);
-    return *this;
+  ssize_t write(char c) noexcept {
+    return ::write(fd, &c, 1);
   }
 
-  PipeStream& operator<<(const std::string& s) noexcept {
-    ::write(fd, s.c_str(), s.size());
-    return *this;
+  template<size_t LEN>
+  ssize_t write(const char (&s)[LEN]) noexcept {
+    return ::write(fd, s, LEN-1);
+  }
+
+  template<typename T>
+  ssize_t write(const T& value) {
+    std::string s = std::to_string(value);
+    return ::write(fd, s.c_str(), s.size());
   }
 
   template<typename T>
   PipeStream& operator<<(T v) noexcept {
-    write(std::to_string(v));
+    write(v);
     return *this;
   }
 };

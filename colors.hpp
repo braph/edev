@@ -1,7 +1,7 @@
 #ifndef _COLORS_HPP
 #define _COLORS_HPP
 
-#include <curses.h>
+#include CURSES_INC
 
 #include <vector>
 #include <utility>

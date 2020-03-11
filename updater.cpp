@@ -84,11 +84,6 @@ static std::string& clean_str(std::string& s) {
 static std::string makeMarkup(const std::string& description) {
   std::string s = Html2Markup::convert(description, "UTF-8");
 
-  // Removing `www.` *may* corrupt some URLs, but saves 20KB!
-  boost::algorithm::erase_all(s, "www.");
-  boost::algorithm::erase_all(s, "http://");
-  boost::algorithm::erase_all(s, "https://");
-
   // Replace protected email links:
   //  /cdn-cgi/l/email-protection#284b47444146684747474c06464d5c
   const char* protectedLink = "[[/cdn-cgi/l/email";
@@ -98,6 +93,11 @@ static std::string makeMarkup(const std::string& description) {
     if (end != std::string::npos)
       s.replace(pos, end-pos, "[[@");
   }
+
+  // Removing `www.` *may* corrupt some URLs, but saves 20KB!
+  boost::algorithm::erase_all(s, "https://");
+  boost::algorithm::erase_all(s, "http://");
+  boost::algorithm::erase_all(s, "www.");
 
   return s;
 }
@@ -238,19 +238,11 @@ void Updater :: insert_browsepage(BrowsePage& page) {
 
 #ifdef TEST_UPDATER
 #include "test.hpp"
-
-#ifdef USE_LOCAL_FILES
+#include "filesystem.hpp"
 #include <fstream>
 #include <streambuf>
-  for (int i = 1; i <= 416; ++i) {
-    std::ifstream t(std::string("/tmp/testdata/") + std::to_string(i));
-    std::string src((std::istreambuf_iterator<char>(t)),
-                     std::istreambuf_iterator<char>());
-
-    BrowsePage browserPage(src);
-    insert_browsepage(browserPage);
-  }
-#endif
+#define USE_FILESYSTEM 0
+#define TESTDATA_DIR "/tmp/testdata" // Dir that contains HTML files
 
 void test_warning(const Database::Styles::Style& style, const char* reason) {
   std::cout << "STYLE: " << style.url() << ": " << reason << '\n';
@@ -264,54 +256,65 @@ void test_warning(const Database::Tracks::Track& track, const char* reason) {
   std::cout << "TRACK: " << track.url() << " in album " << track.album().url() << ": " << reason << '\n';
 }
 
+// Updater tests *will replace* the existing database file!
+// - Updater also covers some tests of BrowsePage and Database
 int main() {
   TEST_BEGIN();
+  Database db;
+  Downloads downloads(10);
 
-#define DO_UPDATE 1
-#if DO_UPDATE
-  // This also covers some testing of the Database class ======================
-  unlink(TEST_DB);
-  std::cout << TEST_DB << '\n';
-  size_t tracks_size;
-  size_t albums_size;
-  std::string track_url;
-  std::string album_desc;
+  db.styles.reserve(EKTOPLAZM_STYLE_COUNT);
+  db.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
+  db.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
+  db.pool_meta.reserve(EKTOPLAZM_META_SIZE);
+  db.pool_desc.reserve(EKTOPLAZM_DESC_SIZE);
+  db.pool_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
+  db.pool_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
+  db.pool_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
+  db.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
+  db.pool_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+
   {
-    Database db;
-    Downloads downloads(10);
+#ifdef USE_FILESYSTEM
+    std::cout << "Updating using filesystem ...\n";
+    Updater u(db, downloads);
+    boost::system::error_code e;
+
+    std::string src;
+    for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
+      std::ifstream stream(f.path().string());
+      src.clear();
+      src.append((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+
+      BrowsePage bp(src);
+      u.insert_browsepage(bp);
+    }
+#else
+    std::cout << "Updating using network ...\n";
+    abort();
     Updater u(db, downloads);
     u.start(0);
-    while (downloads.work()) { usleep(1000 * 10); }
-    tracks_size = db.tracks.size();
-    albums_size = db.albums.size();
-    track_url   = db.tracks[tracks_size-1].url();
-    album_desc  = db.albums[albums_size-1].description();
+    while (downloads.work()) { usleep(300 * 10); }
+#endif
+  }
+
+  { // Save the database and ensure that the amount of data is the same
+    size_t tracks_size     = db.tracks.size();
+    size_t albums_size     = db.albums.size();
     std::cout << "Inserted " << tracks_size << " tracks." << '\n';
     std::cout << "Inserted " << albums_size << " albums." << '\n';
-    db.save(TEST_DB); // Test saving the database
+    std::cout << "Saving database to " << TEST_DB << '\n';
+    db.save(TEST_DB);
+    { // Check if the data has not been altered
+      Database db2;
+      db2.load(TEST_DB);
+      assert(tracks_size == db2.tracks.size());
+      assert(albums_size == db2.albums.size());
+      assert(streq(db.tracks[tracks_size-1].url(),         db2.tracks[tracks_size-1].url()));
+      assert(streq(db.albums[albums_size-1].description(), db2.albums[albums_size-1].description()));
+    }
   }
-#endif
-
-  Database db;
-  db.load(TEST_DB); // Test loading the database
-#if DO_UPDATE
-  assert(tracks_size == db.tracks.size());
-  assert(albums_size == db.albums.size());
-  assert(track_url   == db.tracks[tracks_size-1].url());
-  assert(album_desc  == db.albums[albums_size-1].description());
-#endif
   
-  // Testing shrink_to_fit()
-  {
-    Database db2;
-    db2.load(TEST_DB);
-    db2.shrink_to_fit();
-    for (size_t i = 0; i < db.tracks.size(); ++i)
-      assert(streq(db.tracks[i].title(), db2.tracks[i].title()));
-    for (size_t i = 0; i < db.albums.size(); ++i)
-      assert(streq(db.albums[i].title(), db2.albums[i].title()));
-  }
-
   // Tests of BrowsePage ======================================================
   // - are all styles valid?
   for (auto style : db.getStyles()) {
@@ -342,7 +345,8 @@ int main() {
   }
 
   // Print out defines
-  std::vector<std::pair<const char*, StringPool*>> pools = {
+  struct name_pool { const char* name; StringPool* ptr; };
+  std::vector<name_pool> pools = {
     {"META",        &db.pool_meta},
     {"DESC",        &db.pool_desc},
     {"STYLE_URL",   &db.pool_style_url},
@@ -352,30 +356,15 @@ int main() {
     {"ARCHIVE_URL", &db.pool_archive_url},
   };
 
-#if 0 /* Dump content of string pools */
-  for (auto pair : pools) {
-    char* data = pair.second->data();
-    for (size_t i = pair.second->size() - 1; i--;)
-      if (data[i] == '\0')
-        std::cout << pair.first << ':' << &data[i+1] << '\n';
-  }
-#endif
-
   std::cout
-    << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << '\n';
-    << "#define EKTOPLAZM_ALBUM_COUNT " << db.albums.size() << '\n';
+    << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << '\n'
+    << "#define EKTOPLAZM_ALBUM_COUNT " << db.albums.size() << '\n'
     << "#define EKTOPLAZM_TRACK_COUNT " << db.tracks.size() << '\n';
 
-  for (auto pair : pools) {
-    size_t n_strings = 0;
-    char* data = pair.second->data();
-    for (size_t i = pair.second->size(); i--;)
-      n_strings += (data[i] == '\0');
-
+  for (auto pool : pools)
     std::cout
-      << "#define EKTOPLAZM_" << pair.first << "_SIZE " << pair.second->size()
-      << " // average lenth: " << pair.second->size() / n_strings << '\n';
-  }
+      << "#define EKTOPLAZM_" << pool.name << "_SIZE " << pool.ptr->size()
+      << " // average lenth: " << pool.ptr->size() / pool.ptr->count() << '\n';
 
   TEST_END();
 }

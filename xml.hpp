@@ -256,28 +256,28 @@ public:
 
   /* Wrappers for read-functions */
   static inline XmlDoc readDoc(const char *cur, const char *URL = NULL, const char *encoding = NULL, int options = 0) {
-    xmlDocPtr doc = xmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
+    xmlDocPtr doc = ::xmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);
   }
 
   static inline XmlDoc readFile(const char *URL, const char *encoding = NULL, int options = 0) {
-    xmlDocPtr doc = xmlReadFile(URL, encoding, options);
+    xmlDocPtr doc = ::xmlReadFile(URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);
   }
 
   static inline XmlDoc readMemory(const char *buffer, int size, const char *URL, const char *encoding, int options = 0) {
-    xmlDocPtr doc = xmlReadMemory(buffer, size, URL, encoding, options);
+    xmlDocPtr doc = ::xmlReadMemory(buffer, size, URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);
   }
 
   static inline XmlDoc readFd(int fd, const char *URL, const char *encoding, int options = 0) {
-    xmlDocPtr doc = xmlReadFd(fd, URL, encoding, options);
+    xmlDocPtr doc = ::xmlReadFd(fd, URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);
@@ -285,7 +285,7 @@ public:
   /* End of wrappers */
 
   inline XmlNode getRootElement() const {
-    return XmlNode(xmlDocGetRootElement(m_doc));
+    return XmlNode(::xmlDocGetRootElement(m_doc));
   }
 
   inline XmlXPath xpath() const {
@@ -306,7 +306,7 @@ public:
 class HtmlDoc : public XmlDoc {
 public:
   static inline XmlDoc readFile(const char *url, const char *encoding = NULL, int options = 0) {
-    xmlDocPtr doc = htmlReadFile(url, encoding, options);
+    xmlDocPtr doc = ::htmlReadFile(url, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);
@@ -321,7 +321,7 @@ public:
   }
 
   static inline XmlDoc readDoc(const char *cur, const char *URL = NULL, const char *encoding = NULL, int options = 0) {
-    xmlDocPtr doc = htmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
+    xmlDocPtr doc = ::htmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
     if (! doc)
       throw std::invalid_argument("Could not parse XML");
     return XmlDoc(doc);

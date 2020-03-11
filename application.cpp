@@ -149,8 +149,8 @@ void Application :: run() {
 
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
-  else if (Config::small_update_pages > 0)
-    updater.start(-Config::small_update_pages); // Fetch last N pages
+  //else if (Config::small_update_pages > 0)
+  //  updater.start(-Config::small_update_pages); // Fetch last N pages
 
   Actions actions;
   Views::MainWindow mainwindow(actions, database, player);
@@ -199,7 +199,7 @@ MAINLOOP:
       && player.percent() >= 0.5
       && mainwindow.playlist.containerSize() >= 2)
   {
-    auto list = mainwindow.playlist.getList();
+    auto list = mainwindow.playlist.list();
     nextTrack = (*list)[size_t(mainwindow.playlist.activeIndex() + 1) % list->size()];
     if (nextTrack != currentPrefetching) {
       trackloader.getFileForTrack(nextTrack);

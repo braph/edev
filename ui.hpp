@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 
-#include <curses.h>
+#include CURSES_INC
 
 #include <vector>
 #include <iostream>

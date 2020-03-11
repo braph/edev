@@ -88,7 +88,7 @@ Playlist :: Playlist(Actions& actions, Views::MainWindow& mainwindow)
 , trackRenderer(Config::playlist_columns)
 {
   this->itemRenderer = trackRenderer;
-  this->attachList(&this->playlist);
+  this->list(&this->playlist);
 }
 
 bool Playlist :: handleKey(int key) {

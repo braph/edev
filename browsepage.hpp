@@ -21,12 +21,12 @@ struct Style {
 };
 
 struct Track {
-  std::string  url;
-  std::string  title;
-  std::string  artist;
-  std::string  remix;
-  short        bpm;
-  short        number;
+  std::string url;
+  std::string title;
+  std::string artist;
+  std::string remix;
+  short       bpm;
+  short       number;
 
   Track()
   : bpm(0)
@@ -46,15 +46,16 @@ struct Track {
 };
 
 struct Album {
-  std::string  url;
-  std::string  title;
-  std::string  artist;
-  std::string  description;
-  std::string  cover_url;
-  time_t       date;
-  short        download_count;
-  short        votes;
-  float        rating;
+  std::string url;
+  std::string title;
+  std::string artist;
+  std::string description;
+  std::string cover_url;
+  time_t      date;
+  short       download_count;
+  short       votes;
+  float       rating;
+  bool        isSingleURL;
   std::vector<std::string> archive_urls;
   std::vector<Style> styles;
   std::vector<Track> tracks;
@@ -64,6 +65,7 @@ struct Album {
   , download_count(0)
   , votes(0)
   , rating(0)
+  , isSingleURL(false)
   {
     styles.reserve(3);
     tracks.reserve(10);
@@ -71,7 +73,7 @@ struct Album {
   }
 
   inline std::string to_string() const {
-    struct tm* tm = localtime(&date);
+    struct tm* tm = ::localtime(&date);
     char sdate[20];
     ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
 

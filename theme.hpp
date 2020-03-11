@@ -48,8 +48,8 @@ public:
     THEME_ID_COUNT
   };
 
-  static int  current; // 0 | 8 | 256
-  static void set(unsigned int, const std::string&, short, short, unsigned int);
+  static int current; // 0 | 8 | 256
+  static void set(int, const std::string&, short, short, unsigned int);
   static unsigned int get(ThemeID);
   static void loadTheme(int);
 

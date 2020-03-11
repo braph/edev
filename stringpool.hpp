@@ -26,8 +26,8 @@ public:
   int          size()      const noexcept { return storage.size();       }
   int          capacity()  const noexcept { return storage.capacity();   }
   char*        data()            noexcept { return const_cast<char*>(storage.data()); }
-  void         resize(size_t n)  { storage.resize(n);  }
-  void         reserve(size_t n) { storage.reserve(n); }
+  void         resize(size_t n)           { storage.resize(n);  }
+  void         reserve(size_t n)          { storage.reserve(n); }
 
 private:
   std::string storage;
