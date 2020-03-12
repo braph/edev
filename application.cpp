@@ -251,19 +251,19 @@ HANDLE_KEY:
 }
 
 void Application :: cleanup_files() {
-  boost::system::error_code e;
-  for (auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
+  Filesystem::error_code e;
+  for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
     if (boost::algorithm::starts_with(f.path().filename().string(), "~ekto-"))
       Filesystem::remove(f.path(), e);
 }
 
 void Application :: printDBStats() {
   std::cerr << "Database statistics:\n";
-  for (auto table : database.tables) {
-    std::cerr << table->name << "(" << table->size() << "): ";
-    for (auto column : table->columns)
-      std::cerr << column->bits() << "|";
-    std::cerr << "\n";
+  for (const auto& table : database.tables) {
+    std::cerr << table->name << '(' << table->size() << "): ";
+    for (const auto& column : table->columns)
+      std::cerr << column->bits() << '|';
+    std::cerr << '\n';
   }
 }
 

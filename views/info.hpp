@@ -2,6 +2,7 @@
 #define _INFO_HPP
 
 #include "../ui.hpp"
+#include "../common.hpp"
 #include "../player.hpp"
 #include "../database.hpp"
 
@@ -27,10 +28,10 @@ private:
   using UrlAndTitle = std::pair<std::string, std::string>;
   UI::MouseEvents<UrlAndTitle> clickableURLs;
 
-  void drawLink(const std::string&, const std::string&);
-  void drawHeading(int, const char*);
-  void drawTag(int, const char*);
-  void drawInfo(int, const char*);
+  void drawLink(CString, CString);
+  void drawHeading(int, CString);
+  void drawTag(int, CString);
+  void drawInfo(int, CString);
 };
 
 } // namespace Views

@@ -45,28 +45,28 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   file_in_temp += track_file;
 
   if (force_download) {
-    boost::system::error_code e;
+    Filesystem::error_code e;
     Filesystem::remove(file_in_temp, e);
     Filesystem::remove(file_in_cache, e);
   }
 
   if (Filesystem::exists(file_in_temp)) {
-    std::cerr << " -> TEMP: " << file_in_temp << "\n";
+    std::cerr << " -> TEMP: " << file_in_temp << '\n';
     return file_in_temp.string();
   }
 
   if (Filesystem::exists(file_in_cache)) {
-    std::cerr << " -> CACHE: " << file_in_cache << "\n";
+    std::cerr << " -> CACHE: " << file_in_cache << '\n';
     return file_in_cache.string();
   }
 
   Ektoplayer::url_expand(track_url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
-  std::cerr << " -> DOWNLOAD: " << track_url << "\n";
+  std::cerr << " -> DOWNLOAD: " << track_url << '\n';
 
   FileDownload* fileDownload = new FileDownload(track_url, file_in_temp.string());
   fileDownload->onFinished = [=](Download& _dl, CURLcode curl_e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
-    boost::system::error_code e;
+    Filesystem::error_code e;
     if (curl_e == CURLE_OK && dl.httpCode() == 200) {
       if (Config::use_cache) {
         Filesystem::rename(dl.filename(), file_in_cache, e);

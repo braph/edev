@@ -6,7 +6,8 @@
 #include "common.hpp"
 #include "colors.hpp"
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp> // is_any_of()
 
 #include <fstream>
 #include <cinttypes>

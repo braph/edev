@@ -38,7 +38,7 @@ void TrackRenderer :: operator()(
   width = width - int(m_columns.size()) + 1;
   // Sum of all relative widths
   int _100Percent = 0;
-  for (const auto &column : m_columns) {
+  for (const auto& column : m_columns) {
     if (column.relative)
       // The sum of all relative columns should be 100, but may be another value
       _100Percent += column.size;
@@ -47,7 +47,7 @@ void TrackRenderer :: operator()(
       width -= column.size;
   }
 
-  for (const auto &column : m_columns) {
+  for (const auto& column : m_columns) {
     if (selection)
       wattrset(_win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
     else
@@ -104,7 +104,7 @@ bool Playlist :: handleKey(int key) {
        mainwindow.readline("Search: ", [&](const std::string& line, bool notEOF) {
            trackSearch.startSearch(this->playlist,
              [=](const Database::Tracks::Track& track) {
-                for (const auto &column : Config::playlist_columns)
+                for (const auto& column : Config::playlist_columns)
                   if (boost::algorithm::icontains(trackField(track, column.tag), line))
                     return true;
                 return false;

@@ -25,7 +25,7 @@ short Color :: parse(const std::string& color) {
   if (!color.empty() && isdigit(color[0]))
     return std::stoi(color);
 
-  for (const auto &it : colors)
+  for (const auto& it : colors)
     if (color == it.name)
       return it.value;
 
@@ -33,7 +33,7 @@ short Color :: parse(const std::string& color) {
 }
 
 std::string Color :: to_string(short color) {
-  for (const auto &it : colors)
+  for (const auto& it : colors)
     if (it.value == color)
       return it.name;
 

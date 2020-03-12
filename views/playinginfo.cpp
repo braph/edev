@@ -101,7 +101,7 @@ void PlayingInfo :: draw() {
 void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   size_t sum = 0;
 
-  for (const auto &fmt : format) {
+  for (const auto& fmt : format) {
     size_t len;
     if (fmt.text.length())
       len = mbstowcs(NULL, fmt.text.c_str(), 0);
@@ -111,7 +111,7 @@ void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
   }
 
   moveCursor(getcury(win), size.width/2 - int(sum/2));
-  for (const auto &fmt : format) {
+  for (const auto& fmt : format) {
     attrSet(UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())
       *this << toWideString(fmt.text);

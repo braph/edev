@@ -19,7 +19,7 @@ MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
 {
   readlineWidget.visible = false;
 
-  for (auto w : Config::main_widgets) {
+  for (const auto& w : Config::main_widgets) {
     /**/ if (w == "playinginfo")    addWidget(&playingInfo);
     else if (w == "progressbar")    addWidget(&progressBar);
     else if (w == "tabbar")         addWidget(&tabBar);
@@ -30,7 +30,7 @@ MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
 
   setCurrentIndex(indexOf(&windows));
 
-  for (auto w : Config::tabs_widgets) {
+  for (const auto& w : Config::tabs_widgets) {
     /**/ if (w == "splash")   windows.addWidget(&splash);
     else if (w == "playlist") windows.addWidget(&playlist);
     else if (w == "browser")  windows.addWidget(&playlist); /*TODO*/

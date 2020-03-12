@@ -7,18 +7,18 @@
   //HtmlDoc::readDoc("invalid document", NULL, NULL, XML_PARSE_COMPACT | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
 
 #ifdef TEST_XML
-#include <iostream>
-#include <cassert>
+#include "test.hpp"
 #define NOT_REACHED assert(!"Not reached")
+
 int main() {
   try {
-    XmlDoc::readDoc("invalid document", NULL, NULL, XML_PARSE_COMPACT | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+    Xml::readDoc("invalid document", NULL, NULL, XML_PARSE_COMPACT | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
     NOT_REACHED;
   } catch (...) { /* OK */ }
 
   std::string xml = "<doc><foo bar='baz' rofl='lol'></foo></doc>";
-  XmlDoc  doc = XmlDoc::readDoc(xml, NULL, NULL, XML_PARSE_COMPACT);
-  XmlNode node = doc.getRootElement();
+  Xml::Doc  doc = Xml::readDoc(xml, NULL, NULL, XML_PARSE_COMPACT);
+  Xml::Node node = doc.getRootElement();
 
   for (node = node.children(); node; node = node.next()) {
     std::cout << "node type is" << node.type() << std::endl;
@@ -27,14 +27,14 @@ int main() {
     std::string bar = "bar";
     std::cout << "lol:" << node[bar] << std::endl;
 
-    XmlAttribute attr = node.attributes();
+    Xml::Attribute attr = node.attributes();
     if (attr.valid()) {
-      std::cout << attr.name() << "=" << attr.value() << std::endl;
+      std::cout << attr.name() << '=' << attr.value() << std::endl;
     }
     attr = attr.next();
 
     if (attr.valid()) {
-      std::cout << attr.name() << "=" << attr.value() << std::endl;
+      std::cout << attr.name() << '=' << attr.value() << std::endl;
     }
   }
 
@@ -46,7 +46,7 @@ int main() {
     //  throw std::invalid_argument("THIS NODE HAS CHILDREN");
 
 
-  XmlDoc doc2 = XmlDoc::readHtmlFile("/tmp/ekt.html", NULL, 0);
+  Xml::Doc doc2 = Html::readDoc("/tmp/ekt.html", NULL, 0);
   XmlXPath xpath = doc2.xpath();
   XmlXPathResult res = xpath.query("//span[contains(@class, 'pages')]");
   std::cout << res.size() << std::endl;

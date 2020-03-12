@@ -8,7 +8,7 @@
 #include <iostream> // XXX
 #include <initializer_list>
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #define BITSOF(T)     (CHAR_BIT*sizeof(T))
 #define STRLEN(S)     (sizeof(S)-1)
@@ -22,21 +22,28 @@
  * String functions
  * ==========================================================================*/
 
-char* toNarrowChar(wchar_t);
+struct CString {
+  CString(const CString& s)     noexcept : _s(s._s) {}
+  CString(const char* s)        noexcept : _s(s) {}
+  CString(const std::string& s) noexcept : _s(s.c_str()) {}
+  operator const char*() const  noexcept { return _s; }
+private:
+  const char* _s;
+};
 
-wchar_t* toWideString(const char* s, size_t* len = NULL);
+struct CWString {
+  CWString(const CWString& s)     noexcept : _s(s._s) {}
+  CWString(const wchar_t* s)      noexcept : _s(s) {}
+  CWString(const std::wstring& s) noexcept : _s(s.c_str()) {}
+  operator const wchar_t*() const noexcept { return _s; }
+private:
+  const wchar_t* _s;
+};
 
-char* toNarrowString(const wchar_t* s, size_t* len = NULL);
-
-static inline wchar_t* toWideString(const std::string& s, size_t* len = NULL) {
-  return toWideString(s.c_str(), len);
-}
-
-static inline char* toNarrowString(const std::wstring& s, size_t* len = NULL) {
-  return toNarrowString(s.c_str(), len);
-}
-
-char* time_format(time_t t, const char* fmt);
+char*    toNarrowChar(wchar_t);
+wchar_t* toWideString(CString s, size_t* len = NULL);
+char*    toNarrowString(CWString s, size_t* len = NULL);
+char*    time_format(time_t t, const char* fmt);
 
 static inline const char* strMayNULL(const char* s) {
   return (s ? s : "");
@@ -76,9 +83,9 @@ static inline void open_image(const std::string& url) {
 }
 
 static inline void open_url(const std::string& url) {
-  if (boost::algorithm::iends_with(url, ".png") ||
-      boost::algorithm::iends_with(url, ".jpg") ||
-      boost::algorithm::iends_with(url, ".jpeg"))
+  if (boost::algorithm::iends_with(url, ".png")
+      || boost::algorithm::iends_with(url, ".jpg")
+      || boost::algorithm::iends_with(url, ".jpeg"))
     open_image(url);
   else
     if (fork() == 0) {

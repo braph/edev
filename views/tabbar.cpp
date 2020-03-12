@@ -52,7 +52,7 @@ void TabBar :: draw() {
       attrSet(Theme::get(Theme::TABBAR_UNSELECTED));
 
     addCh(' ');
-    addStr(label.c_str());
+    addStr(label);
   }
 }
 

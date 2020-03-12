@@ -3,21 +3,29 @@
 #include "common.hpp"
 #include "xml.hpp"
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 
 #include <string>
 #include <algorithm>    
 
+using boost::algorithm::trim;
+using boost::algorithm::trim_if;
+using boost::algorithm::split;
+using boost::algorithm::is_any_of;
+using boost::algorithm::erase_all;
+
 static inline size_t find_dash(const std::string& s, size_t &dash_len) {
   size_t pos;
-  for (const auto dash : { "–" /* Unicode (precedence!) */, "-" /* ASCII */ })
-    if (std::string::npos != (pos = s.find(dash))) {
-      dash_len = std::strlen(dash);
-      return pos;
-    }
-  return std::string::npos;
+  if ((pos = s.find("–")) != std::string::npos) // Unicode dash (precedence!)
+    dash_len = sizeof("–") - 1;
+  else if ((pos = s.find("-")) != std::string::npos) // ASCII dash
+    dash_len = 1;
+  return pos;
 }
 
 /* Taken and adapted from:
@@ -45,7 +53,7 @@ static std::string base64_decode(std::string input)
 }
 
 void BrowsePage :: parse_src(const std::string &src) {
-  XmlDoc doc = HtmlDoc::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
+  Xml::Doc doc = Html::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
   std::string result;
   std::vector<std::string> tracks;
@@ -69,21 +77,21 @@ void BrowsePage :: parse_src(const std::string &src) {
   }
 
   // Collect albums
-  for (auto post : xpath.query("//div[starts-with(@id, 'post-')]")) {
+  for (const auto& post : xpath.query("//div[starts-with(@id, 'post-')]")) {
     Album album;
 
     // Date
     result = xpath.query_string("string(.//span[@class = 'd']/text())", post);
     if (! result.empty()) {
       struct tm tm = {0,0,0,0,0,0,0,0,0,0,0};
-      ::strptime(result.c_str(), "%B %d, %Y", &tm);
+      ::strptime(result.c_str(), "%B %d, %Y", &tm); // TODO locale?
       album.date = ::mktime(&tm);
     }
 
     // Download count
     result = xpath.query_string("string(.//span[@class = 'dc']//strong/text())");
     if (! result.empty()) {
-      boost::algorithm::erase_all(result, ",");
+      erase_all(result, ",");
       album.download_count = std::atoi(result.c_str());
     }
 
@@ -94,7 +102,7 @@ void BrowsePage :: parse_src(const std::string &src) {
     album.votes  = std::atoi(strMayNULL(strongs[1].nearestContent()));
 
     // Styles
-    for (auto a : xpath.query(".//span[@class = 'style']//a", post)) {
+    for (const auto& a : xpath.query(".//span[@class = 'style']//a", post)) {
       std::string url = a["href"];
       if (! url.empty())
         album.styles.push_back(Style(std::move(url), a.nearestContent()));
@@ -104,7 +112,7 @@ void BrowsePage :: parse_src(const std::string &src) {
     album.description = xpath.query(".//p", post)[0].dump();
     album.description.erase(0, album.description.find('>')+1); // Remove first tag
     album.description.erase(album.description.rfind('<'));     // Remove last tag
-    boost::trim(album.description);
+    trim(album.description);
 
     // Cover URL
     album.cover_url = xpath.query(".//img[@class = 'cover']", post)[0]["src"];
@@ -113,10 +121,10 @@ void BrowsePage :: parse_src(const std::string &src) {
     auto a_title = xpath.query(".//h1/a", post)[0];
     album.url   = a_title["href"];
     album.title = a_title.nearestContent();
-    boost::trim(album.title);
+    trim(album.title);
 
     // Archive URLs (<span class="dll"><a href="...zip">MP3 Download</a>)
-    for (auto a : xpath.query(".//span[@class = 'dll']//a", post)) {
+    for (const auto& a : xpath.query(".//span[@class = 'dll']//a", post)) {
       std::string url = a["href"];
       if (! url.empty())
         album.archive_urls.push_back(std::move(url));
@@ -125,7 +133,7 @@ void BrowsePage :: parse_src(const std::string &src) {
     // Direct mp3 track URLs
     // <script type="text/javascript"> soundFile:"..."
     tracks.clear();
-    for (auto script : xpath.query(".//script", post)) {
+    for (const auto& script : xpath.query(".//script", post)) {
       const char *base64_begin, *base64_end;
       if (! (base64_begin = script.nearestContent()))
         continue;
@@ -139,7 +147,7 @@ void BrowsePage :: parse_src(const std::string &src) {
 
       result = std::string(base64_begin, size_t(base64_end-base64_begin));
       result = base64_decode(result);
-      boost::split(tracks, result, boost::is_any_of(","));
+      split(tracks, result, is_any_of(","));
 
       if (tracks.size())
         break;
@@ -157,9 +165,9 @@ void BrowsePage :: parse_src(const std::string &src) {
     // - There may be multiple tracklists (evidence url?)
     auto track_urls_iter = tracks.begin();
     auto track_urls_end  = tracks.end();
-    for (auto tracklist : xpath.query(".//div[@class = 'tl']", post)) {
+    for (const auto& tracklist : xpath.query(".//div[@class = 'tl']", post)) {
       Track track;
-      for (auto span : xpath.query(".//span", tracklist)) {
+      for (const auto& span : xpath.query(".//span", tracklist)) {
         switch (span["class"][0]) {
           case 'n':
             if (! track.url.empty()) {
@@ -175,15 +183,15 @@ void BrowsePage :: parse_src(const std::string &src) {
             break;
           case 't':
             track.title = strMayNULL(span.nearestContent());
-            boost::trim(track.title);
+            trim(track.title);
             break;
           case 'r':
             track.remix = strMayNULL(span.nearestContent());
-            boost::trim_if(track.remix, boost::is_any_of("\t ()"));
+            trim_if(track.remix, is_any_of("\t ()"));
             break;
           case 'a':
             track.artist = strMayNULL(span.nearestContent());
-            boost::trim(track.artist);
+            trim(track.artist);
             break;
           case 'd':
             const char* s = span.nearestContent(); // "(134 BPM)"
@@ -200,14 +208,14 @@ void BrowsePage :: parse_src(const std::string &src) {
 
     // Sometimes the track title is merged into the track artist.
     // ("artist - track") -> https://ektoplazm.com/free-music/gods-food
-    for (auto &track : album.tracks)
+    for (auto& track : album.tracks)
       if (track.title.empty()) {
         idx = find_dash(track.artist, dash_len);
         if (idx != std::string::npos) {
           track.title = track.artist.substr(idx + dash_len);
           track.artist.erase(idx);
-          boost::trim(track.title);
-          boost::trim(track.artist);
+          trim(track.title);
+          trim(track.artist);
         }
       }
 
@@ -216,14 +224,14 @@ void BrowsePage :: parse_src(const std::string &src) {
     if (idx != std::string::npos) {
       album.artist = album.title.substr(0, idx);
       album.title.erase(0, idx + dash_len);
-      boost::trim(album.title);
-      boost::trim(album.artist);
+      trim(album.title);
+      trim(album.artist);
     } else {
       album.artist = "Unknown Artist";
     }
 
     // Use album.artist if track.artist is empty
-    for (auto &track : album.tracks)
+    for (auto& track : album.tracks)
       if (track.artist.empty())
         track.artist = album.artist;
 

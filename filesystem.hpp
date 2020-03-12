@@ -7,6 +7,7 @@
 
 namespace Filesystem {
   using namespace boost::filesystem;
+  using boost::system::error_code;
 
   const char* home() noexcept;
   std::string expand(std::string) noexcept;

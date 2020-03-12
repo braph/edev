@@ -157,8 +157,14 @@ struct WidgetDrawable : public Widget {
   int addStr(const char* s) noexcept
   { return waddstr(win, s); }
 
+  int addStr(const std::string& s)
+  { return waddstr(win, s.c_str()); }
+
   int addStr(const wchar_t* s) noexcept
   { return waddwstr(win, s); }
+
+  int addStr(const std::wstring& s)
+  { return waddwstr(win, s.c_str()); }
 
   template<typename... Args>
   int printW(const char* fmt, Args... args) noexcept
@@ -171,8 +177,14 @@ struct WidgetDrawable : public Widget {
   int mvAddStr(int y, int x, const char* s) noexcept
   { return mvwaddstr(win, y, x, s); }
 
+  int mvAddStr(int y, int x, const std::string& s)
+  { return mvwaddstr(win, y, x, s.c_str()); }
+
   int mvAddStr(int y, int x, const wchar_t* s) noexcept
   { return mvwaddwstr(win, y, x, s); }
+
+  int mvAddStr(int y, int x, const std::wstring& s)
+  { return mvwaddwstr(win, y, x, s.c_str()); }
 
   int mvAddCh(int y, int x, chtype c) noexcept
   { return mvwaddch(win, y, x, c); }

@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 typedef const char* ccstr;
+typedef CString InStr;
 
 /* ============================================================================
  * Dumper / Loader
@@ -43,7 +44,7 @@ struct Dumper {
   { dump(BITSOF(T), v.size(), reinterpret_cast<char*>(v.data())); }
 
   void dump(Database::Table& t)
-  { for (auto col : t.columns) { dump(*col); } }
+  { for (const auto& col : t.columns) { dump(*col); } }
 
 private:
   std::ofstream& fs;
@@ -86,7 +87,7 @@ struct Loader {
   }
 
   void load(Database::Table& t)
-  { for (auto col : t.columns) { load(*col); } }
+  { for (const auto& col : t.columns) { load(*col); } }
 
 private:
   std::ifstream& fs;
@@ -135,7 +136,7 @@ Database :: Database()
     &pool_track_url, &pool_cover_url, &pool_archive_url})
 {
   // Records with ID 0 represent a NULL value. Create them here.
-  for (auto table : tables)
+  for (auto& table : tables)
     table->resize(1);
 
   assert(0 == styles.find("", true).id);
@@ -158,8 +159,8 @@ void Database :: load(const std::string& file) {
   if (check != DB_ABI_VERSION)
     throw std::runtime_error("Database ABI version mismatch");
 
-  for (auto p : pools)  l.load(*p);
-  for (auto t : tables) l.load(*t);
+  for (auto& p : pools)  l.load(*p);
+  for (auto& t : tables) l.load(*t);
 }
 
 void Database :: save(const std::string& file) {
@@ -169,8 +170,8 @@ void Database :: save(const std::string& file) {
   Dumper d(fs);
   d.dump(static_cast<uint16_t>(DB_ENDIANNESS_CHECK));
   d.dump(static_cast<uint16_t>(DB_ABI_VERSION));
-  for (auto p : pools)  d.dump(*p);
-  for (auto t : tables) d.dump(*t);
+  for (const auto& p : pools)  d.dump(*p);
+  for (const auto& t : tables) d.dump(*t);
 }
 
 void Database :: shrink_to_fit() {
@@ -184,7 +185,7 @@ void Database :: shrink_to_fit() {
   shrink_pool_to_fit(pool_meta, {&styles.name, &albums.title,
     &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
 
-  for (auto table : tables)
+  for (auto& table : tables)
     table->shrink_to_fit();
 }
 
@@ -200,7 +201,7 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 
   // Build the map used for remapping IDs, storing all IDs used in columns
   std::unordered_map<int, int> idRemap;
-  for (auto col : columns)
+  for (auto& col : columns)
     idRemap.reserve(col->size());
 
   for (auto col : columns)
@@ -219,11 +220,11 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
       [](const IDAndLength& a, const IDAndLength& b){ return a.length > b.length; });
 
   // Add strings in the right order to the stringpool and store the new ID
-  for (auto IDAndLength : idSortedByLength)
+  for (const auto& IDAndLength : idSortedByLength)
     idRemap[IDAndLength.id] = newPool.add(pool.get(IDAndLength.id));
 
   // Replace the IDs from the old pool by the IDs from the new pool
-  for (auto column : columns)
+  for (auto& column : columns)
     for (Column::iterator it = column->begin(); it != column->end(); ++it)
       *it = idRemap[*it];
     //for (auto& id : *column)
@@ -238,7 +239,7 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 
 /* Find a record by its URL or create one if it could not be found */
 template<typename TTable>
-static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, const char* url, bool create) {
+static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, InStr url, bool create) {
   if (!*url)
     return typename TTable::value_type(table.db, 0);
 
@@ -273,7 +274,7 @@ static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, 
 #define _ Database :: Styles :: Style // ======================================
 // ============================================================================
 
-STYLE Database::Styles::find(const char *url, bool create) {
+STYLE Database::Styles::find(InStr url, bool create) {
   return find_by_url(*this, db.pool_style_url, url, create);
 }
 
@@ -281,8 +282,8 @@ STYLE Database::Styles::find(const char *url, bool create) {
 ccstr   _::url()  const   { return STR_GET(style_url, db.styles.url[id]);  }
 ccstr   _::name() const   { return STR_GET(meta,      db.styles.name[id]); }
 // SETTER
-void    _::url(ccstr s)   { STR_SET(style_url, db.styles.url[id],  s);     }
-void    _::name(ccstr s)  { STR_SET(meta,      db.styles.name[id], s);     }
+void    _::url(InStr s)   { STR_SET(style_url, db.styles.url[id],  s);     }
+void    _::name(InStr s)  { STR_SET(meta,      db.styles.name[id], s);     }
 // INDEX
 DB::Field _::operator[](DB::ColumnID id) const {
   switch (static_cast<DB::StyleColumnID>(id)) {
@@ -299,7 +300,7 @@ DB::Field _::operator[](DB::ColumnID id) const {
 #define _ Database :: Albums :: Album // ======================================
 // ============================================================================
 
-ALBUM Database::Albums::find(const char *url, bool create) {
+ALBUM Database::Albums::find(InStr url, bool create) {
   return find_by_url(*this, db.pool_album_url, url, create);
 }
 
@@ -321,14 +322,14 @@ int    _::votes()            const { return db.albums.votes[id];                
 int    _::download_count()   const { return db.albums.download_count[id];                    }
 int    _::styles()           const { return db.albums.styles[id];                            }
 // SETTER
-void   _::url(ccstr s)              { STR_SET(album_url,    db.albums.url[id],         s);  }
-void   _::title(ccstr s)            { STR_SET(meta,         db.albums.title[id],       s);  }
-void   _::artist(ccstr s)           { STR_SET(meta,         db.albums.artist[id],      s);  }
-void   _::cover_url(ccstr s)        { STR_SET(cover_url,    db.albums.cover_url[id],   s);  }
-void   _::description(ccstr s)      { STR_SET(desc,         db.albums.description[id], s);  }
-void   _::archive_mp3_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s);  }
-void   _::archive_wav_url(ccstr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s);  }
-void   _::archive_flac_url(ccstr s) { STR_SET(archive_url,  db.albums.archive_flac[id], s); }
+void   _::url(InStr s)              { STR_SET(album_url,    db.albums.url[id],         s);  }
+void   _::title(InStr s)            { STR_SET(meta,         db.albums.title[id],       s);  }
+void   _::artist(InStr s)           { STR_SET(meta,         db.albums.artist[id],      s);  }
+void   _::cover_url(InStr s)        { STR_SET(cover_url,    db.albums.cover_url[id],   s);  }
+void   _::description(InStr s)      { STR_SET(desc,         db.albums.description[id], s);  }
+void   _::archive_mp3_url(InStr s)  { STR_SET(archive_url,  db.albums.archive_mp3[id], s);  }
+void   _::archive_wav_url(InStr s)  { STR_SET(archive_url,  db.albums.archive_wav[id], s);  }
+void   _::archive_flac_url(InStr s) { STR_SET(archive_url,  db.albums.archive_flac[id], s); }
 void   _::date(time_t t)            { db.albums.date[id]   = SHRINK_DATE(t);                }
 void   _::rating(float i)           { db.albums.rating[id] = i * 100;                       }
 void   _::votes(int i)              { db.albums.votes[id]  = i;                             }
@@ -367,7 +368,7 @@ DB::Field _::operator[](DB::ColumnID id) const {
 #define _ Database :: Tracks :: Track // ======================================
 // ============================================================================
 
-TRACK Database::Tracks::find(const char* url, bool create) {
+TRACK Database::Tracks::find(InStr url, bool create) {
   return find_by_url(*this, db.pool_track_url, url, create);
 }
 
@@ -381,10 +382,10 @@ int   _::bpm()      const { return db.tracks.bpm[id];                         }
 int   _::album_id() const { return db.tracks.album_id[id];                    }
 ALBUM _::album()    const { return db.albums[size_t(db.tracks.album_id[id])]; }
 // SETTER
-void  _::url(ccstr s)     { STR_SET(track_url, db.tracks.url[id],    s);  }
-void  _::title(ccstr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }
-void  _::artist(ccstr s)  { STR_SET(meta,      db.tracks.artist[id], s);  }
-void  _::remix(ccstr s)   { STR_SET(meta,      db.tracks.remix[id],  s);  }
+void  _::url(InStr s)     { STR_SET(track_url, db.tracks.url[id],    s);  }
+void  _::title(InStr s)   { STR_SET(meta,      db.tracks.title[id],  s);  }
+void  _::artist(InStr s)  { STR_SET(meta,      db.tracks.artist[id], s);  }
+void  _::remix(InStr s)   { STR_SET(meta,      db.tracks.remix[id],  s);  }
 void  _::number(int i)    { db.tracks.number[id] = i;                     }
 void  _::bpm(int i)       { db.tracks.bpm[id] = (i & 0xFF /* max 255 */); }
 void  _::album_id(int i)  { db.tracks.album_id[id] = i;                   }

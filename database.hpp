@@ -64,6 +64,7 @@
 class Database {
 public:
   typedef const char* ccstr;
+  typedef CString InStr;
 
   // === Column ===============================================================
   //using Column = std::vector<int>;
@@ -217,8 +218,8 @@ public:
       ccstr url()   const;
       ccstr name()  const;
       // SETTER
-      void  url(ccstr);
-      void  name(ccstr);
+      void  url(InStr);
+      void  name(InStr);
     };
 
     using value_type = Style;
@@ -228,7 +229,7 @@ public:
     value_type operator[](size_t id) { return value_type(db, id);      }
     iterator begin()                 { return iterator(*this, 1);      }
     iterator end()                   { return iterator(*this, size()); }
-    value_type find(const char *url, bool create);
+    value_type find(InStr url, bool create);
   };
 
   struct Albums : public Table {
@@ -268,14 +269,14 @@ public:
       int     download_count()     const;
       int     styles()             const;
       // SETTER
-      void    url(ccstr);
-      void    title(ccstr);
-      void    artist(ccstr);
-      void    cover_url(ccstr);
-      void    description(ccstr);
-      void    archive_mp3_url(ccstr);
-      void    archive_wav_url(ccstr);
-      void    archive_flac_url(ccstr);
+      void    url(InStr);
+      void    title(InStr);
+      void    artist(InStr);
+      void    cover_url(InStr);
+      void    description(InStr);
+      void    archive_mp3_url(InStr);
+      void    archive_wav_url(InStr);
+      void    archive_flac_url(InStr);
       void    date(time_t);
       void    rating(float);
       void    votes(int);
@@ -290,7 +291,7 @@ public:
     value_type operator[](size_t id) { return value_type(db, id);      }
     iterator begin()                 { return iterator(*this, 1);      }
     iterator end()                   { return iterator(*this, size()); }
-    value_type find(const char *url, bool create);
+    value_type find(InStr url, bool create);
   };
 
   struct Tracks : public Table {
@@ -317,10 +318,10 @@ public:
       int     album_id()    const;
       Albums::Album album() const;
       // SETTER
-      void    url(ccstr);
-      void    title(ccstr);
-      void    artist(ccstr);
-      void    remix(ccstr);
+      void    url(InStr);
+      void    title(InStr);
+      void    artist(InStr);
+      void    remix(InStr);
       void    number(int);
       void    bpm(int);
       void    album_id(int);
@@ -333,7 +334,7 @@ public:
     value_type operator[](size_t id) { return value_type(db, id);      }
     iterator begin()                 { return iterator(*this, 1);      }
     iterator end()                   { return iterator(*this, size()); }
-    value_type find(const char *url, bool create);
+    value_type find(InStr url, bool create);
   };
 
   /* ==========================================================================

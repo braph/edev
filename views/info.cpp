@@ -39,26 +39,26 @@ void Info :: setCurrentTrack(Database::Tracks::Track track) {
   }
 }
 
-void Info :: drawHeading(int y, const char* heading) {
+void Info :: drawHeading(int y, CString heading) {
   attrSet(Theme::get(Theme::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
 
-void Info :: drawTag(int y, const char* tag) {
+void Info :: drawTag(int y, CString tag) {
   attrSet(Theme::get(Theme::INFO_TAG));
   mvAddStr(y, START_TAG, tag);
   attrSet(Theme::get(Theme::INFO_VALUE));
   moveCursor(y, START_TAG_VALUE);
 }
 
-void Info :: drawInfo(int y, const char* info) {
+void Info :: drawInfo(int y, CString info) {
   attrSet(Theme::get(Theme::INFO_TAG));
   mvAddStr(y, START_INFO, toWideString(info));
   attrSet(Theme::get(Theme::INFO_VALUE));
   moveCursor(y, START_INFO_VALUE);
 }
 
-void Info :: drawLink(const std::string& url, const std::string &title) {
+void Info :: drawLink(CString url, CString title) {
   attrSet(Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
   addStr(toWideString(title));
@@ -111,8 +111,8 @@ void Info :: draw() {
   if (currentTrack) {
     std::string buffer;
 
-    auto track = currentTrack;
-    auto album = currentTrack.album();
+    const auto& track = currentTrack;
+    const auto& album = currentTrack.album();
 
     // Track ==================================================================
     drawHeading(y++, "Current track");
@@ -246,10 +246,10 @@ void Info :: draw() {
   // URLs ===================================================================
   drawHeading(y++, "URLs");
   int urlCount = clickableURLs.size();
-  for (auto event : clickableURLs) {
+  for (const auto& event : clickableURLs) {
     if (--urlCount >= 2) {
-      drawInfo(y++, event.data.second.c_str());
-      *this << toWideString(event.data.first.c_str());
+      drawInfo(y++, event.data.second);
+      *this << toWideString(event.data.first);
     }
   }
 

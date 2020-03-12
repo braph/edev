@@ -6,7 +6,7 @@
 #include "ektoplayer.hpp"
 #include "browsepage.hpp"
 
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/erase.hpp>
 
 #include <iostream>
 
@@ -14,18 +14,18 @@ struct Html2Markup {
   std::string result;
 
   static std::string convert(const std::string& html, const char* encoding) {
-    XmlDoc doc = HtmlDoc::readDoc(html.c_str(), NULL, encoding,
+    Xml::Doc doc = Html::readDoc(html, NULL, encoding,
         HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
-    XmlNode root = doc.getRootElement();
+    Xml::Node root = doc.getRootElement();
     Html2Markup p;
     p.result.reserve(html.size() / 4);
     p.parse(root);
     return p.result;
   }
 
-  void parse(const XmlNode& _node) {
+  void parse(const Xml::Node& _node) {
     const char* tag;
-    XmlNode node = _node;
+    Xml::Node node = _node;
 
     for (; node; node = node.next()) {
       switch (node.type()) {
@@ -85,13 +85,14 @@ static std::string makeMarkup(const std::string& description) {
   std::string s = Html2Markup::convert(description, "UTF-8");
 
   // Replace protected email links:
-  //  /cdn-cgi/l/email-protection#284b47444146684747474c06464d5c
-  const char* protectedLink = "[[/cdn-cgi/l/email";
+  //  [[/cdn-cgi/l/email-protection#284b47444146684747474c06464d5c]]
+  // by
+  //  [[@]]
   size_t pos = 0;
-  while (std::string::npos != (pos = s.find(protectedLink, pos))) {
+  while (std::string::npos != (pos = s.find("/cdn-cgi/l/email", pos))) {
     size_t end = s.find(']', pos);
     if (end != std::string::npos)
-      s.replace(pos, end-pos, "[[@");
+      s.replace(pos, end-pos, 1, '@');
   }
 
   // Removing `www.` *may* corrupt some URLs, but saves 20KB!
@@ -168,9 +169,9 @@ void Updater :: insert_album(Album& album) {
   Database::StylesArray albumStyleIDs;
   for (auto &style : album.styles) {
     Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL);
-    auto styleRecord = db.styles.find(style.url.c_str(), true);
+    auto styleRecord = db.styles.find(style.url, true);
     if (! *(styleRecord.name()))
-      styleRecord.name(style.name.c_str());
+      styleRecord.name(style.name);
     albumStyleIDs.push_back(styleRecord.id);
   }
   if (albumStyleIDs.size() > 3)
@@ -187,11 +188,11 @@ void Updater :: insert_album(Album& album) {
   clean_str(album.cover_url);
   clean_str(album.description);
 
-  auto albumRecord = db.albums.find(album.url.c_str(), true);
-  albumRecord.title(album.title.c_str());
-  albumRecord.artist(album.artist.c_str());
-  albumRecord.cover_url(album.cover_url.c_str());
-  albumRecord.description(album.description.c_str());
+  auto albumRecord = db.albums.find(album.url, true);
+  albumRecord.title(album.title);
+  albumRecord.artist(album.artist);
+  albumRecord.cover_url(album.cover_url);
+  albumRecord.description(album.description);
   albumRecord.date(album.date);
   albumRecord.rating(album.rating);
   albumRecord.votes(album.votes);
@@ -202,15 +203,15 @@ void Updater :: insert_album(Album& album) {
   for (auto &u : album.archive_urls) {
     if (std::string::npos != u.rfind("MP3.zip")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "MP3.zip");
-      albumRecord.archive_mp3_url(u.c_str());
+      albumRecord.archive_mp3_url(u);
     }
     else if (std::string::npos != u.rfind("WAV.rar")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "WAV.rar");
-      albumRecord.archive_wav_url(u.c_str());
+      albumRecord.archive_wav_url(u);
     }
     else if (std::string::npos != u.rfind("FLAC.zip")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "FLAC.zip");
-      albumRecord.archive_flac_url(u.c_str());
+      albumRecord.archive_flac_url(u);
     }
   }
 
@@ -221,11 +222,11 @@ void Updater :: insert_album(Album& album) {
     clean_str(track.artist);
     clean_str(track.remix);
 
-    auto trackRecord = db.tracks.find(track.url.c_str(), true);
+    auto trackRecord = db.tracks.find(track.url, true);
     trackRecord.album_id(albumRecord.id);
-    trackRecord.title(track.title.c_str());
-    trackRecord.artist(track.artist.c_str());
-    trackRecord.remix(track.remix.c_str());
+    trackRecord.title(track.title);
+    trackRecord.artist(track.artist);
+    trackRecord.remix(track.remix);
     trackRecord.number(track.number);
     trackRecord.bpm(track.bpm);
   }
@@ -278,7 +279,7 @@ int main() {
 #ifdef USE_FILESYSTEM
     std::cout << "Updating using filesystem ...\n";
     Updater u(db, downloads);
-    boost::system::error_code e;
+    Filesystem::error_code e;
 
     std::string src;
     for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {

@@ -5,6 +5,7 @@
 
 #include <ostream>
 #include <iterator>
+#include <functional>
 
 /* Make anything iterable that provides operator[].
  * - Returns TContainer::reference
@@ -58,7 +59,7 @@ public:
   { return static_cast<ptrdiff_t>(idx) + static_cast<ptrdiff_t>(it.idx); }
 
   inline friend std::ostream& operator<<(std::ostream& os, const iterator& it) {
-    os << "Iterator(" << it.idx << ")";
+    os << "Iterator(" << it.idx << ')';
     return os;
   }
 

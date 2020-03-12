@@ -59,7 +59,7 @@ void ReadlineWidget :: setPrompt(const std::string& s) {
 void ReadlineWidget :: draw() {
   clear();
   attrSet(0);
-  mvAddStr(0, 0, prompt.c_str());
+  mvAddStr(0, 0, prompt);
   int x = getcurx(win);
   addStr(rl_line_buffer);
   mvwchgat(win, 0, x + rl_point, 1, A_STANDOUT, 0, NULL);

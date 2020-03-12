@@ -12,19 +12,19 @@ GenericContainer :: GenericContainer()
 }
 
 void GenericContainer :: draw() {
-  for (auto w : _widgets)
+  for (const auto& w : _widgets)
     if (w->visible)
       w->draw();
 }
 
 void GenericContainer :: noutrefresh() {
-  for (auto w : _widgets)
+  for (const auto& w : _widgets)
     if (w->visible)
       w->noutrefresh();
 }
 
 bool GenericContainer :: handleMouse(MEVENT& m) {
-  for (auto w : _widgets)
+  for (const auto& w : _widgets)
     if (w->visible && w->handleMouse(m))
       return true;
   return false;
@@ -58,7 +58,7 @@ Widget* GenericContainer :: currentWidget() const {
 
 int GenericContainer :: indexOf(Widget* widget) const {
   int idx = 0;
-  for (auto w : _widgets) {
+  for (const auto& w : _widgets) {
     if (w == widget)
       return idx;
     ++idx;
@@ -93,7 +93,7 @@ void VerticalContainer :: layout(Pos pos, Size size) {
   this->pos  = pos;
   this->size = size;
 
-  for (auto w : _widgets)
+  for (const auto& w : _widgets)
     if (w->visible) {
       w->layout(pos, UI::Size(w->size.height, size.width));
       pos.y += w->size.height;
@@ -129,7 +129,7 @@ void StackedContainer :: layout(Pos pos, Size size) {
   this->pos  = pos;
   this->size = size;
 
-  for (auto w : _widgets)
+  for (const auto& w : _widgets)
     if (w->visible)
       w->layout(pos, size);
 }
