@@ -190,11 +190,9 @@ void Database :: shrink_to_fit() {
 }
 
 void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
-  std::cerr << " shrinking pool ...";
-  if (pool.isOptimized()) {
-    std::cerr << " already shrinked";
+  if (pool.isOptimized())
     return;
-  }
+  std::cerr << " shrinking pool ...";
 
   StringPool newPool;
   newPool.reserve(size_t(pool.size()));

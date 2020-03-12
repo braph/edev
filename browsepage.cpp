@@ -19,7 +19,7 @@ using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 using boost::algorithm::erase_all;
 
-static inline size_t find_dash(const std::string& s, size_t &dash_len) {
+static inline size_t find_dash(const std::string& s, size_t& dash_len) {
   size_t pos;
   if ((pos = s.find("–")) != std::string::npos) // Unicode dash (precedence!)
     dash_len = sizeof("–") - 1;
@@ -52,7 +52,7 @@ static std::string base64_decode(std::string input)
   }
 }
 
-void BrowsePage :: parse_src(const std::string &src) {
+void BrowsePage :: parse_src(const std::string& src) {
   Xml::Doc doc = Html::readDoc(src, NULL, NULL, HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
   auto xpath = doc.xpath();
   std::string result;
@@ -120,7 +120,7 @@ void BrowsePage :: parse_src(const std::string &src) {
     // Album title and URL
     auto a_title = xpath.query(".//h1/a", post)[0];
     album.url   = a_title["href"];
-    album.title = a_title.nearestContent();
+    album.title = a_title.allText();
     trim(album.title);
 
     // Archive URLs (<span class="dll"><a href="...zip">MP3 Download</a>)
@@ -182,20 +182,26 @@ void BrowsePage :: parse_src(const std::string &src) {
               track.url = std::move(*track_urls_iter++);
             break;
           case 't':
-            track.title = strMayNULL(span.nearestContent());
-            trim(track.title);
+            trim((track.title = span.allText()));
             break;
           case 'r':
-            track.remix = strMayNULL(span.nearestContent());
-            trim_if(track.remix, is_any_of("\t ()"));
+            trim_if((track.remix = span.allText()), is_any_of("\t ()"));
             break;
           case 'a':
-            track.artist = strMayNULL(span.nearestContent());
-            trim(track.artist);
+            trim((track.artist = span.allText()));
             break;
           case 'd':
-            const char* s = span.nearestContent(); // "(134 BPM)"
-            std::sscanf(strMayNULL(s), "%*[^0-9]%hd", &track.bpm);
+            const char* s = span.nearestContent();
+            if (s) {
+              if (std::strchr(s, ':')) { // "(4:32)"
+                short minutes = 0;
+                std::sscanf(s, "%*[^0-9]%hd:%hd", &minutes, &track.length);
+                track.length += minutes * 60;
+              }
+              else { // "(134 BPM)"
+                std::sscanf(strMayNULL(s), "%*[^0-9]%hd", &track.bpm);
+              }
+            }
             break;
         }
       }
@@ -204,7 +210,7 @@ void BrowsePage :: parse_src(const std::string &src) {
         album.tracks.push_back(std::move(track));
     }
 
-    size_t idx, dash_len;
+    size_t idx, dash_len = 0;
 
     // Sometimes the track title is merged into the track artist.
     // ("artist - track") -> https://ektoplazm.com/free-music/gods-food

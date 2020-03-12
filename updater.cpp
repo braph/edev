@@ -85,7 +85,7 @@ static std::string makeMarkup(const std::string& description) {
   std::string s = Html2Markup::convert(description, "UTF-8");
 
   // Replace protected email links:
-  //  [[/cdn-cgi/l/email-protection#284b47444146684747474c06464d5c]]
+  //  [[/cdn-cgi/l/email-protection#284b47444174...]]
   // by
   //  [[@]]
   size_t pos = 0;
@@ -183,16 +183,12 @@ void Updater :: insert_album(Album& album) {
   Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL);
   Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
   album.description = makeMarkup(album.description);
-  clean_str(album.title);
-  clean_str(album.artist);
-  clean_str(album.cover_url);
-  clean_str(album.description);
 
   auto albumRecord = db.albums.find(album.url, true);
-  albumRecord.title(album.title);
-  albumRecord.artist(album.artist);
-  albumRecord.cover_url(album.cover_url);
-  albumRecord.description(album.description);
+  albumRecord.title(clean_str(album.title));
+  albumRecord.artist(clean_str(album.artist));
+  albumRecord.cover_url(clean_str(album.cover_url));
+  albumRecord.description(clean_str(album.description));
   albumRecord.date(album.date);
   albumRecord.rating(album.rating);
   albumRecord.votes(album.votes);
@@ -218,15 +214,19 @@ void Updater :: insert_album(Album& album) {
   // Tracks ===================================================================
   for (auto &track : album.tracks) {
     Ektoplayer::url_shrink(track.url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
-    clean_str(track.title);
-    clean_str(track.artist);
-    clean_str(track.remix);
+
+    // The track URL is used as a primary key. If an album has only one file
+    // we need to create a unique URL for each track.
+    if (album.isSingleURL) {
+      track.url += ".mp3#";
+      track.url += std::to_string(track.number);
+    }
 
     auto trackRecord = db.tracks.find(track.url, true);
     trackRecord.album_id(albumRecord.id);
-    trackRecord.title(track.title);
-    trackRecord.artist(track.artist);
-    trackRecord.remix(track.remix);
+    trackRecord.title(clean_str(track.title));
+    trackRecord.artist(clean_str(track.artist));
+    trackRecord.remix(clean_str(track.remix));
     trackRecord.number(track.number);
     trackRecord.bpm(track.bpm);
   }
@@ -300,8 +300,8 @@ int main() {
   }
 
   { // Save the database and ensure that the amount of data is the same
-    size_t tracks_size     = db.tracks.size();
-    size_t albums_size     = db.albums.size();
+    size_t tracks_size = db.tracks.size();
+    size_t albums_size = db.albums.size();
     std::cout << "Inserted " << tracks_size << " tracks." << '\n';
     std::cout << "Inserted " << albums_size << " albums." << '\n';
     std::cout << "Saving database to " << TEST_DB << '\n';

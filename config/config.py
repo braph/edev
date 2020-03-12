@@ -110,11 +110,6 @@ options = [
         default: '"pulse,alsa,jack,oss"',
         help: 'Set output audio system. See option `-o` in mpg123(1)',
         }),
-    ('threads', {
-        type: 'int', set: 'opt_parse_threads',
-        default: '20',
-        help: 'Number of download threads during database update',
-        }),
     ('playlist.columns', {
         type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
         default: DEFAULT_PLAYLIST_COLUMNS,

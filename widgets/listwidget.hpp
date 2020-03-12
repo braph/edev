@@ -67,10 +67,10 @@ public:
   }
 
   void _clamp() {
-    m_cursor    = clamp(m_cursor,    0, max_cursor());
-    m_cursor    = clamp(m_cursor,    0, containerSize() - 1);
-    m_active    = clamp(m_active,   -1, containerSize() - 1);
-    m_selected  = clamp(m_selected,  0, containerSize() - 1);
+    m_cursor   = clamp(m_cursor,    0, max_cursor());
+    m_cursor   = clamp(m_cursor,    0, containerSize() - 1);
+    m_active   = clamp(m_active,   -1, containerSize() - 1);
+    m_selected = clamp(m_selected,  0, containerSize() - 1);
   }
 
   void draw() {

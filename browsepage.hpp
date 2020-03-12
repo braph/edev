@@ -26,10 +26,12 @@ struct Track {
   std::string artist;
   std::string remix;
   short       bpm;
+  short       length;
   short       number;
 
   Track()
   : bpm(0)
+  , length(0)
   , number(0)
   {}
 
@@ -39,7 +41,8 @@ struct Track {
       << artist << '|'
       << title  << '|'
       << remix  << '|'
-      << bpm    << '|'
+      << bpm    << " bpm|"
+      << length << " sec|"
       << url;
     return o.str();
   }

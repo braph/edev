@@ -24,15 +24,11 @@ char* toNarrowString(CWString s, size_t* len) {
   return buffer.narrow;
 }
 
-char* time_format(time_t t, const char* fmt) {
+char* time_format(time_t t, CString fmt) {
   struct tm* st = localtime(&t);
   strftime(buffer.narrow, ARRAY_SIZE(buffer.narrow), fmt, st);
   return buffer.narrow;
 }
 
 #ifdef TEST_COMMON
-#include "test.hpp"
-
-int main() {
-}
 #endif

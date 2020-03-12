@@ -1,6 +1,5 @@
 - Config: Themes set()
 - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
-- XML: text() -> alltext()
 - keybindings: ^R, maybe even F5 for reloading
 - keybindings: ^S for saving?
 - pads: fix mouse offset // ui.hpp mincol etc...
@@ -15,8 +14,6 @@
 - application.cpp
   - Preload playlist
   - What to do when the database has updated?
-- ui.cpp
-  - Maybe change storage type of Pos and Size to short?
 - downloads.cpp
   - Maybe add a --tries option to the Download base class?!
   - Micro optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)

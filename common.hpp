@@ -41,9 +41,9 @@ private:
 };
 
 char*    toNarrowChar(wchar_t);
-wchar_t* toWideString(CString s, size_t* len = NULL);
-char*    toNarrowString(CWString s, size_t* len = NULL);
-char*    time_format(time_t t, const char* fmt);
+wchar_t* toWideString(CString, size_t* len = NULL);
+char*    toNarrowString(CWString, size_t* len = NULL);
+char*    time_format(time_t, CString);
 
 static inline const char* strMayNULL(const char* s) {
   return (s ? s : "");

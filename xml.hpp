@@ -8,17 +8,16 @@
 
 #include <string>
 #include <iostream>
+#include <stdexcept>
 
-/* Very minimal OO interface to libxml2
+/* Very minimal OO interface to libxml2 - do not use! :D
  * - Function arguments are named as in original libxml
  * - ::xmlCleanupParser() has to be called
  */
 
 // TODO: disable copy constructors etc..
-// TODO: error handling?
-
-// operators: Node.iter_trailing()
-// operators: Node.iter_children()
+// TODO: Node.iter_trailing()
+// TODO: Node.iter_children()
 
 namespace Xml {
 
@@ -31,6 +30,16 @@ struct String {
   operator const xmlChar*() const noexcept { return reinterpret_cast<const xmlChar*>(_s); }
 private:
   const char* _s;
+};
+
+struct Error : public std::exception {
+  Error(xmlErrorPtr e) : _e(e) {}
+ ~Error() { xmlResetError(_e); }
+  const char* what()       const noexcept { return _e->message; }
+  operator xmlErrorPtr()   const noexcept { return _e; }
+  xmlErrorPtr operator->() const noexcept { return _e; }
+private:
+  xmlErrorPtr _e;
 };
 
 /* Object is bound to the lifetime of the Node that returned it. */
@@ -75,18 +84,21 @@ public:
   Node         children()      const { return Node(m_node->children);  }
   Attribute    attributes()    const { return Attribute(m_node->properties); }
 
+  // <currentNode><otherTags>bar</otherTags></currentNode>
+  //   ^--- nearestContent() -^
   const char* nearestContent() const {
-    const char* s = content();
-    if (s)
-      return s;
+    const char* s = NULL;
 
     for (Node node = children(); node; node = node.next())
       if ((s = node.content()))
         return s;
+      else if ((s = node.nearestContent()))
+        return s;
 
-    return NULL;
+    return s;
   }
 
+#if 0 // xmlNodeListGetString() == (m_node->content + overhead) ?!?!
   std::string text() const {
     std::string value;
     xmlChar* _ = ::xmlNodeListGetString(m_node->doc, m_node->xmlChildrenNode, 1);
@@ -94,6 +106,19 @@ public:
       value = reinterpret_cast<const char*>(_);
       ::xmlFree(_);
     }
+    return value;
+  }
+#endif
+
+  std::string allText() const {
+    std::string value;
+    for (Node node = children(); node; node = node.next())
+      if (node.type() == XML_TEXT_NODE) {
+        if (node.content())
+          value += node.content();
+      }
+      else
+        value += node.allText();
     return value;
   }
 
@@ -115,9 +140,8 @@ public:
     return value;
   }
 
-  void set_attribute(String name, String value) const {
-    ::xmlSetProp(m_node, name, value);
-  }
+  void set_attribute(String name, String value) const
+  { ::xmlSetProp(m_node, name, value); }
 
   std::string operator[](String name) const
   { return get_attribute(name); }
@@ -174,34 +198,34 @@ public:
   iterator end()   noexcept { return iterator(m_xpathobject, size()); }
 };
 
-class XmlXPath {
+class XPath {
 private:
   xmlXPathContextPtr m_xpathcontext;
 public:
-  XmlXPath(xmlDocPtr doc)
+  XPath(xmlDocPtr doc)
   : m_xpathcontext(::xmlXPathNewContext(doc)) {
   }
 
-  ~XmlXPath() {
+  ~XPath() {
     ::xmlXPathFreeContext(m_xpathcontext);
   }
 
   XPathResult query(String xpath) {
     xmlXPathObjectPtr _ = ::xmlXPathEvalExpression(xpath, m_xpathcontext);
-    //if (!_) { error; } XXX
+    if (!_) throw Error(xmlGetLastError());
     return XPathResult(_);
   }
 
   XPathResult query(String xpath, Node node) {
     xmlXPathObjectPtr _ = ::xmlXPathNodeEval(xmlNodePtr(node), xpath, m_xpathcontext);
-    //if (!_) { error; } XXX
+    if (!_) throw Error(xmlGetLastError());
     return XPathResult(_);
   }
 
   std::string query_string(String xpath) {
     std::string value;
     xmlXPathObjectPtr _ = ::xmlXPathEvalExpression(xpath, m_xpathcontext);
-    //if (!_) { error; }
+    if (!_) throw Error(xmlGetLastError());
     if (_->stringval)
       value = reinterpret_cast<const char*>(_->stringval);
     ::xmlXPathFreeObject(_);
@@ -211,18 +235,10 @@ public:
   std::string query_string(String xpath, Node node) {
     std::string value;
     xmlXPathObjectPtr _ = ::xmlXPathNodeEval(xmlNodePtr(node), xpath, m_xpathcontext);
-    if (! _) {
-      xmlErrorPtr e = xmlGetLastError();
-      throw std::invalid_argument(e->str1);
-      throw std::invalid_argument(e->message);
-    }
-    else {
-      //XXX std::cout << _->type << std::endl;
-      if (_->stringval)
-        value = reinterpret_cast<const char*>(_->stringval);
-
-      ::xmlXPathFreeObject(_);
-    }
+    if (!_) throw Error(xmlGetLastError());
+    if (_->stringval)
+      value = reinterpret_cast<const char*>(_->stringval);
+    ::xmlXPathFreeObject(_);
     return value;
   }
 };
@@ -252,36 +268,36 @@ public:
     return Node(::xmlDocGetRootElement(m_doc));
   }
 
-  XmlXPath xpath() const {
-    return XmlXPath(m_doc);
+  XPath xpath() const {
+    return XPath(m_doc);
   }
 };
 
 static Doc readDoc(String cur, String URL = NULL, String encoding = NULL, int options = 0) {
   xmlDocPtr doc = ::xmlReadDoc(cur, URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
 static Doc readFile(String URL, String encoding = NULL, int options = 0) {
   xmlDocPtr doc = ::xmlReadFile(URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
 static Doc readMemory(String buffer, int size, String URL, String encoding, int options = 0) {
   xmlDocPtr doc = ::xmlReadMemory(buffer, size, URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
 static Doc readFd(int fd, String URL, String encoding, int options = 0) {
   xmlDocPtr doc = ::xmlReadFd(fd, URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
@@ -291,32 +307,33 @@ namespace Html {
 
 using Xml::Doc;
 using Xml::String;
+using Xml::Error;
 
 static Doc readFile(String url, String encoding = NULL, int options = 0) {
   xmlDocPtr doc = ::htmlReadFile(url, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
 static Doc readDoc(String cur, String URL = NULL, String encoding = NULL, int options = 0) {
   xmlDocPtr doc = ::htmlReadDoc(cur, URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
 static Doc readMemory(String buffer, int size, String URL, String encoding, int options = 0) {
   xmlDocPtr doc = ::htmlReadMemory(buffer, size, URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
 static Doc readFd(int fd, String URL, String encoding, int options = 0) {
   xmlDocPtr doc = ::htmlReadFd(fd, URL, encoding, options);
   if (! doc)
-    throw std::invalid_argument("Could not parse XML");
+    throw Error(xmlGetLastError());
   return Doc(doc);
 }
 

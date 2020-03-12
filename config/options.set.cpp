@@ -1,4 +1,3 @@
-else if (option == "threads") threads = opt_parse_threads(value);
 else if (option == "log_file") log_file = Filesystem::expand(value);
 else if (option == "prefetch") prefetch = opt_parse_bool(value);
 else if (option == "temp_dir") temp_dir = Filesystem::expand(value);

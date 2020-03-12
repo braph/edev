@@ -1,4 +1,3 @@
-extern int threads;
 extern int use_colors;
 extern int small_update_pages;
 extern int playlist_load_newest;

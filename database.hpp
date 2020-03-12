@@ -184,7 +184,7 @@ public:
     , db(db)
     , columns(columns) { }
 
-    size_t  size()              { return columns[0]->size();                 }
+    size_t  size()        const { return columns[0]->size();                 }
     void    resize(size_t n)    { for (auto c : columns) c->resize(n);       }
     void    reserve(size_t n)   { for (auto c : columns) c->reserve(n);      }
     void    shrink_to_fit()     { for (auto c : columns) c->shrink_to_fit(); }
@@ -372,9 +372,9 @@ public:
   };
 
   class Where {
-    ColumnID     column;
-    Operator     op;
-    Field        field;
+    ColumnID column;
+    Operator op;
+    Field    field;
   public:
     Where(ColumnID column, Operator op, int value)
     : column(column), op(op), field(value) {}
@@ -403,18 +403,18 @@ public:
    * Database members and methods
    * ========================================================================*/
 
-  Styles      styles;
-  Albums      albums;
-  Tracks      tracks;
+  Styles styles;
+  Albums albums;
+  Tracks tracks;
   std::array<Table*, 3> tables;
 
-  StringPool  pool_meta;
-  StringPool  pool_desc;
-  StringPool  pool_style_url;
-  StringPool  pool_album_url;
-  StringPool  pool_track_url;
-  StringPool  pool_cover_url;
-  StringPool  pool_archive_url;
+  StringPool pool_meta;
+  StringPool pool_desc;
+  StringPool pool_style_url;
+  StringPool pool_album_url;
+  StringPool pool_track_url;
+  StringPool pool_cover_url;
+  StringPool pool_archive_url;
   std::array<StringPool*, 7> pools;
 
   Database();

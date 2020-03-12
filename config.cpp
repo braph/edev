@@ -52,13 +52,6 @@ static int opt_parse_use_colors(const std::string &s) {
   throw std::invalid_argument("expected auto|mono|8|256");
 }
 
-static int opt_parse_threads(const std::string &s) {
-  int i = opt_parse_int(s);
-  if (i < 1)
-    throw std::invalid_argument("integer must be > 1");
-  return i;
-}
-
 static std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
@@ -77,16 +70,10 @@ static std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   return widgets;
 }
 
-// OLD STUFF
 static inline const char* skipWhitespace(const char *s) {
   while (*s && (*s == ' ' || *s == '\t')) { ++s; }
   return s;
 }
-#if 0
-static inline const char* skipWhitespace(const char *s) {
-  return s + std::strspn(s, " \t");
-}
-#endif
 
 struct AttributeParser {
   const char* s;
@@ -99,9 +86,9 @@ struct AttributeParser {
     std::string* current = &name;
     s = skipWhitespace(s);
     for (; *s; ++s) {
-      if (*s == ',' || isspace(*s))   { break;                  }
-      else if (*s == '=')             { current = &value;       }
-      else                            { current->push_back(*s); }
+      if (*s == ',' || isspace(*s)) { break;                  }
+      else if (*s == '=')           { current = &value;       }
+      else                          { current->push_back(*s); }
     }
 
     return !name.empty();
@@ -162,7 +149,7 @@ struct FormatParser {
   }
 };
 
-static PlaylistColumns opt_parse_playlist_columns(const std::string &s) { // XXX?MOCKUP
+static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
   PlaylistColumns result;
   FormatParser formatParser(s);
   while (formatParser.next()) {
@@ -188,7 +175,7 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) { // XXX
     if (! fmt.size)
       throw std::invalid_argument(formatParser.text + ": Missing column size");
 
-    result.push_back(fmt);
+    result.push_back(std::move(fmt));
   }
 
   return result;
@@ -209,12 +196,12 @@ static PlayingInfoFormat opt_parse_playinginfo_format(const std::string& s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.name == "fg")   fmt.fg = UI::Color::parse(attr.value);
-      else if (attr.name == "bg")   fmt.bg = UI::Color::parse(attr.value);
+      /**/ if (attr.name == "fg")  fmt.fg = UI::Color::parse(attr.value);
+      else if (attr.name == "bg")  fmt.bg = UI::Color::parse(attr.value);
       else fmt.attributes |= UI::Attribute::parse(attr.name);
     }
 
-    result.push_back(fmt);
+    result.push_back(std::move(fmt));
   }
 
   return result;

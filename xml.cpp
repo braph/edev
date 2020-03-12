@@ -1,59 +1,61 @@
 #include "xml.hpp"
 
-//      throw std::invalid_argument("XML misses root element");
-//      throw std::invalid_argument("XML has no children");
-
-  //  xmlDoc  *m_doc = htmlReadFile("/tmp/ekt.html", NULL, 0);
-  //HtmlDoc::readDoc("invalid document", NULL, NULL, XML_PARSE_COMPACT | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+// XML_PARSE_COMPACT | XML_PARSE_NOERROR | XML_PARSE_NOWARNING
 
 #ifdef TEST_XML
 #include "test.hpp"
-#define NOT_REACHED assert(!"Not reached")
+
+using std::cout;
+using std::endl;
+static void errorHandler(void*, const char*, ...) {}
+const std::string xml = "<doc><foo bar='baz' rofl='lol'><a>Text1</a> <a>Text2</a></foo></doc>";
 
 int main() {
-  try {
-    Xml::readDoc("invalid document", NULL, NULL, XML_PARSE_COMPACT | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
-    NOT_REACHED;
-  } catch (...) { /* OK */ }
+  TEST_BEGIN();
+  xmlSetGenericErrorFunc(NULL, errorHandler);
 
-  std::string xml = "<doc><foo bar='baz' rofl='lol'></foo></doc>";
+  except( Xml::readDoc("invalid document", NULL, NULL, 0) );
+
   Xml::Doc  doc = Xml::readDoc(xml, NULL, NULL, XML_PARSE_COMPACT);
   Xml::Node node = doc.getRootElement();
 
-  for (node = node.children(); node; node = node.next()) {
-    std::cout << "node type is" << node.type() << std::endl;
+  Xml::XPath xpath = doc.xpath();
 
-    std::cout << "lol:" << node["bar"] << std::endl;
+  try { xpath.query("["); } catch (const Xml::Error& e) {
+    cout << e.what() << e->code << endl;
+  }
+
+  for (node = node.children(); node; node = node.next()) {
+    cout << "node type is" << node.type() << endl;
+
+    cout << "lol:" << node["bar"] << endl;
     std::string bar = "bar";
-    std::cout << "lol:" << node[bar] << std::endl;
+    cout << "lol:" << node[bar] << endl;
 
     Xml::Attribute attr = node.attributes();
     if (attr.valid()) {
-      std::cout << attr.name() << '=' << attr.value() << std::endl;
+      cout << attr.name() << '=' << attr.value() << endl;
     }
     attr = attr.next();
 
     if (attr.valid()) {
-      std::cout << attr.name() << '=' << attr.value() << std::endl;
+      cout << attr.name() << '=' << attr.value() << endl;
     }
   }
 
-    //if (node->type != XML_ELEMENT_NODE)
-    //  continue;
-      //throw std::invalid_argument("THIS IS NOT A ELEMENT NODE");
+  cout << "alltext=" << doc.getRootElement().allText() << "<" << endl;
+  cout << "content=" << doc.getRootElement().nearestContent() << "<" << endl;
 
-    //if (node->children)
-    //  throw std::invalid_argument("THIS NODE HAS CHILDREN");
-
-
+#if 0
   Xml::Doc doc2 = Html::readDoc("/tmp/ekt.html", NULL, 0);
   XmlXPath xpath = doc2.xpath();
   XmlXPathResult res = xpath.query("//span[contains(@class, 'pages')]");
-  std::cout << res.size() << std::endl;
+  cout << res.size() << endl;
   XmlNode node2 = res[0];
-  std::cout << node2.text() << std::endl;
+  cout << node2.text() << endl;
+#endif
 
-  return 0;
+  TEST_END();
 }
 #endif
 

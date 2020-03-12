@@ -107,16 +107,16 @@ class StaticVector {
   size_t _size;
 public:
   StaticVector() : _size(0) {}
-  bool     empty()     const     { return _size == 0;      }
-  size_t   size()      const     { return _size;           }
-  size_t   max_size()  const     { return N;               }
-  size_t   capacity()  const     { return N;               }
-  T*       begin()               { return &_data[0];       }
-  T*       end()                 { return &_data[size()];  }
-  T&       operator[](size_t i)  { return _data[i];        }
-  T&       front()               { return _data[0];        }
-  T&       back()                { return _data[size()-1]; }
-  T*       data()                { return &_data[0];       }
+  bool     empty()         const noexcept { return _size == 0;      }
+  size_t   size()          const noexcept { return _size;           }
+  size_t   max_size()      const noexcept { return N;               }
+  size_t   capacity()      const noexcept { return N;               }
+  T*       begin()               noexcept { return &_data[0];       }
+  T*       end()                 noexcept { return &_data[size()];  }
+  T&       operator[](size_t i)  noexcept { return _data[i];        }
+  T&       front()               noexcept { return _data[0];        }
+  T&       back()                noexcept { return _data[size()-1]; }
+  T*       data()                noexcept { return &_data[0];       }
 
   template<typename TIterator>
   StaticVector(TIterator beg, TIterator end) : _size(0) {
