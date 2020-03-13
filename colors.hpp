@@ -1,10 +1,9 @@
-#ifndef _COLORS_HPP
-#define _COLORS_HPP
+#ifndef UI_COLORS_HPP
+#define UI_COLORS_HPP
 
 #include CURSES_INC
 
 #include <vector>
-#include <utility>
 #include <string>
 #include <cstdint>
 

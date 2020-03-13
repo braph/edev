@@ -1,5 +1,5 @@
-#ifndef _PIPESTREAM_HPP
-#define _PIPESTREAM_HPP
+#ifndef PIPESTREAM_HPP
+#define PIPESTREAM_HPP
 
 #include <unistd.h>
 

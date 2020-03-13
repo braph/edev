@@ -1,5 +1,5 @@
-#ifndef _XML_HPP
-#define _XML_HPP
+#ifndef XML_HPP
+#define XML_HPP
 
 #include <libxml/parser.h>
 #include <libxml/HTMLparser.h>

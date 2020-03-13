@@ -1,5 +1,5 @@
-#ifndef _STRPOOL_HPP
-#define _STRPOOL_HPP
+#ifndef STRINGPOOL_HPP
+#define STRINGPOOL_HPP
 
 #include <string>
 

@@ -1,5 +1,5 @@
-#ifndef _EKTOPLAYER_HPP
-#define _EKTOPLAYER_HPP
+#ifndef EKTOPLAYER_HPP
+#define EKTOPLAYER_HPP
 
 #include "filesystem.hpp"
 

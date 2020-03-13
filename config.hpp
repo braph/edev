@@ -1,5 +1,5 @@
-#ifndef _CONFIG_HPP
-#define _CONFIG_HPP
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
 #include "views/playlist.hpp"
 #include "views/playinginfo.hpp"

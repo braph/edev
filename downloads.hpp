@@ -1,5 +1,5 @@
-#ifndef _DOWNLOADS_HPP
-#define _DOWNLOADS_HPP
+#ifndef DOWNLOADS_HPP
+#define DOWNLOADS_HPP
 
 #include <curl/curl.h>
 

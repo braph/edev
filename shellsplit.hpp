@@ -1,5 +1,5 @@
-#ifndef _SHELLSPLIT_HPP
-#define _SHELLSPLIT_HPP
+#ifndef SHELLSPLIT_HPP
+#define SHELLSPLIT_HPP
 
 #include <string>
 #include <vector>

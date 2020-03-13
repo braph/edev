@@ -1,5 +1,5 @@
-#ifndef _COMMON_HPP
-#define _COMMON_HPP
+#ifndef COMMON_HPP
+#define COMMON_HPP
 
 #include <string>
 #include <ctime>

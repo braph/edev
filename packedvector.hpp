@@ -1,5 +1,5 @@
-#ifndef _PACKED_VECTOR_HPP
-#define _PACKED_VECTOR_HPP
+#ifndef PACKED_VECTOR_HPP
+#define PACKED_VECTOR_HPP
 
 #include "common.hpp"
 #include "generic.hpp"

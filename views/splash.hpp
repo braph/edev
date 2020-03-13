@@ -1,5 +1,5 @@
-#ifndef _SPLASH_HPP
-#define _SPLASH_HPP
+#ifndef VIEWS_SPLASH_HPP
+#define VIEWS_SPLASH_HPP
 
 #include "../ui.hpp"
 

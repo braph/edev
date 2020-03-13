@@ -1,5 +1,5 @@
-#ifndef _BROWSEPAGE_HPP
-#define _BROWSEPAGE_HPP
+#ifndef BROWSEPAGE_HPP
+#define BROWSEPAGE_HPP
 
 #include <ctime>
 #include <vector>

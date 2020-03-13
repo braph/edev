@@ -1,5 +1,5 @@
-#ifndef _THEME_CPP
-#define _THEME_CPP
+#ifndef THEME_HPP
+#define THEME_HPP
 
 #include <string>
 

@@ -1,5 +1,5 @@
-#ifndef _BINDINGS_HPP
-#define _BINDINGS_HPP
+#ifndef BINDINGS_HPP
+#define BINDINGS_HPP
 
 #include CURSES_INC
 

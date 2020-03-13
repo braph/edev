@@ -1,5 +1,5 @@
-#ifndef _GENERIC_HPP
-#define _GENERIC_HPP
+#ifndef GENERIC_HPP
+#define GENERIC_HPP
 
 #include "common.hpp"
 

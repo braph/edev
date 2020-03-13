@@ -1,5 +1,5 @@
-#ifndef _PROGRESSBAR_HPP
-#define _PROGRESSBAR_HPP
+#ifndef VIEWS_PROGRESSBAR_HPP
+#define VIEWS_PROGRESSBAR_HPP
 
 #include "../ui.hpp"
 

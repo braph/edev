@@ -1,5 +1,5 @@
-#ifndef _UI_HPP
-#define _UI_HPP
+#ifndef UI_HPP
+#define UI_HPP
 
 #include "common.hpp"
 

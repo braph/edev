@@ -1,5 +1,5 @@
-#ifndef _CONTAINER_HPP
-#define _CONTAINER_HPP
+#ifndef UI_CONTAINER_HPP
+#define UI_CONTAINER_HPP
 
 #include "../ui.hpp"
 #include <vector>

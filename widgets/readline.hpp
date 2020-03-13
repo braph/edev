@@ -1,5 +1,5 @@
-#ifndef _READLINE_WIDGET_CPP
-#define _READLINE_WIDGET_CPP
+#ifndef WIDGETS_READLINE_HPP
+#define WIDGETS_READLINE_HPP
 
 #include "../ui.hpp"
 

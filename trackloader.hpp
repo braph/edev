@@ -1,5 +1,5 @@
-#ifndef _TRACKLOADER_HPP
-#define _TRACKLOADER_HPP
+#ifndef TRACKLOADER_HPP
+#define TRACKLOADER_HPP
 
 class Downloads;
 #include "database.hpp"

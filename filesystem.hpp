@@ -1,5 +1,5 @@
-#ifndef _FILESYSTEM_HPP
-#define _FILESYSTEM_HPP
+#ifndef FILESYSTEM_HPP
+#define FILESYSTEM_HPP
 
 #include <boost/filesystem.hpp>
 

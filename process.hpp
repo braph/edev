@@ -1,5 +1,5 @@
-#ifndef _PROCESS_HPP
-#define _PROCESS_HPP
+#ifndef PROCESS_HPP
+#define PROCESS_HPP
 
 #include "pipestream.hpp"
 

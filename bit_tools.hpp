@@ -1,5 +1,5 @@
-#ifndef _BIT_TOOLS_HPP
-#define _BIT_TOOLS_HPP
+#ifndef BIT_TOOLS_HPP
+#define BIT_TOOLS_HPP
 
 // Unsigned ===================================================================
 static inline int bitlength(unsigned long long n) {

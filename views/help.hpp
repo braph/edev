@@ -1,5 +1,5 @@
-#ifndef _HELP_HPP
-#define _HELP_HPP
+#ifndef VIEWS_HELP_HPP
+#define VIEWS_HELP_HPP
 
 #include "../ui.hpp"
 

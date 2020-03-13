@@ -1,5 +1,5 @@
-#ifndef _MPG123_PLAYER_HPP
-#define _MPG123_PLAYER_HPP
+#ifndef MPG123_PLAYER_HPP
+#define MPG123_PLAYER_HPP
 
 #include <string>
 #include <cstdint>
