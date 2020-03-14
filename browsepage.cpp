@@ -141,8 +141,7 @@ void BrowsePage :: parse_src(const std::string& src) {
         continue;
       if (! (base64_begin = std::strchr(base64_begin, '"')))
         continue;
-      base64_begin++;
-      if (! (base64_end = std::strchr(base64_begin, '"')))
+      if (! (base64_end = std::strchr(++base64_begin, '"')))
         continue;
 
       result = std::string(base64_begin, size_t(base64_end-base64_begin));
@@ -248,7 +247,6 @@ void BrowsePage :: parse_src(const std::string& src) {
 
 #ifdef TEST_BROWSEPAGE
 int main() {
-  // Testing of BrowsePage is done in Updater class
   return 0;
 }
 #endif

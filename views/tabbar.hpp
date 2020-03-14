@@ -1,5 +1,5 @@
-#ifndef VIEWS_TABBAR_CPP
-#define VIEWS_TABBAR_CPP
+#ifndef VIEWS_TABBAR_HPP
+#define VIEWS_TABBAR_HPP
 
 #include "../ui.hpp"
 

@@ -32,6 +32,7 @@ application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME
 clean:
 	rm -f {views,ui,widgets,.}/*.o
 	rm -f {views,ui,widgets,.}/*.gch
+	rm -f a.out
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@

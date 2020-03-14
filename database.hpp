@@ -79,12 +79,13 @@ enum ColumnID {
 };
 
 enum StyleColumnID {
-  STYLE_URL = COLUMN_NONE + 1,
+  STYLE_URL = 1,
   STYLE_NAME,
+  STYLE_ENUM_END
 };
 
 enum AlbumColumnID {
-  ALBUM_URL = STYLE_NAME + 1,
+  ALBUM_URL = STYLE_ENUM_END,
   ALBUM_TITLE,
   ALBUM_ARTIST,
   ALBUM_STYLES,
@@ -97,15 +98,17 @@ enum AlbumColumnID {
   ALBUM_RATING,
   ALBUM_VOTES,
   ALBUM_DOWNLOAD_COUNT,
+  ALBUM_ENUM_END
 };
 
 enum TrackColumnID {
-  TRACK_URL = ALBUM_DOWNLOAD_COUNT + 1,
+  TRACK_URL = ALBUM_ENUM_END,
   TRACK_TITLE,
   TRACK_ARTIST,
   TRACK_REMIX,
   TRACK_NUMBER,
   TRACK_BPM,
+  TRACK_ENUM_END
 };
 
 static ColumnID columnIDFromStr(const std::string &s) { //XXX make array
@@ -188,7 +191,7 @@ struct Table {
 template<typename TablePointer>
 struct Record {
   TablePointer table;
-  size_t    id;
+  size_t id;
   Record() : table(NULL), id(0) {}
   Record(TablePointer t, size_t id) : table(t), id(id) {}
   operator bool()                     const noexcept { return id != 0;      }
