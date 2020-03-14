@@ -194,7 +194,7 @@ struct Record {
   operator bool()                     const noexcept { return id != 0;      }
   bool operator!=(const Record &rhs)  const noexcept { return id != rhs.id; }
   bool operator==(const Record &rhs)  const noexcept { return id == rhs.id; }
-  Record& operator=(const Record &rhs)      { id = rhs.id; table = rhs.table; return *this; }
+  Record& operator=(const Record &rhs) { id = rhs.id; table = rhs.table; return *this; }
 };
 
 /* ==========================================================================
@@ -233,11 +233,11 @@ struct Styles : public Table {
 
     // GETTER
     Field operator[](ColumnID) const;
-    ccstr url()  const  { return table->url.get(id);  }
-    ccstr name() const  { return table->name.get(id); }
+    ccstr url()  const noexcept { return table->url.get(id);  }
+    ccstr name() const noexcept { return table->name.get(id); }
     // SETTER
-    void  url(InStr s)  { table->url.set(id, s);      }
-    void  name(InStr s) { table->name.set(id, s);     }
+    void  url(InStr s)          { table->url.set(id, s);      }
+    void  name(InStr s)         { table->name.set(id, s);     }
   };
 
   using value_type = Style;
@@ -267,7 +267,7 @@ struct Albums : public Table {
 
   Albums(Database &db, StringPool& pool_album_url, StringPool& pool_cover_url, StringPool& pool_archive_url, StringPool& pool_desc, StringPool& pool_meta)
   : Table("albums", db,
-    {&url,&title,&artist,&cover_url,&description,&date,&rating, &votes,
+    {&url,&title,&artist,&cover_url,&description,&date,&rating,&votes,
       &download_count,&styles,&archive_mp3,&archive_wav,&archive_flac})
   , url(pool_album_url)
   , title(pool_meta)
@@ -352,22 +352,22 @@ struct Tracks : public Table {
 
     // GETTER
     Field operator[](ColumnID) const;
-    ccstr url()      const { return table->url.get(id);                     }
-    ccstr title()    const { return table->title.get(id);                   }
-    ccstr artist()   const { return table->artist.get(id);                  }
-    ccstr remix()    const { return table->remix.get(id);                   }
-    int   number()   const { return table->number[id];                      }
-    int   bpm()      const { return table->bpm[id];                         }
-    int   album_id() const { return table->album_id[id];                    }
-    Albums::Album album() const;
+    ccstr url()      const noexcept { return table->url.get(id);        }
+    ccstr title()    const noexcept { return table->title.get(id);      }
+    ccstr artist()   const noexcept { return table->artist.get(id);     }
+    ccstr remix()    const noexcept { return table->remix.get(id);      }
+    int   number()   const noexcept { return table->number[id];         }
+    int   bpm()      const noexcept { return table->bpm[id];            }
+    int   album_id() const noexcept { return table->album_id[id];       }
+    Albums::Album album() const noexcept;
     // SETTER
-    void  url(InStr s)     { table->url.set(id, s);                         }
-    void  title(InStr s)   { table->title.set(id, s);                       }
-    void  artist(InStr s)  { table->artist.set(id, s);                      }
-    void  remix(InStr s)   { table->remix.set(id, s);                       }
-    void  number(int i)    { table->number[id] = i;                         }
-    void  bpm(int i)       { table->bpm[id] = (i & 0xFF /* max 255 */);     }
-    void  album_id(int i)  { table->album_id[id] = i;                       }
+    void  url(InStr s)     { table->url.set(id, s);                     }
+    void  title(InStr s)   { table->title.set(id, s);                   }
+    void  artist(InStr s)  { table->artist.set(id, s);                  }
+    void  remix(InStr s)   { table->remix.set(id, s);                   }
+    void  number(int i)    { table->number[id] = i;                     }
+    void  bpm(int i)       { table->bpm[id] = (i & 0xFF /* max 255 */); }
+    void  album_id(int i)  { table->album_id[id] = i;                   }
   };
 
   using value_type = Track;
@@ -408,7 +408,7 @@ public:
   , order(order) {}
 
   template<typename T>
-  bool operator()(const T& a, const T& b) {
+  bool operator()(const T& a, const T& b) const noexcept {
     int ret = a[column].compare(b[column]);
     return (order == ASCENDING ? ret < 0 : ret > 0);
   }
@@ -419,17 +419,12 @@ class Where {
   Operator op;
   Field    field;
 public:
-  Where(ColumnID column, Operator op, int value)
-  : column(column), op(op), field(value) {}
-
-  Where(ColumnID column, Operator op, float value)
-  : column(column), op(op), field(value) {}
-
-  Where(ColumnID column, Operator op, const char* value)
+  template<typename T>
+  Where(ColumnID column, Operator op, T value)
   : column(column), op(op), field(value) {}
 
   template<typename T>
-  bool operator()(const T& t) {
+  bool operator()(const T& t) const noexcept {
     int ret = t[column].compare(field);
     switch (op) {
     case EQUAL:         return ! (ret == 0);

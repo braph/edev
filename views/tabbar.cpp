@@ -9,8 +9,8 @@ TabBar :: TabBar()
 {
 }
 
-void TabBar :: addTab(const std::string &label) {
-  _tabs.push_back(label);
+void TabBar :: addTab(std::string label) {
+  _tabs.push_back(std::move(label));
   draw();
 }
 

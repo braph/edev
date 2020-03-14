@@ -5,6 +5,7 @@
 - pads: fix mouse offset // ui.hpp mincol etc...
 - noexcept on noutrefresh etc.
 - vol. 3 ?
+- Bugs... One track shares the same URL on multiple albums...
 
 ===============================================================================
 

@@ -1,3 +1,0 @@
-Some things I fear to forget:
-  if (linkURL == "@") // Protected email, see updater.cpp
-    linkURL = "Protected e-mail";

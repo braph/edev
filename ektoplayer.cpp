@@ -28,13 +28,13 @@ static bool strip_extension(std::string &s, const char* ext) {
 }
 
 static std::string& unescape(std::string& url) {
-  for (size_t pos; (pos = url.find("%20")) != std::string::npos;)
-    url.replace(pos, 3, " ");
+  for (size_t pos = 0; (pos = url.find("%20", pos)) != std::string::npos;)
+    url.replace(pos, 3, 1, ' ');
   return url;
 }
 
 static std::string& escape(std::string& url) {
-  for (size_t pos; (pos = url.find(' ')) != std::string::npos;)
+  for (size_t pos = 0; (pos = url.find(' ', pos)) != std::string::npos;)
     url.replace(pos, 1, "%20");
   return url;
 }

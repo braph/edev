@@ -16,7 +16,7 @@ public:
   void layout(UI::Pos, UI::Size);
   bool handleMouse(MEVENT&);
 
-  void   addTab(const std::string&);
+  void   addTab(std::string);
   void   setCurrentIndex(int);
   int    currentIndex() const;
   int    count() const;

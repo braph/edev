@@ -2,16 +2,16 @@
 #define BROWSEPAGE_HPP
 
 #include <ctime>
-#include <vector>
 #include <string>
 #include <sstream>
+#include <vector>
 
 struct Style {
   std::string url;
   std::string name;
 
-  Style(const std::string& url, const std::string& name)
-  : url(url), name(name)
+  Style(std::string url, std::string name)
+  : url(std::move(url)), name(std::move(name))
   {
   }
 
@@ -55,8 +55,8 @@ struct Album {
   std::string description;
   std::string cover_url;
   time_t      date;
-  short       download_count;
-  short       votes;
+  int         download_count;
+  int         votes;
   float       rating;
   bool        isSingleURL;
   std::vector<std::string> archive_urls;
@@ -89,9 +89,9 @@ struct Album {
       << "\nDownloads:   " << download_count
       << "\nRated:       " << rating << " (" << votes << " votes)"
       << "\nURL:         " << url
-      << "\nStyles:      "; for (auto &s : styles)       { o << s.to_string() << ',';  }
-    o << "\nArchives:    "; for (auto &i : archive_urls) { o << i << ',';              }
-    o << "\nTracks:      "; for (auto &t : tracks)       { o << '\n' << t.to_string(); }
+      << "\nStyles:      "; for (auto& s : styles)       { o << s.to_string() << ',';  }
+    o << "\nArchives:    "; for (auto& i : archive_urls) { o << i << ',';              }
+    o << "\nTracks:      "; for (auto& t : tracks)       { o << '\n' << t.to_string(); }
     return o.str();
   }
 };
@@ -107,7 +107,7 @@ public:
     albums.reserve(5);
   }
 
-  BrowsePage(const std::string &src)
+  BrowsePage(const std::string& src)
   : num_pages(0)
   {
     albums.reserve(5);

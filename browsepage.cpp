@@ -48,7 +48,7 @@ static std::string base64_decode(std::string input)
   }
   catch (std::exception const&)
   {
-    return std::string("");
+    return "";
   }
 }
 
@@ -146,7 +146,7 @@ void BrowsePage :: parse_src(const std::string& src) {
         continue;
 
       result = std::string(base64_begin, size_t(base64_end-base64_begin));
-      result = base64_decode(result);
+      result = base64_decode(std::move(result));
       split(tracks, result, is_any_of(","));
 
       if (tracks.size())

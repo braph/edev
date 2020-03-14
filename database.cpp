@@ -195,50 +195,6 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
     //  id = idRemap[id];
 }
 
-#if 0
-void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
-  if (pool.isOptimized())
-    return;
-  std::cerr << " shrinking pool ...";
-
-  StringPool newPool;
-  newPool.reserve(size_t(pool.size()));
-
-  // Build the map used for remapping IDs, storing all IDs used in columns
-  std::unordered_map<int, int> idRemap;
-  for (auto& col : columns)
-    idRemap.reserve(col->size());
-
-  for (auto col : columns)
-    for (auto id : *col)
-      idRemap[id] = 0;
-
-  struct IDAndLength { int id; size_t length; };
-
-  // Sort the IDs, longest strings first
-  std::vector<IDAndLength> idSortedByLength;
-  idSortedByLength.reserve(idRemap.size());
-  for (auto& pair : idRemap)
-    idSortedByLength.push_back({pair.first, std::strlen(pool.get(pair.first))});
-
-  std::sort(idSortedByLength.begin(), idSortedByLength.end(),
-      [](const IDAndLength& a, const IDAndLength& b){ return a.length > b.length; });
-
-  // Add strings in the right order to the stringpool and store the new ID
-  for (const auto& IDAndLength : idSortedByLength)
-    idRemap[IDAndLength.id] = newPool.add(pool.get(IDAndLength.id));
-
-  // Replace the IDs from the old pool by the IDs from the new pool
-  for (auto& column : columns)
-    for (Column::iterator it = column->begin(); it != column->end(); ++it)
-      *it = idRemap[*it];
-    //for (auto& id : *column)
-    //  id = idRemap[id];
-
-  pool = std::move(newPool);
-}
-#endif
-
 /* ============================================================================
  * Database :: Table
  * ==========================================================================*/
@@ -326,7 +282,7 @@ Tracks::Track Tracks::find(InStr url, bool create) {
   return find_by_url(*this, db.pool_track_url, url, create);
 }
 
-Albums::Album Tracks::Track::album() const {
+Albums::Album Tracks::Track::album() const noexcept {
   return table->db.albums[size_t(table->album_id[id])];
 }
 

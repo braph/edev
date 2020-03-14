@@ -30,10 +30,8 @@ application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) application.cpp $^
 
 clean:
-	rm -f *.o
-	rm -f views/*.o
-	rm -f ui/*.o
-	rm -f widgets/*.o
+	rm -f {views,ui,widgets,.}/*.o
+	rm -f {views,ui,widgets,.}/*.gch
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
@@ -122,7 +120,7 @@ test_browsepage:
 
 test_updater: database.o $(DATABASE.deps) browsepage.o downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
-	perf stat ./a.out
+	$(VALGRIND) ./a.out
 
 test_database: $(DATABASE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^

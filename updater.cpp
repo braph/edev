@@ -245,16 +245,16 @@ void Updater :: insert_browsepage(BrowsePage& page) {
 #define USE_FILESYSTEM 0
 #define TESTDATA_DIR "/tmp/testdata" // Dir that contains HTML files
 
-void test_warning(const Database::Styles::Style& style, const char* reason) {
-  std::cout << "STYLE: " << style.url() << ": " << reason << '\n';
+static void test_warning(const Database::Styles::Style& style, const char* msg) {
+  std::cout << "STYLE: " << style.url() << ": " << msg << '\n';
 }
 
-void test_warning(const Database::Albums::Album& album, const char *reason) {
-  std::cout << "ALBUM: " << album.url() << ": " << reason << '\n';
+static void test_warning(const Database::Albums::Album& album, const char* msg) {
+  std::cout << "ALBUM: " << album.url() << ": " << msg << '\n';
 }
 
-void test_warning(const Database::Tracks::Track& track, const char* reason) {
-  std::cout << "TRACK: " << track.url() << " in album " << track.album().url() << ": " << reason << '\n';
+static void test_warning(const Database::Tracks::Track& track, const char* msg) {
+  std::cout << "TRACK: " << track.url() << " in album " << track.album().url() << ": " << msg << '\n';
 }
 
 // Updater tests *will replace* the existing database file!
