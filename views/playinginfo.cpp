@@ -19,8 +19,8 @@ static const char state_to_string[4][STATE_LEN+1] = {
 using namespace UI;
 using namespace Views;
 
-PlayingInfo :: PlayingInfo(Database &db)
-: track(db, 0), track_length(0), track_position(0), state(0)
+PlayingInfo :: PlayingInfo(Database::Database &db)
+: track_length(0), track_position(0), state(0)
 {
   if (Theme::current == 256) {
      fmt_top    = &Config::playinginfo_format_top_256;

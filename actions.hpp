@@ -1,10 +1,10 @@
-#ifndef _ACTIONS_HPP
-#define _ACTIONS_HPP
+#ifndef ACTIONS_HPP
+#define ACTIONS_HPP
 
-class Database;
 class TrackLoader;
 class Mpg123Player;
 namespace Views { class MainWindow; }
+namespace Database { class Database; }
 
 #include <string>
 
@@ -51,7 +51,7 @@ public:
   static const char* to_string(ActionID);
 
 public:
-  Database *db;
+  Database::Database *db;
   Mpg123Player *p;
   Views::MainWindow *v;
   TrackLoader *t;

@@ -1,5 +1,5 @@
-#ifndef _LISTWIDGET_HPP
-#define _LISTWIDGET_HPP
+#ifndef WIDGETS_LISTWIDGET_HPP
+#define WIDGETS_LISTWIDGET_HPP
 
 #include "../ui.hpp"
 #include "../common.hpp"

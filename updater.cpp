@@ -107,7 +107,7 @@ static std::string makeMarkup(const std::string& description) {
  * Updater
  * ==========================================================================*/
 
-Updater :: Updater(Database &db, Downloads &downloads)
+Updater :: Updater(Database::Database &db, Downloads &downloads)
   : db(db)
   , downloads(downloads)
 {
@@ -261,7 +261,7 @@ void test_warning(const Database::Tracks::Track& track, const char* reason) {
 // - Updater also covers some tests of BrowsePage and Database
 int main() {
   TEST_BEGIN();
-  Database db;
+  Database::Database db;
   Downloads downloads(10);
 
   db.styles.reserve(EKTOPLAZM_STYLE_COUNT);
@@ -307,7 +307,7 @@ int main() {
     std::cout << "Saving database to " << TEST_DB << '\n';
     db.save(TEST_DB);
     { // Check if the data has not been altered
-      Database db2;
+      Database::Database db2;
       db2.load(TEST_DB);
       assert(tracks_size == db2.tracks.size());
       assert(albums_size == db2.albums.size());

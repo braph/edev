@@ -1,5 +1,5 @@
-#ifndef _BROWSER_HPP
-#define _BROWSER_HPP
+#ifndef BROWSER_HPP
+#define BROWSER_HPP
 
 #include "../actions.hpp"
 #include "../bindings.hpp"

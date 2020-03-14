@@ -18,10 +18,9 @@ using namespace Views;
 #define TRY_LINE_BREAK   70 // Try to break the line on next space
 #define FORCE_LINE_BREAK 85 // Forces line breaks even in words
 
-Info :: Info(Database& db, Mpg123Player& p)
+Info :: Info(Database::Database& db, Mpg123Player& p)
 : db(db)
 , player(p)
-, currentTrack(db, 0)
 {}
 
 void Info :: layout(Pos pos, Size size) {
@@ -62,7 +61,7 @@ void Info :: drawLink(CString url, CString title) {
   attrSet(Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
   addStr(toWideString(title));
-  clickableURLs.add(start, cursorPos(), UrlAndTitle(url, title));
+  clickableURLs.add(start, cursorPos(), {std::string(url), std::string(title)});
 }
 
 struct MarkupParser {
@@ -154,7 +153,7 @@ void Info :: draw() {
     const char* comma = "";
     for (auto id : styleIDs)
       if (id) {
-        *this << comma << track.db.styles[id].name();
+        *this << comma << track.table->db.styles[id].name();
         comma = ", ";
       }
 
@@ -248,8 +247,8 @@ void Info :: draw() {
   int urlCount = clickableURLs.size();
   for (const auto& event : clickableURLs) {
     if (--urlCount >= 2) {
-      drawInfo(y++, event.data.second);
-      *this << toWideString(event.data.first);
+      drawInfo(y++, event.data.title);
+      *this << toWideString(event.data.url);
     }
   }
 
@@ -262,7 +261,7 @@ bool Info :: handleMouse(MEVENT& m) {
     m.x += pad_mincol;
     auto event = clickableURLs.find(m);
     if (event != clickableURLs.end())
-      open_url(event->data.first);
+      open_url(event->data.url);
     return true;
   }
   return false;

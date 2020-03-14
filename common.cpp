@@ -31,4 +31,5 @@ char* time_format(time_t t, CString fmt) {
 }
 
 #ifdef TEST_COMMON
+int main() {}
 #endif

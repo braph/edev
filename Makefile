@@ -43,105 +43,137 @@ noexcept_objs = stringpool.o player.o process.o bindings.o ektoplayer.o filesyst
 $(noexcept_objs): %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fno-exceptions -c $< -o $@
 
+VALGRIND = valgrind --tool=memcheck --errors-for-leak-kinds=definite --leak-check=full --error-exitcode=1
+
 # ============================================================================
-# Views
+# Tests....
 # ============================================================================
 
-test_readline:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_READLINE widgets/readline.cpp $^
-	echo "cannot test here"
+TERMINAL = xterm -e # Used for running ncurses tests
 
-test_splash: theme.o $(THEME.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^
-	echo "Cannot test ncurses based stuff"
+tests: test_common \
+	test_shellsplit \
+	test_stringpool \
+	test_filesystem \
+	test_ektoplayer \
+	test_colors test_theme \
+	test_xml test_generic \
+	test_updater test_database
 
-test_help: theme.o $(THEME.deps) bindings.o actions.o player.o
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_HELP views/help.cpp $^
-	echo "Cannot test ncurses based stuff"
+# ============================================================================
+# Core
+# ============================================================================
 
-test_progressbar: config.o $(CONFIG.deps) theme.o $(THEME.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PROGRESSBAR views/progressbar.cpp $^
-	echo "Widgets cannot be tested in Make"
+test_common:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COMMON common.cpp $^
+	$(VALGRIND) ./a.out
 
-test_database: $(DATABASE.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
-	./a.out
+test_shellsplit:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT shellsplit.cpp $^
+	$(VALGRIND) ./a.out
+
+test_stringpool:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGPOOL stringpool.cpp $^
+	$(VALGRIND) ./a.out
+
+test_filesystem:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_FILESYSTEM filesystem.cpp $^
+	$(VALGRIND) ./a.out
+
+test_ektoplayer: filesystem.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_EKTOPLAYER ektoplayer.cpp $^
+	$(VALGRIND) ./a.out
+
+test_colors:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COLORS colors.cpp $^
+	$(VALGRIND) ./a.out
+
+test_theme: $(THEME.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_THEME theme.cpp $^
+	$(VALGRIND) ./a.out
+
+test_config: $(CONFIG.deps) colors.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_CONFIG ektoplayer.cpp config.cpp $^
+	$(VALGRIND) ./a.out
+
+test_packedvector:
+	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
+	$(VALGRIND) ./a.out
+
+test_player:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYER player.cpp $^
+	$(VALGRIND) ./a.out
+
+test_generic:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_GENERIC generic.cpp $^
+	$(VALGRIND) ./a.out
+
+test_ui:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UI ui.cpp $^
+	$(VALGRIND) ./a.out
+
+test_xml:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_XML xml.cpp $^
+	$(VALGRIND) ./a.out
+
+test_browsepage:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
+	$(VALGRIND) ./a.out
 
 test_updater: database.o $(DATABASE.deps) browsepage.o downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
-test_trackloader: database.o $(DATABASE.deps) downloads.o ektoplayer.o
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TRACKLOADER trackloader.cpp $^
+test_database: $(DATABASE.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
 	perf stat ./a.out
 
-test_tabbar: config.o $(CONFIG.deps) theme.o $(THEME.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TABBAR views/tabbar.cpp $^
+test_trackloader: database.o $(DATABASE.deps) downloads.o ektoplayer.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TRACKLOADER trackloader.cpp $^
+	$(VALGRIND) ./a.out
 
-test_stringpool:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGPOOL stringpool.cpp
-	./a.out
+# ============================================================================
+# Widgets
+# ============================================================================
 
-test_common:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COMMON common.cpp
-	./a.out
+# TODO: test_widgets
 
-test_filesystem:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_FILESYSTEM filesystem.cpp
-	./a.out
-
-test_config: $(CONFIG.deps) colors.o
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_CONFIG ektoplayer.cpp config.cpp $^
-	./a.out
-
-test_colors:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COLORS colors.cpp
-	./a.out
-
-test_shellsplit:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT shellsplit.cpp
-	./a.out
-
-test_theme: $(THEME.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_THEME theme.cpp $^
-	./a.out
-
-test_playinginfo: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/playinginfo.cpp $^
-	echo "Widgets cannot be tested in Make"
-
-test_packedvector:
-	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
-	./a.out
-
-test_playlist: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
-	echo "Widgets cannot be tested in Make"
+test_readline:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_READLINE widgets/readline.cpp $^
+	$(TERMINAL) ./a.out
 
 test_listwidget: theme.o $(THEME.deps) config.o $(CONFIG.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_LISTWIDGET widgets/listwidget.cpp $^
-	echo "Widgets cannot be tested in Make"
+	$(TERMINAL) ./a.out
 
-test_player:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYER player.cpp
-	./a.out
+# ============================================================================
+# Views
+# ============================================================================
 
-test_ektoplayer:
-	$(CXX) -DTEST_EKTOPLAYER ektoplayer.cpp filesystem.cpp
-	./a.out
+# test_help: dependency horror...
+test_views: test_splash test_progressbar test_tabbar test_playinginfo test_playlist
 
-test_generic:
-	$(CXX) -DTEST_GENERIC generic.cpp
-	./a.out
+test_splash: theme.o $(THEME.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^
+	$(TERMINAL) ./a.out
 
-test_ui:
-	$(CXX) -DTEST_UI ui.cpp
-	./a.out
+test_help: theme.o $(THEME.deps) bindings.o actions.o player.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_HELP views/help.cpp $^
+	$(TERMINAL) ./a.out
 
-test_xml:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_XML xml.cpp
-	./a.out
+test_progressbar: config.o $(CONFIG.deps) theme.o $(THEME.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PROGRESSBAR views/progressbar.cpp $^
+	$(TERMINAL) ./a.out
 
-test_browsepage:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp
-	valgrind ./a.out
+test_tabbar: config.o $(CONFIG.deps) theme.o $(THEME.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TABBAR views/tabbar.cpp $^
+	$(TERMINAL) ./a.out
+
+test_playinginfo: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/playinginfo.cpp $^
+	$(TERMINAL) ./a.out
+
+test_playlist: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYLIST views/playlist.cpp $^
+	$(TERMINAL) ./a.out
+

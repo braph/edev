@@ -2,6 +2,7 @@
 #define STRINGPOOL_HPP
 
 #include <string>
+#include <unordered_map>
 
 class StringPool {
 public:
@@ -12,15 +13,16 @@ public:
    * are made to return an existing string from the string pool. */
   int add(const char* s, bool force_append = false);
 
-  /* A pool is optimized when it it sorted by length in descending order. */
-  bool isOptimized() const noexcept;
-
   /* Returns the ID for string `s`.
    * If the string is empty or it could not be found, 0 is returned. */
-  int find(const char *s) const noexcept;
+  int find(const char* s) const noexcept  { return find(s, 1); }
 
   /* Return the number of NUL terminated strings */
   int count() const noexcept;
+
+  /* Shrink to fit */
+  void shrink_to_fit(std::unordered_map<int, int>&);
+  bool is_shrinked() const noexcept;
 
   const char*  get(int id) const noexcept { return storage.c_str() + id; }
   int          size()      const noexcept { return storage.size();       }
@@ -31,6 +33,7 @@ public:
 
 private:
   std::string storage;
+  int find(const char* s, int) const noexcept;
 };
 
 #endif

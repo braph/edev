@@ -1,5 +1,5 @@
-#ifndef _PLAYLIST_HPP
-#define _PLAYLIST_HPP
+#ifndef VIEWS_PLAYLIST_HPP
+#define VIEWS_PLAYLIST_HPP
 
 #include "../actions.hpp"
 #include "../bindings.hpp"

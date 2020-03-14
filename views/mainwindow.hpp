@@ -1,5 +1,5 @@
-#ifndef _MAINWINDOW_HPP
-#define _MAINWINDOW_HPP
+#ifndef VIEWS_MAINWINDOW_HPP
+#define VIEWS_MAINWINDOW_HPP
 
 /* This view holds all views of the application */
 
@@ -32,7 +32,7 @@ public:
   Views::Playlist       playlist;
   Views::Info           info;
   Views::Help           help;
-  MainWindow(Actions&, Database&, Mpg123Player&);
+  MainWindow(Actions&, Database::Database&, Mpg123Player&);
   void layout(UI::Pos, UI::Size);
   bool handleKey(int);
   void readline(const std::string&, ReadlineWidget::onFinishFunction);

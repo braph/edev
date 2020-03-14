@@ -5,7 +5,7 @@
 using namespace UI;
 using namespace Views;
 
-MainWindow :: MainWindow(Actions& actions, Database& db, Mpg123Player& player)
+MainWindow :: MainWindow(Actions& actions, Database::Database& db, Mpg123Player& player)
 : actions(actions)
 , playingInfo(db)
 , progressBar()

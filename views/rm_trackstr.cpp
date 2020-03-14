@@ -16,7 +16,7 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
         for (auto id : styleIDs)
           if (id) {
             strcat(buf, comma);
-            strcat(buf, track.db.styles[id].name());
+            strcat(buf, track.table->db.styles[id].name());
             comma = "|";
           }
       }

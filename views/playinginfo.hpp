@@ -1,5 +1,5 @@
-#ifndef _PLAYINGINFO_HPP
-#define _PLAYINGINFO_HPP
+#ifndef VIEWS_PLAYINGINFO_HPP
+#define VIEWS_PLAYINGINFO_HPP
 
 #include "../ui.hpp"
 #include "../database.hpp"
@@ -26,7 +26,7 @@ typedef std::vector<PlayingInfoFormatFoo> PlayingInfoFormat;
 class PlayingInfo : public UI::Window {
   // Slot: clicked -> player.toggle
 public:
-  PlayingInfo(Database&);
+  PlayingInfo(Database::Database&);
   void setState(int);
   void setTrack(Database::Tracks::Track);
   void setPositionAndLength(int, int);

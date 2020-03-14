@@ -1,5 +1,5 @@
-#ifndef _INFO_HPP
-#define _INFO_HPP
+#ifndef VIEWS_INFO_HPP
+#define VIEWS_INFO_HPP
 
 #include "../ui.hpp"
 #include "../common.hpp"
@@ -7,13 +7,12 @@
 #include "../database.hpp"
 
 #include <string>
-#include <utility>
 
 namespace Views {
 
 class Info : public UI::Pad {
 public:
-  Info(Database&, Mpg123Player&);
+  Info(Database::Database&, Mpg123Player&);
 
   void draw();
   void layout(UI::Pos, UI::Size);
@@ -22,10 +21,11 @@ public:
   void setCurrentTrack(Database::Tracks::Track);
 
 private:
-  Database& db;
+  struct UrlAndTitle { std::string url; std::string title; };
+
+  Database::Database& db;
   Mpg123Player& player;
   Database::Tracks::Track currentTrack;
-  using UrlAndTitle = std::pair<std::string, std::string>;
   UI::MouseEvents<UrlAndTitle> clickableURLs;
 
   void drawLink(CString, CString);

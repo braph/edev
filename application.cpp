@@ -30,7 +30,7 @@ public:
   void run();
   void init();
 private:
-  Database database;
+  Database::Database database;
   Downloads downloads;
   Updater updater;
   TrackLoader trackloader;
@@ -173,8 +173,8 @@ void Application :: run() {
   int key;
   WINDOW *win;
   MEVENT mouse;
-  Database::Tracks::Track nextTrack(database, 0); // "NULL" rows
-  Database::Tracks::Track currentPrefetching(database, 0);
+  Database::Tracks::Track nextTrack;
+  Database::Tracks::Track currentPrefetching;
 
   mainwindow.playlist.playlist = database.getTracks();
 
