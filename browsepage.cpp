@@ -1,6 +1,6 @@
 #include "ektoplayer.hpp"
 #include "browsepage.hpp"
-#include "common.hpp"
+#include "sscan.hpp"
 #include "xml.hpp"
 
 #include <boost/algorithm/string/trim.hpp>
@@ -18,6 +18,8 @@ using boost::algorithm::trim_if;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 using boost::algorithm::erase_all;
+
+static inline const char* strMayNULL(const char* s) { return (s ? s : ""); }
 
 static inline size_t find_dash(const std::string& s, size_t& dash_len) {
   size_t pos;
@@ -194,11 +196,11 @@ void BrowsePage :: parse_src(const std::string& src) {
             if (s) {
               if (std::strchr(s, ':')) { // "(4:32)"
                 short minutes = 0;
-                std::sscanf(s, "%*[^0-9]%hd:%hd", &minutes, &track.length);
+                SScan(s).skip_until("0123456789").strtoi(minutes).read(':').strtoi(track.length);
                 track.length += minutes * 60;
               }
               else { // "(134 BPM)"
-                std::sscanf(strMayNULL(s), "%*[^0-9]%hd", &track.bpm);
+                SScan(s).skip_until("0123456789").strtoi(track.bpm);
               }
             }
             break;

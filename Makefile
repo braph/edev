@@ -21,7 +21,7 @@ CONFIG.deps   = shellsplit.o filesystem.o common.o xml.o
 DATABASE.deps = stringpool.o packedvector.o common.o generic.hpp
 THEME.deps    = colors.o
 PLAYER.deps   = process.o
-VIEWS         = $(addprefix views/, splash.o playinginfo.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
+VIEWS         = $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 VIEWS         += widgets/listwidget.hpp widgets/readline.o
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
@@ -121,7 +121,7 @@ test_browsepage:
 
 test_updater: database.o $(DATABASE.deps) browsepage.o downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
-	$(VALGRIND) ./a.out
+	perf stat ./a.out
 
 test_database: $(DATABASE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
@@ -150,7 +150,7 @@ test_listwidget: theme.o $(THEME.deps) config.o $(CONFIG.deps)
 # ============================================================================
 
 # test_help: dependency horror...
-test_views: test_splash test_progressbar test_tabbar test_playinginfo test_playlist
+test_views: test_splash test_progressbar test_tabbar test_infoline test_playlist
 
 test_splash: theme.o $(THEME.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^
@@ -168,8 +168,8 @@ test_tabbar: config.o $(CONFIG.deps) theme.o $(THEME.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TABBAR views/tabbar.cpp $^
 	$(TERMINAL) ./a.out
 
-test_playinginfo: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/playinginfo.cpp $^
+test_infoline: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/infoline.cpp $^
 	$(TERMINAL) ./a.out
 
 test_playlist: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)

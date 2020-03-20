@@ -7,7 +7,7 @@
 #include "help.hpp"
 #include "info.hpp"
 #include "progressbar.hpp"
-#include "playinginfo.hpp"
+#include "infoline.hpp"
 #include "playlist.hpp"
 #include "tabbar.hpp"
 
@@ -23,7 +23,7 @@ namespace Views {
 class MainWindow : public UI::VerticalContainer {
 public:
   Actions&              actions;
-  Views::PlayingInfo    playingInfo;
+  Views::InfoLine       infoLine;
   Views::ProgressBar    progressBar;
   Views::TabBar         tabBar;
   ReadlineWidget        readlineWidget;

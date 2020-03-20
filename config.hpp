@@ -2,7 +2,7 @@
 #define CONFIG_HPP
 
 #include "views/playlist.hpp"
-#include "views/playinginfo.hpp"
+#include "views/infoline.hpp"
 
 #include <string>
 #include <vector>

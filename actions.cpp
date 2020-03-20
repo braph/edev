@@ -8,7 +8,7 @@
 
 #include <csignal>
 
-static const char *action_strings[Actions::ACTIONID_LAST] = {
+static const char *action_strings[Actions::ACTIONID_ENUM_LAST] = {
 #define X(ENUM, STR) STR,
   XActions
 #undef X
@@ -24,14 +24,14 @@ int Actions :: call(ActionID id) {
 
   // Silence warnings
   case UP: case DOWN: case PAGE_UP: case PAGE_DOWN: case TOP: case BOTTOM: 
-  case SEARCH: case SEARCH_PREV: case SEARCH_NEXT: case ACTIONID_LAST: break;
+  case SEARCH: case SEARCH_PREV: case SEARCH_NEXT: case ACTIONID_ENUM_LAST: break;
 
-  case PLAYER_FORWARD:     p->seekForward(10);                              break;
-  case PLAYER_BACKWARD:    p->seekBackward(10);                             break;
-  case PLAYER_STOP:        p->stop();                                       break;
-  case PLAYER_TOGGLE:      p->toggle();                                     break;
+  case PLAYER_FORWARD:     p->seekForward(10);  break;
+  case PLAYER_BACKWARD:    p->seekBackward(10); break;
+  case PLAYER_STOP:        p->stop();           break;
+  case PLAYER_TOGGLE:      p->toggle();         break;
   case TABBAR_TOGGLE:      v->tabBar.visible      = !v->tabBar.visible;      return REDRAW;
-  case PLAYINGINFO_TOGGLE: v->playingInfo.visible = !v->playingInfo.visible; return REDRAW;
+  case PLAYINGINFO_TOGGLE: v->infoLine.visible    = !v->infoLine.visible;    return REDRAW;
   case PROGRESSBAR_TOGGLE: v->progressBar.visible = !v->progressBar.visible; return REDRAW;
 
   // === Playlist =============================================================
@@ -70,10 +70,10 @@ SELECT_TAB:           if (index < 0)
 }
 
 Actions::ActionID Actions :: parse(const std::string &s) {
-  for (size_t i = 0; i < Actions::ACTIONID_LAST; ++i)
+  for (size_t i = 0; i < Actions::ACTIONID_ENUM_LAST; ++i)
     if (s == action_strings[i])
       return static_cast<Actions::ActionID>(i);
-  return Actions::ACTIONID_LAST;
+  return Actions::ACTIONID_ENUM_LAST;
 }
 
 const char* Actions :: to_string(Actions::ActionID id) {

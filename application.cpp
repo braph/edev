@@ -70,6 +70,7 @@ Application :: ~Application() {
 }
 
 void Application :: init() {
+  std::ios::sync_with_stdio(false);
   std::cout << // Set terminal title
     "\033]0;ektoplayer\007" // *xterm
     "\033kektoplayer\033\\" // screen/tmux
@@ -117,7 +118,6 @@ void Application :: init() {
     fs::create_directory(Config::archive_dir);
 
   error = "Error opening log file";
-  std::ios::sync_with_stdio(false);
   std::ofstream *logfile = new std::ofstream(); /* "wanted" leak */
   logfile->exceptions(std::ofstream::failbit|std::ofstream::badbit);
   logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
@@ -211,10 +211,10 @@ MAINLOOP:
     actions.call(Actions::PLAYLIST_NEXT);
 
   mainwindow.progressBar.setPercent(player.percent());
-  mainwindow.playingInfo.setPositionAndLength(player.position(), player.length());
-  mainwindow.playingInfo.setState(player.state());
+  mainwindow.infoLine.setPositionAndLength(player.position(), player.length());
+  mainwindow.infoLine.setState(player.state());
   if (!mainwindow.playlist.empty() && mainwindow.playlist.activeIndex() >= 0) {
-    mainwindow.playingInfo.setTrack(mainwindow.playlist.getActiveItem());
+    mainwindow.infoLine.setTrack(mainwindow.playlist.getActiveItem());
     mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
   }
   mainwindow.noutrefresh();
@@ -253,7 +253,7 @@ HANDLE_KEY:
 void Application :: cleanup_files() {
   Filesystem::error_code e;
   for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
-    if (boost::algorithm::starts_with(f.path().filename().string(), "~ekto-"))
+    if (boost::algorithm::starts_with(f.path().filename().string(), EKTOPLAZM_TEMP_FILE_PREFIX))
       Filesystem::remove(f.path(), e);
 }
 

@@ -1,6 +1,6 @@
 #include "player.hpp"
 
-#include "common.hpp"
+#include "sscan.hpp"
 #include "process.hpp"
 
 #include <memory>
@@ -108,15 +108,19 @@ void Mpg123Player :: read_stdout() noexcept {
  *   @E Unknown command or no arguments: foo
  */
 void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
-  if (*line++ != '@')
+  SScan scan(line);
+  if (! scan.read('@'))
     return;
 
+  int i;
+
   // Single char command
-  if (line[0] && line[1] == ' ') {
-    line += 2;
-    switch (line[-2]) {
-      case 'P': /* Playing State */
-        _state = static_cast<State>(std::atoi(line));
+  if (scan[0] && scan[1] == ' ') {
+    scan.seek(2, false);
+    switch (scan[-2]) {
+      case 'P': /* Playing State: 0|1|2  */
+        scan.strtoi(i);
+        _state = static_cast<State>(i);
         if (_state == STOPPED) {
           if (_failed) // Try again if playback stopped because of failure
             _state = LOADING;
@@ -134,33 +138,36 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
       case 'R': /* ???? */ break;
       case 'S': /* ???? */ break;
       case 'F': {
+        // @F 77 17466 2.01 456.25
         float played, remaining;
-        std::sscanf(line, "%*d %*d %f %f", /* &d, &d, */ &played, &remaining);
-        _seconds_played    = played;
-        _seconds_remaining = remaining;
-        _seconds_total     = _seconds_played + _seconds_remaining;
+        if (scan.strtoi(i).strtoi(i).strtof(played).strtof(remaining)) {
+          _seconds_played    = played;
+          _seconds_remaining = remaining;
+          _seconds_total     = _seconds_played + _seconds_remaining;
+        }
         break;
       }
       default:
-        //std::cerr << "parse_output(): " << &line[-2] << std::endl;
+        //std::cerr << "parse_output(): " << &scan[-2] << std::endl;
         break;
     }
   }
   // String command
   else {
-    if (cstr_seek(&line, "SAMPLE ")) {
+    if (scan.read("SAMPLE ")) {
       if (_sample_rate) {
         int samples_played, samples_total;
-        std::sscanf(line, "%d %d", &samples_played, &samples_total);
-        _seconds_played = samples_played / _sample_rate;
-        _seconds_total  = samples_total  / _sample_rate;
+        if (scan.strtoi(samples_played).strtoi(samples_total)) {
+          _seconds_played = samples_played / _sample_rate;
+          _seconds_total  = samples_total  / _sample_rate;
+        }
       }
     }
-    else if (cstr_seek(&line, "FORMAT ")) {
-      std::sscanf(line, "%d %d", &_sample_rate, &_channels);
+    else if (scan.clearError().read("FORMAT ")) {
+      scan.strtoi(_sample_rate).strtoi(_channels);
     }
     else {
-      //std::cerr << "parse_output(): " << line << std::endl;
+      //std::cerr << "parse_output(): " << scan << std::endl;
     }
   }
 }

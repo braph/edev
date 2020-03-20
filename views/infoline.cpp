@@ -1,4 +1,4 @@
-#include "playinginfo.hpp"
+#include "infoline.hpp"
 
 #include "../config.hpp"
 #include "../theme.hpp"
@@ -19,35 +19,35 @@ static const char state_to_string[4][STATE_LEN+1] = {
 using namespace UI;
 using namespace Views;
 
-PlayingInfo :: PlayingInfo(Database::Database &db)
+InfoLine :: InfoLine(Database::Database &db)
 : track_length(0), track_position(0), state(0)
 {
   if (Theme::current == 256) {
-     fmt_top    = &Config::playinginfo_format_top_256;
-     fmt_bottom = &Config::playinginfo_format_bottom_256;
+     fmt_top    = &Config::infoline_format_top_256;
+     fmt_bottom = &Config::infoline_format_bottom_256;
   }
   else if (Theme::current == 8) {
-     fmt_top    = &Config::playinginfo_format_top;
-     fmt_bottom = &Config::playinginfo_format_bottom;
+     fmt_top    = &Config::infoline_format_top;
+     fmt_bottom = &Config::infoline_format_bottom;
   }
   draw();
 }
 
-void PlayingInfo :: setTrack(Database::Tracks::Track track) {
+void InfoLine :: setTrack(Database::Tracks::Track track) {
   if (track != this->track) {
     this->track = track;
     draw(); // we need werase()
   }
 }
 
-void PlayingInfo :: setState(int state) {
+void InfoLine :: setState(int state) {
   if (state != this->state) {
     this->state = state;
     draw_state();
   }
 }
 
-void PlayingInfo :: setPositionAndLength(int position, int length) {
+void InfoLine :: setPositionAndLength(int position, int length) {
   if (position != this->track_position || length != this->track_length) {
     track_position = position;
     track_length   = length;
@@ -55,7 +55,7 @@ void PlayingInfo :: setPositionAndLength(int position, int length) {
   }
 }
 
-void PlayingInfo :: layout(Pos pos, Size size) {
+void InfoLine :: layout(Pos pos, Size size) {
   size.height = 2;
   if (size != this->size) {
     this->size = size;
@@ -67,19 +67,19 @@ void PlayingInfo :: layout(Pos pos, Size size) {
   }
 }
 
-void PlayingInfo :: draw_state() {
+void InfoLine :: draw_state() {
   attrSet(Theme::get(Theme::PLAYINGINFO_STATE));
   mvAddStr(0, size.width - STATE_LEN, state_to_string[state]);
 }
 
-void PlayingInfo :: draw_position_and_length() {
+void InfoLine :: draw_position_and_length() {
   attrSet(Theme::get(Theme::PLAYINGINFO_POSITION));
   mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]",
       track_position/60, track_position%60,
       track_length/60, track_length%60);
 }
 
-void PlayingInfo :: draw_track_info() {
+void InfoLine :: draw_track_info() {
   if (! track) {
     attrSet(0);
     mvAddStr(1, size.width / 2 - int(STRLEN(STOPPED_HEADING) / 2), STOPPED_HEADING);
@@ -89,7 +89,7 @@ void PlayingInfo :: draw_track_info() {
   }
 }
 
-void PlayingInfo :: draw() {
+void InfoLine :: draw() {
   erase();
   draw_position_and_length();
   draw_track_info();
@@ -98,7 +98,7 @@ void PlayingInfo :: draw() {
 
 #include "rm_trackstr.cpp"
 
-void PlayingInfo :: print_formatted_strings(const PlayingInfoFormat& format) {
+void InfoLine :: print_formatted_strings(const InfoLineFormat& format) {
   size_t sum = 0;
 
   for (const auto& fmt : format) {
@@ -131,7 +131,7 @@ int main() {
   Database db;
   db.load(TEST_DB);
   
-  PlayingInfo p(db);
+  InfoLine p(db);
   p.layout({0,0}, {LINES, COLS});
   for (size_t i = 0; i < 100; ++i) {
     p.setTrack(db.tracks[i]);

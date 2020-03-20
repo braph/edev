@@ -41,7 +41,7 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
 
   // $temp_dir/~ekto-$track_file
   Filesystem::path file_in_temp  = Config::temp_dir;
-  file_in_temp /= "~ekto-";
+  file_in_temp /= EKTOPLAZM_TEMP_FILE_PREFIX;
   file_in_temp += track_file;
 
   if (force_download) {

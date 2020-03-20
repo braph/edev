@@ -8,6 +8,7 @@
 #define VERSION                    "0.0.0"
 #define GITHUB_URL                 "https://github.com/braph/ektoplayer"
 #define EKTOPLAZM_URL              "https://ektoplazm.com"
+#define EKTOPLAZM_TEMP_FILE_PREFIX "~ekto-"
 #define EKTOPLAZM_BROWSE_URL       EKTOPLAZM_URL "/section/free-music"
 #define EKTOPLAZM_ALBUM_BASE_URL   EKTOPLAZM_URL "/free-music/"
 #define EKTOPLAZM_COVER_BASE_URL   EKTOPLAZM_URL "/img/"

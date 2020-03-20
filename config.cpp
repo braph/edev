@@ -65,7 +65,7 @@ static std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
-    if (!in_list<std::string>(w, {"playinginfo","tabbar","readline","windows","progressbar"}))
+    if (!in_list<std::string>(w, {"infoline","tabbar","readline","windows","progressbar"}))
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }
@@ -182,12 +182,12 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 }
 
 //"<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
-static PlayingInfoFormat opt_parse_playinginfo_format(const std::string& s) {
-  PlayingInfoFormat result;
+static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
+  InfoLineFormat result;
 
   FormatParser formatParser(s);
   while (formatParser.next()) {
-    PlayingInfoFormatFoo fmt;
+    InfoLineFormatFoo fmt;
 
     if (formatParser.column)
       fmt.tag  = formatParser.column;
@@ -346,8 +346,8 @@ int main() {
   assert(c[1].relative  == true);
   assert(c[1].fg        == -1);
   assert(c[1].bg        == -1);
-  PlayingInfoFormat fmt;
-  fmt = opt_parse_playinginfo_format("'>>'{fg=blue bg=magenta bold}");
+  InfoLineFormat fmt;
+  fmt = opt_parse_infoline_format("'>>'{fg=blue bg=magenta bold}");
   assert(fmt.size()         == 1);
   assert(fmt[0].text        == ">>");
   assert(fmt[0].fg          == COLOR_BLUE);

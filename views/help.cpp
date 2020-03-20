@@ -40,7 +40,7 @@ void Help :: draw() {
     mvAddStr(++y, 1, widget.name);
     moveCursor(++y, KEYS_START);
 
-    for (int id = 1; id < Actions::ACTIONID_LAST; ++id) {
+    for (int id = 1; id < Actions::ACTIONID_ENUM_LAST; ++id) {
       int nkeys = 0;
 
       attrSet(Theme::get(Theme::HELP_KEY_NAME));

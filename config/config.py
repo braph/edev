@@ -14,16 +14,16 @@ lateinit  = object()
 # - c_default: Default value converted to the C storage type
 # - lateinit:  If set to True, $set($default) is called to initialize the value
 
-DEFAULT_PLAYINGINFO_FORMAT_TOP = '''"\
+DEFAULT_INFOLINE_FORMAT_TOP = '''"\
   '<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"'''
 
-DEFAULT_PLAYINGINFO_FORMAT_BOTTOM = '''"\
+DEFAULT_INFOLINE_FORMAT_BOTTOM = '''"\
   artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"'''
 
-DEFAULT_PLAYINGINFO_FORMAT_TOP_256 = '''"\
+DEFAULT_INFOLINE_FORMAT_TOP_256 = '''"\
   '<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"'''
 
-DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256 = '''"\
+DEFAULT_INFOLINE_FORMAT_BOTTOM_256 = '''"\
   artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"'''
 
 DEFAULT_PLAYLIST_COLUMNS = '''"\
@@ -105,11 +105,11 @@ options = [
         c_default: '-1',
         help: 'Choose color capabilities. auto|mono|8|256',
         }),
-    ('audio_system', {
-        type: 'std::string', set: 'std::string',
-        default: '"pulse,alsa,jack,oss"',
-        help: 'Set output audio system. See option `-o` in mpg123(1)',
-        }),
+#   ('audio_system', {
+#       type: 'std::string', set: 'std::string',
+#       default: '"pulse,alsa,jack,oss"',
+#       help: 'Set output audio system. See option `-o` in mpg123(1)',
+#       }),
     ('playlist.columns', {
         type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
         default: DEFAULT_PLAYLIST_COLUMNS,
@@ -149,33 +149,33 @@ options = [
         default: "'~'",
         help: 'Character used for the rest of the line',
         }),
-    ('playinginfo.display', {
+    ('infoline.display', {
         type: 'bool', set: 'opt_parse_bool',
         default: 'true',
-        help: 'Enable/display playinginfo',
+        help: 'Enable/display infoline',
         }),
-    ('playinginfo.format_top', {
-        type: 'PlayingInfoFormat', set: 'opt_parse_playinginfo_format',
-        default: DEFAULT_PLAYINGINFO_FORMAT_TOP,
-        help: 'Format of first line in playinginfo',
+    ('infoline.format_top', {
+        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        default: DEFAULT_INFOLINE_FORMAT_TOP,
+        help: 'Format of first line in infoline',
         lateinit: True
         }),
-    ('playinginfo.format_top_256', {
-        type: 'PlayingInfoFormat', set: 'opt_parse_playinginfo_format',
-        default: DEFAULT_PLAYINGINFO_FORMAT_TOP_256,
-        help: 'Format of first line in playinginfo (256 colors)',
+    ('infoline.format_top_256', {
+        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        default: DEFAULT_INFOLINE_FORMAT_TOP_256,
+        help: 'Format of first line in infoline (256 colors)',
         lateinit: True
         }),
-    ('playinginfo.format_bottom', {
-        type: 'PlayingInfoFormat', set: 'opt_parse_playinginfo_format',
-        default: DEFAULT_PLAYINGINFO_FORMAT_BOTTOM,
-        help: 'Format of second line in playinginfo',
+    ('infoline.format_bottom', {
+        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        default: DEFAULT_INFOLINE_FORMAT_BOTTOM,
+        help: 'Format of second line in infoline',
         lateinit: True
         }),
-    ('playinginfo.format_bottom_256', {
-        type: 'PlayingInfoFormat', set: 'opt_parse_playinginfo_format',
-        default: DEFAULT_PLAYINGINFO_FORMAT_BOTTOM_256,
-        help: 'Format of second line in playinginfo (256 colors)',
+    ('infoline.format_bottom_256', {
+        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        default: DEFAULT_INFOLINE_FORMAT_BOTTOM_256,
+        help: 'Format of second line in infoline (256 colors)',
         lateinit: True
         }),
     ('tabbar.display', {
@@ -191,8 +191,8 @@ options = [
         }),
     ('main.widgets', {
         type: 'std::vector<std::string>', set: 'opt_parse_main_widgets',
-        default: '"playinginfo,tabbar,readline,windows,progressbar"',
-        c_default: '{"playinginfo","tabbar","readline","windows","progressbar"}',
+        default: '"infoline,tabbar,readline,windows,progressbar"',
+        c_default: '{"infoline","tabbar","readline","windows","progressbar"}',
         help: 'Specify widgets to show (up to down)',
     }),
 ]

@@ -8,25 +8,25 @@
 
 namespace Views {
 
-struct PlayingInfoFormatFoo {
+struct InfoLineFormatFoo {
   short fg;
   short bg;
   unsigned int attributes;
   Database::ColumnID tag;
   std::string text;
 
-  PlayingInfoFormatFoo()
+  InfoLineFormatFoo()
     : fg(-1), bg(-1), attributes(0)
   {
   }
 };
 
-typedef std::vector<PlayingInfoFormatFoo> PlayingInfoFormat;
+typedef std::vector<InfoLineFormatFoo> InfoLineFormat;
 
-class PlayingInfo : public UI::Window {
+class InfoLine : public UI::Window {
   // Slot: clicked -> player.toggle
 public:
-  PlayingInfo(Database::Database&);
+  InfoLine(Database::Database&);
   void setState(int);
   void setTrack(Database::Tracks::Track);
   void setPositionAndLength(int, int);
@@ -34,13 +34,13 @@ public:
   void layout(UI::Pos, UI::Size);
 private:
   Database::Tracks::Track track;
-  PlayingInfoFormat   *fmt_top;
-  PlayingInfoFormat   *fmt_bottom;
+  InfoLineFormat   *fmt_top;
+  InfoLineFormat   *fmt_bottom;
   unsigned short      track_length;
   unsigned short      track_position;
   unsigned char       state;
 
-  void print_formatted_strings(const PlayingInfoFormat&);
+  void print_formatted_strings(const InfoLineFormat&);
   void draw_position_and_length();
   void draw_track_info();
   void draw_state();

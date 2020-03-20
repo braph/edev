@@ -1,11 +1,32 @@
 - Config: Themes set()
 - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
-- keybindings: ^R, maybe even F5 for reloading
-- keybindings: ^S for saving?
+- keybindings: ^R, maybe even F5 for reloading, ^S for saving?
 - pads: fix mouse offset // ui.hpp mincol etc...
 - noexcept on noutrefresh etc.
 - vol. 3 ?
-- Bugs... One track shares the same URL on multiple albums...
+x config: temp -> $TEMP
+- config: prefetch
+- Application.cpp: handle_key bug
+- Application.cpp/Downloads.cpp: runningHandles() / inQueue() / queue.size()
+- Browsepage: more scanner usage
+- common.hpp/bit_tools.hpp: - swap size_for_bits
+- PackedVector: There seems to be an issue with big ints? -> download_count()?
+- Downloads: wait(INT)
+- Downloads: unique_ptr
+- Vector: __enter__ __leave__
+stringpool: size() - 1 on opt
+- total heap usage: 9,934,570 allocs, 9,934,548 frees, 1,113,073,000 bytes allocated
+- total heap usage: 9,932,411 allocs, 9,932,389 frees, 1,113,021,471 bytes allocated
+- total heap usage: 9,932,557 allocs, 9,932,535 frees, 1,113,028,479 bytes allocated // std::move?!
+- total heap usage: 9,945,040 allocs, 9,945,018 frees, 1,118,081,539 bytes allocated
+- total heap usage: 9,932,373 allocs, 9,932,351 frees, 1,113,019,647 bytes allocated
+- total heap usage: 9,930,433 allocs, 9,930,411 frees, 1,111,880,328 bytes allocated
+- total heap usage: 9,930,396 allocs, 9,930,374 frees, 1,111,878,552 bytes allocated
+- total heap usage: 9,930,280 allocs, 9,930,258 frees, 1,111,872,984 bytes allocated
+- total heap usage: 9,930,266 allocs, 9,930,244 frees, 1,111,872,312 bytes allocated
+- total heap usage: 9,930,308 allocs, 9,930,286 frees, 1,111,874,328 bytes allocated
+- total heap usage: 9,930,352 allocs, 9,930,330 frees, 1,111,876,440 bytes allocated
+- total heap usage: 9,930,357 allocs, 9,930,335 frees, 1,111,876,680 bytes allocated
 
 ===============================================================================
 

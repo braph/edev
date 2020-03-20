@@ -1,5 +1,7 @@
 #include "common.hpp"
 
+#include <cstring>
+
 static union {
   wchar_t wide[512];
   char  narrow[sizeof(wide)];

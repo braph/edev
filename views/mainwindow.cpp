@@ -7,7 +7,7 @@ using namespace Views;
 
 MainWindow :: MainWindow(Actions& actions, Database::Database& db, Mpg123Player& player)
 : actions(actions)
-, playingInfo(db)
+, infoLine(db)
 , progressBar()
 , tabBar()
 , readlineWidget()
@@ -20,7 +20,7 @@ MainWindow :: MainWindow(Actions& actions, Database::Database& db, Mpg123Player&
   readlineWidget.visible = false;
 
   for (const auto& w : Config::main_widgets) {
-    /**/ if (w == "playinginfo")    addWidget(&playingInfo);
+    /**/ if (w == "infoline")       addWidget(&infoLine);
     else if (w == "progressbar")    addWidget(&progressBar);
     else if (w == "tabbar")         addWidget(&tabBar);
     else if (w == "readline")       addWidget(&readlineWidget);
@@ -65,12 +65,12 @@ void MainWindow :: layout(Pos pos, Size size) {
 
   tabBar.layout(pos, size);
   progressBar.layout(pos, size);
-  playingInfo.layout(pos, size);
+  infoLine.layout(pos, size);
   readlineWidget.layout(pos, size);
 
   if (tabBar.visible)         size.height -= tabBar.size.height;
   if (progressBar.visible)    size.height -= progressBar.size.height;
-  if (playingInfo.visible)    size.height -= playingInfo.size.height;
+  if (infoLine.visible)    size.height -= infoLine.size.height;
   if (readlineWidget.visible) size.height -= readlineWidget.size.height;
 
   windows.layout(pos, size);

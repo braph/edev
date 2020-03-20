@@ -3,9 +3,7 @@
 
 #include <string>
 #include <ctime>
-#include <cstring>
 #include <cassert>
-#include <iostream> // XXX
 #include <initializer_list>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -44,20 +42,6 @@ char*    toNarrowChar(wchar_t);
 wchar_t* toWideString(CString, size_t* len = NULL);
 char*    toNarrowString(CWString, size_t* len = NULL);
 char*    time_format(time_t, CString);
-
-static inline const char* strMayNULL(const char* s) {
-  return (s ? s : "");
-}
-
-// If `*s` starts with `prefix` advance the pointer beyond the prefix and return TRUE
-template<size_t LEN>
-static inline bool cstr_seek(const char **s, const char (&prefix)[LEN]) {
-  if (! std::strncmp(*s, prefix, LEN - 1)) {
-    *s += LEN - 1;
-    return true;
-  }
-  return false;
-}
 
 /* ============================================================================
  * Fork()
@@ -98,7 +82,8 @@ static inline void open_url(const std::string& url) {
  * Algorithm
  * ==========================================================================*/
 
-template<typename T> inline bool in_list(const T &elem, const std::initializer_list<T> &list) {
+template<typename T>
+static inline bool in_list(const T &elem, const std::initializer_list<T> &list) {
   for (const auto &i : list)
     if (elem == i)
       return true;
@@ -106,7 +91,7 @@ template<typename T> inline bool in_list(const T &elem, const std::initializer_l
 }
 
 template<typename T>
-inline T clamp(T value, T lower, T upper) {
+static inline T clamp(T value, T lower, T upper) {
   if (value < lower) return lower;
   if (value > upper) return upper;
   return value;

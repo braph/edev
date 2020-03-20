@@ -134,8 +134,8 @@ void Theme :: set(int theme, const std::string &name, short fg, short bg, unsign
     "list.item_odd",
     "list.item_selection",
 
-    "playinginfo.position",
-    "playinginfo.state",
+    "infoline.position",
+    "infoline.state",
 
     "help.widget_name",
     "help.key_name",

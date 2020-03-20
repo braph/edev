@@ -23,7 +23,7 @@ namespace Database { class Database; }
   X(PLAYER_BACKWARD,        "player.backward")    \
   X(PLAYER_STOP,            "player.stop")        \
   X(PLAYER_TOGGLE,          "player.toggle")      \
-  X(PLAYINGINFO_TOGGLE,     "playinginfo.toggle") \
+  X(PLAYINGINFO_TOGGLE,     "infoline.toggle")    \
   X(PROGRESSBAR_TOGGLE,     "progressbar.toggle") \
   X(TABBAR_TOGGLE,          "tabbar.toggle")      \
   X(TABS_NEXT,              "tabs.next")          \
@@ -43,7 +43,7 @@ namespace Database { class Database; }
 class Actions {
 public:
 #define X(ENUM, STR) ENUM,
-  enum ActionID : unsigned char { XActions ACTIONID_LAST };
+  enum ActionID : unsigned char { XActions ACTIONID_ENUM_LAST };
 #undef X
   Actions() {}
   int call(ActionID);
