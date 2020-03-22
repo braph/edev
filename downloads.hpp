@@ -61,7 +61,7 @@ private:
 
 class FileDownload : public Download {
 public:
-  FileDownload(const std::string&, const std::string&);
+  FileDownload(const std::string&, std::string);
 
   const std::string& filename() const noexcept { return _filename; }
 

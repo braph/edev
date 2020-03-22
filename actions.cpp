@@ -51,7 +51,7 @@ PLAYLIST_PLAY:        v->playlist.activeIndex(index);
   case TABS_PREV:     index = v->windows.currentIndex() - 1;    goto SELECT_TAB;
   case SPLASH_SHOW:   index = v->windows.indexOf(&v->splash);   goto SELECT_TAB;
   case PLAYLIST_SHOW: index = v->windows.indexOf(&v->playlist); goto SELECT_TAB;
-  case BROWSER_SHOW:  index = v->windows.indexOf(&v->playlist); goto SELECT_TAB; // TODO
+  case BROWSER_SHOW:  index = v->windows.indexOf(&v->playlist); goto SELECT_TAB; // TODO [later]
   case INFO_SHOW:     index = v->windows.indexOf(&v->info);     goto SELECT_TAB;
   case HELP_SHOW:     index = v->windows.indexOf(&v->help);     goto SELECT_TAB;
 SELECT_TAB:           if (index < 0)

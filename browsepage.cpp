@@ -11,6 +11,8 @@
 #include <boost/archive/iterators/binary_from_base64.hpp>
 
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <algorithm>    
 
 using boost::algorithm::trim;
@@ -18,6 +20,8 @@ using boost::algorithm::trim_if;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 using boost::algorithm::erase_all;
+
+static std::locale en_US("en_US.utf-8");
 
 static inline const char* strMayNULL(const char* s) { return (s ? s : ""); }
 
@@ -69,7 +73,7 @@ void BrowsePage :: parse_src(const std::string& src) {
   }
 #endif
 
-  // Find number of pages (XXX Strange, this query fails with [0] ...)
+  // Find number of pages
   result = xpath.query_string("string(//span[@class = 'pages']/text())");
   if (! result.empty()) {
     // <span class='pages'>Page 1 of 31</span>
@@ -85,9 +89,11 @@ void BrowsePage :: parse_src(const std::string& src) {
     // Date
     result = xpath.query_string("string(.//span[@class = 'd']/text())", post);
     if (! result.empty()) {
-      struct tm tm = {0,0,0,0,0,0,0,0,0,0,0};
-      ::strptime(result.c_str(), "%B %d, %Y", &tm); // TODO locale?
-      album.date = ::mktime(&tm);
+      std::istringstream ss(result);
+      ss.imbue(en_US);
+      std::tm t = {};
+      ss >> std::get_time(&t, "%B %d, %Y");
+      album.date = ::mktime(&t);
     }
 
     // Download count

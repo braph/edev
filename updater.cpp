@@ -139,6 +139,7 @@ bool Updater :: start(int pages) {
   int firstPage, lastPage;
 
 #define LAST_PAGE_FALLBACK 450 // TODO
+// TODO: make this thing work recursive: each dl inserts a new DL!
 
   if (pages > 0) { // Count from first page
     firstPage = pages;
@@ -153,10 +154,9 @@ bool Updater :: start(int pages) {
     lastPage  = (num_pages ? num_pages : LAST_PAGE_FALLBACK);
   }
 
-  std::string url;
   while (firstPage <= lastPage) {
-    url = Ektoplayer::browse_url(firstPage++);
-    BufferDownload* dl = new BufferDownload(url);
+    std::string url = Ektoplayer::browse_url(firstPage++);
+    BufferDownload* dl = new BufferDownload(std::move(url));
     dl->onFinished = cb;
     downloads.addDownload(dl, Downloads::LOW);
   }

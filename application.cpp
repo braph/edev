@@ -43,7 +43,7 @@ private:
 
 Application :: Application()
 : database()
-, downloads(20)
+, downloads(2)
 , updater(database, downloads)
 , trackloader(downloads)
 , player()
@@ -141,7 +141,7 @@ void Application :: init() {
   }
 
   // All colors are beautiful
-  Theme::loadTheme(Config::use_colors != -1 ? Config::use_colors : COLORS);
+  Theme::loadThemeByColors(Config::use_colors != -1 ? Config::use_colors : COLORS);
 }
 
 void Application :: run() {
@@ -223,15 +223,17 @@ MAINLOOP:
   win = mainwindow.getWINDOW();
 
   // Do as much download work as possible, be only interrupted by the user
-  wtimeout(win, 0);
+  wtimeout(win, 1);
   while (downloads.work())
-    if ((key = wgetch(win) != ERR))
+    if (((key = wgetch(win)) != ERR))
       goto HANDLE_KEY;
 
   if (downloads.runningHandles())
     wtimeout(win, 100); // Short timeout, want to continue downloading soon
-  else if (player.isStopped() || player.isPaused())
+  else if (player.isStopped() || player.isPaused()) {
     wtimeout(win, -1); // We have *nothing* to do, wait until user hits a key
+    std::cerr << "tm is -1\n";
+  }
   else
     wtimeout(win, 900); // In playing state we need some UI refreshes
 

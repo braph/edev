@@ -5,6 +5,7 @@ WARNINGS += -Wlogical-op
 WARNINGS += -Wold-style-cast -Wcast-align -Wcast-qual -Wnoexcept -Wno-unused
 WARNINGS += -Wsign-promo -Wsign-compare -Wsign-conversion
 WARNINGS += -Wmissing-include-dirs
+WARNINGS += -Wpessimizing-move -Wredundant-move
 #WARNINGS += -Werror # -Wfatal-errors
 #WARNINGS += -Wdisabled-optimization -Wformat=2 -Wshadow -Wswitch-default -Wstrict-overflow=5 
 #-D_GLIBCXX_ASSERTIONS
@@ -13,7 +14,7 @@ STD = c++11
 CURSES_INC = "<ncurses.h>"
 
 #CXXFLAGS := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
-CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS)
+CXXFLAGS := -std=$(STD) -fno-rtti -O3 -DNDEBUG $(WARNINGS)
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC) 
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
@@ -135,7 +136,7 @@ test_trackloader: database.o $(DATABASE.deps) downloads.o ektoplayer.o
 # Widgets
 # ============================================================================
 
-# TODO: test_widgets
+test_widgets: test_readline test_listwidget
 
 test_readline:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_READLINE widgets/readline.cpp $^

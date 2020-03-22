@@ -16,6 +16,13 @@ public:
   };
 
   enum ThemeID {
+    THEME_MONO,
+    THEME_8,
+    THEME_256,
+    THEMEID_ENUM_LAST
+  };
+
+  enum ElementID {
     DEFAULT,
     URL,
 
@@ -45,17 +52,20 @@ public:
     HELP_COMMAND_NAME,
     HELP_COMMAND_DESC,
 
-    THEME_ID_COUNT
+    ELEMENTID_ENUM_LAST
   };
 
-  static int current; // 0 | 8 | 256
-  static void set(int, const std::string&, short, short, unsigned int);
-  static unsigned int get(ThemeID);
-  static void loadTheme(int);
+  static ThemeID current;
+  static void set(ThemeID, const std::string&, short, short, unsigned int);
+  static unsigned int get(ElementID);
+  static void loadTheme(ThemeID);
+  static void loadThemeByColors(int colors) {
+    loadTheme((colors >= 256 ? THEME_256 : (colors >= 8 ? THEME_8 : THEME_MONO)));
+  }
 
 private:
-  static Definition themes[3][THEME_ID_COUNT];
-  static unsigned int loaded[THEME_ID_COUNT];
+  static Definition themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST];
+  static unsigned int loaded[ELEMENTID_ENUM_LAST];
 };
 
 #endif

@@ -245,16 +245,20 @@ void Config :: color(const std::vector<std::string>& args) {
   checkArgCount(args, 3, INT_MAX);
 
 #if /*TODO*/ 0
-  int theme; // XXX use enum?
+  auto it = args.cbegin();
+  auto end = args.cend();
+
+  Theme::ThemeID theme;
+  if (args[0] == "color_mono")
+    theme = Theme::MONO;
+  else if (args[0] == "color")
+    theme = Theme::EIGHT;
+  else if (args[0] == "color_256")
+    theme = Theme::FULL;
+
   unsigned int attrs;
   short fg;
   short bg;
-  if (args[0] == "color_mono")
-    theme = 0;
-  else if (args[0] == "color")
-    theme = 1;
-  else if (args[0] == "color_256")
-    theme = 2;
 
   const std::string& themeElement = args[1];
   auto it = std::next(args.cbegin(), 2);

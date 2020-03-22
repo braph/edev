@@ -13,7 +13,7 @@ Download :: Download(const std::string &url) {
   setopt(CURLOPT_URL, url.c_str());
   setopt(CURLOPT_PRIVATE, this);
   setopt(CURLOPT_FOLLOWLOCATION, 1);
-  setopt(CURLOPT_TIMEOUT, 60);
+  setopt(CURLOPT_TIMEOUT, 2*60);
 }
 
 Download :: ~Download() {
@@ -71,8 +71,8 @@ static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *strea
   return size*nmemb;
 }
 
-FileDownload :: FileDownload(const std::string &url, const std::string &file)
-: Download(url), _filename(file)
+FileDownload :: FileDownload(const std::string &url, std::string file)
+: Download(url), _filename(std::move(file))
 {
   _stream.exceptions(std::ofstream::failbit|std::ofstream::badbit);
   _stream.open(file, std::ios::binary);
@@ -135,7 +135,7 @@ int Downloads :: work() noexcept {
     else assert_not_reached();
   }
 
-  int ready_filedescriptors = 0;
+  int ready_filedescriptors;
   curl_multi_wait(_curl_multi, NULL, 0, 10, &ready_filedescriptors);
   return ready_filedescriptors;
 }

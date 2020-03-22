@@ -13,11 +13,11 @@
 #define yellow     COLOR_YELLOW
 #define magenta    COLOR_MAGENTA
 
-int          Theme :: current;
-unsigned int Theme :: loaded[THEME_ID_COUNT];
+Theme::ThemeID Theme :: current;
+unsigned int   Theme :: loaded[ELEMENTID_ENUM_LAST];
 
 #define _ Theme :: Definition
-Theme::Definition Theme :: themes[3][THEME_ID_COUNT] = {
+Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
   { // ========================= Mono (no colors) ===============
     /* DEFAULT                */ _(-1, -1                       ),
     /* URL                    */ _(defualt, defualt, A_UNDERLINE),
@@ -111,8 +111,8 @@ Theme::Definition Theme :: themes[3][THEME_ID_COUNT] = {
 };
 #undef _
 
-void Theme :: set(int theme, const std::string &name, short fg, short bg, unsigned int attributes) {
-  const char* names[THEME_ID_COUNT] = {
+void Theme :: set(ThemeID theme, const std::string &name, short fg, short bg, unsigned int attributes) {
+  const char* names[ELEMENTID_ENUM_LAST] = {
     "default",
     "url",
 
@@ -143,7 +143,7 @@ void Theme :: set(int theme, const std::string &name, short fg, short bg, unsign
     "help.command_desc",
   };
 
-  for (size_t i = 0; i < THEME_ID_COUNT; ++i)
+  for (size_t i = 0; i < THEMEID_ENUM_LAST; ++i)
     if (name == names[i]) {
       themes[theme][i] = Theme::Definition(fg, bg, attributes);
       return;
@@ -152,18 +152,16 @@ void Theme :: set(int theme, const std::string &name, short fg, short bg, unsign
   throw std::invalid_argument(name + ": invalid theme element");
 }
 
-unsigned int Theme :: get(ThemeID id) {
+unsigned int Theme :: get(ElementID id) {
   return loaded[id];
 }
 
-void Theme :: loadTheme(int theme) {
+void Theme :: loadTheme(ThemeID theme) {
   current = theme;
-  int theme_idx = (theme >= 256 ? 2 : (theme >= 8 ? 1 : 0));
+  Theme::Definition fallback = themes[theme][DEFAULT];
 
-  Theme::Definition fallback = themes[theme_idx][DEFAULT];
-
-  for (size_t i = 0; i < THEME_ID_COUNT; ++i) {
-    Theme::Definition td = themes[theme_idx][i];
+  for (size_t i = 0; i < ELEMENTID_ENUM_LAST; ++i) {
+    Theme::Definition td = themes[theme][i];
     loaded[i] = UI::Colors::set(
       (td.fg == -2 ? fallback.fg : td.fg),
       (td.bg == -2 ? fallback.bg : td.bg),
@@ -174,7 +172,6 @@ void Theme :: loadTheme(int theme) {
 
 #ifdef TEST_THEME
 #include "test.hpp"
-int main() {
-}
+int main() { }
 #endif
 

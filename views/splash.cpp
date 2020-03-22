@@ -56,11 +56,11 @@ void Splash :: draw() {
   auto bubbleFading    = ArrayView<const short>(colorFading_0);
   auto signatureFading = ArrayView<const short>(colorFading_0);
 
-  if (Theme::current == 256) {
+  if (Theme::current == Theme::THEME_256) {
     logoFading            = logoFading_256;
     bubbleFading          = bubbleFading_256;
     signatureFading       = signatureFading_256;
-  } else if (Theme::current == 8) {
+  } else if (Theme::current == Theme::THEME_8) {
     logoFading            = logoFading_8;
     bubbleFading          = bubbleFading_8;
     signatureFading       = signatureFading_8;

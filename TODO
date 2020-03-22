@@ -27,6 +27,18 @@ stringpool: size() - 1 on opt
 - total heap usage: 9,930,308 allocs, 9,930,286 frees, 1,111,874,328 bytes allocated
 - total heap usage: 9,930,352 allocs, 9,930,330 frees, 1,111,876,440 bytes allocated
 - total heap usage: 9,930,357 allocs, 9,930,335 frees, 1,111,876,680 bytes allocated
+- [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
+- total heap usage: 9,930,409 allocs, 9,930,387 frees, 1,111,879,168 bytes allocated << before time_t
+- total heap usage: 10,174,780 allocs, 10,174,758 frees, 1,138,071,779 bytes allocated << fixed?
+- total heap usage:  9,933,826 allocs, 9,933,804 frees, 1,112,037,605 bytes allocated
+- stl precompile headers?
+
+- total heap usage: 6,234,552 allocs, 6,234,088 frees, 696,668,700 bytes allocated << with some missing
+- total heap usage: 7,010,111 allocs, 7,009,647 frees, 735,319,286 bytes allocated << downloads(10)
+- total heap usage: 10,088,927 allocs, 10,088,463 frees, 1,186,647,817 bytes allocated << downloads(1)
+- total heap usage: 10,088,563 allocs, 10,088,099 frees, 1,187,960,569 bytes allocated << downloads(1) + std::string DL constructor
+- total heap usage: 10,088,446 allocs, 10,087,982 frees, 1,186,225,470 bytes allocated << downloads(1) + std::string DL constr + move
+- total heap usage: 10,067,213 allocs, 10,066,749 frees, 1,173,923,967 bytes allocated << downloads(2)
 
 ===============================================================================
 
