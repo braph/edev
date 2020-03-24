@@ -2,9 +2,10 @@
 #define VIEWS_INFO_HPP
 
 #include "../ui.hpp"
-#include "../common.hpp"
-#include "../player.hpp"
-#include "../database.hpp"
+#include "../ui/mouseevents.hpp"
+#include "../lib/cstring.hpp"
+#include "../context.hpp"
+#include "../database.hpp" // XXX Get rid of this
 
 #include <string>
 
@@ -12,7 +13,7 @@ namespace Views {
 
 class Info : public UI::Pad {
 public:
-  Info(Database::Database&, Mpg123Player&);
+  Info(Context& ctxt) : ctxt(ctxt) {}
 
   void draw();
   void layout(UI::Pos, UI::Size);
@@ -23,8 +24,7 @@ public:
 private:
   struct UrlAndTitle { std::string url; std::string title; };
 
-  Database::Database& db;
-  Mpg123Player& player;
+  Context& ctxt;
   Database::Tracks::Track currentTrack;
   UI::MouseEvents<UrlAndTitle> clickableURLs;
 

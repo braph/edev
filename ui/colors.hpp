@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <string>
-#include <cstdint>
 
 namespace UI {
 
@@ -15,7 +14,7 @@ public:
   static mapping colors[];
 
   static std::string to_string(short);
-  static short parse(const std::string&);
+  static short parse(const std::string&, short on_error_return);
 };
 
 class Attribute {
@@ -34,7 +33,7 @@ public:
 private:
   struct pair_id { short fg; short bg; int id; };
   static std::vector<pair_id> color_pairs;
-  static int id;
+  static int last_id;
 };
 
 } // namespace UI

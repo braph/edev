@@ -1,7 +1,5 @@
 #include "database.hpp"
 
-#include "common.hpp"
-
 #include <fstream>
 #include <climits>
 #include <cstring>
@@ -97,10 +95,10 @@ private:
   size_t elem_count;
 
   void readHeader(size_t expected_bits = 0) {
-    elem_bits = 0xDEAD; elem_count = 0;
+    elem_bits = 0; elem_count = 0;
     load(elem_bits);
     load(elem_count);
-    if (elem_bits == 0 || elem_bits == 0xDEAD || (expected_bits && elem_bits != expected_bits))
+    if (elem_bits == 0 || (expected_bits && elem_bits != expected_bits))
       throw std::runtime_error("Invalid bit count in header");
   }
 
@@ -301,7 +299,7 @@ Field Tracks::Track::operator[](ColumnID id) const {
 
 // ============================================================================
 #ifdef TEST_DATABASE
-#include "test.hpp"
+#include "lib/test.hpp"
 #include <algorithm>
 
 template<typename T1, typename T2>

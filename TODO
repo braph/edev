@@ -1,3 +1,4 @@
+- Errhandling on trackloader/filedownload - what to do on excp?
 - Config: Themes set()
 - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
 - keybindings: ^R, maybe even F5 for reloading, ^S for saving?
@@ -6,15 +7,12 @@
 - vol. 3 ?
 x config: temp -> $TEMP
 - config: prefetch
-- Application.cpp: handle_key bug
 - Application.cpp/Downloads.cpp: runningHandles() / inQueue() / queue.size()
-- Browsepage: more scanner usage
-- common.hpp/bit_tools.hpp: - swap size_for_bits
-- PackedVector: There seems to be an issue with big ints? -> download_count()?
 - Downloads: wait(INT)
 - Downloads: unique_ptr
+- Browsepage: more scanner usage
+- xml.hpp: iterators
 - Vector: __enter__ __leave__
-stringpool: size() - 1 on opt
 - total heap usage: 9,934,570 allocs, 9,934,548 frees, 1,113,073,000 bytes allocated
 - total heap usage: 9,932,411 allocs, 9,932,389 frees, 1,113,021,471 bytes allocated
 - total heap usage: 9,932,557 allocs, 9,932,535 frees, 1,113,028,479 bytes allocated // std::move?!
@@ -31,6 +29,7 @@ stringpool: size() - 1 on opt
 - total heap usage: 9,930,409 allocs, 9,930,387 frees, 1,111,879,168 bytes allocated << before time_t
 - total heap usage: 10,174,780 allocs, 10,174,758 frees, 1,138,071,779 bytes allocated << fixed?
 - total heap usage:  9,933,826 allocs, 9,933,804 frees, 1,112,037,605 bytes allocated
+- total heap usage: 9,930,426 allocs, 9,930,405 frees, 1,111,872,954 bytes allocated << 
 - stl precompile headers?
 
 - total heap usage: 6,234,552 allocs, 6,234,088 frees, 696,668,700 bytes allocated << with some missing
@@ -40,11 +39,14 @@ stringpool: size() - 1 on opt
 - total heap usage: 10,088,446 allocs, 10,087,982 frees, 1,186,225,470 bytes allocated << downloads(1) + std::string DL constr + move
 - total heap usage: 10,067,213 allocs, 10,066,749 frees, 1,173,923,967 bytes allocated << downloads(2)
 
+- total heap usage: 6,810 allocs, 6,323 frees, 5,599,344 bytes allocated <<< without UI::constructors
+
+- 56.77s user 3.59s system 413% cpu 14.611 total
+- 56.43s user 3.46s system 442% cpu 13.544 total
+- 52.15s user 3.12s system 470% cpu 11.759 total
+
 ===============================================================================
 
-- Make actions a pImpl? --- seems not yet to be needed....
-- database.cpp
-  - Lots of duplicated code in class:Table. Maybe use class TableBase + Table<T>?
 - application.cpp
   - Preload playlist
   - What to do when the database has updated?

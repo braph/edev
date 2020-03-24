@@ -12,17 +12,16 @@ class ReadlineWidget : public UI::Window {
 public:
   ReadlineWidget();
 
-  using onFinishFunction = std::function<void(const std::string&, bool)>;
+  using onFinishFunction = std::function<void(std::string, bool)>;
   onFinishFunction onFinish;
 
   void draw();
   void layout(UI::Pos, UI::Size);
   bool handleKey(int);
-  void setPrompt(const std::string&);
+  void setPrompt(std::string);
 
 private:
-  std::string prompt;
-  int oldCursor;
+  std::string _prompt;
 };
 
 #endif

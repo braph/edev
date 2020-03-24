@@ -11,18 +11,15 @@
 #include "playlist.hpp"
 #include "tabbar.hpp"
 
-#include "../actions.hpp"
-#include "../player.hpp"
-#include "../database.hpp"
 #include "../ui.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/readline.hpp"
+#include "../context.hpp"
 
 namespace Views {
 
 class MainWindow : public UI::VerticalContainer {
 public:
-  Actions&              actions;
   Views::InfoLine       infoLine;
   Views::ProgressBar    progressBar;
   Views::TabBar         tabBar;
@@ -32,10 +29,11 @@ public:
   Views::Playlist       playlist;
   Views::Info           info;
   Views::Help           help;
-  MainWindow(Actions&, Database::Database&, Mpg123Player&);
+  Context&              ctxt;
+  MainWindow(Context&);
   void layout(UI::Pos, UI::Size);
   bool handleKey(int);
-  void readline(const std::string&, ReadlineWidget::onFinishFunction);
+  void readline(std::string, ReadlineWidget::onFinishFunction);
 };
 
 } // namespace Views

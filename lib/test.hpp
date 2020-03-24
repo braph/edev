@@ -3,11 +3,8 @@
 #include <stdexcept>
 #include <cstring>
 #include <unistd.h>
-#include "common.hpp"
 #undef NDEBUG
 #include <cassert>
-
-#define TEST_DB "/tmp/ektoplayer-test.db"
 
 #define except(...) \
   try { __VA_ARGS__; throw 0; } \

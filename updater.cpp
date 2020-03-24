@@ -1,14 +1,15 @@
 #include "updater.hpp"
 
-#include "xml.hpp"
+#include "lib/xml.hpp"
+#include "lib/downloads.hpp"
 #include "database.hpp"
-#include "downloads.hpp"
-#include "ektoplayer.hpp"
 #include "browsepage.hpp"
+#include "ektoplayer.hpp"
 
 #include <boost/algorithm/string/erase.hpp>
 
 #include <iostream>
+#include <cstring>
 
 struct Html2Markup {
   std::string result;
@@ -32,24 +33,24 @@ struct Html2Markup {
         case XML_ELEMENT_NODE:
           tag = node.name();
 
-          if (!strcmp(tag, "a")) {
+          if (! std::strcmp(tag, "a")) {
             write("((");
             parse(node.children());
             write("))[[");
             write(node["href"]);
             write("]]");
           }
-          else if (!strcmp(tag, "strong") || !strcmp(tag, "b")) {
+          else if (! std::strcmp(tag, "strong") || ! std::strcmp(tag, "b")) {
             write("**");
             parse(node.children());
             write("**");
           }
-          else if (!strcmp(tag, "em") || !strcmp(tag, "i")) {
+          else if (! std::strcmp(tag, "em") || ! std::strcmp(tag, "i")) {
             write("__");
             parse(node.children());
             write("__");
           }
-          else if (!strcmp(tag, "br")) {
+          else if (! std::strcmp(tag, "br")) {
             write('\n');
           }
           else {
@@ -193,7 +194,7 @@ void Updater :: insert_album(Album& album) {
   albumRecord.rating(album.rating);
   albumRecord.votes(album.votes);
   albumRecord.download_count(album.download_count);
-  albumRecord.styles(albumStyleIDs.data());
+  albumRecord.styles(int(albumStyleIDs.data())); // XXX: cast silences warning
 
   // Album archive URLs =======================================================
   for (auto &u : album.archive_urls) {
@@ -238,8 +239,8 @@ void Updater :: insert_browsepage(BrowsePage& page) {
 }
 
 #ifdef TEST_UPDATER
-#include "test.hpp"
-#include "filesystem.hpp"
+#include "lib/test.hpp"
+#include "lib/filesystem.hpp"
 #include <fstream>
 #include <streambuf>
 #define USE_FILESYSTEM 0

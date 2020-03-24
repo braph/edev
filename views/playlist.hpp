@@ -1,12 +1,11 @@
 #ifndef VIEWS_PLAYLIST_HPP
 #define VIEWS_PLAYLIST_HPP
 
-#include "../actions.hpp"
-#include "../bindings.hpp"
-#include "../database.hpp"
+#include "../context.hpp"
+#include "../database.hpp" // XXX ger rid of this
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp" // XXX
-//#include "mainwindow.hpp"
+#include "../lib/steppablesearch.hpp"
 
 #include <vector>
 
@@ -40,12 +39,11 @@ private:
 
 class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
-  Playlist(Actions&, Views::MainWindow&);
+  Playlist(Context&);
   std::vector<Database::Tracks::Track> playlist;
   bool handleKey(int);
 private:
-  Actions& actions;
-  Views::MainWindow& mainwindow;
+  Context& ctxt;
   TrackRenderer trackRenderer;
   SteppableSearch<std::vector<Database::Tracks::Track>> trackSearch;
 };

@@ -18,28 +18,29 @@ CXXFLAGS := -std=$(STD) -fno-rtti -O3 -DNDEBUG $(WARNINGS)
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC) 
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
-CONFIG.deps   = shellsplit.o filesystem.o common.o xml.o
-DATABASE.deps = stringpool.o packedvector.o common.o generic.hpp
-THEME.deps    = colors.o
-PLAYER.deps   = process.o
+CONFIG.deps   = lib/shellsplit.o lib/filesystem.o lib/cstring.o lib/xml.o
+DATABASE.deps = lib/stringpool.o lib/packedvector.o
+THEME.deps    = ui/colors.o
+PLAYER.deps   = lib/process.o
 VIEWS         = $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 VIEWS         += widgets/listwidget.hpp widgets/readline.o
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
 	browsepage.o updater.o $(VIEWS) ui/container.o \
-	 player.o $(PLAYER.deps) actions.o bindings.o downloads.o ektoplayer.o trackloader.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) application.cpp $^
+	 player.o $(PLAYER.deps) actions.o bindings.o lib/downloads.o ektoplayer.o trackloader.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) -s application.cpp $^
 
 clean:
-	rm -f {views,ui,widgets,.}/*.o
-	rm -f {views,ui,widgets,.}/*.gch
+	rm -f {views,ui,widgets,lib,.}/*.o
+	rm -f {views,ui,widgets,lib,.}/*.gch
 	rm -f a.out
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-noexcept_objs = stringpool.o player.o process.o bindings.o ektoplayer.o filesystem.o \
-								$(addprefix views/, splash.o )
+noexcept_objs = actions.o bindings.o ui/colors.o ektoplayer.o theme.o player.o \
+								$(addprefix lib/, downloads.o filesystem.o shellsplit.o stringpool.o  process.o) \
+								$(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 $(noexcept_objs): %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fno-exceptions -c $< -o $@
 
@@ -51,76 +52,76 @@ VALGRIND = valgrind --tool=memcheck --errors-for-leak-kinds=definite --leak-chec
 
 TERMINAL = xterm -e # Used for running ncurses tests
 
-tests: test_common \
+tests: \
 	test_shellsplit \
 	test_stringpool \
 	test_filesystem \
 	test_ektoplayer \
 	test_colors test_theme \
-	test_xml test_generic \
+	test_xml \
 	test_updater test_database
 
 # ============================================================================
 # Core
 # ============================================================================
 
-test_common:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COMMON common.cpp $^
-	$(VALGRIND) ./a.out
+#test_common:
+#	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COMMON common.cpp $^
+#	$(VALGRIND) ./a.out
 
 test_shellsplit:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT shellsplit.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT lib/shellsplit.cpp $^
 	$(VALGRIND) ./a.out
 
 test_stringpool:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGPOOL stringpool.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGPOOL lib/stringpool.cpp $^
 	$(VALGRIND) ./a.out
 
 test_filesystem:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_FILESYSTEM filesystem.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_FILESYSTEM lib/filesystem.cpp $^
 	$(VALGRIND) ./a.out
 
-test_ektoplayer: filesystem.o
+test_ektoplayer: lib/filesystem.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_EKTOPLAYER ektoplayer.cpp $^
 	$(VALGRIND) ./a.out
 
 test_colors:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COLORS colors.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COLORS ui/colors.cpp $^
 	$(VALGRIND) ./a.out
 
 test_theme: $(THEME.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_THEME theme.cpp $^
 	$(VALGRIND) ./a.out
 
-test_config: $(CONFIG.deps) colors.o
+test_config: $(CONFIG.deps) ui/colors.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_CONFIG ektoplayer.cpp config.cpp $^
 	$(VALGRIND) ./a.out
 
 test_packedvector:
-	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) packedvector.cpp $^
+	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) lib/packedvector.cpp $^
 	$(VALGRIND) ./a.out
 
 test_player:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYER player.cpp $^
 	$(VALGRIND) ./a.out
 
-test_generic:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_GENERIC generic.cpp $^
-	$(VALGRIND) ./a.out
+#test_generic:
+#	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_GENERIC generic.cpp $^
+#	$(VALGRIND) ./a.out
 
 test_ui:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UI ui.cpp $^
 	$(VALGRIND) ./a.out
 
 test_xml:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_XML xml.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_XML lib/xml.cpp $^
 	$(VALGRIND) ./a.out
 
 test_browsepage:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
 	$(VALGRIND) ./a.out
 
-test_updater: database.o $(DATABASE.deps) browsepage.o downloads.o ektoplayer.o
+test_updater: database.o $(DATABASE.deps) browsepage.o lib/downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
@@ -128,7 +129,7 @@ test_database: $(DATABASE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_DATABASE database.cpp $^
 	perf stat ./a.out
 
-test_trackloader: database.o $(DATABASE.deps) downloads.o ektoplayer.o
+test_trackloader: database.o $(DATABASE.deps) lib/downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_TRACKLOADER trackloader.cpp $^
 	$(VALGRIND) ./a.out
 
@@ -170,7 +171,7 @@ test_tabbar: config.o $(CONFIG.deps) theme.o $(THEME.deps)
 	$(TERMINAL) ./a.out
 
 test_infoline: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYINGINFO views/infoline.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_INFOLINE views/infoline.cpp $^
 	$(TERMINAL) ./a.out
 
 test_playlist: theme.o $(THEME.deps) config.o $(CONFIG.deps) database.o $(DATABASE.deps)

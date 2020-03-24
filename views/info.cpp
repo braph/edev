@@ -2,10 +2,11 @@
 
 #include "../theme.hpp"
 #include "../config.hpp"
-#include "../colors.hpp"
-#include "../common.hpp"
-#include "../filesystem.hpp"
+#include "../ui/colors.hpp"
+#include "../lib/filesystem.hpp"
 #include "../ektoplayer.hpp"
+#include "../player.hpp"
+#include "../url_handler.hpp"
 
 using namespace UI;
 using namespace Views;
@@ -17,11 +18,6 @@ using namespace Views;
 #define START_INFO_VALUE 26
 #define TRY_LINE_BREAK   70 // Try to break the line on next space
 #define FORCE_LINE_BREAK 85 // Forces line breaks even in words
-
-Info :: Info(Database::Database& db, Mpg123Player& p)
-: db(db)
-, player(p)
-{}
 
 void Info :: layout(Pos pos, Size size) {
   this->pos  = pos;
@@ -130,7 +126,7 @@ void Info :: draw() {
     *this << track.bpm();
 
     drawTag(y++, "Length");
-    printW("%02d:%02d", player.length()/60, player.length()%60);
+    printW("%02d:%02d", ctxt.player->length()/60, ctxt.player->length()%60);
 
     y++; // Newline
 
@@ -221,10 +217,10 @@ void Info :: draw() {
   *this << VERSION;
 
   drawInfo(y++, "Tracks in database");
-  *this << db.tracks.size();
+  *this << ctxt.database->tracks.size();
 
   drawInfo(y++, "Albums in database");
-  *this << db.albums.size();
+  *this << ctxt.database->albums.size();
 
   drawInfo(y++, "Tracks in playlist");
   *this << 0; // TODO

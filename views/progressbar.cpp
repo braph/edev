@@ -2,9 +2,9 @@
 
 #include "../theme.hpp"
 #include "../config.hpp"
-#include "../common.hpp"
-#include "../generic.hpp"
-#include "../colors.hpp"
+#include "../ui/colors.hpp"
+#include "../lib/spanview.hpp"
+#include "../lib/arrayview.hpp"
 
 static const short fading_0[]   = {-1};
 static const short fading_8[]   = {COLOR_BLUE};
@@ -16,16 +16,23 @@ using namespace Views;
 /* The progressbar is drawed only *once* in layout().
  * It is positioned in the right place later by setPercent() */
 
+ProgressBar :: ProgressBar()
+: UI::Pad({0,0}, {1,COLS*2})
+{
+}
+
 void ProgressBar :: draw() {
 }
 
 void ProgressBar :: layout(Pos pos, Size size) {
   size.height = 1;
-  this->pos = pos;
-  this->size = size;
+  if (this->pos != pos || this->size != size) {
+    this->pos = pos;
+    this->size = size;
+    wresize(win, size.height, size.width * 2);
+    mvwin(win, pos.y, pos.x);
+  }
 
-  wresize(win, size.height, size.width * 2);
-  mvwin(win, pos.y, pos.x);
   moveCursor(0, 0);
 
   ArrayView<const short> fading(fading_0);
@@ -63,23 +70,28 @@ bool ProgressBar :: handleMouse(MEVENT& m) {
 }
 
 #ifdef TEST_PROGRESSBAR
-#include "../test.hpp"
+#include "../lib/test.hpp"
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();
 
   Config::init();
-  Theme::loadTheme(256);
+
+  for (int colors : {0, 8, 256}) {
+    if (colors <= COLORS) {
+      Theme::loadThemeByColors(colors); // TODO
   
-  ProgressBar b;
-  b.layout({0,0}, {LINES,COLS});
-  for (;;)
-    for (float f = 0.0; f < 1; f += 0.01) {
-      b.setPercent(f);
-      b.noutrefresh();
-      doupdate();
-      usleep(1000 * 30);
+      ProgressBar b;
+      b.layout({0,0}, {LINES,COLS});
+      for (;;)
+        for (float f = 0.0; f < 1; f += 0.01) {
+          b.setPercent(f);
+          b.noutrefresh();
+          doupdate();
+          usleep(1000 * 30);
+        }
     }
+  }
 
   TEST_END();
 }

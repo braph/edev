@@ -1,21 +1,21 @@
 #include "mainwindow.hpp"
-#include "../common.hpp"
+#include "../bindings.hpp"
 #include "../config.hpp"
 
 using namespace UI;
 using namespace Views;
 
-MainWindow :: MainWindow(Actions& actions, Database::Database& db, Mpg123Player& player)
-: actions(actions)
-, infoLine(db)
+MainWindow :: MainWindow(Context& ctxt)
+: infoLine()
 , progressBar()
 , tabBar()
 , readlineWidget()
 , windows()
 , splash()
-, playlist(actions, *this)
-, info(db, player)
+, playlist(ctxt)
+, info(ctxt)
 , help()
+, ctxt(ctxt)
 {
   readlineWidget.visible = false;
 
@@ -25,7 +25,7 @@ MainWindow :: MainWindow(Actions& actions, Database::Database& db, Mpg123Player&
     else if (w == "tabbar")         addWidget(&tabBar);
     else if (w == "readline")       addWidget(&readlineWidget);
     else if (w == "windows")        addWidget(&windows);
-    else assert_not_reached();
+    else assert(0);
   }
 
   setCurrentIndex(indexOf(&windows));
@@ -36,17 +36,17 @@ MainWindow :: MainWindow(Actions& actions, Database::Database& db, Mpg123Player&
     else if (w == "browser")  windows.addWidget(&playlist); /*TODO*/
     else if (w == "info")     windows.addWidget(&info);
     else if (w == "help")     windows.addWidget(&help);
-    else assert_not_reached();
+    else assert(0);
     tabBar.addTab(w);
   }
 }
 
-void MainWindow :: readline(const std::string& prompt, ReadlineWidget::onFinishFunction callback) {
+void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction callback) {
   readlineWidget.visible = true;
-  readlineWidget.setPrompt(prompt);
+  readlineWidget.setPrompt(std::move(prompt));
   int oldWidget = currentIndex();
   setCurrentIndex(indexOf(&readlineWidget));
-  readlineWidget.onFinish = [=](const std::string& line, bool notEOF) {
+  readlineWidget.onFinish = [=](std::string line, bool notEOF) {
     callback(line, notEOF);
     readlineWidget.visible = false;
     setCurrentIndex(oldWidget);
@@ -70,7 +70,7 @@ void MainWindow :: layout(Pos pos, Size size) {
 
   if (tabBar.visible)         size.height -= tabBar.size.height;
   if (progressBar.visible)    size.height -= progressBar.size.height;
-  if (infoLine.visible)    size.height -= infoLine.size.height;
+  if (infoLine.visible)       size.height -= infoLine.size.height;
   if (readlineWidget.visible) size.height -= readlineWidget.size.height;
 
   windows.layout(pos, size);
@@ -80,6 +80,6 @@ void MainWindow :: layout(Pos pos, Size size) {
 
 bool MainWindow :: handleKey(int key) {
   if (! VerticalContainer::handleKey(key))
-    actions.call(Bindings::global[key]);
+    Actions::call(ctxt, Bindings::global[key]);
   return true;
 }

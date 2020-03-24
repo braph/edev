@@ -1,13 +1,11 @@
 #ifndef UI_HPP
 #define UI_HPP
 
-#include "common.hpp"
+#include "lib/algorithm.hpp" // clamp
 
 #include CURSES_INC
 
-#include <vector>
-#include <iostream>
-#include <algorithm>
+#include <ostream>
 
 namespace UI {
 
@@ -24,9 +22,8 @@ struct Pos {
   bool operator< (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
   bool operator> (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
 
-  inline friend std::ostream& operator<<(std::ostream& os, const UI::Pos& p) {
-    os << "UI::Pos(" << p.y << ',' << p.x << ')';
-    return os;
+  inline friend std::ostream& operator<<(std::ostream& o, const Pos& p) {
+    return o << "UI::Pos(" << p.y << ',' << p.x << ')';
   }
 };
 
@@ -46,43 +43,8 @@ struct Size {
   Size calc(int height, int width) const noexcept
   { return Size(this->height + height, this->width + width); }
 
-  inline friend std::ostream& operator<<(std::ostream& os, const UI::Size& s) {
-    os << "UI::Size(" << s.height << ',' << s.width << ')';
-    return os;
-  }
-};
-
-template<typename T>
-struct MouseEvents {
-  struct Rectangle  {
-    UI::Pos start, stop;
-    Rectangle(const UI::Pos& start, const UI::Pos& stop) : start(start), stop(stop) {}
-  };
-
-  struct MouseEvent {
-    Rectangle section;
-    T data;
-    MouseEvent(const Rectangle& section, const T& data) : section(section), data(data) {}
-  };
-
-  std::vector<MouseEvent> events;
-
-  using iterator = typename std::vector<MouseEvent>::iterator;
-
-  size_t   size()   noexcept { return events.size();  }
-  iterator begin()  noexcept { return events.begin(); }
-  iterator end()    noexcept { return events.end();   }
-  iterator cbegin() noexcept { return events.begin(); }
-  iterator cend()   noexcept { return events.end();   }
-  void     clear()  noexcept { events.clear();        }
-
-  iterator find(const Pos& mousePos) noexcept {
-    return std::find_if(begin(), end(), [&](const MouseEvent& event) {
-        return mousePos >= event.section.start && mousePos <= event.section.stop; });
-  }
-
-  void add(const Pos& start, const Pos& stop, const T& data) {
-    events.push_back(MouseEvent(Rectangle(start, stop), data));
+  inline friend std::ostream& operator<<(std::ostream& o, const Size& s) {
+    return o << "UI::Size(" << s.height << ',' << s.width << ')';
   }
 };
 
@@ -92,12 +54,12 @@ public:
   Size size;
   bool visible;
 
-  virtual void    draw() = 0;
-  virtual void    layout(Pos pos, Size size) = 0;
-  virtual void    noutrefresh() = 0;
+  virtual void draw() = 0;
+  virtual void layout(Pos pos, Size size) = 0;
+  virtual void noutrefresh() = 0;
+  virtual bool handleKey(int) { return false; }
+  virtual bool handleMouse(MEVENT&) { return false; }
   virtual WINDOW* getWINDOW() const = 0;
-  virtual bool    handleKey(int) {return false;}
-  virtual bool    handleMouse(MEVENT &m) { (void)m; return false; }
 
   Widget()
   : pos(0,0), size(0,0), visible(true)
@@ -114,11 +76,11 @@ struct WidgetDrawable : public Widget {
   ~WidgetDrawable()
   { if (win) delwin(win); }
 
-  WINDOW *getWINDOW() const
+  WINDOW *getWINDOW() const noexcept
   { return win; }
 
-  UI::Pos cursorPos() const noexcept
-  { UI::Pos pos; getyx(win, pos.y, pos.x); return pos; }
+  Pos cursorPos() const noexcept
+  { Pos pos; getyx(win, pos.y, pos.x); return pos; }
 
   // Char
   WidgetDrawable& operator<<(char c) noexcept
@@ -145,7 +107,7 @@ struct WidgetDrawable : public Widget {
   { wprintw(win, "%d", i); return *this; }
 
   WidgetDrawable& operator<<(size_t s) noexcept
-  { wprintw(win, "%lu", s); return *this; }
+  { wprintw(win, "%zu", s); return *this; }
 
   WidgetDrawable& operator<<(float f) noexcept
   { wprintw(win, "%f", f); return *this; }
@@ -157,13 +119,13 @@ struct WidgetDrawable : public Widget {
   int addStr(const char* s) noexcept
   { return waddstr(win, s); }
 
-  int addStr(const std::string& s)
+  int addStr(const std::string& s) noexcept
   { return waddstr(win, s.c_str()); }
 
   int addStr(const wchar_t* s) noexcept
   { return waddwstr(win, s); }
 
-  int addStr(const std::wstring& s)
+  int addStr(const std::wstring& s) noexcept
   { return waddwstr(win, s.c_str()); }
 
   template<typename... Args>
@@ -177,13 +139,13 @@ struct WidgetDrawable : public Widget {
   int mvAddStr(int y, int x, const char* s) noexcept
   { return mvwaddstr(win, y, x, s); }
 
-  int mvAddStr(int y, int x, const std::string& s)
+  int mvAddStr(int y, int x, const std::string& s) noexcept
   { return mvwaddstr(win, y, x, s.c_str()); }
 
   int mvAddStr(int y, int x, const wchar_t* s) noexcept
   { return mvwaddwstr(win, y, x, s); }
 
-  int mvAddStr(int y, int x, const std::wstring& s)
+  int mvAddStr(int y, int x, const std::wstring& s) noexcept
   { return mvwaddwstr(win, y, x, s.c_str()); }
 
   int mvAddCh(int y, int x, chtype c) noexcept
@@ -207,16 +169,18 @@ struct WidgetDrawable : public Widget {
 
 class Window : public WidgetDrawable {
 public:
-  Window()
+  Window(Pos pos_ = {0,0}, Size size_ = {1,1})
   {
-    pos = UI::Pos(0,0);
-    size = UI::Size(1,1);
-    win = newwin(1, 1, 0, 0);
+    pos = pos_;
+    size = size_;
+    win = newwin(size.height, size.width, pos.y, pos.x);
+    if (win) {
+      keypad(win, true);
+      return;
+    }
 #ifdef __cpp_exceptions
-    if (! win)
-      throw std::runtime_error("newwin()");
+    throw std::runtime_error("newwin()");
 #endif
-    keypad(win, true);
   }
 
   void layout(Pos pos, Size size) {
@@ -238,17 +202,21 @@ public:
 
 class Pad : public WidgetDrawable {
 public:
-  Pad() {
-    pos = UI::Pos(0,0);
-    size = UI::Size(1,1);
-    win = newpad(1, 1);
-#ifdef __cpp_exceptions
-    if (! win)
-      throw std::runtime_error("newpad()");
-#endif
-    keypad(win, true);
+  Pad(Pos pos_ = {0,0}, Size size_ = {1,1})
+  {
     pad_minrow = 0;
     pad_mincol = 0;
+    pos = pos_;
+    size = size_;
+    win = newpad(size.height, size.width);
+    if (win) {
+      mvwin(win, pos.y, pos.x);
+      keypad(win, true);
+      return;
+    }
+#ifdef __cpp_exceptions
+    throw std::runtime_error("newpad()");
+#endif
   }
 
   void noutrefresh() {

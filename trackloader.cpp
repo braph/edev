@@ -1,9 +1,9 @@
 #include "trackloader.hpp"
 
+#include "lib/downloads.hpp"
+#include "lib/filesystem.hpp"
 #include "config.hpp"
-#include "downloads.hpp"
 #include "ektoplayer.hpp"
-#include "filesystem.hpp"
 
 #include <iostream>
 
@@ -40,7 +40,7 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   file_in_cache /= track_file;
 
   // $temp_dir/~ekto-$track_file
-  Filesystem::path file_in_temp  = Config::temp_dir;
+  Filesystem::path file_in_temp = Config::temp_dir;
   file_in_temp /= EKTOPLAZM_TEMP_FILE_PREFIX;
   file_in_temp += track_file;
 

@@ -1,26 +1,37 @@
 #include "theme.hpp"
-#include "colors.hpp"
+#include "ui/colors.hpp"
 
 #include <stdexcept>
 
-#define defualt    -2
-#define white      COLOR_WHITE
-#define black      COLOR_BLACK
-#define red        COLOR_RED
-#define blue       COLOR_BLUE
-#define cyan       COLOR_CYAN
-#define green      COLOR_GREEN
-#define yellow     COLOR_YELLOW
-#define magenta    COLOR_MAGENTA
+// Undef, just to be sure
+#undef DEFAULT
+#undef WHITE
+#undef BLACK
+#undef RED
+#undef BLUE
+#undef CYAN
+#undef GREEN
+#undef YELLOW
+#undef MAGENTA
+
+#define DEFAULT    -2
+#define WHITE      COLOR_WHITE
+#define BLACK      COLOR_BLACK
+#define RED        COLOR_RED
+#define BLUE       COLOR_BLUE
+#define CYAN       COLOR_CYAN
+#define GREEN      COLOR_GREEN
+#define YELLOW     COLOR_YELLOW
+#define MAGENTA    COLOR_MAGENTA
 
 Theme::ThemeID Theme :: current;
 unsigned int   Theme :: loaded[ELEMENTID_ENUM_LAST];
 
 #define _ Theme :: Definition
 Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
-  { // ========================= Mono (no colors) ===============
+  { // ========================= Mono (no colors) =============================
     /* DEFAULT                */ _(-1, -1                       ),
-    /* URL                    */ _(defualt, defualt, A_UNDERLINE),
+    /* URL                    */ _(DEFAULT, DEFAULT, A_UNDERLINE),
 
     /* INFO_HEAD              */ _(                             ),
     /* INFO_TAG               */ _(                             ),
@@ -33,65 +44,65 @@ Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
     /* PROGRESSBAR_PROGRESS   */ _(                             ),
     /* PROGRESSBAR_REST       */ _(                             ),
 
-    /* TABBAR_SELECTED        */ _(defualt, defualt, A_BOLD     ),
+    /* TABBAR_SELECTED        */ _(DEFAULT, DEFAULT, A_BOLD     ),
     /* TABBAR_UNSELECTED      */ _(                             ),
 
     /* LIST_ITEM_EVEN         */ _(                             ),
     /* LIST_ITEM_ODD          */ _(                             ),
     /* LIST_ITEM_SELECTION    */ _(                             ),
 
-    /* PLAYINGINFO_POSITION   */ _(                             ),
-    /* PLAYINGINFO_STATE      */ _(                             ),
+    /* INFOLINE_POSITION      */ _(                             ),
+    /* INFOLINE_STATE         */ _(                             ),
 
-    /* HELP_WIDGET_NAME       */ _(defualt, defualt, A_BOLD     ),
+    /* HELP_WIDGET_NAME       */ _(DEFAULT, DEFAULT, A_BOLD     ),
     /* HELP_KEY_NAME          */ _(                             ),
     /* HELP_COMMAND_NAME      */ _(                             ),
     /* HELP_COMMAND_DESC      */ _(                             )
   },
-  { // ========================= 8 Colors (default) =============
+  { // ========================= 8 Colors (default) ===========================
     /* DEFAULT                */ _(-1, -1                       ),
-    /* URL                    */ _(magenta, defualt, A_UNDERLINE),
+    /* URL                    */ _(MAGENTA, DEFAULT, A_UNDERLINE),
 
-    /* INFO_HEAD              */ _(blue, defualt, A_BOLD        ),
-    /* INFO_TAG               */ _(blue                         ),
-    /* INFO_VALUE             */ _(magenta                      ),
-    /* INFO_DESCRIPTION       */ _(blue                         ),
-    /* INFO_DOWNLOAD_FILE     */ _(blue                         ),
-    /* INFO_DOWNLOAD_PERCENT  */ _(magenta                      ),
-    /* INFO_DOWNLOAD_ERROR    */ _(red                          ),
+    /* INFO_HEAD              */ _(BLUE, DEFAULT, A_BOLD        ),
+    /* INFO_TAG               */ _(BLUE                         ),
+    /* INFO_VALUE             */ _(MAGENTA                      ),
+    /* INFO_DESCRIPTION       */ _(BLUE                         ),
+    /* INFO_DOWNLOAD_FILE     */ _(BLUE                         ),
+    /* INFO_DOWNLOAD_PERCENT  */ _(MAGENTA                      ),
+    /* INFO_DOWNLOAD_ERROR    */ _(RED                          ),
 
-    /* PROGRESSBAR_PROGRESS   */ _(blue                         ),
-    /* PROGRESSBAR_REST       */ _(black                        ),
+    /* PROGRESSBAR_PROGRESS   */ _(BLUE                         ),
+    /* PROGRESSBAR_REST       */ _(BLACK                        ),
 
-    /* TABBAR_SELECTED        */ _(blue                         ),
-    /* TABBAR_UNSELECTED      */ _(white                        ),
+    /* TABBAR_SELECTED        */ _(BLUE                         ),
+    /* TABBAR_UNSELECTED      */ _(WHITE                        ),
 
-    /* LIST_ITEM_EVEN         */ _(blue                         ),
-    /* LIST_ITEM_ODD          */ _(blue                         ),
-    /* LIST_ITEM_SELECTION    */ _(magenta                      ),
+    /* LIST_ITEM_EVEN         */ _(BLUE                         ),
+    /* LIST_ITEM_ODD          */ _(BLUE                         ),
+    /* LIST_ITEM_SELECTION    */ _(MAGENTA                      ),
 
-    /* PLAYINGINFO_POSITION   */ _(magenta                      ),
-    /* PLAYINGINFO_STATE      */ _(cyan                         ),
+    /* INFOLINE_POSITION      */ _(MAGENTA                      ),
+    /* INFOLINE_STATE         */ _(CYAN                         ),
 
-    /* HELP_WIDGET_NAME       */ _(blue, defualt, A_BOLD        ),
-    /* HELP_KEY_NAME          */ _(blue                         ),
-    /* HELP_COMMAND_NAME      */ _(magenta                      ),
-    /* HELP_COMMAND_DESC      */ _(yellow                       )
+    /* HELP_WIDGET_NAME       */ _(BLUE, DEFAULT, A_BOLD        ),
+    /* HELP_KEY_NAME          */ _(BLUE                         ),
+    /* HELP_COMMAND_NAME      */ _(MAGENTA                      ),
+    /* HELP_COMMAND_DESC      */ _(YELLOW                       )
   },
-  { // ========================= 256 Colors =====================
-    /* DEFAULT                */ _(white, -1                    ), // 233
-    /* URL                    */ _(97, defualt, A_UNDERLINE     ),
+  { // ========================= 256 Colors ===================================
+    /* DEFAULT                */ _(WHITE, -1                    ), // 233
+    /* URL                    */ _(97, DEFAULT, A_UNDERLINE     ),
 
-    /* INFO_HEAD              */ _(32, defualt, A_BOLD          ),
+    /* INFO_HEAD              */ _(32, DEFAULT, A_BOLD          ),
     /* INFO_TAG               */ _(74                           ),
     /* INFO_VALUE             */ _(67                           ),
     /* INFO_DESCRIPTION       */ _(67                           ),
     /* INFO_DOWNLOAD_FILE     */ _(75                           ),
     /* INFO_DOWNLOAD_PERCENT  */ _(68                           ),
-    /* INFO_DOWNLOAD_ERROR    */ _(red                          ),
+    /* INFO_DOWNLOAD_ERROR    */ _(RED                          ),
 
     /* PROGRESSBAR_PROGRESS   */ _(23                           ),
-    /* PROGRESSBAR_REST       */ _(black                        ),
+    /* PROGRESSBAR_REST       */ _(BLACK                        ),
 
     /* TABBAR_SELECTED        */ _(75                           ),
     /* TABBAR_UNSELECTED      */ _(250                          ),
@@ -100,18 +111,27 @@ Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
     /* LIST_ITEM_ODD          */ _(25                           ),
     /* LIST_ITEM_SELECTION    */ _(97                           ),
 
-    /* PLAYINGINFO_POSITION   */ _(97                           ),
-    /* PLAYINGINFO_STATE      */ _(37                           ),
+    /* INFOLINE_POSITION      */ _(97                           ),
+    /* INFOLINE_STATE         */ _(37                           ),
 
-    /* HELP_WIDGET_NAME       */ _(33, defualt, A_BOLD          ),
+    /* HELP_WIDGET_NAME       */ _(33, DEFAULT, A_BOLD          ),
     /* HELP_KEY_NAME          */ _(75                           ),
     /* HELP_COMMAND_NAME      */ _(68                           ),
     /* HELP_COMMAND_DESC      */ _(29                           )
   }
 };
 #undef _
+#undef DEFAULT
+#undef WHITE
+#undef BLACK
+#undef RED
+#undef BLUE
+#undef CYAN
+#undef GREEN
+#undef YELLOW
+#undef MAGENTA
 
-void Theme :: set(ThemeID theme, const std::string &name, short fg, short bg, unsigned int attributes) {
+bool Theme :: set(ThemeID theme, const std::string &name, short fg, short bg, unsigned int attributes) {
   const char* names[ELEMENTID_ENUM_LAST] = {
     "default",
     "url",
@@ -146,10 +166,10 @@ void Theme :: set(ThemeID theme, const std::string &name, short fg, short bg, un
   for (size_t i = 0; i < THEMEID_ENUM_LAST; ++i)
     if (name == names[i]) {
       themes[theme][i] = Theme::Definition(fg, bg, attributes);
-      return;
+      return true;
     }
 
-  throw std::invalid_argument(name + ": invalid theme element");
+  return false;
 }
 
 unsigned int Theme :: get(ElementID id) {
@@ -170,8 +190,11 @@ void Theme :: loadTheme(ThemeID theme) {
   }
 }
 
+void Theme :: loadThemeByColors(int colors) {
+  loadTheme((colors >= 256 ? THEME_256 : (colors >= 8 ? THEME_8 : THEME_MONO)));
+}
+
 #ifdef TEST_THEME
-#include "test.hpp"
 int main() { }
 #endif
 

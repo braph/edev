@@ -1,7 +1,7 @@
 #include "player.hpp"
 
-#include "sscan.hpp"
-#include "process.hpp"
+#include "lib/sscan.hpp"
+#include "lib/process.hpp"
 
 #include <memory>
 #include <cstdio>
@@ -65,8 +65,7 @@ void Mpg123Player :: work() noexcept {
   // Start process if it died (or wasn't even started yet)
   if (!_process || !_process->running()) {
     _process = std::unique_ptr<Process>(
-      new Process([&](){ execlp("mpg123", "mp123", "--fuzzy", "-R", NULL); },
-      true));
+      new Process([&](){ execlp("mpg123", "mp123", "--fuzzy", "-R", NULL); }, true));
     *_process << "SILENCE\n";
   }
 
@@ -112,7 +111,7 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
   if (! scan.read('@'))
     return;
 
-  int i;
+  int i = 0; // XXX this silences warning
 
   // Single char command
   if (scan[0] && scan[1] == ' ') {

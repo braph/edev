@@ -25,7 +25,9 @@ static void readline_forward_finished(char *line) {
       widgetInstance->onFinish(result, static_cast<bool>(line));
 }
 
-ReadlineWidget :: ReadlineWidget() : UI::Window() {
+ReadlineWidget :: ReadlineWidget()
+: UI::Window({0,0}, {1,0})
+{
   keypad(win, false);
 
   rl_initialize();
@@ -52,14 +54,14 @@ void ReadlineWidget :: layout(UI::Pos pos, UI::Size size) {
   }
 }
 
-void ReadlineWidget :: setPrompt(const std::string& s) {
-  prompt = s;
+void ReadlineWidget :: setPrompt(std::string prompt) {
+  _prompt = std::move(prompt);
 }
 
 void ReadlineWidget :: draw() {
   clear();
   attrSet(0);
-  mvAddStr(0, 0, prompt);
+  mvAddStr(0, 0, _prompt);
   int x = getcurx(win);
   addStr(rl_line_buffer);
   mvwchgat(win, 0, x + rl_point, 1, A_STANDOUT, 0, NULL);
@@ -84,7 +86,7 @@ int main() {
   ReadlineWidget w;
   w.layout({0,0}, {LINES, COLS});
   w.setPrompt("> ");
-  w.onFinish = [](const std::string& s, bool notEOF) {
+  w.onFinish = [](std::string s, bool notEOF) {
     if (notEOF)
       std::cerr << "Line: " << s << std::endl;
     else

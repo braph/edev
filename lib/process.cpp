@@ -67,6 +67,7 @@ pid_t Process::open(std::function<void()> function, bool pipe_stdin, bool pipe_s
   if (pipe_stdout) stdout_pipe.open(stdout_p[0]);
   if (pipe_stderr) stderr_pipe.open(stderr_p[0]);
   
+  // XXX: move this?
   fcntl(stdout_pipe.fd, F_SETFL, fcntl(stdout_pipe.fd, F_GETFL) | O_NONBLOCK);
   fcntl(stderr_pipe.fd, F_SETFL, fcntl(stderr_pipe.fd, F_GETFL) | O_NONBLOCK);
 

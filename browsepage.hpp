@@ -3,8 +3,8 @@
 
 #include <ctime>
 #include <string>
-#include <sstream>
 #include <vector>
+#include <ostream>
 
 struct Style {
   std::string url;
@@ -15,8 +15,8 @@ struct Style {
   {
   }
 
-  inline std::string to_string() const {
-    return url + '|' + name;
+  inline friend std::ostream& operator<<(std::ostream& o, const Style& s) {
+    return o << s.url << '|' << s.name;
   }
 };
 
@@ -35,16 +35,15 @@ struct Track {
   , number(0)
   {}
 
-  inline std::string to_string() const {
-    std::stringstream o;o
-      << number << '|'
-      << artist << '|'
-      << title  << '|'
-      << remix  << '|'
-      << bpm    << " bpm|"
-      << length << " sec|"
-      << url;
-    return o.str();
+  inline friend std::ostream& operator<<(std::ostream& o, const Track& t) {
+    return o
+      << t.number << '|'
+      << t.artist << '|'
+      << t.title  << '|'
+      << t.remix  << '|'
+      << t.bpm    << " BPM|"
+      << t.length << " Sec|"
+      << t.url;
   }
 };
 
@@ -54,7 +53,7 @@ struct Album {
   std::string artist;
   std::string description;
   std::string cover_url;
-  time_t      date;
+  std::time_t date;
   int         download_count;
   int         votes;
   float       rating;
@@ -75,24 +74,23 @@ struct Album {
     archive_urls.reserve(3);
   }
 
-  inline std::string to_string() const {
-    struct tm* tm = ::localtime(&date);
-    char sdate[20];
-    ::strftime(sdate, sizeof(sdate), "%Y-%m-%d 00:00:00", tm);
+  inline friend std::ostream& operator<<(std::ostream& o, const Album& a) {
+    std::tm* t = std::localtime(&a.date);
+    char date_string[12];
+    std::strftime(date_string, sizeof(date_string), "%Y-%m-%d", t);
 
-    std::stringstream o;o
-      <<   "Title:       " << title
-      << "\nArtist:      " << artist
-      << "\nDate:        " << sdate
-      << "\nDescription: " << description
-      << "\nCover URL:   " << cover_url
-      << "\nDownloads:   " << download_count
-      << "\nRated:       " << rating << " (" << votes << " votes)"
-      << "\nURL:         " << url
-      << "\nStyles:      "; for (auto& s : styles)       { o << s.to_string() << ',';  }
-    o << "\nArchives:    "; for (auto& i : archive_urls) { o << i << ',';              }
-    o << "\nTracks:      "; for (auto& t : tracks)       { o << '\n' << t.to_string(); }
-    return o.str();
+    o <<   "Title:       " << a.title
+      << "\nArtist:      " << a.artist
+      << "\nDate:        " << date_string
+      << "\nDescription: " << a.description
+      << "\nCover URL:   " << a.cover_url
+      << "\nDownloads:   " << a.download_count
+      << "\nRated:       " << a.rating << " (" << a.votes << " votes)"
+      << "\nURL:         " << a.url
+      << "\nStyles:      "; for (auto& s : a.styles)       { o << s << ',';  }
+    o << "\nArchives:    "; for (auto& i : a.archive_urls) { o << i << ',';  }
+    o << "\nTracks:      "; for (auto& t : a.tracks)       { o << '\n' << t; }
+    return o;
   }
 };
 

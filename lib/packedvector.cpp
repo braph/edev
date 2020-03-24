@@ -2,20 +2,6 @@
 
 #define GROW_FACTOR 2
 
-static inline uint32_t replace_bits_32(uint32_t src, uint32_t val, uint32_t offset, uint32_t len) {
-  if (len == 32)
-    return val;
-  uint32_t mask = (~(0xFFFFFFFFu << len)) << offset;
-  return (src & ~mask) | (val << offset);
-}
-
-static inline uint64_t replace_bits_64(uint64_t src, uint64_t val, uint64_t offset, uint64_t len) {
-  if (len == 64)
-    return val;
-  uint64_t mask = (~(0xFFFFFFFFFFFFFFFFu << len)) << offset;
-  return (src & ~mask) | (val << offset);
-}
-
 union BitShiftHelper {
   struct {
     uint32_t u1;
@@ -60,8 +46,8 @@ void PackedVector :: push_back(value_type value) {
 }
 
 PackedVector::value_type PackedVector :: get(size_t index) const {
-  uint32_t dataIndex   = (index * _bits) / 32;
-  uint32_t bitOffset   = (index * _bits) % 32;
+  unsigned int dataIndex = (index * _bits) / 32;
+  unsigned int bitOffset = (index * _bits) % 32;
 
   if (bitOffset + _bits <= 32) {
     uint32_t e = _data[dataIndex];
@@ -77,8 +63,8 @@ PackedVector::value_type PackedVector :: get(size_t index) const {
 }
 
 void PackedVector :: set(size_t index, value_type value) {
-  uint32_t dataIndex   = (index * _bits) / 32;
-  uint32_t bitOffset   = (index * _bits) % 32;
+  unsigned int dataIndex = (index * _bits) / 32;
+  unsigned int bitOffset = (index * _bits) % 32;
 
   if (bitOffset + _bits <= 32) {
     uint32_t e = _data[dataIndex];

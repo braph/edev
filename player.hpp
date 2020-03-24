@@ -3,9 +3,8 @@
 
 #include <string>
 #include <cstdint>
-#include <functional>
 
-#include "process.hpp"
+#include "lib/process.hpp"
 
 class Mpg123Player {
 public:
@@ -30,12 +29,12 @@ public:
   void seekForward(int) noexcept;
   void seekBackward(int) noexcept;
 
-  bool  isTrackCompleted() const noexcept { return _track_completed;  }
+  State state()            const noexcept { return _state;            }
   bool  isStopped()        const noexcept { return _state == STOPPED; }
   bool  isPlaying()        const noexcept { return _state == PLAYING; }
   bool  isPaused()         const noexcept { return _state == PAUSED;  }
   bool  isLoading()        const noexcept { return _state == LOADING; }
-  int   state()            const noexcept { return _state;            }
+  bool  isTrackCompleted() const noexcept { return _track_completed;  }
   int   position()         const noexcept { return _seconds_played;   }
   int   length()           const noexcept { return _seconds_total;    }
   float percent()          const noexcept { return (length() ? float(position()) / length() : 0); }

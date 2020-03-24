@@ -2,7 +2,7 @@
 #define TRACKLOADER_HPP
 
 class Downloads;
-#include "database.hpp"
+#include "database.hpp" // TODO: get rid of this!
 
 #include <string>
 

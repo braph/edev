@@ -1,15 +1,15 @@
 #ifndef DATABASE_HPP
 #define DATABASE_HPP
 
-#include "common.hpp"
-#include "generic.hpp"
-#include "stringpool.hpp"
-#include "packedvector.hpp"
+#include "lib/cstring.hpp"
+#include "lib/genericiterator.hpp"
+#include "lib/stringpool.hpp"
+#include "lib/packedvector.hpp"
+#include "ektoplayer.hpp" // REPORT_BUG
 
 #include <array>
 #include <vector>
 #include <string>
-#include <cstring>
 
 namespace Database {
 
@@ -148,10 +148,10 @@ struct Field {
   inline Field(float f)  { setFloat(f);   }
   inline Field(time_t t) { setTime(t);    }
 
-  inline void setString(ccstr s) { type = STRING;  value.s = s; }
-  inline void setInteger(int i)  { type = INTEGER; value.i = i; } 
-  inline void setFloat(float f)  { type = FLOAT;   value.f = f; }
-  inline void setTime(time_t t)  { type = TIME;    value.t = t; }
+  void setString(ccstr s) { type = STRING;  value.s = s; }
+  void setInteger(int i)  { type = INTEGER; value.i = i; }
+  void setFloat(float f)  { type = FLOAT;   value.f = f; }
+  void setTime(time_t t)  { type = TIME;    value.t = t; }
 
   int compare(const Field &rhs) const noexcept {
     assert(type == rhs.type);

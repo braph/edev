@@ -1,10 +1,10 @@
 #include "config.hpp"
 
 #include "ektoplayer.hpp"
-#include "filesystem.hpp"
-#include "shellsplit.hpp"
-#include "common.hpp"
-#include "colors.hpp"
+#include "lib/algorithm.hpp"
+#include "lib/filesystem.hpp"
+#include "lib/shellsplit.hpp"
+#include "ui/colors.hpp"
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp> // is_any_of()
@@ -162,8 +162,8 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.name == "fg")     fmt.fg = UI::Color::parse(attr.value);
-      else if (attr.name == "bg")     fmt.bg = UI::Color::parse(attr.value);
+      /**/ if (attr.name == "fg")     fmt.fg = UI::Color::parse(attr.value, -1);
+      else if (attr.name == "bg")     fmt.bg = UI::Color::parse(attr.value, -1);
       else if (attr.name == "right")  fmt.justify = PlaylistColumnFormat::Right;
       else if (attr.name == "left")   fmt.justify = PlaylistColumnFormat::Left;
       else if (attr.name == "size") {
@@ -187,7 +187,7 @@ static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
 
   FormatParser formatParser(s);
   while (formatParser.next()) {
-    InfoLineFormatFoo fmt;
+    InfoLineFormatString fmt;
 
     if (formatParser.column)
       fmt.tag  = formatParser.column;
@@ -196,8 +196,8 @@ static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.name == "fg")  fmt.fg = UI::Color::parse(attr.value);
-      else if (attr.name == "bg")  fmt.bg = UI::Color::parse(attr.value);
+      /**/ if (attr.name == "fg") fmt.fg = UI::Color::parse(attr.value, -1);
+      else if (attr.name == "bg") fmt.bg = UI::Color::parse(attr.value, -1);
       else fmt.attributes |= UI::Attribute::parse(attr.name);
     }
 

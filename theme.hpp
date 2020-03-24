@@ -44,8 +44,8 @@ public:
     LIST_ITEM_ODD,
     LIST_ITEM_SELECTION,
 
-    PLAYINGINFO_POSITION,
-    PLAYINGINFO_STATE,
+    INFOLINE_POSITION,
+    INFOLINE_STATE,
 
     HELP_WIDGET_NAME,
     HELP_KEY_NAME,
@@ -56,12 +56,11 @@ public:
   };
 
   static ThemeID current;
-  static void set(ThemeID, const std::string&, short, short, unsigned int);
+
+  static bool set(ThemeID, const std::string&, short, short, unsigned int);
   static unsigned int get(ElementID);
   static void loadTheme(ThemeID);
-  static void loadThemeByColors(int colors) {
-    loadTheme((colors >= 256 ? THEME_256 : (colors >= 8 ? THEME_8 : THEME_MONO)));
-  }
+  static void loadThemeByColors(int);
 
 private:
   static Definition themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST];

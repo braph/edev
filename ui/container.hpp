@@ -2,7 +2,9 @@
 #define UI_CONTAINER_HPP
 
 #include "../ui.hpp"
+
 #include <vector>
+
 namespace UI {
 
 class GenericContainer : public Widget {

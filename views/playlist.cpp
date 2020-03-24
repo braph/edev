@@ -4,10 +4,13 @@
 #include "mainwindow.hpp"
 #include "rm_trackstr.cpp" //XXX
 #include "../config.hpp"
-#include "../colors.hpp"
+#include "../ui/colors.hpp"
 #include "../theme.hpp"
-#include "../database.hpp"
-#include "../common.hpp"
+#include "../actions.hpp"
+#include "../bindings.hpp"
+#include "../lib/algorithm.hpp" // clamp
+
+#include <boost/algorithm/string/predicate.hpp> // icontains
 
 #include <cstring>
 
@@ -82,9 +85,8 @@ void TrackRenderer :: operator()(
  * Playlist
  * ==========================================================================*/
 
-Playlist :: Playlist(Actions& actions, Views::MainWindow& mainwindow)
-: actions(actions)
-, mainwindow(mainwindow)
+Playlist :: Playlist(Context& ctxt)
+: ctxt(ctxt)
 , trackRenderer(Config::playlist_columns)
 {
   this->itemRenderer = trackRenderer;
@@ -101,7 +103,7 @@ bool Playlist :: handleKey(int key) {
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
     case Actions::SEARCH:
-       mainwindow.readline("Search: ", [&](const std::string& line, bool notEOF) {
+       ctxt.mainwindow->readline("Search: ", [&](const std::string& line, bool notEOF) {
            trackSearch.startSearch(this->playlist,
              [=](const Database::Tracks::Track& track) {
                 for (const auto& column : Config::playlist_columns)
@@ -121,7 +123,7 @@ bool Playlist :: handleKey(int key) {
                                  cursorIndex(trackSearch.index());
                                break;
 
-    default: actions.call(Bindings::playlist[key]);
+    default: Actions::call(ctxt, Bindings::playlist[key]);
     }
     return true;
   }

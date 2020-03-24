@@ -9,6 +9,8 @@ namespace Views {
 
 class ProgressBar : public UI::Pad {
 public:
+  ProgressBar();
+
   void draw();
   void layout(UI::Pos, UI::Size);
 

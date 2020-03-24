@@ -28,7 +28,7 @@ public:
   bool try_get_exit_status(int &exit_status) noexcept;
   void close_stdin() noexcept;
   void kill(bool force=false) noexcept;
-  bool running() noexcept;
+  bool running() noexcept; // XXX const?
 
   template<typename T>
   Process& operator<<(T v) noexcept {

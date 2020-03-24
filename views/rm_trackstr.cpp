@@ -1,4 +1,4 @@
-#include "../packedvector.hpp"
+#include "../lib/packedvector.hpp"
 
 static const char* trackField(const Database::Tracks::Track &track, Database::ColumnID id) {
   static char buf[128];

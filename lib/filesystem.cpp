@@ -41,7 +41,7 @@ size_t dir_size(const path& path) noexcept {
       s = 0;
   }
   else if (is_directory(path)) {
-    for (auto& f : directory_iterator(path, e))
+    for (const auto& f : directory_iterator(path, e))
       s += dir_size(f.path());
   }
 

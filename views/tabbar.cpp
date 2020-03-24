@@ -5,7 +5,8 @@
 using namespace Views;
 
 TabBar :: TabBar()
-: UI::Window(), _current(0)
+: UI::Window({0,0}, {1,0})
+, _current(0)
 {
 }
 
@@ -75,12 +76,12 @@ bool TabBar :: handleMouse(MEVENT& m) {
 }
 
 #ifdef TEST_TABBAR
-#include "../test.hpp"
+#include "../lib/test.hpp"
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();
 
-  Theme::loadTheme(256);
+  Theme::loadThemeByColors(256); // TODO
 
   TabBar b;
   b.layout({0,0}, {LINES,COLS});

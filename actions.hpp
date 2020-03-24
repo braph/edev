@@ -1,60 +1,54 @@
 #ifndef ACTIONS_HPP
 #define ACTIONS_HPP
 
-class TrackLoader;
-class Mpg123Player;
-namespace Views { class MainWindow; }
-namespace Database { class Database; }
+#include "context.hpp"
 
 #include <string>
 
-#define XActions \
-  X(NONE,                   "none")               \
-  X(UP,                     "up")                 \
-  X(DOWN,                   "down")               \
-  X(PAGE_UP,                "page_up")            \
-  X(PAGE_DOWN,              "page_down")          \
-  X(TOP,                    "top")                \
-  X(BOTTOM,                 "bottom")             \
-  X(SEARCH,                 "search")             \
-  X(SEARCH_NEXT,            "search.next")        \
-  X(SEARCH_PREV,            "search.prev")        \
-  X(PLAYER_FORWARD,         "player.forward")     \
-  X(PLAYER_BACKWARD,        "player.backward")    \
-  X(PLAYER_STOP,            "player.stop")        \
-  X(PLAYER_TOGGLE,          "player.toggle")      \
-  X(PLAYINGINFO_TOGGLE,     "infoline.toggle")    \
-  X(PROGRESSBAR_TOGGLE,     "progressbar.toggle") \
-  X(TABBAR_TOGGLE,          "tabbar.toggle")      \
-  X(TABS_NEXT,              "tabs.next")          \
-  X(TABS_PREV,              "tabs.prev")          \
-  X(SPLASH_SHOW,            "splash.show")        \
-  X(PLAYLIST_SHOW,          "playlist.show")      \
-  X(BROWSER_SHOW,           "browser.show")       \
-  X(HELP_SHOW,              "help.show")          \
-  X(INFO_SHOW,              "info.show")          \
-  X(PLAYLIST_PLAY,          "playlist.play")      \
-  X(PLAYLIST_NEXT,          "playlist.next")      \
-  X(PLAYLIST_PREV,          "playlist.prev")      \
-  X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current") \
-  X(REDRAW,                 "redraw")             \
-  X(QUIT,                   "quit")               \
+#define XACTIONS \
+  X(NONE,                   "none")                   \
+  X(UP,                     "up")                     \
+  X(DOWN,                   "down")                   \
+  X(PAGE_UP,                "page_up")                \
+  X(PAGE_DOWN,              "page_down")              \
+  X(TOP,                    "top")                    \
+  X(BOTTOM,                 "bottom")                 \
+  X(SEARCH,                 "search")                 \
+  X(SEARCH_NEXT,            "search.next")            \
+  X(SEARCH_PREV,            "search.prev")            \
+  X(PLAYER_FORWARD,         "player.forward")         \
+  X(PLAYER_BACKWARD,        "player.backward")        \
+  X(PLAYER_STOP,            "player.stop")            \
+  X(PLAYER_TOGGLE,          "player.toggle")          \
+  X(PLAYINGINFO_TOGGLE,     "infoline.toggle")        \
+  X(PROGRESSBAR_TOGGLE,     "progressbar.toggle")     \
+  X(TABBAR_TOGGLE,          "tabbar.toggle")          \
+  X(TABS_NEXT,              "tabs.next")              \
+  X(TABS_PREV,              "tabs.prev")              \
+  X(SPLASH_SHOW,            "splash.show")            \
+  X(PLAYLIST_SHOW,          "playlist.show")          \
+  X(BROWSER_SHOW,           "browser.show")           \
+  X(HELP_SHOW,              "help.show")              \
+  X(INFO_SHOW,              "info.show")              \
+  X(PLAYLIST_PLAY,          "playlist.play")          \
+  X(PLAYLIST_NEXT,          "playlist.next")          \
+  X(PLAYLIST_PREV,          "playlist.prev")          \
+  X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current")  \
+  X(REDRAW,                 "redraw")                 \
+  X(QUIT,                   "quit")                   \
 
 class Actions {
 public:
 #define X(ENUM, STR) ENUM,
-  enum ActionID : unsigned char { XActions ACTIONID_ENUM_LAST };
+  enum ActionID : unsigned char { XACTIONS ACTIONID_ENUM_LAST };
 #undef X
-  Actions() {}
-  int call(ActionID);
+  static int call(Context&, ActionID);
   static ActionID parse(const std::string&);
   static const char* to_string(ActionID);
-
-public:
-  Database::Database *db;
-  Mpg123Player *p;
-  Views::MainWindow *v;
-  TrackLoader *t;
 };
+
+#ifndef ACTIONS_EXPORT_XACTIONS
+#undef XActions
+#endif
 
 #endif

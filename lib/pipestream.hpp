@@ -1,5 +1,5 @@
-#ifndef PIPESTREAM_HPP
-#define PIPESTREAM_HPP
+#ifndef LIB_PIPESTREAM_HPP
+#define LIB_PIPESTREAM_HPP
 
 #include <unistd.h>
 
@@ -18,7 +18,7 @@ struct PipeStream {
   { close(); }
 
   operator bool()  const noexcept { return fd >= 0; }
-  bool operator!() const noexcept { return fd <  0; }
+  bool operator!() const noexcept { return fd < 0;  }
 
   void open(int filedes) noexcept {
     close();

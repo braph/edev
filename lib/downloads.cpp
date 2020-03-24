@@ -1,5 +1,5 @@
 #include "downloads.hpp"
-#include "common.hpp"
+#include <cstdlib>
 #include <stdexcept>
 
 /* ============================================================================
@@ -7,13 +7,16 @@
  * ==========================================================================*/
 
 Download :: Download(const std::string &url) {
-  if (! (curl_easy = curl_easy_init()))
-    throw std::runtime_error("curl_easy_init()");
-
-  setopt(CURLOPT_URL, url.c_str());
-  setopt(CURLOPT_PRIVATE, this);
-  setopt(CURLOPT_FOLLOWLOCATION, 1);
-  setopt(CURLOPT_TIMEOUT, 2*60);
+  if ((curl_easy = curl_easy_init())) {
+    setopt(CURLOPT_URL, url.c_str());
+    setopt(CURLOPT_PRIVATE, this);
+    setopt(CURLOPT_FOLLOWLOCATION, 1);
+    setopt(CURLOPT_TIMEOUT, 60);
+    return;
+  }
+#ifdef __cpp_exceptions
+  throw std::runtime_error("curl_easy_init()");
+#endif
 }
 
 Download :: ~Download() {
@@ -75,7 +78,7 @@ FileDownload :: FileDownload(const std::string &url, std::string file)
 : Download(url), _filename(std::move(file))
 {
   _stream.exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  _stream.open(file, std::ios::binary);
+  _stream.open(_filename, std::ios::binary);
   setopt(CURLOPT_WRITEFUNCTION, write_stream_cb);
   setopt(CURLOPT_WRITEDATA, &_stream);
 }
@@ -88,9 +91,13 @@ Downloads :: Downloads(int parallel)
 : _parallel(parallel), _running_handles(0)
 {
   curl_global_init(CURL_GLOBAL_ALL);
-  if (! (_curl_multi = curl_multi_init()))
-    throw std::runtime_error("curl_multi_init()");
-  curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
+  if ((_curl_multi = curl_multi_init())) {
+    curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
+    return;
+  }
+#ifdef __cpp_exceptions
+  throw std::runtime_error("curl_multi_init()");
+#endif
 }
 
 Downloads :: ~Downloads() {
@@ -120,8 +127,6 @@ int Downloads :: work() noexcept {
   int msgs_left;
   while ((msg = curl_multi_info_read(_curl_multi, &msgs_left))) {
     CURL *curl_easy = msg->easy_handle;
-    assert(curl_easy);
-
     Download *dl;
     curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, &dl);
     const char *url = dl->lastURL();
@@ -132,7 +137,9 @@ int Downloads :: work() noexcept {
       curl_multi_remove_handle(_curl_multi, curl_easy);
       delete dl;
     }
-    else assert_not_reached();
+#ifndef NDEBUG
+    else abort();
+#endif
   }
 
   int ready_filedescriptors;

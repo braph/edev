@@ -3,8 +3,6 @@
 #include <cctype>
 #include <stdexcept>
 
-#include "common.hpp"
-
 using namespace UI;
 
 // === UI::Color ==============================================================
@@ -21,15 +19,17 @@ Color :: mapping Color :: colors[] = {
   {"magenta",   COLOR_MAGENTA}
 };
 
-short Color :: parse(const std::string& color) {
-  if (!color.empty() && isdigit(color[0]))
-    return std::stoi(color);
+short Color :: parse(const std::string& color, short on_error_return = -2) {
+  if (! color.empty()) {
+    if (isdigit(color[0]))
+      return std::stoi(color);
 
-  for (const auto& it : colors)
-    if (color == it.name)
-      return it.value;
+    for (const auto& it : colors)
+      if (color == it.name)
+        return it.value;
+  }
 
-  throw std::invalid_argument(color + ": Not a color"); // TODO
+  return on_error_return;
 }
 
 std::string Color :: to_string(short color) {
@@ -53,32 +53,32 @@ Attribute :: mapping Attribute :: attributes[] = {
 };
 
 unsigned int Attribute :: parse(const std::string& attribute) {
-  for (size_t i = 0; i < ARRAY_SIZE(attributes); ++i)
-    if (attribute == attributes[i].name)
-      return attributes[i].value;
+  for (const auto& e : attributes)
+    if (attribute == e.name)
+      return e.value;
 
-  throw std::invalid_argument(attribute + ": invalid attribute");
+  return 0;
 }
 
 std::string Attribute :: to_string(unsigned int attribute) {
-  for (size_t i = 0; i < ARRAY_SIZE(attributes); ++i)
-    if (attribute == attributes[i].value)
-      return attributes[i].name;
+  for (const auto& e : attributes)
+    if (attribute == e.value)
+      return e.name;
 
-  throw std::invalid_argument("invalid attribute value");
+  return "";
 }
 
 // === UI::Colors =============================================================
 
 std::vector<Colors::pair_id> Colors :: color_pairs;
-int Colors :: id = 1;
+int Colors :: last_id = 1;
 
 int Colors :: create_color_pair(short fg, short bg) {
   for (const auto& pair : color_pairs)
     if (pair.fg == fg && pair.bg == bg)
       return pair.id;
 
-  Colors::pair_id new_pair = {fg, bg, id++};
+  Colors::pair_id new_pair = {fg, bg, last_id++};
   init_pair(new_pair.id, fg, bg);
   color_pairs.push_back(new_pair);
   return new_pair.id;
@@ -89,7 +89,7 @@ unsigned int Colors :: set(short fg, short bg, unsigned int attributes) {
 }
 
 #ifdef TEST_COLORS
-#include "test.hpp"
+#include "../lib/test.hpp"
 int main() {
   TEST_BEGIN();
 
@@ -103,6 +103,7 @@ int main() {
   assert(UI::Color::parse("yellow")           == COLOR_YELLOW);
   assert(UI::Color::parse("magenta")          == COLOR_MAGENTA);
   assert(UI::Color::parse("123")              == 123);
+  assert(UI::Color::parse("no_color")         == -2);
 
   assert(UI::Color::to_string(-1)             == "none");
   assert(UI::Color::to_string(COLOR_WHITE)    == "white");

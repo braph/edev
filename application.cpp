@@ -1,12 +1,12 @@
 #include "ektoplayer.hpp"
 #include "trackloader.hpp"
-#include "downloads.hpp"
+#include "lib/downloads.hpp"
 #include "database.hpp"
 #include "bindings.hpp"
 #include "updater.hpp"
 #include "player.hpp"
 #include "config.hpp"
-#include "colors.hpp"
+#include "context.hpp"
 #include "theme.hpp"
 #include "views/mainwindow.hpp"
 
@@ -17,6 +17,7 @@
 #include <locale>
 #include <fstream>
 #include <csignal>
+#include <iostream>
 
 namespace fs = Filesystem;
 
@@ -35,6 +36,7 @@ private:
   Updater updater;
   TrackLoader trackloader;
   Mpg123Player player;
+  Context ctxt;
   const char* error;
 
   void printDBStats();
@@ -52,6 +54,11 @@ Application :: Application()
   catch (const std::exception &e) {
     throw std::runtime_error(std::string(error) + ": " + e.what());
   }
+
+  ctxt.database = &database;
+  ctxt.trackloader = &trackloader;
+  ctxt.downloads = &downloads;
+  ctxt.player = &player;
 }
 
 Application :: ~Application() {
@@ -152,12 +159,8 @@ void Application :: run() {
   //else if (Config::small_update_pages > 0)
   //  updater.start(-Config::small_update_pages); // Fetch last N pages
 
-  Actions actions;
-  Views::MainWindow mainwindow(actions, database, player);
-  actions.db = &database;
-  actions.p  = &player;
-  actions.v  = &mainwindow;
-  actions.t  = &trackloader;
+  Views::MainWindow mainwindow(ctxt);
+  ctxt.mainwindow = &mainwindow;
 
   // Connecting widgets events
   mainwindow.progressBar.percentChanged = [&](float percent) {
@@ -208,7 +211,7 @@ MAINLOOP:
   }
 
   if (player.isTrackCompleted())
-    actions.call(Actions::PLAYLIST_NEXT);
+    Actions::call(ctxt, Actions::PLAYLIST_NEXT);
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.infoLine.setPositionAndLength(player.position(), player.length());

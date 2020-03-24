@@ -2,8 +2,7 @@
 
 #include "../config.hpp"
 #include "../theme.hpp"
-#include "../colors.hpp"
-#include "../common.hpp"
+#include "../ui/colors.hpp"
 
 #include <cstring>
 
@@ -19,17 +18,22 @@ static const char state_to_string[4][STATE_LEN+1] = {
 using namespace UI;
 using namespace Views;
 
-InfoLine :: InfoLine(Database::Database &db)
-: track_length(0), track_position(0), state(0)
+InfoLine :: InfoLine()
+: UI::Window({0,0}, {2,0})
+, track_length(0)
+, track_position(0)
+, state(Mpg123Player::STOPPED)
 {
-  if (Theme::current == 256) {
+  if (Theme::current == Theme::THEME_256) {
      fmt_top    = &Config::infoline_format_top_256;
      fmt_bottom = &Config::infoline_format_bottom_256;
   }
-  else if (Theme::current == 8) {
+  else if (Theme::current == Theme::THEME_8) {
      fmt_top    = &Config::infoline_format_top;
      fmt_bottom = &Config::infoline_format_bottom;
   }
+  else
+    abort(); // TODO
   draw();
 }
 
@@ -40,7 +44,7 @@ void InfoLine :: setTrack(Database::Tracks::Track track) {
   }
 }
 
-void InfoLine :: setState(int state) {
+void InfoLine :: setState(Mpg123Player::State state) {
   if (state != this->state) {
     this->state = state;
     draw_state();
@@ -68,12 +72,12 @@ void InfoLine :: layout(Pos pos, Size size) {
 }
 
 void InfoLine :: draw_state() {
-  attrSet(Theme::get(Theme::PLAYINGINFO_STATE));
+  attrSet(Theme::get(Theme::INFOLINE_STATE));
   mvAddStr(0, size.width - STATE_LEN, state_to_string[state]);
 }
 
 void InfoLine :: draw_position_and_length() {
-  attrSet(Theme::get(Theme::PLAYINGINFO_POSITION));
+  attrSet(Theme::get(Theme::INFOLINE_POSITION));
   mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]",
       track_position/60, track_position%60,
       track_length/60, track_length%60);
@@ -82,10 +86,10 @@ void InfoLine :: draw_position_and_length() {
 void InfoLine :: draw_track_info() {
   if (! track) {
     attrSet(0);
-    mvAddStr(1, size.width / 2 - int(STRLEN(STOPPED_HEADING) / 2), STOPPED_HEADING);
+    mvAddStr(1, size.width / 2 - int((sizeof(STOPPED_HEADING)-1) / 2), STOPPED_HEADING);
   } else {
-    moveCursor(0, 0); print_formatted_strings(*fmt_top);
-    moveCursor(1, 0); print_formatted_strings(*fmt_bottom);
+    print_formatted_strings(0, *fmt_top);
+    print_formatted_strings(1, *fmt_bottom);
   }
 }
 
@@ -98,19 +102,19 @@ void InfoLine :: draw() {
 
 #include "rm_trackstr.cpp"
 
-void InfoLine :: print_formatted_strings(const InfoLineFormat& format) {
+void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
   size_t sum = 0;
 
   for (const auto& fmt : format) {
     size_t len;
     if (fmt.text.length())
-      len = mbstowcs(NULL, fmt.text.c_str(), 0);
+      len = ::mbstowcs(NULL, fmt.text.c_str(), 0);
     else
-      len = mbstowcs(NULL, trackField(track, fmt.tag), 0);
+      len = ::mbstowcs(NULL, trackField(track, fmt.tag), 0);
     sum += len; // TODO: Error handling...
   }
 
-  moveCursor(getcury(win), size.width/2 - int(sum/2));
+  moveCursor(y, size.width/2 - int(sum/2));
   for (const auto& fmt : format) {
     attrSet(UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())
@@ -120,8 +124,8 @@ void InfoLine :: print_formatted_strings(const InfoLineFormat& format) {
   }
 }
 
-#ifdef TEST_PLAYINGINFO
-#include "../test.hpp"
+#ifdef TEST_INFOLINE
+#include "../lib/test.hpp"
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();

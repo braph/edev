@@ -1,6 +1,12 @@
 #ifndef BIT_TOOLS_HPP
 #define BIT_TOOLS_HPP
 
+#include <limits>
+#include <climits>
+#include <type_traits>
+
+#define BITSOF(T) (CHAR_BIT*sizeof(T))
+
 // Unsigned ===================================================================
 static inline int bitlength(unsigned long long n) {
   return (!n ? 0 :
@@ -48,7 +54,18 @@ static inline int bitlength(char n) {
   return bitlength(static_cast<unsigned char>(n));
 }
 
-/* Example for replace_bits<uint_16t>(18, 7, 3, 3)
+// ============================================================================
+static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
+  storage_size *= CHAR_BIT;
+  return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
+}
+
+static inline constexpr size_t elements_fit_in_bits(size_t bits, size_t storage_bits) {
+  return (storage_bits%bits ? storage_bits/bits : storage_bits/bits);
+}
+
+/**
+ * Example for replace_bits<uint_16t>(18, 7, 3, 3)
  *
  * BIT_COUNT: 16
  * 0xFFFF:    11111111 11111111 -- TUIntType with all bits set
@@ -62,8 +79,7 @@ static inline int bitlength(char n) {
  *            00000000 00010010
  *            00000000 00000010
  */
-
-template<typename TUIntType>
+template<typename TUIntType> // TODO std::make_unsigned
 inline TUIntType replace_bits(TUIntType src, TUIntType val, int offset, int len) {
   enum { BIT_COUNT = CHAR_BIT * sizeof(TUIntType) };
   const TUIntType OxFFFF = std::numeric_limits<TUIntType>::max();
@@ -80,89 +96,6 @@ template<typename TUIntType>
 inline TUIntType extract_bits(TUIntType src, int offset, int len) {
   const TUIntType OxFFFF = std::numeric_limits<TUIntType>::max();
   return (src >> offset) &~(OxFFFF << len);
-}
-
-#include<vector>
-#include<iostream>
-#include<bitset>
-// 0100|0000 0010|0000 
-template<typename TUIntType, typename TIterator>
-TUIntType compress(TIterator _it, TIterator _end, int bitwidth) {
-  if (_it == _end)
-    return 0;
-  StaticVector<TUIntType, 8> sorted(_it, _end);
-
-  auto it = sorted.begin();
-  auto end = sorted.end();
-  std::sort(it, end, std::greater<TUIntType>());
-
-//std::cout << "First value: " << *it << std::endl;
-  TUIntType result = replace_bits<TUIntType>(0, *it, 0, bitwidth);
-//std::cout << "Result: " << std::bitset<32>(result) << std::endl;
-
-  int offset = bitwidth;
-
-  for (++it; it != end; ++it) {
-//  std::cout << "Inserting " << *it << " on " << offset << " bitwidth: " << bitwidth << std::endl;
-
-    result= replace_bits<TUIntType>(result,*it, offset, bitwidth);
-    offset += bitwidth;
-    bitwidth = bitlength(*it);
-
-//  std::cout << "Result: " << std::bitset<32>(result) << std::endl;
-  }
-  return result;
-}
-
-template<typename TUIntType>
-struct BitUnpacker {
-  TUIntType packed;
-  int bitwidth;
-  int offset;
-
-  BitUnpacker(TUIntType packed, int bitwidth)
-  : packed(packed), bitwidth(bitwidth), offset(0) {}
-
-  TUIntType next() {
-    TUIntType value;
-
-    if (! offset) {
-      // First integer, special case:
-      // Bitwidth stays! It is NOT obtained by bitlength(value)
-      value = extract_bits<TUIntType>(packed, offset, bitwidth);
-      offset = bitwidth;
-    }
-    else {
-      value = extract_bits<TUIntType>(packed, offset, bitwidth);
-      offset += bitwidth;
-      bitwidth = bitlength(value);
-    }
-    return value;
-  }
-};
-
-template<typename TUIntType, typename TContainer>
-void uncompress(TContainer& container, TUIntType packed, int bitwidth) {
-  container.clear();
-  TUIntType value = extract_bits<TUIntType>(packed, 0, bitwidth);
-  container.push_back(value);
-//std::cout << "First value: " << value << " (" << std::endl;
-  int offset = bitwidth;
-
-  while ((value = extract_bits<TUIntType>(packed, offset, bitwidth)) > 0) {
-//  std::cout << "push back: " << value << std::endl;
-    container.push_back(value);
-    offset += bitwidth;
-    bitwidth = bitlength(value);
-  }
-
-#if 0
-  const TUIntType OxFFFF = ~static_cast<TUIntType>(0);
-  TUIntType value = packed &~(OxFFFF << bitwidth);
-  bitwidth = 
-
-  return (src >> offset) &~(OxFFFF << len);
-#endif
 }
 
 #endif

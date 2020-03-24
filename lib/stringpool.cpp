@@ -5,7 +5,7 @@
 #include <climits>
 #include <algorithm>
 
-int StringPool :: add(const char *s, bool force_append) {
+int StringPool :: add(const char* s, bool force_append) {
   if (! *s)
     return 0;
 
@@ -20,15 +20,22 @@ int StringPool :: add(const char *s, bool force_append) {
   return pos;
 }
 
-int StringPool :: find(const char *s, int start_pos) const noexcept {
-  if (! *s)
-    return 0;
-
-  size_t pos = storage.find(s, size_t(start_pos), std::strlen(s) + 1);
-  if (pos != std::string::npos)
-    return pos;
+int StringPool :: find(const char* s, int start_pos) const noexcept {
+  if (*s) {
+    size_t pos = storage.find(s, size_t(start_pos), std::strlen(s) + 1);
+    if (pos != std::string::npos)
+      return pos;
+  }
 
   return 0;
+}
+
+int StringPool :: count() const noexcept {
+  int n = 0;
+  for (auto c : storage)
+    if (!c)
+      ++n;
+  return n-1;
 }
 
 bool StringPool :: is_shrinked() const noexcept {
@@ -63,14 +70,6 @@ bool StringPool :: is_shrinked() const noexcept {
   }
 
   return true;
-}
-
-int StringPool :: count() const noexcept {
-  int n = 0;
-  for (auto c : storage)
-    if (!c)
-      ++n;
-  return n-1;
 }
 
 void StringPool :: shrink_to_fit(std::unordered_map<int, int>& old_id_new_id) {

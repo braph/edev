@@ -1,8 +1,7 @@
 #include "help.hpp"
 
 #include "../theme.hpp"
-#include "../colors.hpp"
-#include "../common.hpp"
+#include "../ui/colors.hpp"
 #include "../bindings.hpp"
 #include "../actions.hpp"
 

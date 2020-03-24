@@ -14,8 +14,8 @@ public:
 #ifndef TEST_UPDATER
 private:
 #endif
-  Database::Database &db;
-  Downloads &downloads;
+  Database::Database& db;
+  Downloads& downloads;
   void insert_album(Album&);
   void insert_browsepage(BrowsePage&);
 };

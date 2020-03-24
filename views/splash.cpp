@@ -1,9 +1,9 @@
 #include "splash.hpp"
 
 #include "../theme.hpp"
-#include "../colors.hpp"
-#include "../common.hpp"
-#include "../generic.hpp"
+#include "../ui/colors.hpp"
+#include "../lib/spanview.hpp"
+#include "../lib/arrayview.hpp"
 
 #define LOGO_WIDTH  78
 #define LOGO_HEIGHT 10
@@ -109,7 +109,7 @@ void Splash :: draw() {
 }
 
 #ifdef TEST_SPLASH
-#include "../test.hpp"
+#include "../lib/test.hpp"
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();
@@ -117,8 +117,8 @@ int main() {
   Widget *s = new Views::Splash;
   s->layout({10,10}, {20,80});
 
-  for (auto colors : {0,8,256}) {
-    Theme::current = colors;
+  for (auto theme : {Theme::THEME_MONO, Theme::THEME_8, Theme::THEME_256}) {
+    Theme::current = theme;
     s->draw();
     s->noutrefresh();
     doupdate();

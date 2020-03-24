@@ -2,11 +2,12 @@
 #define WIDGETS_LISTWIDGET_HPP
 
 #include "../ui.hpp"
-#include "../common.hpp"
 
 #include <sstream>
 #include <climits>
 #include <functional>
+
+// TODO: Clamp active index to -1, MAX
 
 /* ============================================================================
  * ListWidget - Template for displaying containers as a ncurses list
@@ -43,15 +44,13 @@ public:
     draw();
   }
 
+  /// Only if cursorIndex() != -1
   value_type getCursorItem() const {
-    if (empty())
-      throw std::out_of_range("getCursorItem()");
     return (*m_list)[size_type(m_selected)];
   }
 
+  /// Only if activeIndex() != -1
   value_type getActiveItem() const {
-    if (empty())
-      throw std::out_of_range("getActiveItem()");
     return (*m_list)[static_cast<size_type>(m_active)];
   }
 
