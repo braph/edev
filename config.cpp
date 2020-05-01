@@ -1,10 +1,11 @@
 #include "config.hpp"
 
 #include "ektoplayer.hpp"
+#include "ui/colors.hpp"
 #include "lib/algorithm.hpp"
 #include "lib/filesystem.hpp"
 #include "lib/shellsplit.hpp"
-#include "ui/colors.hpp"
+#include "lib/switch.hpp"
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp> // is_any_of()
@@ -13,6 +14,7 @@
 #include <cinttypes>
 
 using namespace Views;
+using pack = StringPack::AlnumNoCase;
 
 /* ============================================================================
  * Parsing functions for primitives
@@ -27,9 +29,11 @@ static int opt_parse_int(const std::string &s) {
 }
 
 static bool opt_parse_bool(const std::string &s) {
-  if (s == "true")        return true;
-  else if (s == "false")  return false;
-  else throw std::invalid_argument("expected `true` or `false`");
+  switch (pack::pack_runtime(s)) {
+    case pack("true"):    return true;
+    case pack("false"):   return false;
+  }
+  throw std::invalid_argument("expected `true` or `false`");
 }
 
 static wchar_t opt_parse_char(const std::string &s) {
@@ -45,10 +49,12 @@ static wchar_t opt_parse_char(const std::string &s) {
  * ==========================================================================*/
 
 static int opt_parse_use_colors(const std::string &s) {
-  /**/ if (s == "auto")   return -1;
-  else if (s == "mono")   return 0;
-  else if (s == "8")      return 8;
-  else if (s == "256")    return 256;
+  switch (pack::pack_runtime(s)) {
+    case pack("auto"):  return -1;
+    case pack("mono"):  return 0;
+    case pack("8"):     return 8;
+    case pack("256"):   return 256;
+  }
   throw std::invalid_argument("expected auto|mono|8|256");
 }
 
@@ -56,16 +62,22 @@ static std::vector<std::string> opt_parse_tabs_widgets(const std::string &s) {
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
-    if (!in_list<std::string>(w, {"splash","playlist","browser","info","help"}))
+    if (!in_list<std::uint64_t>(
+        pack::pack_runtime(w),
+        {pack("splash"), pack("playlist"), pack("browser"), pack("info"), pack("help")}))
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }
 
 static std::vector<std::string> opt_parse_main_widgets(const std::string &s) {
+  using pack = StringPack::AlphaNoCase;
+
   std::vector<std::string> widgets;
   boost::split(widgets, s, boost::is_any_of(", \t"), boost::token_compress_on);
   for (const auto& w : widgets)
-    if (!in_list<std::string>(w, {"infoline","tabbar","readline","windows","progressbar"}))
+    if (!in_list<std::uint64_t>(
+        pack::pack_runtime(w),
+        {pack("infoline"), pack("tabbar"), pack("readline"), pack("windows"), pack("progressbar")}))
       throw std::invalid_argument(w + ": Invalid widget");
   return widgets;
 }
@@ -162,13 +174,14 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.name == "fg")     fmt.fg = UI::Color::parse(attr.value, -1);
-      else if (attr.name == "bg")     fmt.bg = UI::Color::parse(attr.value, -1);
-      else if (attr.name == "right")  fmt.justify = PlaylistColumnFormat::Right;
-      else if (attr.name == "left")   fmt.justify = PlaylistColumnFormat::Left;
-      else if (attr.name == "size") {
-        fmt.size = std::stoi(attr.value);
-        fmt.relative = (attr.value.back() == '%');
+      switch (pack::pack_runtime(attr.name)) {
+        case pack("fg"):    fmt.fg = UI::Color::parse(attr.value, -1);  break;
+        case pack("bg"):    fmt.bg = UI::Color::parse(attr.value, -1);  break;
+        case pack("right"): fmt.justify = PlaylistColumnFormat::Right;  break;
+        case pack("left"):  fmt.justify = PlaylistColumnFormat::Left;   break;
+        case pack("size"):
+          fmt.size = std::atoi(attr.value.c_str());
+          fmt.relative = (attr.value.back() == '%');
       }
     }
 
@@ -196,9 +209,11 @@ static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
-      /**/ if (attr.name == "fg") fmt.fg = UI::Color::parse(attr.value, -1);
-      else if (attr.name == "bg") fmt.bg = UI::Color::parse(attr.value, -1);
-      else fmt.attributes |= UI::Attribute::parse(attr.name);
+      switch (pack::pack_runtime(attr.name)) {
+        case pack("fg"): fmt.fg = UI::Color::parse(attr.value, -1); break;
+        case pack("bg"): fmt.bg = UI::Color::parse(attr.value, -1); break;
+        default:         fmt.attributes |= UI::Attribute::parse(attr.name);
+      }
     }
 
     result.push_back(std::move(fmt));
@@ -293,14 +308,17 @@ void Config :: read(const std::string &file) {
       ShellSplit::split(line, args);
       if (! args.size() || args[0][0] == '#')
         continue;
-      else if (args[0] == "set")        { Config::set(args);        }
-      else if (args[0] == "color")      { Config::color(args);      }
-      else if (args[0] == "color_256")  { Config::color(args);      }
-      else if (args[0] == "color_mono") { Config::color(args);      }
-      else if (args[0] == "bind")       { Config::bind(args);       }
-      else if (args[0] == "unbind")     { Config::unbind(args);     }
-      else if (args[0] == "unbind_all") { Config::unbind_all(args); }
-      else throw std::invalid_argument("unknown command");
+
+      switch (pack::pack_runtime(args[0])) {
+        case pack("set"):        Config::set(args);        break;
+        case pack("color"):      Config::color(args);      break;
+        case pack("color_256"):  Config::color(args);      break;
+        case pack("color_mono"): Config::color(args);      break;
+        case pack("bind"):       Config::bind(args);       break;
+        case pack("unbind"):     Config::unbind(args);     break;
+        case pack("unbind_all"): Config::unbind_all(args); break;
+        default: throw std::invalid_argument("unknown command");
+      }
     }
   }
   catch (const std::ifstream::failure&) {

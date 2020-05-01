@@ -13,8 +13,8 @@ WARNINGS += -Wpessimizing-move -Wredundant-move
 STD = c++11
 CURSES_INC = "<ncurses.h>"
 
-#CXXFLAGS := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
-CXXFLAGS := -std=$(STD) -fno-rtti -O3 -DNDEBUG $(WARNINGS)
+#CXXFLAGS := -std=$(STD) -fno-rtti -O2 -pg -g $(WARNINGS)
+CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC) 
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
@@ -28,7 +28,7 @@ VIEWS         += widgets/listwidget.hpp widgets/readline.o
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
 	browsepage.o updater.o $(VIEWS) ui/container.o \
 	 player.o $(PLAYER.deps) actions.o bindings.o lib/downloads.o ektoplayer.o trackloader.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) -s application.cpp $^
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) application.cpp $^
 
 clean:
 	rm -f {views,ui,widgets,lib,.}/*.o
@@ -38,7 +38,7 @@ clean:
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-noexcept_objs = actions.o bindings.o ui/colors.o ektoplayer.o theme.o player.o \
+noexcept_objs = database.o actions.o bindings.o ui/colors.o ektoplayer.o theme.o player.o \
 								$(addprefix lib/, downloads.o filesystem.o shellsplit.o stringpool.o  process.o) \
 								$(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 $(noexcept_objs): %.o: %.cpp

@@ -3,7 +3,7 @@
 
 #include "../ui.hpp"
 #include "../database.hpp" // XXX get rid of this
-#include "../context.hpp"
+#include "../application.hpp"
 #include "../player.hpp"
 #include <vector>
 #include <string>

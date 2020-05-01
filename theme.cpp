@@ -1,8 +1,6 @@
 #include "theme.hpp"
 #include "ui/colors.hpp"
 
-#include <stdexcept>
-
 // Undef, just to be sure
 #undef DEFAULT
 #undef WHITE
@@ -120,6 +118,7 @@ Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
     /* HELP_COMMAND_DESC      */ _(29                           )
   }
 };
+
 #undef _
 #undef DEFAULT
 #undef WHITE
@@ -177,6 +176,8 @@ unsigned int Theme :: get(ElementID id) {
 }
 
 void Theme :: loadTheme(ThemeID theme) {
+  UI::Colors::reset();
+
   current = theme;
   Theme::Definition fallback = themes[theme][DEFAULT];
 

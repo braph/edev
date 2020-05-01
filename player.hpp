@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
 
 #include "lib/process.hpp"
 
@@ -16,7 +17,6 @@ public:
   };
 
   Mpg123Player();
- ~Mpg123Player();
 
   void work() noexcept;
 

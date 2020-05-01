@@ -1,7 +1,6 @@
-#ifndef GENERICITERATOR_HPP
-#define GENERICITERATOR_HPP
+#ifndef LIB_GENERICITERATOR_HPP
+#define LIB_GENERICITERATOR_HPP
 
-#include <ostream>
 #include <iterator>
 
 /**
@@ -18,12 +17,22 @@ public:
   using difference_type   = std::ptrdiff_t;
   using pointer           = typename TContainer::reference;//*;
   using reference         = typename TContainer::reference;//&;
+  using iterator          = GenericIterator;
 
-  typedef GenericIterator iterator;
+  GenericIterator() noexcept
+    : container(NULL)
+    , idx(0)
+  {}
 
-  GenericIterator() : container(NULL), idx(0) {}
-  GenericIterator(TContainer& container, size_t idx) : container(&container), idx(idx) {}
-  GenericIterator(const GenericIterator& rhs) : container(rhs.container), idx(rhs.idx) {}
+  GenericIterator(TContainer* container, size_t idx) noexcept
+    : container(container)
+    , idx(idx)
+  {}
+
+  GenericIterator(const GenericIterator& rhs) noexcept
+    : container(rhs.container)
+    , idx(rhs.idx)
+  {}
 
   iterator& operator=(const iterator&it) noexcept {
     container = it.container;
@@ -38,8 +47,8 @@ public:
   bool operator<=(const iterator&it) const noexcept { return idx <= it.idx; }
   bool operator>=(const iterator&it) const noexcept { return idx >= it.idx; }
 
-  reference operator*()              const { return (*container)[idx]; }
-  reference operator[](ptrdiff_t n)  const { return *(*this + n);      }
+  reference operator*()              const noexcept { return (*container)[idx]; }
+  reference operator[](ptrdiff_t n)  const noexcept { return *(*this + n);      }
 
   iterator& operator++() noexcept    { ++idx; return *this; }
   iterator& operator--() noexcept    { --idx; return *this; }
@@ -56,10 +65,8 @@ public:
   ptrdiff_t operator+ (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) + static_cast<ptrdiff_t>(it.idx); }
 
-  inline friend std::ostream& operator<<(std::ostream& os, const iterator& it) {
-    os << "Iterator(" << it.idx << ')';
-    return os;
-  }
+  size_t index()
+  { return idx; }
 
 private:
   TContainer *container;

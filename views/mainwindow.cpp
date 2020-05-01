@@ -2,8 +2,11 @@
 #include "../bindings.hpp"
 #include "../config.hpp"
 
+#include "../lib/switch.hpp"
+
 using namespace UI;
 using namespace Views;
+using pack = StringPack::AlphaNoCase;
 
 MainWindow :: MainWindow(Context& ctxt)
 : infoLine()
@@ -20,23 +23,28 @@ MainWindow :: MainWindow(Context& ctxt)
   readlineWidget.visible = false;
 
   for (const auto& w : Config::main_widgets) {
-    /**/ if (w == "infoline")       addWidget(&infoLine);
-    else if (w == "progressbar")    addWidget(&progressBar);
-    else if (w == "tabbar")         addWidget(&tabBar);
-    else if (w == "readline")       addWidget(&readlineWidget);
-    else if (w == "windows")        addWidget(&windows);
-    else assert(0);
+    switch (pack::pack_runtime(w)) {
+      case pack("infoline"):      addWidget(&infoLine);         break;
+      case pack("progressbar"):   addWidget(&progressBar);      break;
+      case pack("tabbar"):        addWidget(&tabBar);           break;
+      case pack("readline"):      addWidget(&readlineWidget);   break;
+      case pack("windows"):       addWidget(&windows);          break;
+      default: assert(!"not reached");
+    }
   }
 
   setCurrentIndex(indexOf(&windows));
 
   for (const auto& w : Config::tabs_widgets) {
-    /**/ if (w == "splash")   windows.addWidget(&splash);
-    else if (w == "playlist") windows.addWidget(&playlist);
-    else if (w == "browser")  windows.addWidget(&playlist); /*TODO*/
-    else if (w == "info")     windows.addWidget(&info);
-    else if (w == "help")     windows.addWidget(&help);
-    else assert(0);
+    switch (pack::pack_runtime(w)) {
+      case pack("splash"):    windows.addWidget(&splash);       break;
+      case pack("playlist"):  windows.addWidget(&playlist);     break;
+      case pack("browser"):   windows.addWidget(&playlist);     break; /*TODO*/
+      case pack("info"):      windows.addWidget(&info);         break;
+      case pack("help"):      windows.addWidget(&help);         break;
+      default: assert(!"not reached");
+    }
+
     tabBar.addTab(w);
   }
 }

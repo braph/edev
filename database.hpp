@@ -5,15 +5,21 @@
 #include "lib/genericiterator.hpp"
 #include "lib/stringpool.hpp"
 #include "lib/packedvector.hpp"
+#include "lib/switch.hpp"
 #include "ektoplayer.hpp" // REPORT_BUG
 
 #include <array>
 #include <vector>
 #include <string>
+#include <cstring>
+#include <initializer_list>
+
+#define DATABASE_USE_PACKED_VECTOR 1
 
 namespace Database {
 
 class Database;
+typedef const char* ccstr;
 
 /* ============================================================================
  * Metadata Database
@@ -59,9 +65,6 @@ class Database;
  * this -1 logic all over the place. this won't be fixed.
  */
 
-typedef const char* ccstr;
-typedef CString InStr;
-
 /* ==========================================================================
  * ColumnIDs
  *
@@ -81,7 +84,7 @@ enum ColumnID {
 enum StyleColumnID {
   STYLE_URL = 1,
   STYLE_NAME,
-  STYLE_ENUM_END
+  STYLE_ENUM_END,
 };
 
 enum AlbumColumnID {
@@ -98,7 +101,7 @@ enum AlbumColumnID {
   ALBUM_RATING,
   ALBUM_VOTES,
   ALBUM_DOWNLOAD_COUNT,
-  ALBUM_ENUM_END
+  ALBUM_ENUM_END,
 };
 
 enum TrackColumnID {
@@ -108,28 +111,31 @@ enum TrackColumnID {
   TRACK_REMIX,
   TRACK_NUMBER,
   TRACK_BPM,
-  TRACK_ENUM_END
+  TRACK_ENUM_END,
 };
 
-static ColumnID columnIDFromStr(const std::string &s) { //XXX make array
-  /**/ if (s == "style")        return static_cast<ColumnID>(STYLE_NAME);
-  else if (s == "album")        return static_cast<ColumnID>(ALBUM_TITLE);
-  else if (s == "album_artist") return static_cast<ColumnID>(ALBUM_ARTIST);
-  else if (s == "description")  return static_cast<ColumnID>(ALBUM_DESCRIPTION);
-  else if (s == "date")         return static_cast<ColumnID>(ALBUM_DATE);
-  else if (s == "rating")       return static_cast<ColumnID>(ALBUM_RATING);
-  else if (s == "votes")        return static_cast<ColumnID>(ALBUM_VOTES);
-  else if (s == "downloads")    return static_cast<ColumnID>(ALBUM_DOWNLOAD_COUNT);
-  else if (s == "day")          return static_cast<ColumnID>(ALBUM_DAY);
-  else if (s == "month")        return static_cast<ColumnID>(ALBUM_MONTH);
-  else if (s == "year")         return static_cast<ColumnID>(ALBUM_YEAR);
-  else if (s == "title")        return static_cast<ColumnID>(TRACK_TITLE);
-  else if (s == "artist")       return static_cast<ColumnID>(TRACK_ARTIST);
-  else if (s == "remix")        return static_cast<ColumnID>(TRACK_REMIX);
-  else if (s == "number")       return static_cast<ColumnID>(TRACK_NUMBER);
-  else if (s == "bpm")          return static_cast<ColumnID>(TRACK_BPM);
-  else if (s == "styles")       return static_cast<ColumnID>(ALBUM_STYLES);
-  else                          return static_cast<ColumnID>(COLUMN_NONE);
+static ColumnID columnIDFromStr(const std::string &s) noexcept {
+  using pack = StringPack::AlphaNoCase;
+  switch (pack::pack_runtime(s)) {
+    case pack("style"):         return static_cast<ColumnID>(STYLE_NAME);
+    case pack("album"):         return static_cast<ColumnID>(ALBUM_TITLE);
+    case pack("album_artist"):  return static_cast<ColumnID>(ALBUM_ARTIST);
+    case pack("description"):   return static_cast<ColumnID>(ALBUM_DESCRIPTION);
+    case pack("date"):          return static_cast<ColumnID>(ALBUM_DATE);
+    case pack("rating"):        return static_cast<ColumnID>(ALBUM_RATING);
+    case pack("votes"):         return static_cast<ColumnID>(ALBUM_VOTES);
+    case pack("downloads"):     return static_cast<ColumnID>(ALBUM_DOWNLOAD_COUNT);
+    case pack("day"):           return static_cast<ColumnID>(ALBUM_DAY);
+    case pack("month"):         return static_cast<ColumnID>(ALBUM_MONTH);
+    case pack("year"):          return static_cast<ColumnID>(ALBUM_YEAR);
+    case pack("title"):         return static_cast<ColumnID>(TRACK_TITLE);
+    case pack("artist"):        return static_cast<ColumnID>(TRACK_ARTIST);
+    case pack("remix"):         return static_cast<ColumnID>(TRACK_REMIX);
+    case pack("number"):        return static_cast<ColumnID>(TRACK_NUMBER);
+    case pack("bpm"):           return static_cast<ColumnID>(TRACK_BPM);
+    case pack("styles"):        return static_cast<ColumnID>(ALBUM_STYLES);
+    default:                    return static_cast<ColumnID>(COLUMN_NONE);
+  }
 }
 
 /* ==========================================================================
@@ -143,15 +149,15 @@ struct Field {
   Type type;
   Value value;
 
-  inline Field(ccstr s)  { setString(s);  }
-  inline Field(int i)    { setInteger(i); }
-  inline Field(float f)  { setFloat(f);   }
-  inline Field(time_t t) { setTime(t);    }
+  inline Field(ccstr s)   noexcept { setString(s);  }
+  inline Field(int i)     noexcept { setInteger(i); }
+  inline Field(float f)   noexcept { setFloat(f);   }
+  inline Field(time_t t)  noexcept { setTime(t);    }
 
-  void setString(ccstr s) { type = STRING;  value.s = s; }
-  void setInteger(int i)  { type = INTEGER; value.i = i; }
-  void setFloat(float f)  { type = FLOAT;   value.f = f; }
-  void setTime(time_t t)  { type = TIME;    value.t = t; }
+  void setString(ccstr s) noexcept { type = STRING;  value.s = s; }
+  void setInteger(int i)  noexcept { type = INTEGER; value.i = i; }
+  void setFloat(float f)  noexcept { type = FLOAT;   value.f = f; }
+  void setTime(time_t t)  noexcept { type = TIME;    value.t = t; }
 
   int compare(const Field &rhs) const noexcept {
     assert(type == rhs.type);
@@ -165,8 +171,12 @@ struct Field {
 };
 
 // === Column ===============================================================
-//using Column = std::vector<int>;
+#if DATABASE_USE_PACKED_VECTOR
 using Column = DynamicPackedVector;
+#else
+using Column = std::vector<int>;
+#endif
+
 using StylesArray = TinyPackedArray<5, uint32_t>;
 
 // === Base class for all tables ============================================
@@ -181,10 +191,10 @@ struct Table {
   , columns(columns)
   {}
 
-  size_t size()        const { return columns[0]->size();                 }
-  void   resize(size_t n)    { for (auto c : columns) c->resize(n);       }
-  void   reserve(size_t n)   { for (auto c : columns) c->reserve(n);      }
-  void   shrink_to_fit()     { for (auto c : columns) c->shrink_to_fit(); }
+  size_t size() const noexcept { return columns[0]->size();                 }
+  void   resize(size_t n)      { for (auto c : columns) c->resize(n);       }
+  void   reserve(size_t n)     { for (auto c : columns) c->reserve(n);      }
+  void   shrink_to_fit()       { for (auto c : columns) c->shrink_to_fit(); }
 };
 
 // === Base class for all records ===========================================
@@ -194,10 +204,10 @@ struct Record {
   size_t id;
   Record() : table(NULL), id(0) {}
   Record(TablePointer t, size_t id) : table(t), id(id) {}
-  operator bool()                     const noexcept { return id != 0;      }
-  bool operator!=(const Record &rhs)  const noexcept { return id != rhs.id; }
-  bool operator==(const Record &rhs)  const noexcept { return id == rhs.id; }
-  Record& operator=(const Record &rhs) { id = rhs.id; table = rhs.table; return *this; }
+  operator bool()                   const noexcept { return id != 0;    }
+  bool operator!=(const Record& r)  const noexcept { return id != r.id; }
+  bool operator==(const Record& r)  const noexcept { return id == r.id; }
+  Record& operator=(const Record& r)      noexcept { id = r.id; table = r.table; return *this; }
 };
 
 /* ==========================================================================
@@ -209,12 +219,13 @@ class StringColumn : public Column {
 public:
   StringColumn(StringPool& pool) : pool(pool) {}
 
-  const char* get(size_t i) {
+  const char* get(size_t i) noexcept { // TODO: this should be const!
     return pool.get((*this)[i]);
   }
 
-  void set(size_t i, const char* s) {
-    if (std::strcmp(pool.get((*this)[i]), s))
+  void set(size_t i, CString s) {
+    int string_id = (*this)[i];
+    if (!string_id || std::strcmp(pool.get(string_id), s))
       (*this)[i] = pool.add(s);
   }
 };
@@ -239,18 +250,18 @@ struct Styles : public Table {
     ccstr url()  const noexcept { return table->url.get(id);  }
     ccstr name() const noexcept { return table->name.get(id); }
     // SETTER
-    void  url(InStr s)          { table->url.set(id, s);      }
-    void  name(InStr s)         { table->name.set(id, s);     }
+    void  url(CString s)        { table->url.set(id, s);      }
+    void  name(CString s)       { table->name.set(id, s);     }
   };
 
   using value_type = Style;
   using reference  = Style;
   using iterator   = GenericIterator<Styles>;
 
-  value_type operator[](size_t id) { return value_type(this, id);    }
-  iterator begin()                 { return iterator(*this, 1);      }
-  iterator end()                   { return iterator(*this, size()); }
-  value_type find(InStr url, bool create);
+  value_type operator[](size_t id) { return value_type(this, id);   }
+  iterator begin()                 { return iterator(this, 1);      }
+  iterator end()                   { return iterator(this, size()); }
+  value_type find(CString url, bool create);
 };
 
 struct Albums : public Table {
@@ -268,7 +279,7 @@ struct Albums : public Table {
   StringColumn archive_wav;
   StringColumn archive_flac;
 
-  Albums(Database &db, StringPool& pool_album_url, StringPool& pool_cover_url, StringPool& pool_archive_url, StringPool& pool_desc, StringPool& pool_meta)
+  Albums(Database& db, StringPool& pool_album_url, StringPool& pool_cover_url, StringPool& pool_archive_url, StringPool& pool_desc, StringPool& pool_meta)
   : Table("albums", db,
     {&url,&title,&artist,&cover_url,&description,&date,&rating,&votes,
       &download_count,&styles,&archive_mp3,&archive_wav,&archive_flac})
@@ -292,43 +303,43 @@ struct Albums : public Table {
 
     // GETTER
     Field  operator[](ColumnID) const;
-    ccstr  url()               const { return table->url.get(id);             }
-    ccstr  title()             const { return table->title.get(id);           }
-    ccstr  artist()            const { return table->artist.get(id);          }
-    ccstr  cover_url()         const { return table->cover_url.get(id);       }
-    ccstr  description()       const { return table->description.get(id);     }
-    ccstr  archive_mp3_url()   const { return table->archive_mp3.get(id);     }
-    ccstr  archive_wav_url()   const { return table->archive_wav.get(id);     }
-    ccstr  archive_flac_url()  const { return table->archive_flac.get(id);    }
-    time_t date()              const { return expandDate(table->date[id]);    }
-    float  rating()            const { return float(table->rating[id]) / 100; }
-    int    votes()             const { return table->votes[id];               }
-    int    download_count()    const { return table->download_count[id];      }
-    int    styles()            const { return table->styles[id];              }
+    ccstr  url()               const noexcept { return table->url.get(id);             }
+    ccstr  title()             const noexcept { return table->title.get(id);           }
+    ccstr  artist()            const noexcept { return table->artist.get(id);          }
+    ccstr  cover_url()         const noexcept { return table->cover_url.get(id);       }
+    ccstr  description()       const noexcept { return table->description.get(id);     }
+    ccstr  archive_mp3_url()   const noexcept { return table->archive_mp3.get(id);     }
+    ccstr  archive_wav_url()   const noexcept { return table->archive_wav.get(id);     }
+    ccstr  archive_flac_url()  const noexcept { return table->archive_flac.get(id);    }
+    time_t date()              const noexcept { return expandDate(table->date[id]);    }
+    float  rating()            const noexcept { return float(table->rating[id]) / 100; }
+    int    votes()             const noexcept { return table->votes[id];               }
+    int    download_count()    const noexcept { return table->download_count[id];      }
+    int    styles()            const noexcept { return table->styles[id];              }
     // SETTER
-    void   url(InStr s)              { table->url.set(id, s);                 }
-    void   title(InStr s)            { table->title.set(id, s);               }
-    void   artist(InStr s)           { table->artist.set(id, s);              }
-    void   cover_url(InStr s)        { table->cover_url.set(id, s);           }
-    void   description(InStr s)      { table->description.set(id, s);         }
-    void   archive_mp3_url(InStr s)  { table->archive_mp3.set(id, s);         }
-    void   archive_wav_url(InStr s)  { table->archive_wav.set(id, s);         }
-    void   archive_flac_url(InStr s) { table->archive_flac.set(id, s);        }
-    void   date(time_t t)            { table->date[id]   = shrinkDate(t);     }
-    void   rating(float i)           { table->rating[id] = i * 100;           }
-    void   votes(int i)              { table->votes[id]  = i;                 }
-    void   download_count(int i)     { table->download_count[id] = i;         }
-    void   styles(int i)             { table->styles[id] = i;                 }
+    void   url(CString s)              { table->url.set(id, s);               }
+    void   title(CString s)            { table->title.set(id, s);             }
+    void   artist(CString s)           { table->artist.set(id, s);            }
+    void   cover_url(CString s)        { table->cover_url.set(id, s);         }
+    void   description(CString s)      { table->description.set(id, s);       }
+    void   archive_mp3_url(CString s)  { table->archive_mp3.set(id, s);       }
+    void   archive_wav_url(CString s)  { table->archive_wav.set(id, s);       }
+    void   archive_flac_url(CString s) { table->archive_flac.set(id, s);      }
+    void   date(time_t t)              { table->date[id] = shrinkDate(t);     }
+    void   rating(float i)             { table->rating[id] = i * 100;         }
+    void   votes(int i)                { table->votes[id] = i;                }
+    void   download_count(int i)       { table->download_count[id] = i;       }
+    void   styles(int i)               { table->styles[id] = i;               }
   };
 
   using value_type = Album;
   using reference  = Album;
   using iterator   = GenericIterator<Albums>;
 
-  value_type operator[](size_t id) { return value_type(this, id);    }
-  iterator begin()                 { return iterator(*this, 1);      }
-  iterator end()                   { return iterator(*this, size()); }
-  value_type find(InStr url, bool create);
+  value_type operator[](size_t id) { return value_type(this, id);   }
+  iterator begin()                 { return iterator(this, 1);      }
+  iterator end()                   { return iterator(this, size()); }
+  value_type find(CString url, bool create);
 };
 
 struct Tracks : public Table {
@@ -364,23 +375,23 @@ struct Tracks : public Table {
     int   album_id() const noexcept { return table->album_id[id];       }
     Albums::Album album() const noexcept;
     // SETTER
-    void  url(InStr s)     { table->url.set(id, s);                     }
-    void  title(InStr s)   { table->title.set(id, s);                   }
-    void  artist(InStr s)  { table->artist.set(id, s);                  }
-    void  remix(InStr s)   { table->remix.set(id, s);                   }
-    void  number(int i)    { table->number[id] = i;                     }
-    void  bpm(int i)       { table->bpm[id] = (i & 0xFF /* max 255 */); }
-    void  album_id(int i)  { table->album_id[id] = i;                   }
+    void  url(CString s)    { table->url.set(id, s);                     }
+    void  title(CString s)  { table->title.set(id, s);                   }
+    void  artist(CString s) { table->artist.set(id, s);                  }
+    void  remix(CString s)  { table->remix.set(id, s);                   }
+    void  number(int i)     { table->number[id] = i;                     }
+    void  bpm(int i)        { table->bpm[id] = (i & 0xFF /* max 255 */); }
+    void  album_id(int i)   { table->album_id[id] = i;                   }
   };
 
   using value_type = Track;
   using reference  = Track;
   using iterator   = GenericIterator<Tracks>;
 
-  value_type operator[](size_t id) { return value_type(this, id);    }
-  iterator begin()                 { return iterator(*this, 1);      }
-  iterator end()                   { return iterator(*this, size()); }
-  value_type find(InStr url, bool create);
+  value_type operator[](size_t id) { return value_type(this, id);   }
+  iterator begin()                 { return iterator(this, 1);      }
+  iterator end()                   { return iterator(this, size()); }
+  value_type find(CString url, bool create);
 };
 
 /* ==========================================================================
@@ -442,10 +453,6 @@ public:
 
 class Database {
 public:
-  /* ==========================================================================
-   * Database members and methods
-   * ========================================================================*/
-
   Styles styles;
   Albums albums;
   Tracks tracks;
@@ -462,17 +469,17 @@ public:
 
   Database();
 
-  std::vector<Styles::Style> getStyles() {
-    return std::vector<Styles::Style>(styles.begin(), styles.end()); }
+  std::vector<Styles::Style> getStyles()
+  { return std::vector<Styles::Style>(styles.begin(), styles.end()); }
   
-  std::vector<Albums::Album> getAlbums() {
-    return std::vector<Albums::Album>(albums.begin(), albums.end()); }
+  std::vector<Albums::Album> getAlbums()
+  { return std::vector<Albums::Album>(albums.begin(), albums.end()); }
 
-  std::vector<Tracks::Track> getTracks() {
-    return std::vector<Tracks::Track>(tracks.begin(), tracks.end()); }
+  std::vector<Tracks::Track> getTracks()
+  { return std::vector<Tracks::Track>(tracks.begin(), tracks.end()); }
 
-  void load(const std::string&);
-  void save(const std::string&);
+  const char* load(const std::string&) noexcept;
+  const char* save(const std::string&) noexcept;
   void shrink_to_fit();
 
 private:

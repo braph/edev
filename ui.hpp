@@ -1,38 +1,69 @@
 #ifndef UI_HPP
 #define UI_HPP
 
-#include "lib/algorithm.hpp" // clamp
+#include "lib/algorithm.hpp" // clamp XXX
 
 #include CURSES_INC
 
-#include <ostream>
+#include <string>
+
+#ifdef __cpp_exceptions
+#include <stdexcept>
+#endif
+
+#ifndef NDEBUG
+#include <cstdio> // sprintf
+// Using variadic args (va_list) increases binary size but enables compiler
+// warnings with -Wformat. We enable them if not 'explicity' disabled with -NDEBUG.
+#define USE_C_VARIADIC_ARGS
+#endif
+
+#ifdef USE_C_VARIADIC_ARGS
+#include <cstdarg>
+#endif
+
+/* Notes:
+ * - `waddstr`
+ * - Prefer waddnstr(s, strlen(s)) rather waddstr(s), as wadd
+ */
 
 namespace UI {
 
 struct Pos {
   int y;
   int x;
-  Pos() : y(0), x(0) {}
-  Pos(int y, int x) : y(y), x(x) {}
-  Pos(const MEVENT& m) : y(m.y), x(m.x) {}
-  bool operator==(const Pos& p) const noexcept { return y == p.y && x == p.x; }
-  bool operator!=(const Pos& p) const noexcept { return y != p.y || x != p.x; }
-  bool operator>=(const Pos& p) const noexcept { return y >= p.y && x >= p.x; }
-  bool operator<=(const Pos& p) const noexcept { return y <= p.y && x <= p.x; }
-  bool operator< (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
-  bool operator> (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
+  Pos()                noexcept : y(0), x(0) {}
+  Pos(int y, int x)    noexcept : y(y), x(x) {}
+  Pos(const MEVENT& m) noexcept : y(m.y), x(m.x) {}
+  inline bool operator==(const Pos& p) const noexcept { return y == p.y && x == p.x; }
+  inline bool operator!=(const Pos& p) const noexcept { return y != p.y || x != p.x; }
+  inline bool operator>=(const Pos& p) const noexcept { return y >= p.y && x >= p.x; }
+  inline bool operator<=(const Pos& p) const noexcept { return y <= p.y && x <= p.x; }
+  inline bool operator< (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
+  inline bool operator> (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
 
-  inline friend std::ostream& operator<<(std::ostream& o, const Pos& p) {
-    return o << "UI::Pos(" << p.y << ',' << p.x << ')';
+#ifndef NDEBUG
+  inline operator const char*() noexcept {
+    static char _[50];
+    sprintf(_, "UI::Pos(%d,%d)", y, x);
+    return _;
   }
+#endif
 };
 
 struct Size {
   int height;
   int width;
 
-  Size() : height(0), width(0) {}
-  Size(int height, int width) : height(height), width(width) {}
+  Size() noexcept
+    : height(0)
+    , width(0)
+  {}
+
+  Size(int height, int width) noexcept
+    : height(height)
+    , width(width)
+  {}
 
   bool operator==(const Size& s) const noexcept
   { return s.height == height && s.width == width; }
@@ -43,9 +74,13 @@ struct Size {
   Size calc(int height, int width) const noexcept
   { return Size(this->height + height, this->width + width); }
 
-  inline friend std::ostream& operator<<(std::ostream& o, const Size& s) {
-    return o << "UI::Size(" << s.height << ',' << s.width << ')';
+#ifndef NDEBUG
+  inline operator const char*() noexcept {
+    static char _[50];
+    sprintf(_, "UI::Size(%d,%d)", height, width);
+    return _;
   }
+#endif
 };
 
 class Widget {
@@ -59,7 +94,7 @@ public:
   virtual void noutrefresh() = 0;
   virtual bool handleKey(int) { return false; }
   virtual bool handleMouse(MEVENT&) { return false; }
-  virtual WINDOW* getWINDOW() const = 0;
+  virtual WINDOW* getWINDOW() const noexcept = 0;
 
   Widget()
   : pos(0,0), size(0,0), visible(true)
@@ -76,94 +111,186 @@ struct WidgetDrawable : public Widget {
   ~WidgetDrawable()
   { if (win) delwin(win); }
 
-  WINDOW *getWINDOW() const noexcept
+  inline WINDOW *getWINDOW() const noexcept
   { return win; }
 
-  Pos cursorPos() const noexcept
+  inline Pos cursorPos() const noexcept
   { Pos pos; getyx(win, pos.y, pos.x); return pos; }
 
-  // Char
-  WidgetDrawable& operator<<(char c) noexcept
+  // ==========================================================================
+  // Stream << operators
+  // ==========================================================================
+
+  // char / wchar_t
+  inline WidgetDrawable& operator<<(char c) noexcept
   { waddch(win, static_cast<chtype>(c)); return *this; }
 
-  WidgetDrawable& operator<<(wchar_t c) noexcept
+  inline WidgetDrawable& operator<<(wchar_t c) noexcept
   { waddnwstr(win, &c, 1); return *this; }
 
-  // String
-  WidgetDrawable& operator<<(const char* s) noexcept
+  // const char* / const wchar_t*
+  inline WidgetDrawable& operator<<(const char* s) noexcept
   { waddstr(win, s); return *this; }
 
-  WidgetDrawable& operator<<(const wchar_t* s) noexcept
+  inline WidgetDrawable& operator<<(const wchar_t* s) noexcept
   { waddwstr(win, s); return *this; }
 
-  WidgetDrawable& operator<<(const std::string& s) noexcept
-  { waddstr(win, s.c_str()); return *this; }
+  // char[] / wchar_t[] --> `N` may NOT be actual strlen!
+  template<size_t N>
+  inline WidgetDrawable& operator<<(char (&s)[N]) noexcept
+  { waddstr(win, s); return *this; }
 
-  WidgetDrawable& operator<<(const std::wstring& s) noexcept
-  { waddwstr(win, s.c_str()); return *this; }
+  template<size_t N>
+  inline WidgetDrawable& operator<<(wchar_t (&s)[N]) noexcept
+  { waddwstr(win, s); return *this; }
+
+  // const char[] / const wchar_t[] --> Pretty safe to use `N`
+  template<size_t N>
+  inline WidgetDrawable& operator<<(const char (&s)[N]) noexcept
+  { waddnstr(win, s, N-1); return *this; }
+
+  template<size_t N>
+  inline WidgetDrawable& operator<<(const wchar_t (&s)[N]) noexcept
+  { waddnwstr(win, s, N-1); return *this; }
+
+  // std::string / std::wstring
+  inline WidgetDrawable& operator<<(const std::string& s) noexcept
+  { waddnstr(win, s.c_str(), s.size()); return *this; }
+
+  inline WidgetDrawable& operator<<(const std::wstring& s) noexcept
+  { waddnwstr(win, s.c_str(), s.size()); return *this; }
 
   // Integer types
-  WidgetDrawable& operator<<(int i) noexcept
+  inline WidgetDrawable& operator<<(int i) noexcept
   { wprintw(win, "%d", i); return *this; }
 
-  WidgetDrawable& operator<<(size_t s) noexcept
+  inline WidgetDrawable& operator<<(size_t s) noexcept
   { wprintw(win, "%zu", s); return *this; }
 
-  WidgetDrawable& operator<<(float f) noexcept
+  inline WidgetDrawable& operator<<(float f) noexcept
   { wprintw(win, "%f", f); return *this; }
 
   // add-methods ==============================================================
-  int addCh(chtype c) noexcept
+  inline int addCh(chtype c) noexcept
   { return waddch(win, c); }
 
-  int addStr(const char* s) noexcept
+  // const char* / const wchar_t*
+  inline int addStr(const char* s) noexcept
   { return waddstr(win, s); }
 
-  int addStr(const std::string& s) noexcept
-  { return waddstr(win, s.c_str()); }
-
-  int addStr(const wchar_t* s) noexcept
+  inline int addStr(const wchar_t* s) noexcept
   { return waddwstr(win, s); }
 
-  int addStr(const std::wstring& s) noexcept
-  { return waddwstr(win, s.c_str()); }
+  // char[] / wchar_t[] --> `N` may NOT be actual strlen!
+  template<size_t N>
+  inline int addStr(char (&s)[N]) noexcept
+  { return waddstr(win, s); }
 
+  template<size_t N>
+  inline int addStr(wchar_t (&s)[N]) noexcept
+  { return waddwstr(win, s); }
+
+  // const char[] / const wchar_t[] --> Pretty safe to use `N`
+  template<size_t N>
+  inline int addStr(const char (&s)[N]) noexcept
+  { return waddnstr(win, s, N-1); }
+
+  template<size_t N>
+  inline int addStr(const wchar_t (&s)[N]) noexcept
+  { return waddnwstr(win, s, N-1); }
+
+  // std::string / std::wstring
+  inline int addStr(const std::string& s) noexcept
+  { return waddnstr(win, s.c_str(), s.size()); }
+
+  inline int addStr(const std::wstring& s) noexcept
+  { return waddnwstr(win, s.c_str(), s.size()); }
+
+#ifdef USE_C_VARIADIC_ARGS
+#if defined(__GNUC__) || defined(__clang__)
+  __attribute__((__format__(__printf__, 2, 3)))
+#endif
+  int printW(const char* fmt, ...) noexcept {
+    va_list ap;
+    va_start(ap, fmt);
+    int ret = vw_printw(win, fmt, ap); 
+    va_end(ap);
+    return ret;
+  }
+#else
   template<typename... Args>
   int printW(const char* fmt, Args... args) noexcept
   { return wprintw(win, fmt, args...); }
+#endif
 
   // mv-methods ===============================================================
-  int moveCursor(int y, int x) noexcept
+  inline int moveCursor(int y, int x) noexcept
   { return wmove(win, y, x); }
 
-  int mvAddStr(int y, int x, const char* s) noexcept
-  { return mvwaddstr(win, y, x, s); }
-
-  int mvAddStr(int y, int x, const std::string& s) noexcept
-  { return mvwaddstr(win, y, x, s.c_str()); }
-
-  int mvAddStr(int y, int x, const wchar_t* s) noexcept
-  { return mvwaddwstr(win, y, x, s); }
-
-  int mvAddStr(int y, int x, const std::wstring& s) noexcept
-  { return mvwaddwstr(win, y, x, s.c_str()); }
-
-  int mvAddCh(int y, int x, chtype c) noexcept
+  inline int mvAddCh(int y, int x, chtype c) noexcept
   { return mvwaddch(win, y, x, c); }
 
+  // const char* / const wchar_t*
+  inline int mvAddStr(int y, int x, const char* s) noexcept
+  { return mvwaddstr(win, y, x, s); }
+
+  inline int mvAddStr(int y, int x, const wchar_t* s) noexcept
+  { return mvwaddwstr(win, y, x, s); }
+
+  // char[] / wchar_t[] --> `N` may NOT be actual strlen!
+  template<size_t N>
+  inline int mvAddStr(int y, int x, char (&s)[N]) noexcept
+  { return mvwaddstr(y, x, win, s); }
+
+  template<size_t N>
+  inline int mvAddStr(int y, int x, wchar_t (&s)[N]) noexcept
+  { return mvwaddwstr(y, x, win, s); }
+
+  // const char[] / const wchar_t[] --> Pretty safe to use `N`
+  template<size_t N>
+  inline int mvAddStr(int y, int x, const char (&s)[N]) noexcept
+  { return mvwaddnstr(y, x, win, s, N-1); }
+
+  template<size_t N>
+  inline int mvAddStr(int y, int x, const wchar_t (&s)[N]) noexcept
+  { return mvwaddnwstr(y, x, win, s, N-1); }
+
+  // std::string / std::wstring
+  inline int mvAddStr(int y, int x, const std::string& s) noexcept
+  { return mvwaddnstr(win, y, x, s.c_str(), s.size()); }
+
+  inline int mvAddStr(int y, int x, const std::wstring& s) noexcept
+  { return mvwaddnwstr(win, y, x, s.c_str(), s.size()); }
+
+#ifdef USE_C_VARIADIC_ARGS
+#if defined(__GNUC__) || defined(__clang__)
+  __attribute__((__format__(__printf__, 4, 5)))
+#endif
+  int mvPrintW(int y, int x, const char* fmt, ...) noexcept {
+    int ret = ERR;
+    if (OK == wmove(win, y, x)) {
+      va_list ap;
+      va_start(ap, fmt);
+      ret = vw_printw(win, fmt, ap); 
+      va_end(ap);
+    }
+    return ret;
+  }
+#else
   template<typename... Args>
   int mvPrintW(int y, int x, const char* fmt, Args... args) noexcept
   { return mvwprintw(win, y, x, fmt, args...); }
+#endif
 
   // attr-methods =============================================================
-  int attrSet(unsigned int attrs) noexcept
+  inline int attrSet(unsigned int attrs) noexcept
   { return wattrset(win, attrs); }
 
   // misc methods =============================================================
-  int clear() noexcept
+  inline int clear() noexcept
   { return wclear(win); }
 
-  int erase() noexcept
+  inline int erase() noexcept
   { return werase(win); }
 };
 

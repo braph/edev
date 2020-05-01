@@ -1,7 +1,7 @@
 #include "colors.hpp"
 
 #include <cctype>
-#include <stdexcept>
+#include <algorithm>
 
 using namespace UI;
 
@@ -19,10 +19,10 @@ Color :: mapping Color :: colors[] = {
   {"magenta",   COLOR_MAGENTA}
 };
 
-short Color :: parse(const std::string& color, short on_error_return = -2) {
+short Color :: parse(const std::string& color, short on_error_return = -2) noexcept {
   if (! color.empty()) {
-    if (isdigit(color[0]))
-      return std::stoi(color);
+    if (std::isdigit(color[0]))
+      return std::atoi(&color[0]);
 
     for (const auto& it : colors)
       if (color == it.name)
@@ -37,7 +37,9 @@ std::string Color :: to_string(short color) {
     if (it.value == color)
       return it.name;
 
-  return std::to_string(color);
+  char _[10];
+  sprintf(_, "%hd", color);
+  return _;
 }
 
 // === UI::Attribute ==========================================================
@@ -52,7 +54,7 @@ Attribute :: mapping Attribute :: attributes[] = {
   {"underline", A_UNDERLINE}
 };
 
-unsigned int Attribute :: parse(const std::string& attribute) {
+unsigned int Attribute :: parse(const std::string& attribute) noexcept {
   for (const auto& e : attributes)
     if (attribute == e.name)
       return e.value;
@@ -70,22 +72,34 @@ std::string Attribute :: to_string(unsigned int attribute) {
 
 // === UI::Colors =============================================================
 
-std::vector<Colors::pair_id> Colors :: color_pairs;
+#define MERGE_FG_BG(FG, BG) \
+  (static_cast<unsigned int>(FG) + \
+  (static_cast<unsigned int>(BG) << 16))
+
+std::vector<unsigned int> Colors :: color_pairs;
 int Colors :: last_id = 1;
 
 int Colors :: create_color_pair(short fg, short bg) {
-  for (const auto& pair : color_pairs)
-    if (pair.fg == fg && pair.bg == bg)
-      return pair.id;
+  unsigned int color_pair = MERGE_FG_BG(fg, bg);
 
-  Colors::pair_id new_pair = {fg, bg, last_id++};
-  init_pair(new_pair.id, fg, bg);
-  color_pairs.push_back(new_pair);
-  return new_pair.id;
+  auto find_it = std::find(color_pairs.begin(), color_pairs.end(), color_pair);
+  if (find_it != color_pairs.end())
+    return std::distance(color_pairs.begin(), find_it);
+
+  int pair_id = last_id++;
+  init_pair(pair_id, fg, bg);
+  color_pairs.resize(size_t(last_id), MERGE_FG_BG(-2, -2));
+  color_pairs[size_t(pair_id)] = color_pair;
+  return pair_id;
 }
 
 unsigned int Colors :: set(short fg, short bg, unsigned int attributes) {
   return COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
+}
+
+void Colors :: reset() noexcept {
+  color_pairs.clear();
+  last_id = 1;
 }
 
 #ifdef TEST_COLORS

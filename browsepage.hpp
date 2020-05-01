@@ -1,23 +1,24 @@
 #ifndef BROWSEPAGE_HPP
 #define BROWSEPAGE_HPP
 
+#include "lib/xml.hpp"
+
 #include <ctime>
 #include <string>
 #include <vector>
-#include <ostream>
+#include <iosfwd>
 
 struct Style {
   std::string url;
   std::string name;
 
   Style(std::string url, std::string name)
-  : url(std::move(url)), name(std::move(name))
+  : url(std::move(url))
+  , name(std::move(name))
   {
   }
 
-  inline friend std::ostream& operator<<(std::ostream& o, const Style& s) {
-    return o << s.url << '|' << s.name;
-  }
+  friend inline std::ostream& operator<<(std::ostream&, const Style&);
 };
 
 struct Track {
@@ -35,16 +36,7 @@ struct Track {
   , number(0)
   {}
 
-  inline friend std::ostream& operator<<(std::ostream& o, const Track& t) {
-    return o
-      << t.number << '|'
-      << t.artist << '|'
-      << t.title  << '|'
-      << t.remix  << '|'
-      << t.bpm    << " BPM|"
-      << t.length << " Sec|"
-      << t.url;
-  }
+  friend inline std::ostream& operator<<(std::ostream&, const Track&);
 };
 
 struct Album {
@@ -70,49 +62,29 @@ struct Album {
   , isSingleURL(false)
   {
     styles.reserve(3);
-    tracks.reserve(10);
+    tracks.reserve(11);
     archive_urls.reserve(3);
   }
 
-  inline friend std::ostream& operator<<(std::ostream& o, const Album& a) {
-    std::tm* t = std::localtime(&a.date);
-    char date_string[12];
-    std::strftime(date_string, sizeof(date_string), "%Y-%m-%d", t);
-
-    o <<   "Title:       " << a.title
-      << "\nArtist:      " << a.artist
-      << "\nDate:        " << date_string
-      << "\nDescription: " << a.description
-      << "\nCover URL:   " << a.cover_url
-      << "\nDownloads:   " << a.download_count
-      << "\nRated:       " << a.rating << " (" << a.votes << " votes)"
-      << "\nURL:         " << a.url
-      << "\nStyles:      "; for (auto& s : a.styles)       { o << s << ',';  }
-    o << "\nArchives:    "; for (auto& i : a.archive_urls) { o << i << ',';  }
-    o << "\nTracks:      "; for (auto& t : a.tracks)       { o << '\n' << t; }
-    return o;
+  inline bool empty() {
+    return tracks.empty();
   }
+
+  friend inline std::ostream& operator<<(std::ostream&, const Album&);
 };
 
-class BrowsePage {
+class BrowsePageParser {
 public:
-  int num_pages;
-  std::vector<Album> albums;
+  BrowsePageParser(const std::string&);
+  int num_pages();
+  Album next_album();
 
-  BrowsePage()
-  : num_pages(0)
-  {
-    albums.reserve(5);
-  }
-
-  BrowsePage(const std::string& src)
-  : num_pages(0)
-  {
-    albums.reserve(5);
-    parse_src(src);
-  }
-
-  void parse_src(const std::string&);
+private:
+  Html::Doc doc;
+  Xml::XPath xpath;
+  Xml::XPathResult xpath_albums;
+  Xml::XPathResult::iterator xpath_albums_it;
+  Xml::XPathResult::iterator xpath_albums_end;
 };
 
 #endif

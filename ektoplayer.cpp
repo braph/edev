@@ -1,11 +1,15 @@
 #include "ektoplayer.hpp"
 
+#include "lib/downloads.hpp"
+
 #include <curl/curl.h>
 
 #include <cstring>
 
+namespace {
+
 // https://foo.com/bar/ -> bar
-static std::string& url_basename(std::string &url) {
+std::string& url_basename(std::string &url) {
   if (url.size()) {
     if (url.back() == '/')
       url.pop_back();
@@ -18,7 +22,7 @@ static std::string& url_basename(std::string &url) {
   return url;
 }
 
-static bool strip_extension(std::string &s, const char* ext) {
+bool strip_extension(std::string &s, const char* ext) {
   size_t ext_len = std::strlen(ext);
   if (std::string::npos != s.find(ext, s.size() - ext_len)) {
     s.erase(s.size() - ext_len);
@@ -27,17 +31,19 @@ static bool strip_extension(std::string &s, const char* ext) {
   return false;
 }
 
-static std::string& unescape(std::string& url) {
+std::string& unescape(std::string& url) {
   for (size_t pos = 0; (pos = url.find("%20", pos)) != std::string::npos;)
     url.replace(pos, 3, 1, ' ');
   return url;
 }
 
-static std::string& escape(std::string& url) {
+std::string& escape(std::string& url) {
   for (size_t pos = 0; (pos = url.find(' ', pos)) != std::string::npos;)
     url.replace(pos, 1, "%20");
   return url;
 }
+
+} // namespace (anonymous)
 
 namespace Ektoplayer {
 
@@ -70,9 +76,8 @@ using namespace Ektoplayer;
 int main() {
   TEST_BEGIN();
 
-  std::cout
-    << "config_dir():  " << Ektoplayer::config_dir()  << std::endl
-    << "config_file(): " << Ektoplayer::config_file() << std::endl;
+  std::cout << "config_dir():  " << Ektoplayer::config_dir()  << std::endl;
+  std::cout << "config_file(): " << Ektoplayer::config_file() << std::endl;
 
   // Basic tests
   for (const char* _ : {
@@ -107,7 +112,6 @@ int main() {
     url_shrink(url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
     assert(url == "woodsworthy-call-of-the-ancestors-300x300.png");
     url_expand(url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-    std::cout << url << std::endl;
     assert(url == _);
   }
 

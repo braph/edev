@@ -2,21 +2,22 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <fcntl.h>
+#include <sys/wait.h>
 
 #include <cstdlib>
 #include <cassert>
 #include <stdexcept>
 
-Process::Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
-: pid(-1)
+Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
+: _pid(-1)
 , closed(true)
 {
-  assert(function);
   open(function, pipe_stdin, pipe_stdout, pipe_stderr);
 }
 
-pid_t Process::open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept {
+pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept {
+  assert(function && "No function passed");
+
   int stdin_p[2], stdout_p[2], stderr_p[2];
   
   if (pipe_stdin && pipe(stdin_p) != 0)
@@ -47,8 +48,8 @@ pid_t Process::open(std::function<void()> function, bool pipe_stdin, bool pipe_s
     if (pipe_stdout) {close(stdout_p[0]); close(stdout_p[1]);}
     if (pipe_stderr) {close(stderr_p[0]); close(stderr_p[1]);}
   
-    //Based on http://stackoverflow.com/a/899533/3808293
-    int fd_max=static_cast<int>(sysconf(_SC_OPEN_MAX)); // truncation is safe
+    // Based on http://stackoverflow.com/a/899533/3808293
+    int fd_max = static_cast<int>(sysconf(_SC_OPEN_MAX)); // truncation is safe
     for (int fd = 3; fd < fd_max; fd++)
       close(fd);
   
@@ -67,25 +68,18 @@ pid_t Process::open(std::function<void()> function, bool pipe_stdin, bool pipe_s
   if (pipe_stdout) stdout_pipe.open(stdout_p[0]);
   if (pipe_stderr) stderr_pipe.open(stderr_p[0]);
   
-  // XXX: move this?
-  fcntl(stdout_pipe.fd, F_SETFL, fcntl(stdout_pipe.fd, F_GETFL) | O_NONBLOCK);
-  fcntl(stderr_pipe.fd, F_SETFL, fcntl(stderr_pipe.fd, F_GETFL) | O_NONBLOCK);
-
-  closed=false;
-  this->pid = pid;
+  closed = false;
+  this->_pid = pid;
   return pid;
 }
 
-int Process::get_exit_status() noexcept {
-  if (pid <= 0)
+int Process :: get_exit_status() noexcept {
+  if (_pid <= 0)
     return -1;
 
   int exit_status;
-  waitpid(pid, &exit_status, 0);
-  {
-    std::lock_guard<std::mutex> lock(close_mutex);
-    closed=true;
-  }
+  waitpid(_pid, &exit_status, 0);
+  closed = true;
   close_fds();
 
   if (exit_status >= 256)
@@ -93,18 +87,15 @@ int Process::get_exit_status() noexcept {
   return exit_status;
 }
 
-bool Process::try_get_exit_status(int &exit_status) noexcept {
-  if (pid <= 0)
+bool Process :: try_get_exit_status(int &exit_status) noexcept {
+  if (_pid <= 0)
     return false;
 
-  pid_t p = waitpid(pid, &exit_status, WNOHANG);
+  pid_t p = waitpid(_pid, &exit_status, WNOHANG);
   if (p == 0)
     return false;
 
-  {
-    std::lock_guard<std::mutex> lock(close_mutex);
-    closed=true;
-  }
+  closed = true;
   close_fds();
 
   if (exit_status >= 256)
@@ -118,28 +109,27 @@ bool Process :: running() noexcept {
   return !try_get_exit_status(retcode);
 }
 
-void Process::close_fds() noexcept {
+void Process :: close_fds() noexcept {
   stdin_pipe.close();
   stdout_pipe.close();
   stderr_pipe.close();
-  // if (pid > 0) ?!
+  // if (_pid > 0) ?!
 }
 
-void Process::kill(bool force) noexcept {
-  std::lock_guard<std::mutex> lock(close_mutex);
-  if (pid > 0 && !closed) {
+void Process :: kill(bool force) noexcept {
+  if (_pid > 0 && !closed) {
     if (force)
-      ::kill(-pid, SIGTERM);
+      ::kill(-_pid, SIGTERM);
     else
-      ::kill(-pid, SIGINT);
+      ::kill(-_pid, SIGINT);
   }
 }
 
-Process::~Process() noexcept {
+Process :: ~Process() noexcept {
   close_fds();
 }
 
-pid_t Process::get_id() const noexcept {
-  return pid;
+pid_t Process :: get_id() const noexcept {
+  return _pid;
 }
 

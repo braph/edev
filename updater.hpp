@@ -1,8 +1,9 @@
 #ifndef UPDATER_HPP
 #define UPDATER_HPP
 
+#include <string>
+
 class Album;
-class BrowsePage;
 class Downloads;
 namespace Database { class Database; }
 
@@ -17,7 +18,7 @@ private:
   Database::Database& db;
   Downloads& downloads;
   void insert_album(Album&);
-  void insert_browsepage(BrowsePage&);
+  void insert_browsepage(const std::string&);
 };
 
 #endif

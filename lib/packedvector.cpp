@@ -1,5 +1,7 @@
 #include "packedvector.hpp"
 
+#include <cstring>
+
 #define GROW_FACTOR 2
 
 union BitShiftHelper {
@@ -17,8 +19,13 @@ union BitShiftHelper {
 void PackedVector :: reserve(size_t n) {
   __enter__("%lu", n);
 
-  if (n > capacity())
-    *this = PackedVector(_bits, n, begin(), end());
+  if (n > _capacity) {
+    data_type* new_data = new data_type[size_for_bits(_bits * n, sizeof(data_type))];
+    std::memcpy(new_data, _data, size_for_bits(_bits * _size, 1));
+    delete[] _data;
+    _data = new_data;
+    _capacity = n;
+  }
 
   __leave__();
 }
@@ -28,7 +35,7 @@ void PackedVector :: resize(size_t n, value_type value) {
 
   reserve(n);
   while (_size < n)
-    push_back(value);
+    set(_size++, value);
 
   __leave__();
 }
@@ -36,7 +43,7 @@ void PackedVector :: resize(size_t n, value_type value) {
 void PackedVector :: push_back(value_type value) {
   __enter__("%d", value);
 
-  if (_size == capacity())
+  if (_size == _capacity)
     reserve(_size * GROW_FACTOR + 1);
 
   set(_size, value);
@@ -45,24 +52,29 @@ void PackedVector :: push_back(value_type value) {
   __leave__();
 }
 
-PackedVector::value_type PackedVector :: get(size_t index) const {
+#define USE_POSSIBLE_FASTER_IMPLEMENTATION 0
+PackedVector::value_type PackedVector :: get(size_t index) const noexcept {
   unsigned int dataIndex = (index * _bits) / 32;
   unsigned int bitOffset = (index * _bits) % 32;
 
+#if ! USE_POSSIBLE_FASTER_IMPLEMENTATION
   if (bitOffset + _bits <= 32) {
     uint32_t e = _data[dataIndex];
     e = (e >> bitOffset) &~(0xFFFFFFFFu << _bits);
     return value_type(e);
   } else {
+#endif
     BitShiftHelper store;
     store.u32.u1 = _data[dataIndex];
     store.u32.u2 = _data[dataIndex+1];
     uint32_t e = (store.u64 >> bitOffset) &~(0xFFFFFFFFu << _bits);
     return value_type(e);
-  }
+#if ! USE_POSSIBLE_FASTER_IMPLEMENTATION
+}
+#endif
 }
 
-void PackedVector :: set(size_t index, value_type value) {
+void PackedVector :: set(size_t index, value_type value) noexcept {
   unsigned int dataIndex = (index * _bits) / 32;
   unsigned int bitOffset = (index * _bits) % 32;
 
@@ -86,37 +98,13 @@ void PackedVector :: set(size_t index, value_type value) {
 void DynamicPackedVector :: reserve(size_t n, int bits) {
   __enter__("n = %lu, bits = %d", n, bits);
 
-  if (n < _vec.size())
-    n = _vec.size();
-
-  if (bits > _vec.bits())
+  if (bits > _vec.bits()) {
+    if (n < _vec.capacity())
+      n = _vec.capacity();
     _vec = PackedVector(bits, n, _vec.begin(), _vec.end());
+  }
   else
     _vec.reserve(n);
-
-  __leave__();
-}
-
-void DynamicPackedVector :: set(size_t index, value_type value) {
-  __enter__("index = %lu, value = %d", index, value);
-
-  reserve(capacity(), bitlength(value));
-  _vec.set(index, value);
-
-  __leave__();
-}
-
-void DynamicPackedVector :: push_back(value_type value) {
-  __enter__("%d", value);
-
-  size_t new_size;
-  if (size() == capacity())
-    new_size = size() * GROW_FACTOR + 1;
-  else
-    new_size = capacity(); // keep capacity!
-
-  reserve(new_size, bitlength(value));
-  _vec.push_back(value);
 
   __leave__();
 }
@@ -125,7 +113,38 @@ void DynamicPackedVector :: resize(size_t n, value_type value) {
   __enter__("%lu, %d", n, value);
 
   reserve(n, bitlength(value));
-  _vec.resize(n, value);
+  while (_vec._size < n)
+    _vec.set(_vec._size++, value);
+
+  __leave__();
+}
+
+void DynamicPackedVector :: set(size_t index, value_type value) noexcept {
+  __enter__("index = %lu, value = %d", index, value);
+
+  int value_bits = bitlength(value);
+  if (value_bits > _vec.bits())
+    _vec = PackedVector(value_bits, _vec.capacity(), _vec.begin(), _vec.end());
+  _vec.set(index, value);
+
+  __leave__();
+}
+
+void DynamicPackedVector :: push_back(value_type value) {
+  __enter__("%d", value);
+
+  int value_bits = bitlength(value);
+  if (value_bits > _vec.bits())
+    // We have to recreate the vector if the bitwidth has increased.
+    // To save a conditional branch we don't check if the capacity needs to
+    // be changed. Instead we add +1 to the capacity to ensure we have space
+    // for the new element.
+    _vec = PackedVector(value_bits, _vec._capacity + 1, _vec.begin(), _vec.end());
+  else if (_vec._capacity == _vec._size)
+    _vec.reserve((_vec._capacity + 1) * GROW_FACTOR);
+
+  _vec.set(_vec._size, value);
+  ++_vec._size;
 
   __leave__();
 }
@@ -146,241 +165,130 @@ void DynamicPackedVector :: shrink_to_fit() {
 #include <vector>
 #include <initializer_list>
 
-template<typename TInt>
-void testCompress(const std::initializer_list<TInt>& list, int bitwidth) {
-  std::vector<TInt> expected(list.begin(), list.end());
-  std::sort(expected.begin(), expected.end(), std::greater<TInt>());
+/**
+ * Foo
+ */
+template<typename TValue, typename TTestee, typename TExpect>
+struct VectorTester {
+  using value_type = TValue;
 
-  TInt compressed = compress<TInt>(list.begin(), list.end(), bitwidth);
+  TTestee testee; // The vector TO be tested
+  TExpect expect; // The reference vector
 
-  std::vector<TInt> uncompressed;
+#define proxy0(F_RET, F_NAME) \
+  F_RET F_NAME() { \
+    testee.F_NAME(); \
+    expect.F_NAME(); }
 
-  BitUnpacker<TInt> unpacker(compressed, bitwidth);
-  for (TInt v = unpacker.next(); v; v = unpacker.next())
-    uncompressed.push_back(v);
+#define proxy1(F_RET, F_NAME, A1_TYPE, A1_NAME) \
+  F_RET F_NAME(A1_TYPE A1_NAME) { \
+    testee.F_NAME(A1_NAME); \
+    expect.F_NAME(A1_NAME); }
 
-  /*
-  for (auto v : BitUnpacker<TInt>(compressed, bitwidth)) {
-    std::cout << "pb:"<<static_cast<long>(v)<<std::endl;
-    uncompressed.push_back(v);
-  }*/
+  proxy0(void,clear)
+  proxy0(void,pop_back)
+  proxy1(void,push_back,value_type,v)
+  proxy1(void,reserve,size_t,n)
+  proxy1(void,resize,size_t,n)
 
-  //uncompress<TInt, std::vector<TInt>>(uncompressed, compressed, bitwidth);
+  struct reference {
+    TTestee& testee;
+    TExpect& expect;
+    size_t pos;
 
-  for (auto e : expected)
-    std::cout << "exp:"<<e<<std::endl;
+    reference(TTestee& testee, TExpect &expect, size_t pos)
+      : testee(testee)
+      , expect(expect)
+      , pos(pos)
+    {}
 
-  if (expected != uncompressed)
-    throw std::runtime_error("FOO");
-}
+    template<typename TRhsValue>
+    reference& operator=(const TRhsValue& v) {
+      testee[pos] = v;
+      expect[pos] = v;
+      return *this;
+    }
+  };
+
+  reference operator[](size_t pos) {
+    return reference(testee, expect, pos);
+  }
+
+#define _check(...) \
+  if (! (__VA_ARGS__)) throw std::runtime_error(#__VA_ARGS__)
+
+  void check_empty()    { _check( testee.empty()    == expect.empty() ); }
+  void check_size()     { _check( testee.size()     == expect.size()  ); }
+  void check_front()    { _check( testee.front()    == expect.front() ); }
+  void check_back()     { _check( testee.back()     == expect.back()  ); }
+  void check_capacity() { _check( testee.capacity() == expect.capacity() ); }
+  void check_equals_using_index_access() {
+    size_t sz = expect.size();
+    for (size_t i = 0; i < sz; ++i)
+      _check( testee[i] == expect[i] );
+  }
+  void check_equals_using_iterator_access() {
+    auto testee_it = testee.begin(), testee_end = testee.end();
+    auto expect_it = expect.begin(), expect_end = expect.end();
+
+    while (testee_it != testee_end && expect_it != expect_end)
+      _check( *testee_it++ == *expect_it++ );
+
+    _check( testee_it == testee_end );
+    _check( expect_it == expect_end );
+  }
+
+  void check_all() {
+    check_empty();
+    check_size();
+  }
+};
 
 int main() {
   TEST_BEGIN();
 
-  // ==========================================================================
+  using V = VectorTester<int, std::vector<int>, DynamicPackedVector>;
+
   {
-    testCompress<uint8_t>({1}, 5);
-    testCompress<uint8_t>({1,2}, 5);
-    testCompress<uint16_t>({3,6,12,10}, 5);
+    V v;
+    v.check_all();
+    assert(v.testee.capacity() == 0);
 
-    std::vector<uint32_t> t({5,9,2,13});
-    uint32_t compressed = compress<uint32_t>(t.begin(), t.end(), 5);
+    // Basic
+    for (int i = 0; i < 1024; ++i)
+      v.push_back(i);
+    v.check_all();
 
-#if 0
-    std::cout << "HERESMT"<<std::endl;
-    BitUnpacker<uint32_t> unp(compressed, 5);
-    for (uint32_t v = unp.next(); v; v = unp.next())
-      std::cout << v << std::endl;
-    std::cout << "///HERESMT"<<std::endl;
-#endif
+    // Clear
+    v.clear();
+    v.check_all();
+
+    // Foo
+    for (int i = 0; i <= INT_MAX; i *= 2)
+      v.push_back(i);
+    v.check_all();
+
+    // Direct access (get)
+    for (int i = 0) {}
+
+    // Direct access (set)
+    for (int i = 0; i < TODO; ++i)
+      v[i] = 2;
+    v.check_all();
+
   }
-
-  // Test: 32bit
-  {
-    TinyPackedArray<32, uint32_t> array;
-    assert(array.capacity() == 1);
-    array.push_back(0xBEEF);
-    assert(array[0] == 0xBEEF);
-  }
-
-  // Test: 24bit
-  {
-    TinyPackedArray<24, uint32_t> array;
-    assert(array.capacity() == 1);
-    array.push_back(0xBEEF);
-    assert(array[0] == 0xBEEF);
-  }
-
-  // Test: 16bit
-  {
-    TinyPackedArray<16, uint32_t> array;
-    assert(array.capacity() == 2);
-    array.push_back(0xDEAD);
-    array.push_back(0xBEEF);
-    assert(array[0] == 0xDEAD);
-    assert(array[1] == 0xBEEF);
-  }
-
-  // Test: 8bit
-  {
-    TinyPackedArray<8, uint32_t> array;
-    assert(array.capacity() == 4);
-    array.push_back(0xAA);
-    array.push_back(0xBB);
-    array.push_back(0xCC);
-    array.push_back(0xDD);
-    assert(array[0] == 0xAA);
-    assert(array[1] == 0xBB);
-    assert(array[2] == 0xCC);
-    assert(array[3] == 0xDD);
-  }
-
-  // Test: 3bit
-  {
-    TinyPackedArray<3, uint32_t> arr;
-    assert(arr.capacity() == 10);
-    arr.push_back(1);
-    arr.push_back(2);
-    arr.push_back(3);
-    arr.push_back(4);
-    arr.push_back(5);
-    arr.push_back(1);
-    arr.push_back(2);
-    arr.push_back(3);
-    arr.push_back(4);
-    arr.push_back(5);
-    assert(arr[0] == 1 && arr[1] == 2 && arr[2] == 3 && arr[3] == 4 && arr[4] == 5);
-    assert(arr[5] == 1 && arr[6] == 2 && arr[7] == 3 && arr[8] == 4 && arr[9] == 5);
-
-    size_t sum = 0;
-    for (auto i : arr) { sum += i; }
-    assert(sum == 30);
-  }
-
-  // Test: Access
-  {
-    TinyPackedArray<3, uint32_t> arr;
-    arr.push_back(0);
-    arr.push_back(1);
-    arr[0] = 4;
-    assert(arr[0] == 4);
-    arr[1] = arr[0];
-    assert(arr[1] == 4);
-  }
-
-  // Test: Sorting
-  {
-    TinyPackedArray<3, uint32_t> arr;
-    arr.push_back(5);
-    arr.push_back(2);
-    arr.push_back(1);
-    arr.push_back(4);
-    arr.push_back(3);
-
-    std::swap(*(arr.begin()), *(arr.begin()+1));
-    std::cout << *(arr.begin()) << ' ' << *(arr.begin()+1) << std::endl;
-
-
-#if 1
-    std::sort(arr.begin(), arr.end());
-    for (auto i : arr) { std::cout << i << std::endl; }
-    assert(arr[0] == 1 && arr[1] == 2 && arr[2] == 3 && arr[3] == 4 && arr[4] == 5);
-#endif
-  }
-
-  // Test: Sorting
-  {
-    TinyPackedArray<5, uint32_t> arr;
-    arr.push_back(5);
-    arr.push_back(2);
-    arr.push_back(1);
-
-    std::sort(arr.begin(), arr.end(), std::greater<uint8_t>());
-    std::cout << arr.data() << std::endl;
-
-    std::sort(arr.begin(), arr.end(), std::less<uint8_t>());
-    std::cout << arr.data() << std::endl;
-  }
-
-#if 0
-  {
-    PackedVector v(8);
-    assert(v.empty());
-    assert(v.size() == 0);
-    assert(v.capacity() == 0);
-
-    v.push_back(42);
-    assert(v[0] == 42);
-
-    v.push_back(13);
-    assert(v[1] == 13);
-
-    v.push_back(12);
-    assert(v[2] == 12);
-
-    v.push_back(19);
-    assert(v[3] == 19);
-  }
-#endif
 
 #define SZ 1048576
   {
-    std::vector<int> v;
-    for (int i = 0; i < SZ; ++i)
-      v.push_back(i);
-  }
-
-  {
-    DynamicPackedVector v;
-    std::cout << "push back 0" << std::endl;
-    for (int i = 0; i < 20000; ++i) {
-      v.push_back(i);
-      //assert(v[i] == i); XXX
-    }
-  }
-
-  {
-    DynamicPackedVector v;
-    std::cout << "push back" << std::endl;
-    for (int i = 0; i < SZ; ++i) {
-      v.push_back(i);
-      //assert(v[i] == i); XXX
-    }
-
-    std::cout << "set" << std::endl;
-    for (size_t i = 0; i < SZ; ++i) {
-      v[i] = 2;
-    }
-
-    std::cout << "get" << std::endl;
-    for (size_t i = 0; i < SZ; ++i) {
-      assert(v[i] == 2);
-    }
-
-    std::cout << "*iterator =" << std::endl;
+    std::cerr << "*iterator =\n";
     for (DynamicPackedVector::iterator it = v.begin(); it != v.end(); ++it) {
       *it = 33;
     }
 
-    std::cout << "get[33]" << std::endl;
+    std::cerr << "get[33]\n";
     for (size_t i = 0; i < SZ; ++i) {
       assert(v[i] == 33);
     }
-  }
-
-  {
-    std::cout << "push_back" << std::endl;
-    DynamicPackedVector v;
-    for (size_t i = 0; i < SZ; ++i)
-      v.push_back(1);
-
-    std::cout << "*it = 1024" << std::endl;
-    for (DynamicPackedVector::iterator it = v.begin(); it != v.end(); ++it)
-      *it = 1024;
-
-    std::cout << "v[i] == 1024" << std::endl;
-    for (size_t i = 0; i < SZ; ++i)
-      assert(v[i] == 1024);
   }
 
   TEST_END();

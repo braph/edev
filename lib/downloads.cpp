@@ -1,5 +1,6 @@
 #include "downloads.hpp"
 #include <cstdlib>
+#include <climits>
 #include <stdexcept>
 
 /* ============================================================================
@@ -87,14 +88,13 @@ FileDownload :: FileDownload(const std::string &url, std::string file)
  * Downloads
  * ==========================================================================*/
 
-Downloads :: Downloads(int parallel)
-: _parallel(parallel), _running_handles(0)
+Downloads :: Downloads()
+: _parallel(INT_MAX), _running_handles(0)
 {
   curl_global_init(CURL_GLOBAL_ALL);
-  if ((_curl_multi = curl_multi_init())) {
-    curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
+  if ((_curl_multi = curl_multi_init()))
     return;
-  }
+
 #ifdef __cpp_exceptions
   throw std::runtime_error("curl_multi_init()");
 #endif
@@ -105,6 +105,11 @@ Downloads :: ~Downloads() {
     delete dl;
   curl_multi_cleanup(_curl_multi);
   curl_global_cleanup();
+}
+
+void Downloads :: setParallel(int parallel) {
+  _parallel = parallel;
+  curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
 }
 
 void Downloads :: addDownload(Download* dl, Priority priority) {
@@ -143,6 +148,6 @@ int Downloads :: work() noexcept {
   }
 
   int ready_filedescriptors;
-  curl_multi_wait(_curl_multi, NULL, 0, 10, &ready_filedescriptors);
+  curl_multi_wait(_curl_multi, NULL, 0, 0, &ready_filedescriptors);
   return ready_filedescriptors;
 }

@@ -4,7 +4,7 @@
 #include "../ui.hpp"
 #include "../ui/mouseevents.hpp"
 #include "../lib/cstring.hpp"
-#include "../context.hpp"
+#include "../application.hpp"
 #include "../database.hpp" // XXX Get rid of this
 
 #include <string>

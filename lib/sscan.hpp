@@ -2,11 +2,12 @@
 #define SSCAN_HPP
 
 #include <cstdio>
+#include <cstdlib>
+#include <climits>
+#include <cstring>
 #include <cassert>
 #include <cerrno>
 #include <cinttypes>
-#include <climits>
-#include <cstring>
 
 /**
  * Helper for scanning a string.
@@ -14,7 +15,7 @@
  * Provides methods for extracting numbers, skipping chars or whole strings.
  *
  * If a read failed, bool(SScan) will return false;
- * Use `getError()` to return the `errno`, which is either
+ * Use `error()` to return the `errno`, which is either
  *  - 0      No error
  *  - ERANGE Over-/underflow (set by strto* functions)
  *  - EINVAL Could not parse the desired type/string
@@ -26,8 +27,8 @@ public:
   SScan(const char* s) : _s(s), _error(0) {}
   operator bool()         const noexcept { return !_error; }
   char operator[](int i)  const noexcept { return _s[i];   }
-  int getError()          const noexcept { return _error;  }
-  const char* getBuffer() const noexcept { return _s;      }
+  int error()             const noexcept { return _error;  }
+  const char* buffer()    const noexcept { return _s;      }
   std::size_t length()    const noexcept { return std::strlen(_s); }
   SScan& clearError()           noexcept { _error = 0; return *this; }
 
@@ -134,6 +135,8 @@ static inline const char* skipWhitespace(const char *s) {
 #endif
 
 #ifdef TEST_SSCAN
+#include "test.hpp"
+
 void test_myscanf(const char* s) {
   std::intmax_t a, b, c, d;
   SScan scanner(s);

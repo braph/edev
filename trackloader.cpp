@@ -4,8 +4,7 @@
 #include "lib/filesystem.hpp"
 #include "config.hpp"
 #include "ektoplayer.hpp"
-
-#include <iostream>
+#include "log.hpp"
 
 TrackLoader :: TrackLoader(Downloads& downloads)
 : downloads(downloads)
@@ -29,8 +28,6 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   }
 #endif
 
-  std::cerr << "Track " << track.title();
-
   std::string track_url = track.url();
   Filesystem::path track_file = track_url;
   track_file += ".mp3";
@@ -51,38 +48,32 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   }
 
   if (Filesystem::exists(file_in_temp)) {
-    std::cerr << " -> TEMP: " << file_in_temp << '\n';
+    log_write("Track %s -> TEMP: %s\n", track.title(), file_in_temp.c_str());
     return file_in_temp.string();
   }
 
   if (Filesystem::exists(file_in_cache)) {
-    std::cerr << " -> CACHE: " << file_in_cache << '\n';
+    log_write("Track %s -> CACHE: %s\n", track.title(), file_in_cache.c_str());
     return file_in_cache.string();
   }
 
   Ektoplayer::url_expand(track_url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
-  std::cerr << " -> DOWNLOAD: " << track_url << '\n';
+  log_write("Track %s -> DOWNLOAD: %s\n", track.title(), track_url.c_str());
 
-  FileDownload* fileDownload = new FileDownload(track_url, file_in_temp.string());
-  fileDownload->onFinished = [=](Download& _dl, CURLcode curl_e) {
+  Filesystem::path& destination_file = (Config::use_cache ? file_in_cache : file_in_temp);
+
+  FileDownload* download = new FileDownload(track_url, destination_file.string());
+  download->onFinished = [=](Download& _dl, CURLcode e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
-    Filesystem::error_code e;
-    if (curl_e == CURLE_OK && dl.httpCode() == 200) {
-      if (Config::use_cache) {
-        Filesystem::rename(dl.filename(), file_in_cache, e);
-        if (e) {
-          Filesystem::copy(dl.filename(), file_in_cache, e);
-          Filesystem::remove(dl.filename(), e);
-        }
-      }
-    } else {
-      Filesystem::remove(dl.filename(), e);
+    if (! (e == CURLE_OK && dl.httpCode() == 200)) {
+      Filesystem::error_code ec;
+      Filesystem::remove(dl.filename(), ec);
     }
-    std::cerr << dl.lastURL() << ": " << curl_easy_strerror(curl_e) << " [" << dl.httpCode() << "]\n";
+    log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(e), dl.httpCode());
   };
 
-  downloads.addDownload(fileDownload, Downloads::HIGH);
-  return fileDownload->filename();
+  downloads.addDownload(download, Downloads::HIGH);
+  return download->filename();
 }
 
 #if 0

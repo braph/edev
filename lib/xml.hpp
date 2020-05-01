@@ -6,8 +6,8 @@
 #include <libxml/xpath.h>
 #include <libxml/xmlerror.h>
 
+#include <memory>
 #include <string>
-#include <iostream>
 #include <stdexcept>
 
 /* Very minimal OO interface to libxml2 - do not use! :D
@@ -21,7 +21,9 @@
 
 namespace Xml {
 
-/* Used for INPUT parameters that take `const char*` */
+/**
+ * Used for *INPUT* parameters
+ */
 struct String {
   String(const String& s)         noexcept : _s(s._s) {}
   String(const char* s)           noexcept : _s(s) {}
@@ -42,6 +44,44 @@ private:
   xmlErrorPtr _e;
 };
 
+#if 0
+struct Result {
+  Result(xmlChar* s) : _s(s) {}
+ ~Result() { xmlFree(_s); }
+  operator std::string() { return
+    std::string(reinterpret_cast<char*>(_s))
+  }
+
+private:
+  xmlChar* _s;
+};
+#endif
+
+class XPathResultString {
+public:
+  XPathResultString(xmlXPathObjectPtr p) : _obj(p) {}
+ ~XPathResultString() { ::xmlXPathFreeObject(_obj); }
+
+  operator bool() { return _obj->stringval; }
+
+  char* c_str() {
+    return reinterpret_cast<char*>(_obj->stringval);
+  }
+
+  std::string str() { return std::string(*this); }
+
+  operator std::string() {
+    std::string value;
+    if (_obj->stringval)
+      value = reinterpret_cast<const char*>(_obj->stringval);
+    return value;
+  }
+
+private:
+  xmlXPathObjectPtr _obj;
+};
+
+
 /* Object is bound to the lifetime of the Node that returned it. */
 class Attribute {
 private:
@@ -54,11 +94,11 @@ public:
       m_attr = NULL;
   }
 
-  bool valid()                  const { return m_attr; }
-  explicit operator bool()      const { return m_attr; }
-  explicit operator xmlAttr*()  const { return m_attr; }
-  const char* name()            const { return reinterpret_cast<const char*>(m_attr->name); }
-  Attribute   next()            const { return Attribute(m_attr->next); }
+  bool valid()                  const noexcept { return m_attr; }
+  explicit operator bool()      const noexcept { return m_attr; }
+  explicit operator xmlAttr*()  const noexcept { return m_attr; }
+  const char* name()            const noexcept { return reinterpret_cast<const char*>(m_attr->name); }
+  Attribute   next()            const noexcept { return Attribute(m_attr->next); }
 
   std::string value() const { 
     xmlChar* _ = ::xmlNodeListGetString(m_attr->doc, m_attr->children, 1);
@@ -74,19 +114,19 @@ private:
   xmlNode *m_node;
 public:
   Node(xmlNode *node) : m_node(node) {}
-  explicit operator xmlNode*() const { return m_node; }
-  explicit operator bool()     const { return m_node; }
-  bool         valid()         const { return m_node; }
-  const char*  name()          const { return reinterpret_cast<const char*>(m_node->name);    }
-  const char*  content()       const { return reinterpret_cast<const char*>(m_node->content); }
-  int          type()          const { return m_node->type;               }
-  Node         next()          const { return Node(m_node->next);      }
-  Node         children()      const { return Node(m_node->children);  }
-  Attribute    attributes()    const { return Attribute(m_node->properties); }
+  explicit operator xmlNode*() const noexcept { return m_node; }
+  explicit operator bool()     const noexcept { return m_node; }
+  bool         valid()         const noexcept { return m_node; }
+  const char*  name()          const noexcept { return reinterpret_cast<const char*>(m_node->name);    }
+  const char*  content()       const noexcept { return reinterpret_cast<const char*>(m_node->content); }
+  int          type()          const noexcept { return m_node->type;               }
+  Node         next()          const noexcept { return Node(m_node->next);      }
+  Node         children()      const noexcept { return Node(m_node->children);  }
+  Attribute    attributes()    const noexcept { return Attribute(m_node->properties); }
 
   // <currentNode><otherTags>bar</otherTags></currentNode>
   //   ^--- nearestContent() -^
-  const char* nearestContent() const {
+  const char* nearestContent() const noexcept {
     const char* s = NULL;
 
     for (Node node = children(); node; node = node.next())
@@ -179,7 +219,7 @@ public:
     return m_xpathobject->nodesetval->nodeNr;
   }
 
-  // XPathResult is wrong in this template XXX
+  // XPathResult is wrong in this template XXX?
   class iterator : public std::iterator<std::forward_iterator_tag, XPathResult> {
     private:
       xmlXPathObjectPtr m_xpathobject;
@@ -192,6 +232,7 @@ public:
       Node operator*() const { return Node(m_xpathobject->nodesetval->nodeTab[m_pos]); }
       iterator operator++()     { ++m_pos; return *this; }
       bool operator!=(const iterator& rhs) const { return m_pos != rhs.m_pos; }
+      bool operator==(const iterator& rhs) const { return m_pos == rhs.m_pos; }
   };
 
   iterator begin() noexcept { return iterator(m_xpathobject); }
@@ -211,9 +252,7 @@ public:
   }
 
   XPathResult query(String xpath) {
-    xmlXPathObjectPtr _ = ::xmlXPathEvalExpression(xpath, m_xpathcontext);
-    if (!_) throw Error(xmlGetLastError());
-    return XPathResult(_);
+    return query(xpath, m_xpathcontext->doc->children);
   }
 
   XPathResult query(String xpath, Node node) {
@@ -222,24 +261,38 @@ public:
     return XPathResult(_);
   }
 
-  std::string query_string(String xpath) {
-    std::string value;
-    xmlXPathObjectPtr _ = ::xmlXPathEvalExpression(xpath, m_xpathcontext);
-    if (!_) throw Error(xmlGetLastError());
-    if (_->stringval)
-      value = reinterpret_cast<const char*>(_->stringval);
-    ::xmlXPathFreeObject(_);
-    return value;
+  XPathResult query(xmlXPathCompExprPtr expr) {
+    return query(expr, m_xpathcontext->doc->children);
   }
 
-  std::string query_string(String xpath, Node node) {
-    std::string value;
+  XPathResult query(xmlXPathCompExprPtr expr, Node node) {
+    ::xmlXPathSetContextNode(xmlNodePtr(node), m_xpathcontext);
+    xmlXPathObjectPtr _ = ::xmlXPathCompiledEval(expr, m_xpathcontext);
+    if (!_) throw Error(xmlGetLastError());
+    return XPathResult(_);
+  }
+
+  // ===========================================================================
+
+  XPathResultString query_string(String xpath) {
+    return query_string(xpath, m_xpathcontext->doc->children);
+  }
+
+  XPathResultString query_string(String xpath, Node node) {
     xmlXPathObjectPtr _ = ::xmlXPathNodeEval(xmlNodePtr(node), xpath, m_xpathcontext);
     if (!_) throw Error(xmlGetLastError());
-    if (_->stringval)
-      value = reinterpret_cast<const char*>(_->stringval);
-    ::xmlXPathFreeObject(_);
-    return value;
+    return XPathResultString(_);
+  }
+
+  XPathResultString query_string(xmlXPathCompExprPtr expr) {
+    return query_string(expr, m_xpathcontext->doc->children);
+  }
+
+  XPathResultString query_string(xmlXPathCompExprPtr expr, Node node) {
+    ::xmlXPathSetContextNode(xmlNodePtr(node), m_xpathcontext);
+    xmlXPathObjectPtr _ = ::xmlXPathCompiledEval(expr, m_xpathcontext);
+    if (!_) throw Error(xmlGetLastError());
+    return XPathResultString(_);
   }
 };
 
@@ -273,15 +326,16 @@ public:
   }
 };
 
-static Doc readDoc(String cur, String URL = NULL, String encoding = NULL, int options = 0) {
-  xmlDocPtr doc = ::xmlReadDoc(cur, URL, encoding, options);
+static Doc readDoc(const char* cur, String URL = NULL, String encoding = NULL, int options = 0) {
+  xmlDocPtr doc = ::xmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
   if (! doc)
     throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
-static Doc readFile(String URL, String encoding = NULL, int options = 0) {
-  xmlDocPtr doc = ::xmlReadFile(URL, encoding, options);
+// Special overload for std::string making use of size() XXX
+static Doc readDoc(const std::string& cur, String URL = NULL, String encoding = NULL, int options = 0) {
+  xmlDocPtr doc = ::xmlReadMemory(cur.c_str(), int(cur.size()), URL, encoding, options);
   if (! doc)
     throw Error(xmlGetLastError());
   return Doc(doc);
@@ -289,6 +343,13 @@ static Doc readFile(String URL, String encoding = NULL, int options = 0) {
 
 static Doc readMemory(String buffer, int size, String URL, String encoding, int options = 0) {
   xmlDocPtr doc = ::xmlReadMemory(buffer, size, URL, encoding, options);
+  if (! doc)
+    throw Error(xmlGetLastError());
+  return Doc(doc);
+}
+
+static Doc readFile(String URL, String encoding = NULL, int options = 0) {
+  xmlDocPtr doc = ::xmlReadFile(URL, encoding, options);
   if (! doc)
     throw Error(xmlGetLastError());
   return Doc(doc);
@@ -309,15 +370,16 @@ using Xml::Doc;
 using Xml::String;
 using Xml::Error;
 
-static Doc readFile(String url, String encoding = NULL, int options = 0) {
-  xmlDocPtr doc = ::htmlReadFile(url, encoding, options);
+static Doc readDoc(const char* cur, String URL = NULL, String encoding = NULL, int options = 0) {
+  xmlDocPtr doc = ::htmlReadDoc(reinterpret_cast<const xmlChar*>(cur), URL, encoding, options);
   if (! doc)
     throw Error(xmlGetLastError());
   return Doc(doc);
 }
 
-static Doc readDoc(String cur, String URL = NULL, String encoding = NULL, int options = 0) {
-  xmlDocPtr doc = ::htmlReadDoc(cur, URL, encoding, options);
+// Special overload for std::string making use of size() XXX?
+static Doc readDoc(const std::string& cur, String URL = NULL, String encoding = NULL, int options = 0) {
+  xmlDocPtr doc = ::htmlReadMemory(cur.c_str(), int(cur.size()), URL, encoding, options);
   if (! doc)
     throw Error(xmlGetLastError());
   return Doc(doc);
@@ -325,6 +387,13 @@ static Doc readDoc(String cur, String URL = NULL, String encoding = NULL, int op
 
 static Doc readMemory(String buffer, int size, String URL, String encoding, int options = 0) {
   xmlDocPtr doc = ::htmlReadMemory(buffer, size, URL, encoding, options);
+  if (! doc)
+    throw Error(xmlGetLastError());
+  return Doc(doc);
+}
+
+static Doc readFile(String url, String encoding = NULL, int options = 0) {
+  xmlDocPtr doc = ::htmlReadFile(url, encoding, options);
   if (! doc)
     throw Error(xmlGetLastError());
   return Doc(doc);

@@ -15,7 +15,7 @@ public:
   bool handleKey(int);
   bool handleMouse(MEVENT&);
 
-  WINDOW* getWINDOW() const;
+  WINDOW* getWINDOW() const noexcept;
   Widget* currentWidget() const;
   int     indexOf(Widget*) const;
   int     currentIndex() const;

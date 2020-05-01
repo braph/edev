@@ -1,14 +1,13 @@
-#ifndef PROCESS_HPP
-#define PROCESS_HPP
+#ifndef LIB_PROCESS_HPP
+#define LIB_PROCESS_HPP
 
 #include "pipestream.hpp"
 
-#include <sys/wait.h>
+#include <sys/types.h> // pid_t
 
-#include <string>
-#include <mutex>
-#include <memory>
 #include <functional>
+
+#include <cstdio>
 
 class Process {
 public:
@@ -21,7 +20,7 @@ public:
       bool pipe_stdin=true,
       bool pipe_stdout=true,
       bool pipe_stderr=true) noexcept;
- ~Process() noexcept;
+ ~Process();
   
   pid_t get_id() const noexcept;
   int get_exit_status() noexcept;
@@ -36,19 +35,11 @@ public:
     return *this;
   }
 
-  template<size_t LEN>
-  Process& operator<<(const char (&s)[LEN]) noexcept {
-    stdin_pipe.write(s, LEN-1);
-    return *this;
-  }
-
 private:
-  pid_t pid;
-  bool closed;
-  std::mutex close_mutex;
-  std::mutex stdin_mutex;
-  pid_t open(std::function<void()>, bool, bool, bool) noexcept;
+  pid_t _pid;
+  bool closed; // TODO: _closed
 
+  pid_t open(std::function<void()>, bool, bool, bool) noexcept;
   void close_fds() noexcept;
 };
 

@@ -78,13 +78,15 @@ class Downloads {
 public:
   enum Priority { LOW, HIGH };
 
-  Downloads(int);
+  Downloads();
  ~Downloads();
+  void setParallel(int);
   void addDownload(Download*, Priority);
   int work() noexcept;
 
-  std::deque<Download*>& queue() noexcept { return _queue; }
-  int runningHandles() const noexcept     { return _running_handles; }
+  std::deque<Download*>& queue()  noexcept { return _queue;                   }
+  size_t runningDownloads() const noexcept { return size_t(_running_handles); }
+  size_t queuedDownloads()  const noexcept { return _queue.size();            }
 
 private:
   CURLM* _curl_multi;

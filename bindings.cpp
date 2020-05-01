@@ -27,8 +27,8 @@ void init() {
   _['l']  = _['}']  = _['\t']             = Actions::TABS_NEXT;
   _['h']  = _['{']  = _[KEY_BTAB]         = Actions::TABS_PREV;
   _[C('l')]                               = Actions::REDRAW;
-  //_[C('r')]                               = RELOAD;
-  //_[C('U')]                               = UPDATE;
+//_[C('r')]                               = RELOAD;
+//_[C('U')]                               = UPDATE;
 
   _['q']                                  = Actions::QUIT;
 #undef _
@@ -50,7 +50,8 @@ void init() {
 
 } // namespace Bindings
 
-#ifdef NUR_ZUR_UEBERSICHT
+/*
+#ifdef BLAAH
   // nav: help, info, browser, playlist
    @bindings[:playlist] = {
       # selection
@@ -82,3 +83,4 @@ void init() {
       :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]
    }
 #endif
+// */

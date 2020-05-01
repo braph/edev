@@ -1,3 +1,11 @@
+- bit_tools, do it !!!
+- boost::algorithm::starts_with() -- replace?
+- getFileForTrack->rename and don't move the file!file
+- TrackLoader remove dependency Downloads
+- Context -> RegistryPattern -> or globals?
+- private -> protected
+- wtf xml.hpp that optimization did'nt work?!
+- cstring -> starts_with <<< NO ???
 - Errhandling on trackloader/filedownload - what to do on excp?
 - Config: Themes set()
 - Make the Result class a Generic. Do std::sort() etc, by providing lambdas
@@ -7,43 +15,16 @@
 - vol. 3 ?
 x config: temp -> $TEMP
 - config: prefetch
-- Application.cpp/Downloads.cpp: runningHandles() / inQueue() / queue.size()
-- Downloads: wait(INT)
-- Downloads: unique_ptr
+- Downloads: unique_ptr <<< shall Downloads own a Download?
 - Browsepage: more scanner usage
 - xml.hpp: iterators
 - Vector: __enter__ __leave__
-- total heap usage: 9,934,570 allocs, 9,934,548 frees, 1,113,073,000 bytes allocated
-- total heap usage: 9,932,411 allocs, 9,932,389 frees, 1,113,021,471 bytes allocated
-- total heap usage: 9,932,557 allocs, 9,932,535 frees, 1,113,028,479 bytes allocated // std::move?!
-- total heap usage: 9,945,040 allocs, 9,945,018 frees, 1,118,081,539 bytes allocated
-- total heap usage: 9,932,373 allocs, 9,932,351 frees, 1,113,019,647 bytes allocated
-- total heap usage: 9,930,433 allocs, 9,930,411 frees, 1,111,880,328 bytes allocated
-- total heap usage: 9,930,396 allocs, 9,930,374 frees, 1,111,878,552 bytes allocated
-- total heap usage: 9,930,280 allocs, 9,930,258 frees, 1,111,872,984 bytes allocated
-- total heap usage: 9,930,266 allocs, 9,930,244 frees, 1,111,872,312 bytes allocated
-- total heap usage: 9,930,308 allocs, 9,930,286 frees, 1,111,874,328 bytes allocated
-- total heap usage: 9,930,352 allocs, 9,930,330 frees, 1,111,876,440 bytes allocated
-- total heap usage: 9,930,357 allocs, 9,930,335 frees, 1,111,876,680 bytes allocated
 - [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
-- total heap usage: 9,930,409 allocs, 9,930,387 frees, 1,111,879,168 bytes allocated << before time_t
-- total heap usage: 10,174,780 allocs, 10,174,758 frees, 1,138,071,779 bytes allocated << fixed?
-- total heap usage:  9,933,826 allocs, 9,933,804 frees, 1,112,037,605 bytes allocated
-- total heap usage: 9,930,426 allocs, 9,930,405 frees, 1,111,872,954 bytes allocated << 
-- stl precompile headers?
+- replace cout/cerr/fstreams
+- remove exceptions
+- replace ui/colors vector<unsigned>
 
-- total heap usage: 6,234,552 allocs, 6,234,088 frees, 696,668,700 bytes allocated << with some missing
-- total heap usage: 7,010,111 allocs, 7,009,647 frees, 735,319,286 bytes allocated << downloads(10)
-- total heap usage: 10,088,927 allocs, 10,088,463 frees, 1,186,647,817 bytes allocated << downloads(1)
-- total heap usage: 10,088,563 allocs, 10,088,099 frees, 1,187,960,569 bytes allocated << downloads(1) + std::string DL constructor
-- total heap usage: 10,088,446 allocs, 10,087,982 frees, 1,186,225,470 bytes allocated << downloads(1) + std::string DL constr + move
-- total heap usage: 10,067,213 allocs, 10,066,749 frees, 1,173,923,967 bytes allocated << downloads(2)
-
-- total heap usage: 6,810 allocs, 6,323 frees, 5,599,344 bytes allocated <<< without UI::constructors
-
-- 56.77s user 3.59s system 413% cpu 14.611 total
-- 56.43s user 3.46s system 442% cpu 13.544 total
-- 52.15s user 3.12s system 470% cpu 11.759 total
+total heap usage: 6,802 allocs, 6,312 frees, 4,567,167 bytes allocated
 
 ===============================================================================
 

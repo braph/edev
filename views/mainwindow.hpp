@@ -14,7 +14,7 @@
 #include "../ui.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/readline.hpp"
-#include "../context.hpp"
+#include "../application.hpp"
 
 namespace Views {
 

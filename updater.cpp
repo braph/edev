@@ -2,76 +2,112 @@
 
 #include "lib/xml.hpp"
 #include "lib/downloads.hpp"
+#include "lib/switch.hpp"
+#include "log.hpp"
 #include "database.hpp"
 #include "browsepage.hpp"
 #include "ektoplayer.hpp"
 
 #include <boost/algorithm/string/erase.hpp>
 
-#include <iostream>
 #include <cstring>
 
-struct Html2Markup {
-  std::string result;
+using pack = StringPack::Generic;
 
-  static std::string convert(const std::string& html, const char* encoding) {
-    Xml::Doc doc = Html::readDoc(html, NULL, encoding,
-        HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT);
-    Xml::Node root = doc.getRootElement();
-    Html2Markup p;
-    p.result.reserve(html.size() / 4);
-    p.parse(root);
-    return p.result;
+template<typename TClass>
+static void wrap_startElement(void* self, const xmlChar* name, const xmlChar** attrs) {
+  static_cast<TClass*>(self)->startElement(
+      reinterpret_cast<const char*>(name),
+      reinterpret_cast<const char**>(attrs));
+}
+
+template<typename TClass>
+static void wrap_endElement(void* self, const xmlChar* name) {
+  static_cast<TClass*>(self)->endElement(
+      reinterpret_cast<const char*>(name));
+}
+
+template<typename TClass>
+static void wrap_characters(void* self, const xmlChar* ch, int len) {
+  static_cast<TClass*>(self)->characters(
+      reinterpret_cast<const char*>(ch),
+      len);
+}
+
+/**
+ * Converts
+ *   Some HTML <a href="link url">link text</a> <b>bold</b> <i>italic</i>
+ * To
+ *   Some HTML ((link text))[[url]] **bold** __italic__
+ */
+class Html2Markdown {
+public:
+  Html2Markdown() 
+   : handler()
+  {
+    handler.startElement = wrap_startElement<Html2Markdown>;
+    handler.endElement = wrap_endElement<Html2Markdown>;
+    handler.characters = wrap_characters<Html2Markdown>;
   }
 
-  void parse(const Xml::Node& _node) {
-    const char* tag;
-    Xml::Node node = _node;
+  std::string convert(const std::string& src) {
+    result.clear();
+    result.reserve(src.size() / 1.5);
+    xmlSAXUserParseMemory(&handler, this, src.c_str(), src.size());
+    return result;
+  }
 
-    for (; node; node = node.next()) {
-      switch (node.type()) {
-        case XML_ELEMENT_NODE:
-          tag = node.name();
+public: // TODO... make private...
+  xmlSAXHandler handler;
+  std::string result;
+  std::string url;
 
-          if (! std::strcmp(tag, "a")) {
-            write("((");
-            parse(node.children());
-            write("))[[");
-            write(node["href"]);
-            write("]]");
-          }
-          else if (! std::strcmp(tag, "strong") || ! std::strcmp(tag, "b")) {
-            write("**");
-            parse(node.children());
-            write("**");
-          }
-          else if (! std::strcmp(tag, "em") || ! std::strcmp(tag, "i")) {
-            write("__");
-            parse(node.children());
-            write("__");
-          }
-          else if (! std::strcmp(tag, "br")) {
-            write('\n');
-          }
-          else {
-            parse(node.children());
-          }
-
-          break;
-
-        case XML_TEXT_NODE:
-          write(node.content());
-          parse(node.children());
-          break;
-
-        default:
-          parse(node.children());
-      }
+  void startElement(const char* name, const char** attrs) {
+    switch (pack::pack_runtime(name)) {
+      case pack("i"):
+      case pack("em"):
+        result.append(2, '_');
+        break;
+      case pack("b"):
+      case pack("strong"):
+        result.append(2, '*');
+        break;
+      case pack("a"):
+        result.append(2, '(');
+        if (attrs)
+          for (; *attrs; ++attrs)
+            if (! std::strcmp(*attrs++, "href")) {
+              url = *attrs;
+              break;
+            }
+        break;
+      case pack("br"):
+        result.append(1, '\n');
+        break;
     }
   }
 
-  template<typename T> inline void write(T value) {
-    result += value;
+  void endElement(const char* name) {
+    switch (pack::pack_runtime(name)) {
+      case pack("i"):
+      case pack("em"):
+        result.append(2, '_');
+        break;
+      case pack("b"):
+      case pack("strong"):
+        result.append(2, '*');
+        break;
+      case pack("a"):
+        result.append("))[[", 4);
+        result.append(url);
+        result.append(2, ']');
+        url.clear();
+        break;
+    }
+  }
+
+  void characters(const char* ch, int len) {
+    result.append(ch, size_t(len));
   }
 };
 
@@ -82,8 +118,8 @@ static std::string& clean_str(std::string& s) {
   return s;
 }
 
-static std::string makeMarkup(const std::string& description) {
-  std::string s = Html2Markup::convert(description, "UTF-8");
+static std::string make_markdown(const std::string& description) {
+  std::string s = Html2Markdown().convert(description);
 
   // Replace protected email links:
   //  [[/cdn-cgi/l/email-protection#284b47444174...]]
@@ -116,16 +152,15 @@ Updater :: Updater(Database::Database &db, Downloads &downloads)
 
 bool Updater :: start(int pages) {
   // Not the best way to determine if we're already updating, but sufficient...
-  if (downloads.queue().size() > 30)
+  if ((downloads.runningDownloads() + downloads.queuedDownloads()) > 30)
     return true;
 
   std::function<void(Download&, CURLcode)> cb = [this](Download& _dl, CURLcode code) {
     BufferDownload &dl = static_cast<BufferDownload&>(_dl);
     if (code == CURLE_OK && dl.httpCode() == 200) {
-      BrowsePage page(dl.buffer());
-      this->insert_browsepage(page);
+      this->insert_browsepage(dl.buffer());
     }
-    std::cerr << dl.lastURL() << ": " << curl_easy_strerror(code) << " [" << dl.httpCode() << "]\n";
+    log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(code), dl.httpCode());
   };
 
   // Retrieve the first page
@@ -135,8 +170,8 @@ bool Updater :: start(int pages) {
   if (e != CURLE_OK)
     return false;
 
-  BrowsePage page(dl.buffer());
-  int num_pages = page.num_pages;
+  BrowsePageParser parser(dl.buffer());
+  int num_pages = parser.num_pages();
   int firstPage, lastPage;
 
 #define LAST_PAGE_FALLBACK 450 // TODO
@@ -176,14 +211,14 @@ void Updater :: insert_album(Album& album) {
     albumStyleIDs.push_back(styleRecord.id);
   }
   if (albumStyleIDs.size() > 3)
-    std::cerr << album.url << '\n';
+    log_write("%s\n", album.url.c_str());
   // Move large IDs to the end, this compresses bitwidth of styleIDs.value
   std::sort(albumStyleIDs.begin(), albumStyleIDs.end(), std::greater<uint8_t>());
 
   // Album ====================================================================
   Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL);
   Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-  album.description = makeMarkup(album.description);
+  album.description = make_markdown(album.description);
 
   auto albumRecord = db.albums.find(album.url, true);
   albumRecord.title(clean_str(album.title));
@@ -219,8 +254,9 @@ void Updater :: insert_album(Album& album) {
     // The track URL is used as a primary key. If an album has only one file
     // we need to create a unique URL for each track.
     if (album.isSingleURL) {
-      track.url += ".mp3#";
-      track.url += std::to_string(track.number);
+      char _[20];
+      sprintf(_, ".mp3#%d", track.number);
+      track.url += _;
     }
 
     auto trackRecord = db.tracks.find(track.url, true);
@@ -233,29 +269,47 @@ void Updater :: insert_album(Album& album) {
   }
 }
 
-void Updater :: insert_browsepage(BrowsePage& page) {
-  for (auto &album : page.albums)
+void Updater :: insert_browsepage(const std::string& source) {
+  BrowsePageParser parser(source);
+  for (;;) {
+    Album album = parser.next_album();
+    if (album.empty())
+      return;
     insert_album(album);
+  }
 }
 
 #ifdef TEST_UPDATER
 #include "lib/test.hpp"
 #include "lib/filesystem.hpp"
+#include <cstdio>
 #include <fstream>
 #include <streambuf>
 #define USE_FILESYSTEM 0
 #define TESTDATA_DIR "/tmp/testdata" // Dir that contains HTML files
 
-static void test_warning(const Database::Styles::Style& style, const char* msg) {
-  std::cout << "STYLE: " << style.url() << ": " << msg << '\n';
-}
+using namespace std;
 
-static void test_warning(const Database::Albums::Album& album, const char* msg) {
-  std::cout << "ALBUM: " << album.url() << ": " << msg << '\n';
-}
+static void test_warning(const Database::Styles::Style& style, const char* msg)
+{ printf("STYLE: %s: %s\n", style.url(), msg); }
 
-static void test_warning(const Database::Tracks::Track& track, const char* msg) {
-  std::cout << "TRACK: " << track.url() << " in album " << track.album().url() << ": " << msg << '\n';
+static void test_warning(const Database::Albums::Album& album, const char* msg)
+{ printf("ALBUM: %s: %s\n",  album.url(), msg); }
+
+static void test_warning(const Database::Tracks::Track& track, const char* msg)
+{ printf("TRACK: %s in album %s: %s", track.url(), track.album().url(), msg); }
+
+#define warn_if(OBJECT, ...) \
+  if (__VA_ARGS__) test_warning(OBJECT, #__VA_ARGS__)
+
+static void read_file_into_string(const std::string& file, std::string& s) {
+  s.clear();
+  ifstream stream(file);
+  stream.seekg(0, std::ios::end);
+  std::streamoff size = stream.tellg();
+  s.resize(size_t(size), '\0');
+  stream.seekg(0);
+  stream.read(&s[0], size);
 }
 
 // Updater tests *will replace* the existing database file!
@@ -263,7 +317,8 @@ static void test_warning(const Database::Tracks::Track& track, const char* msg) 
 int main() {
   TEST_BEGIN();
   Database::Database db;
-  Downloads downloads(10);
+  Downloads downloads;
+  downloads.setParallel(10);
 
   db.styles.reserve(EKTOPLAZM_STYLE_COUNT);
   db.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
@@ -278,21 +333,17 @@ int main() {
 
   {
 #ifdef USE_FILESYSTEM
-    std::cout << "Updating using filesystem ...\n";
+    printf("Updating using filesystem ...\n");
     Updater u(db, downloads);
     Filesystem::error_code e;
 
-    std::string src;
+    string src;
     for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
-      std::ifstream stream(f.path().string());
-      src.clear();
-      src.append((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-
-      BrowsePage bp(src);
-      u.insert_browsepage(bp);
+      read_file_into_string(f.path().string(), src);
+      u.insert_browsepage(src);
     }
 #else
-    std::cout << "Updating using network ...\n";
+    printf("Updating using network ...\n");
     abort();
     Updater u(db, downloads);
     u.start(0);
@@ -303,9 +354,9 @@ int main() {
   { // Save the database and ensure that the amount of data is the same
     size_t tracks_size = db.tracks.size();
     size_t albums_size = db.albums.size();
-    std::cout << "Inserted " << tracks_size << " tracks." << '\n';
-    std::cout << "Inserted " << albums_size << " albums." << '\n';
-    std::cout << "Saving database to " << TEST_DB << '\n';
+    printf("Inserted %zu tracks\n", tracks_size);
+    printf("Inserted %zu albums\n", albums_size);
+    printf("Saving database to " TEST_DB "\n");
     db.save(TEST_DB);
     { // Check if the data has not been altered
       Database::Database db2;
@@ -320,53 +371,41 @@ int main() {
   // Tests of BrowsePage ======================================================
   // - are all styles valid?
   for (auto style : db.getStyles()) {
-    if (std::strlen(style.url()) < 3)
-      test_warning(style, "URL < 3");
-    if (std::strlen(style.name()) < 3)
-      test_warning(style, "NAME < 3");
+    warn_if(style, strlen(style.url()) < 3);
+    warn_if(style, strlen(style.name()) < 3);
   }
   // - are all tracks valid?
   for (auto track : db.getTracks()) {
-    if (std::strlen(track.url()) < 3)
-      test_warning(track, "URL < 3");
-    if (std::strlen(track.title()) < 1)
-      test_warning(track, "TITLE < 1");
-    if (std::strlen(track.artist()) < 1)
-      test_warning(track, "ARTIST < 1");
+    warn_if(track, strlen(track.url()) < 3);
+    warn_if(track, strlen(track.title()) < 1);
+    warn_if(track, strlen(track.artist()) < 1);
   }
   // - are all albums valid?
   for (auto album : db.getAlbums()) {
-    if (std::strlen(album.url()) < 3)
-      test_warning(album, "URL < 3");
-    if (std::strlen(album.title()) < 1)
-      test_warning(album, "TITLE < 1");
-#if 0
-    if (std::strlen(album.artist()) < 1)
-      test_warning(album, "ARTIST < 1");
-#endif
+    warn_if(album, strlen(album.url()) < 3);
+    warn_if(album, strlen(album.title()) < 1);
+    warn_if(album, strlen(album.artist()) < 1);
   }
 
   // Print out defines
-  struct name_pool { const char* name; StringPool* ptr; };
-  std::vector<name_pool> pools = {
-    {"META",        &db.pool_meta},
-    {"DESC",        &db.pool_desc},
-    {"STYLE_URL",   &db.pool_style_url},
-    {"ALBUM_URL",   &db.pool_album_url},
-    {"TRACK_URL",   &db.pool_track_url},
-    {"COVER_URL",   &db.pool_cover_url},
-    {"ARCHIVE_URL", &db.pool_archive_url},
+  struct { const char* name; StringPool& pool; }
+  pools[] = {
+    {"META",        db.pool_meta},
+    {"DESC",        db.pool_desc},
+    {"STYLE_URL",   db.pool_style_url},
+    {"ALBUM_URL",   db.pool_album_url},
+    {"TRACK_URL",   db.pool_track_url},
+    {"COVER_URL",   db.pool_cover_url},
+    {"ARCHIVE_URL", db.pool_archive_url},
   };
 
-  std::cout
-    << "#define EKTOPLAZM_STYLE_COUNT " << db.styles.size() << '\n'
-    << "#define EKTOPLAZM_ALBUM_COUNT " << db.albums.size() << '\n'
-    << "#define EKTOPLAZM_TRACK_COUNT " << db.tracks.size() << '\n';
+  printf("#define EKTOPLAZM_STYLE_COUNT %zu\n", db.styles.size());
+  printf("#define EKTOPLAZM_ALBUM_COUNT %zu\n", db.albums.size());
+  printf("#define EKTOPLAZM_TRACK_COUNT %zu\n", db.tracks.size());
 
-  for (auto pool : pools)
-    std::cout
-      << "#define EKTOPLAZM_" << pool.name << "_SIZE " << pool.ptr->size()
-      << " // average lenth: " << pool.ptr->size() / pool.ptr->count() << '\n';
+  for (const auto& p : pools)
+    printf("#define EKTOPLAZM_%s_SIZE %zu // average length: %zu\n",
+        p.name, p.pool.size(), p.pool.size() / p.pool.count());
 
   TEST_END();
 }

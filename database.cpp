@@ -1,9 +1,10 @@
 #include "database.hpp"
 
-#include <fstream>
+#include "log.hpp"
+
 #include <climits>
 #include <cstring>
-#include <iostream>
+#include <cstdio>
 #include <unordered_map>
 
 #define DB_ABI_VERSION      1
@@ -25,54 +26,90 @@ namespace Database {
  */
 
 struct Dumper {
-  Dumper(std::ofstream& fs) : fs(fs) {}
+  Dumper(FILE* fh)
+    : fs(fh)
+    , _error(0)
+  {}
 
-  void dump(size_t value)
-  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
+  operator bool() const noexcept {
+    return !_error;
+  }
 
-  void dump(uint16_t value)
-  { fs.write(reinterpret_cast<char*>(&value), sizeof(value)); }
+  void dump(size_t value) noexcept
+  { write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  void dump(StringPool& p)
+  void dump(uint16_t value) noexcept
+  { write(reinterpret_cast<char*>(&value), sizeof(value)); }
+
+  void dump(StringPool& p) noexcept
   { dump(BITSOF(char), size_t(p.size()), reinterpret_cast<char*>(p.data())); }
 
-  void dump(DynamicPackedVector& v)
+  void dump(DynamicPackedVector& v) noexcept
   { dump(size_t(v.bits()), v.size(), reinterpret_cast<char*>(v.data())); }
 
   template<typename T>
-  void dump(std::vector<T>& v)
+  void dump(std::vector<T>& v) noexcept
   { dump(BITSOF(T), v.size(), reinterpret_cast<char*>(v.data())); }
 
-  void dump(Table& t)
+  void dump(Table& t) noexcept
   { for (const auto& col : t.columns) { dump(*col); } }
 
 private:
-  std::ofstream& fs;
-  void dump(size_t bits, size_t count, char* data) {
+  FILE* fs;
+  int _error;
+
+  void write(char* buf, size_t size) noexcept {
+    _error |=! ::fwrite(buf, size, 1, fs);
+  }
+
+  void dump(size_t bits, size_t count, char* data) noexcept {
     dump(bits);
     dump(count);
-    fs.write(data, std::streamsize(size_for_bits(bits*count)));
+    write(data, std::streamsize(size_for_bits(bits*count)));
     dump(bits);
     dump(count);
   }
 };
 
 struct Loader {
-  Loader(std::ifstream& fs) : fs(fs) {}
+  enum Error {
+    Success = 0,
+    InvalidBitCountInHeader,
+    InvalidBitCountInFooter,
+    InvalidElemCountInFooter
+  };
 
-  void load(size_t& value)
-  { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
+  const char* what() const noexcept {
+    switch (_error) {
+      case Success: return strerror(0);
+      case InvalidBitCountInHeader: return "Invalid bit count in header";
+      case InvalidBitCountInFooter: return "Invalid bit count in footer";
+      case InvalidElemCountInFooter: return "Invalid element count in footer";
+    }
+  }
 
-  void load(uint16_t& value)
-  { fs.read(reinterpret_cast<char*>(&value), sizeof(value)); }
+  operator bool() const noexcept {
+    return ! _error;
+  }
 
-  void load(StringPool& pool) {
+  Loader(FILE* fs)
+    : fs(fs)
+    , _error(Success)
+  {}
+
+  void load(size_t& value) noexcept
+  { read(reinterpret_cast<char*>(&value), sizeof(value)); }
+
+  void load(uint16_t& value) noexcept
+  { read(reinterpret_cast<char*>(&value), sizeof(value)); }
+
+  void load(StringPool& pool) noexcept {
     readHeader(BITSOF(char));
     pool.resize(elem_count);
     readData(reinterpret_cast<char*>(pool.data()));
   }
 
-  void load(DynamicPackedVector& vec) {
+  void load(DynamicPackedVector& vec) noexcept {
     readHeader();
     vec.reserve(elem_count, elem_bits);
     vec.resize(elem_count);
@@ -80,35 +117,42 @@ struct Loader {
   }
 
   template<typename T>
-  void load(std::vector<T>& v) {
+  void load(std::vector<T>& v) noexcept {
     readHeader(BITSOF(T));
     v.resize(elem_count);
     readData(reinterpret_cast<char*>(v.data()));
   }
 
-  void load(Table& t)
+  void load(Table& t) noexcept
   { for (const auto& col : t.columns) { load(*col); } }
 
 private:
-  std::ifstream& fs;
+  FILE* fs;
+  Error _error;
   size_t elem_bits;
   size_t elem_count;
 
-  void readHeader(size_t expected_bits = 0) {
+  void read(char* buf, size_t size) noexcept {
+    fread(buf, size, 1, fs);
+  }
+
+  void readHeader(size_t expected_bits = 0) noexcept {
     elem_bits = 0; elem_count = 0;
     load(elem_bits);
     load(elem_count);
     if (elem_bits == 0 || (expected_bits && elem_bits != expected_bits))
-      throw std::runtime_error("Invalid bit count in header");
+      _error = InvalidBitCountInHeader;
   }
 
-  void readData(char* buf) {
+  void readData(char* buf) noexcept {
     size_t check_bits = 0xDEAD, check_count = 0;
-    fs.read(buf, std::streamsize(size_for_bits(elem_bits*elem_count)));
-    fs.read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
-    fs.read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
-    if (check_bits != elem_bits || check_count != elem_count)
-      throw std::runtime_error("Validation failed: invalid bit/element count in footer");
+    read(buf, std::streamsize(size_for_bits(elem_bits*elem_count)));
+    read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
+    read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
+    if (check_bits != elem_bits)
+      _error = InvalidBitCountInFooter;
+    if (check_count != elem_count)
+      _error = InvalidElemCountInFooter;
   }
 };
 
@@ -126,34 +170,59 @@ Database :: Database()
 {
 }
 
-void Database :: load(const std::string& file) {
+const char* Database :: load(const std::string& file) noexcept {
   uint16_t check;
-  std::ifstream fs;
-  fs.exceptions(std::ifstream::failbit|std::ifstream::badbit|std::ifstream::eofbit);
-  fs.open(file, std::ios::binary);
+  const char* err = NULL;
+  FILE* fh = fopen(file.c_str(), "r");
+  if (! fh)
+    return strerror(errno);
 
-  Loader l(fs);
+  Loader l(fh);
   l.load(check);
-  if (check != DB_ENDIANNESS_CHECK)
-    throw std::runtime_error("Database endianess mismatch");
+  if (check != DB_ENDIANNESS_CHECK) {
+    err = "Database endianess mismatch";
+    goto END;
+  }
 
   l.load(check);
-  if (check != DB_ABI_VERSION)
-    throw std::runtime_error("Database ABI version mismatch");
+  if (check != DB_ABI_VERSION) {
+    err = "Database ABI version mismatch";
+    goto END;
+  }
 
-  for (auto& p : pools)  l.load(*p);
-  for (auto& t : tables) l.load(*t);
+  for (auto p : pools)
+    l.load(*p);
+
+  for (auto t : tables)
+    l.load(*t);
+
+  if (! l)
+    err = l.what();
+
+END:
+  fclose(fh);
+  return err;
 }
 
-void Database :: save(const std::string& file) {
-  std::ofstream fs;
-  fs.exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  fs.open(file, std::ios::binary);
-  Dumper d(fs);
-  d.dump(static_cast<uint16_t>(DB_ENDIANNESS_CHECK));
-  d.dump(static_cast<uint16_t>(DB_ABI_VERSION));
-  for (const auto& p : pools)  d.dump(*p);
-  for (const auto& t : tables) d.dump(*t);
+const char* Database :: save(const std::string& file) noexcept {
+  FILE* fh = fopen(file.c_str(), "w");
+  if (! fh)
+    return strerror(errno);
+
+  Dumper d(fh);
+  d.dump(uint16_t(DB_ENDIANNESS_CHECK));
+  d.dump(uint16_t(DB_ABI_VERSION));
+  for (auto p : pools)
+    d.dump(*p);
+  for (auto t : tables)
+    d.dump(*t);
+
+  const char* err = NULL;
+  if (! d)
+    err = strerror(EIO);
+
+  fclose(fh);
+  return err;
 }
 
 void Database :: shrink_to_fit() {
@@ -174,21 +243,18 @@ void Database :: shrink_to_fit() {
 void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
   if (pool.is_shrinked())
     return;
-  std::cerr << " shrinking pool ...";
+  log_write("shrinking pool ... ");
 
-  std::unordered_map<int, int> idRemap;
-  for (auto& col : columns)
-    idRemap.reserve(col->size());
-
+  StringPool::Shrinker shrinker = pool.get_shrinker();
   for (auto col : columns)
     for (auto id : *col)
-      idRemap[id] = 0;
+      shrinker.add(id);
 
-  pool.shrink_to_fit(idRemap);
+  shrinker.shrink_pool();
 
   for (auto& column : columns)
     for (Column::iterator it = column->begin(); it != column->end(); ++it)
-      *it = idRemap[*it];
+      *it = shrinker.get_new_id(*it);
     //for (auto& id : *column)
     //  id = idRemap[id];
 }
@@ -199,8 +265,8 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 
 /* Find a record by its URL or create one if it could not be found */
 template<typename TTable>
-static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, InStr url, bool create) {
-  if (!*url)
+static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, CString url, bool create) {
+  if (url.empty())
     return typename TTable::value_type(NULL, 0);
 
   int strId = pool.find(url);
@@ -212,7 +278,7 @@ static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, 
 
   if (create) {
     if (! strId)
-      strId = pool.add(url, true);
+      strId = pool.add_unchecked(url);
 
     size_t pos = table.size();
     table.resize(pos+1);
@@ -227,7 +293,7 @@ static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, 
 // Styles :: Style ============================================================
 // ============================================================================
 
-Styles::Style Styles::find(InStr url, bool create) {
+Styles::Style Styles::find(CString url, bool create) {
   return find_by_url(*this, db.pool_style_url, url, create);
 }
 
@@ -243,7 +309,7 @@ Field Styles::Style::operator[](ColumnID id) const {
 // Albums :: Album ============================================================
 // ============================================================================
 
-Albums::Album Albums::find(InStr url, bool create) {
+Albums::Album Albums::find(CString url, bool create) {
   return find_by_url(*this, db.pool_album_url, url, create);
 }
 
@@ -276,7 +342,7 @@ Field Albums::Album::operator[](ColumnID id) const {
 // Tracks :: Track ============================================================
 // ============================================================================
 
-Tracks::Track Tracks::find(InStr url, bool create) {
+Tracks::Track Tracks::find(CString url, bool create) {
   return find_by_url(*this, db.pool_track_url, url, create);
 }
 
@@ -302,6 +368,8 @@ Field Tracks::Track::operator[](ColumnID id) const {
 #include "lib/test.hpp"
 #include <algorithm>
 
+using namespace std;
+
 template<typename T1, typename T2>
 bool equals(T1& result, Database::ColumnID id, T2& vec) {
   if (result.size() != vec.size())
@@ -322,41 +390,41 @@ int main () {
   db.load(TEST_DB);
 
   /* Test: ROW with ID 0 is actually empty */
-  assert (std::strlen(db.styles[0].url()) == 0);
-  assert (std::strlen(db.albums[0].url()) == 0);
-  assert (std::strlen(db.tracks[0].url()) == 0);
+  assert (strlen(db.styles[0].url()) == 0);
+  assert (strlen(db.albums[0].url()) == 0);
+  assert (strlen(db.tracks[0].url()) == 0);
 
   auto styles = db.getStyles();
   auto albums = db.getAlbums();
   auto tracks = db.getTracks();
 
   if (db.tracks.size() < 100)
-    throw std::runtime_error("Sorry, I need a database with some data, please run the updater ...");
+    throw runtime_error("Sorry, I need a database with some data, please run the updater ...");
 
   /* Test: Count of result set equals the number of table entries */
   assert (styles.size() == db.styles.size() - 1);
   assert (albums.size() == db.albums.size() - 1);
   assert (tracks.size() == db.tracks.size() - 1);
   /* Test: First row of database contains valid data */
-  assert (std::strlen(db.styles[1].url()));
-  assert (std::strlen(db.albums[1].url()));
-  assert (std::strlen(db.tracks[1].url()));
+  assert (strlen(db.styles[1].url()));
+  assert (strlen(db.albums[1].url()));
+  assert (strlen(db.tracks[1].url()));
   /* Test: First row of result set contains valid data */
-  assert (std::strlen(styles[0].url()));
-  assert (std::strlen(albums[0].url()));
-  assert (std::strlen(tracks[0].url()));
+  assert (strlen(styles[0].url()));
+  assert (strlen(albums[0].url()));
+  assert (strlen(tracks[0].url()));
   /* Test: The first row of a result set equals the first record of a table */
   assert (styles[0].url() == db.styles[1].url());
   assert (albums[0].url() == db.albums[1].url());
   assert (tracks[0].url() == db.tracks[1].url());
   /* Test: Last row of database contains valid data */
-  assert (std::strlen(db.styles[db.styles.size() - 1].url()));
-  assert (std::strlen(db.albums[db.albums.size() - 1].url()));
-  assert (std::strlen(db.tracks[db.tracks.size() - 1].url()));
+  assert (strlen(db.styles[db.styles.size() - 1].url()));
+  assert (strlen(db.albums[db.albums.size() - 1].url()));
+  assert (strlen(db.tracks[db.tracks.size() - 1].url()));
   /* Test: Last row of result set */
-  assert (std::strlen(styles[styles.size() - 1].url()));
-  assert (std::strlen(albums[albums.size() - 1].url()));
-  assert (std::strlen(tracks[tracks.size() - 1].url()));
+  assert (strlen(styles[styles.size() - 1].url()));
+  assert (strlen(albums[albums.size() - 1].url()));
+  assert (strlen(tracks[tracks.size() - 1].url()));
 
   /* Test: shrink_to_fit() ================================================= */
   {
@@ -367,33 +435,36 @@ int main () {
       assert(streq(db.tracks[i].title(), db2.tracks[i].title()));
     for (size_t i = 0; i < db.albums.size(); ++i)
       assert(streq(db.albums[i].title(), db2.albums[i].title()));
+    for (const auto& pool : db2.pools)
+      assert(pool->is_shrinked());
+    db2.save(TEST_DB ".shrinked");
   }
 
   /* Test: ORDER BY TRACK_TITLE ============================================ */
-  std::vector<const char*> track_titles;
+  vector<const char*> track_titles;
   for (auto track : tracks)
     track_titles.push_back(track.title());
 
   // Duplication succeded
   assert(equals(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
 
-  std::sort(track_titles.begin(), track_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
-  std::sort(tracks.begin(), tracks.end(), Database::OrderBy(Database::TRACK_TITLE));
+  sort(track_titles.begin(), track_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
+  sort(tracks.begin(), tracks.end(), Database::OrderBy(Database::TRACK_TITLE));
 
   // Sorting succeeded
   assert(equals(tracks, (Database::ColumnID) Database::TRACK_TITLE, track_titles));
 
 
   /* Test: ORDER BY ALBUM_TITLE ============================================ */
-  std::vector<const char*> album_titles;
+  vector<const char*> album_titles;
   for (auto track : tracks)
     album_titles.push_back(track.album().title());
 
   // Duplication succeded
   assert(equals(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
 
-  std::sort(album_titles.begin(), album_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
-  std::sort(tracks.begin(), tracks.end(), Database::OrderBy(Database::ALBUM_TITLE));
+  sort(album_titles.begin(), album_titles.end(), [](const char* a, const char* b) { return strcmp(a, b) < 0; });
+  sort(tracks.begin(), tracks.end(), Database::OrderBy(Database::ALBUM_TITLE));
 
   // Sorting succeeded
   assert(equals(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));

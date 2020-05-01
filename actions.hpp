@@ -1,10 +1,14 @@
 #ifndef ACTIONS_HPP
 #define ACTIONS_HPP
 
-#include "context.hpp"
+#include "application.hpp"
 
 #include <string>
 
+class Actions {
+public:
+  enum ActionID : unsigned char {
+#define X(ENUM, STR) ENUM,
 #define XACTIONS \
   X(NONE,                   "none")                   \
   X(UP,                     "up")                     \
@@ -35,13 +39,12 @@
   X(PLAYLIST_PREV,          "playlist.prev")          \
   X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current")  \
   X(REDRAW,                 "redraw")                 \
-  X(QUIT,                   "quit")                   \
-
-class Actions {
-public:
-#define X(ENUM, STR) ENUM,
-  enum ActionID : unsigned char { XACTIONS ACTIONID_ENUM_LAST };
+  X(QUIT,                   "quit")
+  XACTIONS
+  ACTIONID_ENUM_LAST
+  };
 #undef X
+
   static int call(Context&, ActionID);
   static ActionID parse(const std::string&);
   static const char* to_string(ActionID);

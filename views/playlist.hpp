@@ -1,7 +1,7 @@
 #ifndef VIEWS_PLAYLIST_HPP
 #define VIEWS_PLAYLIST_HPP
 
-#include "../context.hpp"
+#include "../application.hpp"
 #include "../database.hpp" // XXX ger rid of this
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp" // XXX

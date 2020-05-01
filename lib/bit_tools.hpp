@@ -3,54 +3,50 @@
 
 #include <limits>
 #include <climits>
+#include <cstddef>
 #include <type_traits>
 
-#define BITSOF(T) (CHAR_BIT*sizeof(T))
+#define BITSOF(T) (CHAR_BIT * sizeof(T))
 
 // Unsigned ===================================================================
-static inline int bitlength(unsigned long long n) {
-  return (!n ? 0 :
-    static_cast<int>(sizeof(long long) * CHAR_BIT) - __builtin_clzll(n));
+static inline int bitlength(unsigned long long n) noexcept {
+  return (!n ? 0 : int(sizeof(long long) * CHAR_BIT) - __builtin_clzll(n));
 }
 
-static inline int bitlength(unsigned long n) {
-  return (!n ? 0 :
-    static_cast<int>(sizeof(long) * CHAR_BIT) - __builtin_clzl(n));
+static inline int bitlength(unsigned long n) noexcept {
+  return (!n ? 0 : int(sizeof(long) * CHAR_BIT) - __builtin_clzl(n));
 }
 
-static inline int bitlength(unsigned int n) {
-  return (!n ? 0 :
-    static_cast<int>(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
+static inline int bitlength(unsigned int n) noexcept {
+  return (!n ? 0 : int(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
 }
 
-static inline int bitlength(unsigned short n) {
-  return (!n ? 0 :
-    static_cast<int>(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
+static inline int bitlength(unsigned short n) noexcept {
+  return (!n ? 0 : int(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
 }
 
-static inline int bitlength(unsigned char n) {
-  return (!n ? 0 :
-    static_cast<int>(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
+static inline int bitlength(unsigned char n) noexcept {
+  return (!n ? 0 : int(sizeof(int) * CHAR_BIT) - __builtin_clz(n));
 }
 
 // Signed =====================================================================
-static inline int bitlength(long long n) {
+static inline int bitlength(long long n) noexcept {
   return bitlength(static_cast<unsigned long long>(n));
 }
 
-static inline int bitlength(long n) {
+static inline int bitlength(long n) noexcept {
   return bitlength(static_cast<unsigned long>(n));
 }
 
-static inline int bitlength(int n) {
+static inline int bitlength(int n) noexcept {
   return bitlength(static_cast<unsigned int>(n));
 }
 
-static inline int bitlength(short n) {
+static inline int bitlength(short n) noexcept {
   return bitlength(static_cast<unsigned short>(n));
 }
 
-static inline int bitlength(char n) {
+static inline int bitlength(char n) noexcept {
   return bitlength(static_cast<unsigned char>(n));
 }
 
@@ -84,6 +80,10 @@ inline TUIntType replace_bits(TUIntType src, TUIntType val, int offset, int len)
   enum { BIT_COUNT = CHAR_BIT * sizeof(TUIntType) };
   const TUIntType OxFFFF = std::numeric_limits<TUIntType>::max();
 
+  // secure val to len bits
+  val = val & ~(OxFFFF << len);
+
+  // 4.52637 +- 0.00775 seconds time elapsed
   // We are replacing the whole `src`
   if (! offset && len == BIT_COUNT)
     return val;

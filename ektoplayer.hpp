@@ -32,19 +32,25 @@
 
 namespace Ektoplayer {
 
+/// Return ektoplayer's configuration directory
 static inline Filesystem::path config_dir() {
   return Filesystem::path(Filesystem::home()) / ".config" / "ektoplayer";
 }
 
+/// Return ektoplayer's configuration file
 static inline Filesystem::path config_file() {
   return config_dir() / "ektoplayer.rc";
 }
 
+/// Return an ektoplazm browse url
 static inline std::string browse_url(int page = 1) {
-  if (page == 1)
-    return EKTOPLAZM_BROWSE_URL;
-  else
-    return EKTOPLAZM_BROWSE_URL "/page/" + std::to_string(page);
+  char buf[sizeof(EKTOPLAZM_BROWSE_URL "/page/") + 10];
+  sprintf(buf, EKTOPLAZM_BROWSE_URL "/page/%d", page);
+
+  if (page <= 1)
+    buf[sizeof(EKTOPLAZM_BROWSE_URL) - 1] = '\0';
+
+  return buf;
 }
 
 /**

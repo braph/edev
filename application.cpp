@@ -1,3 +1,5 @@
+#include "application.hpp"
+
 #include "ektoplayer.hpp"
 #include "trackloader.hpp"
 #include "lib/downloads.hpp"
@@ -6,18 +8,17 @@
 #include "updater.hpp"
 #include "player.hpp"
 #include "config.hpp"
-#include "context.hpp"
 #include "theme.hpp"
+#include "log.hpp"
 #include "views/mainwindow.hpp"
 
+#include <locale.h>
 #include <libxml/xmlversion.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <locale>
-#include <fstream>
 #include <csignal>
-#include <iostream>
+#include <type_traits>
 
 namespace fs = Filesystem;
 
@@ -28,8 +29,8 @@ class Application {
 public:
   Application();
  ~Application();
-  void run();
   void init();
+  void run();
 private:
   Database::Database database;
   Downloads downloads;
@@ -39,52 +40,50 @@ private:
   Context ctxt;
   const char* error;
 
-  void printDBStats();
+  void print_db_stats();
   void cleanup_files();
 };
 
 Application :: Application()
 : database()
-, downloads(2)
+, downloads()
 , updater(database, downloads)
 , trackloader(downloads)
 , player()
 {
-  try { init(); }
+  try {
+    init();
+  }
   catch (const std::exception &e) {
     throw std::runtime_error(std::string(error) + ": " + e.what());
   }
 
-  ctxt.database = &database;
-  ctxt.trackloader = &trackloader;
-  ctxt.downloads = &downloads;
   ctxt.player = &player;
+  ctxt.database = &database;
+  ctxt.downloads = &downloads;
+  ctxt.trackloader = &trackloader;
 }
 
 Application :: ~Application() {
   endwin();
   cleanup_files();
 
-  try {
-    database.shrink_to_fit();
-    database.save(Config::database_file);
-  }
-  catch (const std::exception &e) {
-    std::cout << "Error saving database to file: " << e.what() << std::endl;
-  }
+  database.shrink_to_fit(); // TODO: maybe alloc fails - write unshrinked first?
+  const char* err = database.save(Config::database_file);
+  if (err)
+    printf("Error saving database to file: %s\n", err);
 
-  std::cerr << "Terminated gracefully.\n";
+  log_write("Terminated gracefully.\n");
 }
 
 void Application :: init() {
-  std::ios::sync_with_stdio(false);
-  std::cout << // Set terminal title
-    "\033]0;ektoplayer\007" // *xterm
-    "\033kektoplayer\033\\" // screen/tmux
-    "\r";
-
-  // Use the locale from the environment?!
-  std::locale::global(std::locale(""));
+  // Set terminal title
+  printf("\033]0;ektoplayer\007" // *xterm
+         "\033kektoplayer\033\\" // screen/tmux
+         "\r\n");
+ 
+  // Use the locale from the environment
+  setlocale(LC_ALL, "");
 
   // Initialize curses
   initscr();
@@ -125,14 +124,16 @@ void Application :: init() {
     fs::create_directory(Config::archive_dir);
 
   error = "Error opening log file";
-  std::ofstream *logfile = new std::ofstream(); /* "wanted" leak */
-  logfile->exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  logfile->open(Config::log_file, std::ofstream::out|std::ofstream::app);
-  std::cerr.rdbuf(logfile->rdbuf());
+  if (! std::freopen(Config::log_file.c_str(), "a", stderr))
+    throw std::runtime_error(std::strerror(errno));
+  setvbuf(stderr, NULL, _IOLBF, 0);
 
   error = "Error opening database file. Try again, then delete it. Sorry!";
-  if (fs::exists(Config::database_file))
-    database.load(Config::database_file);
+  if (fs::exists(Config::database_file)) {
+    const char* err = database.load(Config::database_file);
+    if (err)
+      throw std::runtime_error(err);
+  }
   else {
     // The database will *at least* hold this amount of data
     database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
@@ -149,10 +150,12 @@ void Application :: init() {
 
   // All colors are beautiful
   Theme::loadThemeByColors(Config::use_colors != -1 ? Config::use_colors : COLORS);
+
+  downloads.setParallel(2);
 }
 
 void Application :: run() {
-  printDBStats();
+  print_db_stats();
 
   if (database.tracks.size() < 42)
     updater.start(0); // Fetch all pages
@@ -182,15 +185,17 @@ void Application :: run() {
   mainwindow.playlist.playlist = database.getTracks();
 
 WINDOW_RESIZE:
-  currentSIGNAL = 0;
   mainwindow.layout({0,0}, {LINES,COLS});
   mainwindow.draw();
 
 MAINLOOP:
   switch (currentSIGNAL) {
     case SIGINT:
-    case SIGTERM: return;
-    case SIGWINCH: goto WINDOW_RESIZE;
+    case SIGTERM:
+      return;
+    case SIGWINCH:
+      currentSIGNAL = 0;
+      goto WINDOW_RESIZE;
   }
 
   player.work();
@@ -226,24 +231,24 @@ MAINLOOP:
   win = mainwindow.getWINDOW();
 
   // Do as much download work as possible, be only interrupted by the user
-  wtimeout(win, 1);
-  while (downloads.work())
+  wtimeout(win, 0);
+  while (downloads.work() /*XXX*/) {
     if (((key = wgetch(win)) != ERR))
       goto HANDLE_KEY;
-
-  if (downloads.runningHandles())
-    wtimeout(win, 100); // Short timeout, want to continue downloading soon
-  else if (player.isStopped() || player.isPaused()) {
-    wtimeout(win, -1); // We have *nothing* to do, wait until user hits a key
-    std::cerr << "tm is -1\n";
   }
+
+  if (downloads.runningDownloads() || downloads.queuedDownloads())
+    wtimeout(win, 100); // Short timeout, want to continue downloading soon
+  else if (player.isStopped() || player.isPaused())
+    wtimeout(win, -1); // We have *nothing* to do, wait until user hits a key
   else
     wtimeout(win, 900); // In playing state we need some UI refreshes
 
   key = wgetch(win);
 HANDLE_KEY:
   switch (key) {
-    case ERR: break;
+    case ERR:
+      break;
     case KEY_MOUSE:
       if (OK == getmouse(&mouse))
         mainwindow.handleMouse(mouse);
@@ -259,27 +264,29 @@ void Application :: cleanup_files() {
   Filesystem::error_code e;
   for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
     if (boost::algorithm::starts_with(f.path().filename().string(), EKTOPLAZM_TEMP_FILE_PREFIX))
-      Filesystem::remove(f.path(), e);
+      Filesystem::remove(f, e);
 }
 
-void Application :: printDBStats() {
-  std::cerr << "Database statistics:\n";
+void Application :: print_db_stats() {
+  log_write("Database statistics:\n");
   for (const auto& table : database.tables) {
-    std::cerr << table->name << '(' << table->size() << "): ";
+    log_write("%s (%zu): ", table->name, table->size());
+#if DATABASE_USE_PACKED_VECTOR
     for (const auto& column : table->columns)
-      std::cerr << column->bits() << '|';
-    std::cerr << '\n';
+      log_write("%zu|", column->bits());
+#endif
+    log_write("\n");
   }
 }
 
 int main() {
   LIBXML_TEST_VERSION;
+  std::signal(SIGINT, on_SIGNAL);
+  std::signal(SIGTERM, on_SIGNAL);
   std::signal(SIGWINCH, on_SIGNAL);
-  std::signal(SIGINT,   on_SIGNAL);
-  std::signal(SIGTERM,  on_SIGNAL);
 
 #ifndef NDEBUG
-  std::cerr << "Running a DEBUG build!\n";
+  log_write("Running a DEBUG build!\n");
 #endif
 
   try {
@@ -288,7 +295,7 @@ int main() {
   }
   catch (const std::exception &e) {
     endwin();
-    std::cout << e.what() << std::endl;
+    printf("%s\n", e.what());
     return 1;
   }
 

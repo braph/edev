@@ -19,10 +19,13 @@ using namespace Views;
 #define TRY_LINE_BREAK   70 // Try to break the line on next space
 #define FORCE_LINE_BREAK 85 // Forces line breaks even in words
 
+// XXX Ncurses deals with multibyte characters if setlocale() is called
+#define toWideString(...) __VA_ARGS__
+
 void Info :: layout(Pos pos, Size size) {
   this->pos  = pos;
   this->size = size;
-  wresize(win, 200, 110);
+  wresize(win, 110, 110);
   pad_minrow = 0;
   pad_mincol = 0;
 }
@@ -34,7 +37,7 @@ void Info :: setCurrentTrack(Database::Tracks::Track track) {
   }
 }
 
-void Info :: drawHeading(int y, CString heading) {
+inline void Info :: drawHeading(int y, CString heading) {
   attrSet(Theme::get(Theme::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
@@ -99,7 +102,6 @@ struct MarkupParser {
 
 void Info :: draw() {
   clickableURLs.clear();
-  wresize(win, 200, 110);
   clear();
   int y = 1;
 
@@ -244,11 +246,9 @@ void Info :: draw() {
   for (const auto& event : clickableURLs) {
     if (--urlCount >= 2) {
       drawInfo(y++, event.data.title);
-      *this << toWideString(event.data.url);
+      mvAddStr(y++, START_INFO + 2, toWideString(event.data.url));
     }
   }
-
-  wresize(win, y, getmaxx(win)); // shrink
 }
 
 bool Info :: handleMouse(MEVENT& m) {
