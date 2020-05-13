@@ -5,7 +5,7 @@
 #include "../database.hpp" // XXX get rid of this
 #include "../application.hpp"
 #include "../player.hpp"
-#include <vector>
+#include "../lib/staticvector.hpp"
 #include <string>
 
 namespace Views {
@@ -14,16 +14,24 @@ struct InfoLineFormatString {
   short fg;
   short bg;
   unsigned int attributes;
-  Database::ColumnID tag;
   std::string text;
+  Database::ColumnID tag;
 
-  InfoLineFormatString()
-    : fg(-1), bg(-1), attributes(0)
-  {
-  }
+  InfoLineFormatString(
+    Database::ColumnID tag_ = Database::COLUMN_NONE,
+    std::string text_ = "",
+    short fg_ = -1,
+    short bg_ = -1,
+    unsigned int attributes_ = 0)
+  : fg(fg_)
+  , bg(bg_)
+  , attributes(attributes_)
+  , text(text_)
+  , tag(tag_)
+  {}
 };
 
-typedef std::vector<InfoLineFormatString> InfoLineFormat;
+using InfoLineFormat = StaticVector<InfoLineFormatString, 10>;
 
 class InfoLine : public UI::Window {
   // XXX Slot: clicked -> player.toggle
@@ -34,6 +42,7 @@ public:
   void setPositionAndLength(int, int);
   void draw();
   void layout(UI::Pos, UI::Size);
+
 private:
   Database::Tracks::Track track;
   InfoLineFormat*         fmt_top;

@@ -3,9 +3,9 @@
 
 #include "lib/cstring.hpp"
 #include "lib/genericiterator.hpp"
-#include "lib/stringpool.hpp"
 #include "lib/packedvector.hpp"
-#include "lib/switch.hpp"
+#include "lib/stringchunk.hpp"
+#include "lib/stringpack.hpp"
 #include "ektoplayer.hpp" // REPORT_BUG
 
 #include <array>
@@ -19,7 +19,7 @@
 namespace Database {
 
 class Database;
-typedef const char* ccstr;
+using ccstr = const char*;
 
 /* ============================================================================
  * Metadata Database
@@ -33,21 +33,21 @@ typedef const char* ccstr;
  * === Columns ===
  * A column is a vector<int> like container. It stores the integers in a packed
  * way. The integers only occupy as much bits as the biggest integer contained.
- * For storing strings inside a column, a reference id to a string pool must be
+ * For storing strings inside a column, a reference id to a string chunk must be
  * stored.
  *
- * === String Pools ===
- * A stringpool is one big buffer containing all possible strings in the
+ * === String Chunks ===
+ * A stringchunk is one big buffer containing all possible strings in the
  * database. A string is referenced using an ID, which is simply the offset
  * from the beginning of the buffer.
  *
- * Inserting into a stringpool is expensive (the whole buffer has to be
+ * Inserting into a stringchunk is expensive (the whole buffer has to be
  * searched) and the [sub]string-deduplication makes only sense on similar
- * data, so we use separate pools for each column.
+ * data, so we use separate chunks for each column.
  * Exception is {track,album}{title,artist,remix,style} - they all share the same
- * pool ("meta") as there is a chance that we can find duplicates there.
+ * chunk ("meta") as there is a chance that we can find duplicates there.
  *
- * Splitting up the stringpool also results in lower string IDs per pool,
+ * Splitting up the stringchunks also results in lower string IDs per chunk,
  * leading to smaller storage requirements in a bitpacked vector.
  *
  * === Loading and Saving the database ===
@@ -77,17 +77,17 @@ typedef const char* ccstr;
  * `view` of another column (e.g. `ALBUM_DAY` returns day of `ALBUM_DATE`).
  * ========================================================================*/
 
-enum ColumnID {
+enum ColumnID : unsigned char {
   COLUMN_NONE = 0
 };
 
-enum StyleColumnID {
+enum StyleColumnID : unsigned char {
   STYLE_URL = 1,
   STYLE_NAME,
   STYLE_ENUM_END,
 };
 
-enum AlbumColumnID {
+enum AlbumColumnID : unsigned char {
   ALBUM_URL = STYLE_ENUM_END,
   ALBUM_TITLE,
   ALBUM_ARTIST,
@@ -104,7 +104,7 @@ enum AlbumColumnID {
   ALBUM_ENUM_END,
 };
 
-enum TrackColumnID {
+enum TrackColumnID : unsigned char {
   TRACK_URL = ALBUM_ENUM_END,
   TRACK_TITLE,
   TRACK_ARTIST,
@@ -117,24 +117,24 @@ enum TrackColumnID {
 static ColumnID columnIDFromStr(const std::string &s) noexcept {
   using pack = StringPack::AlphaNoCase;
   switch (pack::pack_runtime(s)) {
-    case pack("style"):         return static_cast<ColumnID>(STYLE_NAME);
-    case pack("album"):         return static_cast<ColumnID>(ALBUM_TITLE);
-    case pack("album_artist"):  return static_cast<ColumnID>(ALBUM_ARTIST);
-    case pack("description"):   return static_cast<ColumnID>(ALBUM_DESCRIPTION);
-    case pack("date"):          return static_cast<ColumnID>(ALBUM_DATE);
-    case pack("rating"):        return static_cast<ColumnID>(ALBUM_RATING);
-    case pack("votes"):         return static_cast<ColumnID>(ALBUM_VOTES);
-    case pack("downloads"):     return static_cast<ColumnID>(ALBUM_DOWNLOAD_COUNT);
-    case pack("day"):           return static_cast<ColumnID>(ALBUM_DAY);
-    case pack("month"):         return static_cast<ColumnID>(ALBUM_MONTH);
-    case pack("year"):          return static_cast<ColumnID>(ALBUM_YEAR);
-    case pack("title"):         return static_cast<ColumnID>(TRACK_TITLE);
-    case pack("artist"):        return static_cast<ColumnID>(TRACK_ARTIST);
-    case pack("remix"):         return static_cast<ColumnID>(TRACK_REMIX);
-    case pack("number"):        return static_cast<ColumnID>(TRACK_NUMBER);
-    case pack("bpm"):           return static_cast<ColumnID>(TRACK_BPM);
-    case pack("styles"):        return static_cast<ColumnID>(ALBUM_STYLES);
-    default:                    return static_cast<ColumnID>(COLUMN_NONE);
+  case pack("style"):         return static_cast<ColumnID>(STYLE_NAME);
+  case pack("album"):         return static_cast<ColumnID>(ALBUM_TITLE);
+  case pack("album_artist"):  return static_cast<ColumnID>(ALBUM_ARTIST);
+  case pack("description"):   return static_cast<ColumnID>(ALBUM_DESCRIPTION);
+  case pack("date"):          return static_cast<ColumnID>(ALBUM_DATE);
+  case pack("rating"):        return static_cast<ColumnID>(ALBUM_RATING);
+  case pack("votes"):         return static_cast<ColumnID>(ALBUM_VOTES);
+  case pack("downloads"):     return static_cast<ColumnID>(ALBUM_DOWNLOAD_COUNT);
+  case pack("day"):           return static_cast<ColumnID>(ALBUM_DAY);
+  case pack("month"):         return static_cast<ColumnID>(ALBUM_MONTH);
+  case pack("year"):          return static_cast<ColumnID>(ALBUM_YEAR);
+  case pack("title"):         return static_cast<ColumnID>(TRACK_TITLE);
+  case pack("artist"):        return static_cast<ColumnID>(TRACK_ARTIST);
+  case pack("remix"):         return static_cast<ColumnID>(TRACK_REMIX);
+  case pack("number"):        return static_cast<ColumnID>(TRACK_NUMBER);
+  case pack("bpm"):           return static_cast<ColumnID>(TRACK_BPM);
+  case pack("styles"):        return static_cast<ColumnID>(ALBUM_STYLES);
+  default:                    return static_cast<ColumnID>(COLUMN_NONE);
   }
 }
 
@@ -143,21 +143,32 @@ static ColumnID columnIDFromStr(const std::string &s) noexcept {
  * ========================================================================*/
 
 struct Field {
-  enum  Type  { STRING,  INTEGER, FLOAT,   TIME,     };
-  union Value { ccstr s; int i;   float f; time_t t; };
+  enum Type : unsigned char {
+    STRING,
+    INTEGER,
+    FLOAT,
+    TIME
+  };
 
-  Type type;
+  union Value {
+    ccstr s;
+    int i;
+    float f;
+    time_t t;
+  };
+
   Value value;
+  Type  type;
 
   inline Field(ccstr s)   noexcept { setString(s);  }
   inline Field(int i)     noexcept { setInteger(i); }
   inline Field(float f)   noexcept { setFloat(f);   }
   inline Field(time_t t)  noexcept { setTime(t);    }
 
-  void setString(ccstr s) noexcept { type = STRING;  value.s = s; }
-  void setInteger(int i)  noexcept { type = INTEGER; value.i = i; }
-  void setFloat(float f)  noexcept { type = FLOAT;   value.f = f; }
-  void setTime(time_t t)  noexcept { type = TIME;    value.t = t; }
+  inline void setString(ccstr s) noexcept { type = STRING;  value.s = s; }
+  inline void setInteger(int i)  noexcept { type = INTEGER; value.i = i; }
+  inline void setFloat(float f)  noexcept { type = FLOAT;   value.f = f; }
+  inline void setTime(time_t t)  noexcept { type = TIME;    value.t = t; }
 
   int compare(const Field &rhs) const noexcept {
     assert(type == rhs.type);
@@ -181,14 +192,14 @@ using StylesArray = TinyPackedArray<5, uint32_t>;
 
 // === Base class for all tables ============================================
 struct Table {
-  ccstr name;
+  const char* name;
   Database &db;
   std::vector<Column*> columns;
 
-  Table(ccstr name, Database &db, std::vector<Column*> columns)
+  Table(const char* name, Database &db, std::vector<Column*> columns)
   : name(name)
   , db(db)
-  , columns(columns)
+  , columns(std::move(columns))
   {}
 
   size_t size() const noexcept { return columns[0]->size();                 }
@@ -215,18 +226,20 @@ struct Record {
  * ========================================================================*/
 
 class StringColumn : public Column {
-  StringPool& pool;
+  StringChunk& chunk;
 public:
-  StringColumn(StringPool& pool) : pool(pool) {}
+  StringColumn(StringChunk& chunk)
+    : chunk(chunk)
+  {}
 
   const char* get(size_t i) noexcept { // TODO: this should be const!
-    return pool.get((*this)[i]);
+    return chunk.get((*this)[i]);
   }
 
   void set(size_t i, CString s) {
-    int string_id = (*this)[i];
-    if (!string_id || std::strcmp(pool.get(string_id), s))
-      (*this)[i] = pool.add(s);
+    auto string_id = (*this)[i];
+    if (!string_id || std::strcmp(chunk.get(string_id), s))
+      (*this)[i] = chunk.add(s);
   }
 };
 
@@ -234,10 +247,10 @@ struct Styles : public Table {
   StringColumn url;
   StringColumn name;
 
-  Styles(Database& db, StringPool& pool_url, StringPool& pool_name)
+  Styles(Database& db, StringChunk& chunk_url, StringChunk& chunk_name)
   : Table("styles", db, {&url,&name})
-  , url(pool_url)
-  , name(pool_name)
+  , url(chunk_url)
+  , name(chunk_name)
   {
     resize(1); // Records with ID 0 represent a NULL value. Create them here.
   }
@@ -279,18 +292,18 @@ struct Albums : public Table {
   StringColumn archive_wav;
   StringColumn archive_flac;
 
-  Albums(Database& db, StringPool& pool_album_url, StringPool& pool_cover_url, StringPool& pool_archive_url, StringPool& pool_desc, StringPool& pool_meta)
+  Albums(Database& db, StringChunk& chunk_album_url, StringChunk& chunk_cover_url, StringChunk& chunk_archive_url, StringChunk& chunk_desc, StringChunk& chunk_meta)
   : Table("albums", db,
     {&url,&title,&artist,&cover_url,&description,&date,&rating,&votes,
       &download_count,&styles,&archive_mp3,&archive_wav,&archive_flac})
-  , url(pool_album_url)
-  , title(pool_meta)
-  , artist(pool_meta)
-  , cover_url(pool_cover_url)
-  , description(pool_desc)
-  , archive_mp3(pool_archive_url)
-  , archive_wav(pool_archive_url)
-  , archive_flac(pool_archive_url)
+  , url(chunk_album_url)
+  , title(chunk_meta)
+  , artist(chunk_meta)
+  , cover_url(chunk_cover_url)
+  , description(chunk_desc)
+  , archive_mp3(chunk_archive_url)
+  , archive_wav(chunk_archive_url)
+  , archive_flac(chunk_archive_url)
   {
     resize(1); // Records with ID 0 represent a NULL value. Create them here.
   }
@@ -351,12 +364,12 @@ struct Tracks : public Table {
   Column        number;
   Column        bpm;
 
-  Tracks(Database &db, StringPool& pool_track_url, StringPool& pool_meta)
+  Tracks(Database &db, StringChunk& chunk_track_url, StringChunk& chunk_meta)
   : Table("tracks", db, {&url,&album_id,&title,&artist,&remix,&number,&bpm})
-  , url(pool_track_url)
-  , title(pool_meta)
-  , artist(pool_meta)
-  , remix(pool_meta)
+  , url(chunk_track_url)
+  , title(chunk_meta)
+  , artist(chunk_meta)
+  , remix(chunk_meta)
   {
     resize(1); // Records with ID 0 represent a NULL value. Create them here.
   }
@@ -398,12 +411,12 @@ struct Tracks : public Table {
  * Order-By + Where
  * ========================================================================*/
 
-enum SortOrder {
+enum class SortOrder : unsigned char {
   ASCENDING,
   DESCENDING,
 };
 
-enum Operator {
+enum class Operator : unsigned char {
   EQUAL,
   UNEQUAL,
   GREATER,
@@ -417,14 +430,14 @@ class OrderBy {
   SortOrder order;
 public:
   template<typename TColumn>
-  OrderBy(TColumn column, SortOrder order = ASCENDING)
+  OrderBy(TColumn column, SortOrder order = SortOrder::ASCENDING)
   : column(static_cast<ColumnID>(column))
   , order(order) {}
 
   template<typename T>
   bool operator()(const T& a, const T& b) const noexcept {
     int ret = a[column].compare(b[column]);
-    return (order == ASCENDING ? ret < 0 : ret > 0);
+    return (order == SortOrder::ASCENDING ? ret < 0 : ret > 0);
   }
 };
 
@@ -441,12 +454,12 @@ public:
   bool operator()(const T& t) const noexcept {
     int ret = t[column].compare(field);
     switch (op) {
-    case EQUAL:         return ! (ret == 0);
-    case UNEQUAL:       return ! (ret != 0);
-    case GREATER:       return ! (ret >  0);
-    case GREATER_EQUAL: return ! (ret >= 0);
-    case LESSER:        return ! (ret <  0);
-    case LESSER_EQUAL:  return ! (ret <= 0);
+    case Operator::EQUAL:         return ! (ret == 0);
+    case Operator::UNEQUAL:       return ! (ret != 0);
+    case Operator::GREATER:       return ! (ret >  0);
+    case Operator::GREATER_EQUAL: return ! (ret >= 0);
+    case Operator::LESSER:        return ! (ret <  0);
+    case Operator::LESSER_EQUAL:  return ! (ret <= 0);
     }
   }
 };
@@ -458,14 +471,14 @@ public:
   Tracks tracks;
   std::array<Table*, 3> tables;
 
-  StringPool pool_meta;
-  StringPool pool_desc;
-  StringPool pool_style_url;
-  StringPool pool_album_url;
-  StringPool pool_track_url;
-  StringPool pool_cover_url;
-  StringPool pool_archive_url;
-  std::array<StringPool*, 7> pools;
+  StringChunk chunk_meta;
+  StringChunk chunk_desc;
+  StringChunk chunk_style_url;
+  StringChunk chunk_album_url;
+  StringChunk chunk_track_url;
+  StringChunk chunk_cover_url;
+  StringChunk chunk_archive_url;
+  std::array<StringChunk*, 7> chunks;
 
   Database();
 
@@ -483,7 +496,7 @@ public:
   void shrink_to_fit();
 
 private:
-  void shrink_pool_to_fit(StringPool&, std::initializer_list<Column*>);
+  void shrink_chunk_to_fit(StringChunk&, std::initializer_list<Column*>);
 };
 
 } // namespace Database

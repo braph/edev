@@ -1,115 +1,20 @@
 #include "updater.hpp"
 
-#include "lib/xml.hpp"
-#include "lib/downloads.hpp"
-#include "lib/switch.hpp"
-#include "log.hpp"
-#include "database.hpp"
-#include "browsepage.hpp"
 #include "ektoplayer.hpp"
+#include "browsepage.hpp"
+#include "database.hpp"
+#include "markdown.hpp"
+#include "log.hpp"
+
+#include "lib/stringpack.hpp"
+#include "lib/downloads.hpp"
+#include "lib/cstring.hpp"
 
 #include <boost/algorithm/string/erase.hpp>
 
 #include <cstring>
 
-using pack = StringPack::Generic;
-
-template<typename TClass>
-static void wrap_startElement(void* self, const xmlChar* name, const xmlChar** attrs) {
-  static_cast<TClass*>(self)->startElement(
-      reinterpret_cast<const char*>(name),
-      reinterpret_cast<const char**>(attrs));
-}
-
-template<typename TClass>
-static void wrap_endElement(void* self, const xmlChar* name) {
-  static_cast<TClass*>(self)->endElement(
-      reinterpret_cast<const char*>(name));
-}
-
-template<typename TClass>
-static void wrap_characters(void* self, const xmlChar* ch, int len) {
-  static_cast<TClass*>(self)->characters(
-      reinterpret_cast<const char*>(ch),
-      len);
-}
-
-/**
- * Converts
- *   Some HTML <a href="link url">link text</a> <b>bold</b> <i>italic</i>
- * To
- *   Some HTML ((link text))[[url]] **bold** __italic__
- */
-class Html2Markdown {
-public:
-  Html2Markdown() 
-   : handler()
-  {
-    handler.startElement = wrap_startElement<Html2Markdown>;
-    handler.endElement = wrap_endElement<Html2Markdown>;
-    handler.characters = wrap_characters<Html2Markdown>;
-  }
-
-  std::string convert(const std::string& src) {
-    result.clear();
-    result.reserve(src.size() / 1.5);
-    xmlSAXUserParseMemory(&handler, this, src.c_str(), src.size());
-    return result;
-  }
-
-public: // TODO... make private...
-  xmlSAXHandler handler;
-  std::string result;
-  std::string url;
-
-  void startElement(const char* name, const char** attrs) {
-    switch (pack::pack_runtime(name)) {
-      case pack("i"):
-      case pack("em"):
-        result.append(2, '_');
-        break;
-      case pack("b"):
-      case pack("strong"):
-        result.append(2, '*');
-        break;
-      case pack("a"):
-        result.append(2, '(');
-        if (attrs)
-          for (; *attrs; ++attrs)
-            if (! std::strcmp(*attrs++, "href")) {
-              url = *attrs;
-              break;
-            }
-        break;
-      case pack("br"):
-        result.append(1, '\n');
-        break;
-    }
-  }
-
-  void endElement(const char* name) {
-    switch (pack::pack_runtime(name)) {
-      case pack("i"):
-      case pack("em"):
-        result.append(2, '_');
-        break;
-      case pack("b"):
-      case pack("strong"):
-        result.append(2, '*');
-        break;
-      case pack("a"):
-        result.append("))[[", 4);
-        result.append(url);
-        result.append(2, ']');
-        url.clear();
-        break;
-    }
-  }
-
-  void characters(const char* ch, int len) {
-    result.append(ch, size_t(len));
-  }
-};
+#define BROWSEPAGE_HTML_SIZE (60 * 1024) /* Bytes */
 
 static std::string& clean_str(std::string& s) {
   size_t pos = 0;
@@ -119,7 +24,7 @@ static std::string& clean_str(std::string& s) {
 }
 
 static std::string make_markdown(const std::string& description) {
-  std::string s = Html2Markdown().convert(description);
+  std::string s = Html2Markdown::convert(description);
 
   // Replace protected email links:
   //  [[/cdn-cgi/l/email-protection#284b47444174...]]
@@ -144,58 +49,42 @@ static std::string make_markdown(const std::string& description) {
  * Updater
  * ==========================================================================*/
 
-Updater :: Updater(Database::Database &db, Downloads &downloads)
-  : db(db)
-  , downloads(downloads)
+Updater :: Updater(Database::Database &db) noexcept
+  : _db(db)
 {
 }
 
-bool Updater :: start(int pages) {
-  // Not the best way to determine if we're already updating, but sufficient...
-  if ((downloads.runningDownloads() + downloads.queuedDownloads()) > 30)
-    return true;
+void Updater :: fetch_page(int page) noexcept {
+  BufferDownload* dl = new BufferDownload(Ektoplayer::browse_url(page));
+  dl->buffer().reserve(BROWSEPAGE_HTML_SIZE);
 
-  std::function<void(Download&, CURLcode)> cb = [this](Download& _dl, CURLcode code) {
-    BufferDownload &dl = static_cast<BufferDownload&>(_dl);
-    if (code == CURLE_OK && dl.httpCode() == 200) {
-      this->insert_browsepage(dl.buffer());
-    }
+  dl->onFinished = [this,page](Download& dl, CURLcode code) {
     log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(code), dl.httpCode());
+
+    if (code != CURLE_OK)
+      fetch_page(page);
+    else if (dl.httpCode() == 404)
+      _max_pages = std::min(_max_pages, page);
+    else if (dl.httpCode() == 200) {
+      BrowsePageParser parser(static_cast<BufferDownload&>(dl).buffer());
+      _max_pages = std::min(_max_pages, parser.num_pages());
+      for (Album _; ! (_ = parser.next_album()).empty(); insert_album(_));
+
+      int next_page = page + _downloads.parallel();
+      if (next_page <= _max_pages)
+        fetch_page(next_page);
+    }
   };
 
-  // Retrieve the first page
-  BufferDownload dl(Ektoplayer::browse_url(1));
-  dl.onFinished = cb;
-  CURLcode e = dl.perform();
-  if (e != CURLE_OK)
-    return false;
+  _downloads.addDownload(dl);
+}
 
-  BrowsePageParser parser(dl.buffer());
-  int num_pages = parser.num_pages();
-  int firstPage, lastPage;
+bool Updater :: start(int pages) noexcept {
+  _max_pages = pages;
 
-#define LAST_PAGE_FALLBACK 450 // TODO
-// TODO: make this thing work recursive: each dl inserts a new DL!
-
-  if (pages > 0) { // Count from first page
-    firstPage = pages;
-    lastPage  = (num_pages ? num_pages : LAST_PAGE_FALLBACK);
-  }
-  else if (pages < 0) { // Count from last page
-    lastPage  = (num_pages ? num_pages : LAST_PAGE_FALLBACK);
-    firstPage = lastPage + pages;
-  }
-  else { // All pages
-    firstPage = 2;
-    lastPage  = (num_pages ? num_pages : LAST_PAGE_FALLBACK);
-  }
-
-  while (firstPage <= lastPage) {
-    std::string url = Ektoplayer::browse_url(firstPage++);
-    BufferDownload* dl = new BufferDownload(std::move(url));
-    dl->onFinished = cb;
-    downloads.addDownload(dl, Downloads::LOW);
-  }
+  if (! (_downloads.runningDownloads() + _downloads.queuedDownloads()))
+    for (int i = 1; i <= _downloads.parallel(); ++i)
+      fetch_page(i);
 
   return true;
 }
@@ -205,7 +94,7 @@ void Updater :: insert_album(Album& album) {
   Database::StylesArray albumStyleIDs;
   for (auto &style : album.styles) {
     Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL);
-    auto styleRecord = db.styles.find(style.url, true);
+    auto styleRecord = _db.styles.find(style.url, true);
     if (! *(styleRecord.name()))
       styleRecord.name(style.name);
     albumStyleIDs.push_back(styleRecord.id);
@@ -220,7 +109,7 @@ void Updater :: insert_album(Album& album) {
   Ektoplayer::url_shrink(album.cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
   album.description = make_markdown(album.description);
 
-  auto albumRecord = db.albums.find(album.url, true);
+  auto albumRecord = _db.albums.find(album.url, true);
   albumRecord.title(clean_str(album.title));
   albumRecord.artist(clean_str(album.artist));
   albumRecord.cover_url(clean_str(album.cover_url));
@@ -233,15 +122,15 @@ void Updater :: insert_album(Album& album) {
 
   // Album archive URLs =======================================================
   for (auto &u : album.archive_urls) {
-    if (std::string::npos != u.rfind("MP3.zip")) {
+    if (ends_with(u, "MP3.zip")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "MP3.zip");
       albumRecord.archive_mp3_url(u);
     }
-    else if (std::string::npos != u.rfind("WAV.rar")) {
+    else if (ends_with(u, "WAV.rar")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "WAV.rar");
       albumRecord.archive_wav_url(u);
     }
-    else if (std::string::npos != u.rfind("FLAC.zip")) {
+    else if (ends_with(u, "FLAC.zip")) {
       Ektoplayer::url_shrink(u, EKTOPLAZM_ARCHIVE_BASE_URL, "FLAC.zip");
       albumRecord.archive_flac_url(u);
     }
@@ -259,7 +148,7 @@ void Updater :: insert_album(Album& album) {
       track.url += _;
     }
 
-    auto trackRecord = db.tracks.find(track.url, true);
+    auto trackRecord = _db.tracks.find(track.url, true);
     trackRecord.album_id(albumRecord.id);
     trackRecord.title(clean_str(track.title));
     trackRecord.artist(clean_str(track.artist));
@@ -323,13 +212,13 @@ int main() {
   db.styles.reserve(EKTOPLAZM_STYLE_COUNT);
   db.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
   db.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
-  db.pool_meta.reserve(EKTOPLAZM_META_SIZE);
-  db.pool_desc.reserve(EKTOPLAZM_DESC_SIZE);
-  db.pool_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
-  db.pool_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
-  db.pool_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
-  db.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
-  db.pool_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+  db.chunk_meta.reserve(EKTOPLAZM_META_SIZE);
+  db.chunk_desc.reserve(EKTOPLAZM_DESC_SIZE);
+  db.chunk_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
+  db.chunk_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
+  db.chunk_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
+  db.chunk_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
+  db.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
 
   {
 #ifdef USE_FILESYSTEM
@@ -388,24 +277,24 @@ int main() {
   }
 
   // Print out defines
-  struct { const char* name; StringPool& pool; }
-  pools[] = {
-    {"META",        db.pool_meta},
-    {"DESC",        db.pool_desc},
-    {"STYLE_URL",   db.pool_style_url},
-    {"ALBUM_URL",   db.pool_album_url},
-    {"TRACK_URL",   db.pool_track_url},
-    {"COVER_URL",   db.pool_cover_url},
-    {"ARCHIVE_URL", db.pool_archive_url},
+  struct { const char* name; StringChunk& chunk; }
+  chunks[] = {
+    {"META",        db.chunk_meta},
+    {"DESC",        db.chunk_desc},
+    {"STYLE_URL",   db.chunk_style_url},
+    {"ALBUM_URL",   db.chunk_album_url},
+    {"TRACK_URL",   db.chunk_track_url},
+    {"COVER_URL",   db.chunk_cover_url},
+    {"ARCHIVE_URL", db.chunk_archive_url},
   };
 
   printf("#define EKTOPLAZM_STYLE_COUNT %zu\n", db.styles.size());
   printf("#define EKTOPLAZM_ALBUM_COUNT %zu\n", db.albums.size());
   printf("#define EKTOPLAZM_TRACK_COUNT %zu\n", db.tracks.size());
 
-  for (const auto& p : pools)
+  for (const auto& p : chunks)
     printf("#define EKTOPLAZM_%s_SIZE %zu // average length: %zu\n",
-        p.name, p.pool.size(), p.pool.size() / p.pool.count());
+        p.name, p.chunk.size(), p.chunk.size() / p.chunk.count());
 
   TEST_END();
 }

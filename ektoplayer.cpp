@@ -22,6 +22,7 @@ std::string& url_basename(std::string &url) {
   return url;
 }
 
+// TODO: templated on size
 bool strip_extension(std::string &s, const char* ext) {
   size_t ext_len = std::strlen(ext);
   if (std::string::npos != s.find(ext, s.size() - ext_len)) {

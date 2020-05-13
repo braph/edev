@@ -17,6 +17,7 @@ public:
 
   void draw();
   void layout(UI::Pos, UI::Size);
+  bool handleKey(int);
   bool handleMouse(MEVENT&);
 
   void setCurrentTrack(Database::Tracks::Track);
@@ -28,10 +29,10 @@ private:
   Database::Tracks::Track currentTrack;
   UI::MouseEvents<UrlAndTitle> clickableURLs;
 
-  void drawLink(CString, CString);
   void drawHeading(int, CString);
   void drawTag(int, CString);
   void drawInfo(int, CString);
+  void drawLink(CString, CString);
 };
 
 } // namespace Views

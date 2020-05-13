@@ -6,6 +6,7 @@
 #include CURSES_INC
 
 #include <string>
+#include <cstdio>//XXX
 
 #ifdef __cpp_exceptions
 #include <stdexcept>
@@ -32,9 +33,10 @@ namespace UI {
 struct Pos {
   int y;
   int x;
-  Pos()                noexcept : y(0), x(0) {}
-  Pos(int y, int x)    noexcept : y(y), x(x) {}
-  Pos(const MEVENT& m) noexcept : y(m.y), x(m.x) {}
+
+  inline Pos()                               noexcept : y(0),   x(0)   {}
+  inline Pos(int y, int x)                   noexcept : y(y),   x(x)   {}
+  inline Pos(const MEVENT& m)                noexcept : y(m.y), x(m.x) {}
   inline bool operator==(const Pos& p) const noexcept { return y == p.y && x == p.x; }
   inline bool operator!=(const Pos& p) const noexcept { return y != p.y || x != p.x; }
   inline bool operator>=(const Pos& p) const noexcept { return y >= p.y && x >= p.x; }
@@ -55,23 +57,12 @@ struct Size {
   int height;
   int width;
 
-  Size() noexcept
-    : height(0)
-    , width(0)
-  {}
+  inline Size()                               noexcept : height(0),      width(0)     {}
+  inline Size(int height, int width)          noexcept : height(height), width(width) {}
+  inline bool operator==(const Size& s) const noexcept { return s.height == height && s.width == width; }
+  inline bool operator!=(const Size& s) const noexcept { return s.height != height || s.width != width; }
 
-  Size(int height, int width) noexcept
-    : height(height)
-    , width(width)
-  {}
-
-  bool operator==(const Size& s) const noexcept
-  { return s.height == height && s.width == width; }
-
-  bool operator!=(const Size& s) const noexcept
-  { return s.height != height || s.width != width; }
-
-  Size calc(int height, int width) const noexcept
+  inline Size calc(int height, int width) const noexcept
   { return Size(this->height + height, this->width + width); }
 
 #ifndef NDEBUG
@@ -240,20 +231,11 @@ struct WidgetDrawable : public Widget {
   // char[] / wchar_t[] --> `N` may NOT be actual strlen!
   template<size_t N>
   inline int mvAddStr(int y, int x, char (&s)[N]) noexcept
-  { return mvwaddstr(y, x, win, s); }
+  { return mvwaddstr(win, y, x, s); }
 
   template<size_t N>
   inline int mvAddStr(int y, int x, wchar_t (&s)[N]) noexcept
-  { return mvwaddwstr(y, x, win, s); }
-
-  // const char[] / const wchar_t[] --> Pretty safe to use `N`
-  template<size_t N>
-  inline int mvAddStr(int y, int x, const char (&s)[N]) noexcept
-  { return mvwaddnstr(y, x, win, s, N-1); }
-
-  template<size_t N>
-  inline int mvAddStr(int y, int x, const wchar_t (&s)[N]) noexcept
-  { return mvwaddnwstr(y, x, win, s, N-1); }
+  { return mvwaddwstr(win, y, x, s); }
 
   // std::string / std::wstring
   inline int mvAddStr(int y, int x, const std::string& s) noexcept
@@ -364,21 +346,6 @@ public:
   void down(int n = 1) {
     pad_minrow = clamp(pad_minrow + n, 0, getmaxy(win) - size.height);
     noutrefresh();
-  }
-
-  bool handleKey(int n) {
-#define __C(K) (K%32)
-#define true false // TODO
-    switch (n) {
-    case 'k': case KEY_UP:   up();   return true;
-    case 'j': case KEY_DOWN: down(); return true;
-    case __C('u'): case KEY_PPAGE: page_up(); return true;
-    case __C('d'): case KEY_NPAGE: page_down(); return true;
-    case 'g': top(); return true;
-    case 'G': bottom(); return true;
-    }
-#undef true
-    return false;
   }
 
 protected:

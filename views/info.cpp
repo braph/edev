@@ -1,12 +1,13 @@
 #include "info.hpp"
 
+#include "../ektoplayer.hpp"
+#include "../bindings.hpp"
 #include "../theme.hpp"
 #include "../config.hpp"
-#include "../ui/colors.hpp"
-#include "../lib/filesystem.hpp"
-#include "../ektoplayer.hpp"
 #include "../player.hpp"
 #include "../url_handler.hpp"
+#include "../ui/colors.hpp"
+#include "../lib/filesystem.hpp"
 
 using namespace UI;
 using namespace Views;
@@ -115,7 +116,7 @@ void Info :: draw() {
     drawHeading(y++, "Current track");
     drawTag(y++, "Title");
     *this << toWideString(track.title());
-    if (*(track.remix()))
+    if (track.remix()[0])
       *this << " (" << toWideString(track.remix()) << ')';
 
     drawTag(y++, "Artist");
@@ -225,7 +226,7 @@ void Info :: draw() {
   *this << ctxt.database->albums.size();
 
   drawInfo(y++, "Tracks in playlist");
-  *this << 0; // TODO
+  *this << ctxt.mainwindow->playlist.list()->size();
 
   drawInfo(y++, "Cache dir size");
   *this << Filesystem::dir_size(Config::cache_dir) / 1024 / 1024 << "MB";
@@ -248,6 +249,18 @@ void Info :: draw() {
       drawInfo(y++, event.data.title);
       mvAddStr(y++, START_INFO + 2, toWideString(event.data.url));
     }
+  }
+}
+
+bool Info :: handleKey(int n) {
+  switch (Bindings::pad[n]) {
+  case Actions::UP:         up();         return true;
+  case Actions::DOWN:       down();       return true;
+  case Actions::PAGE_UP:    page_up();    return true;
+  case Actions::PAGE_DOWN:  page_down();  return true;
+  case Actions::TOP:        top();        return true;
+  case Actions::BOTTOM:     bottom();     return true;
+  default:                                return false;
   }
 }
 

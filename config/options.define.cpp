@@ -16,13 +16,45 @@ std::string                 Config :: cache_dir /* will be initialized later */;
 std::string                 Config :: archive_dir /* will be initialized later */;
 std::string                 Config :: download_dir = "/tmp";
 std::string                 Config :: database_file /* will be initialized later */;
-InfoLineFormat              Config :: infoline_format_top /* will be initialized later */;
-InfoLineFormat              Config :: infoline_format_bottom /* will be initialized later */;
-InfoLineFormat              Config :: infoline_format_top_256 /* will be initialized later */;
-InfoLineFormat              Config :: infoline_format_bottom_256 /* will be initialized later */;
+InfoLineFormat              Config :: infoline_format_top = {
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< ", COLOR_BLACK},
+{static_cast<Database::ColumnID>(Database::TRACK_TITLE), "",    COLOR_YELLOW, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), " >>", COLOR_BLACK}};
+InfoLineFormat              Config :: infoline_format_bottom = {
+{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " - "},
+{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   "",     COLOR_RED, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " ("},
+{static_cast<Database::ColumnID>(Database::ALBUM_YEAR),    "",     COLOR_CYAN, -1, 0},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   ")"}
+};
+InfoLineFormat              Config :: infoline_format_top_256 = {
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< ", 236},
+{static_cast<Database::ColumnID>(Database::TRACK_TITLE), "",    178, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), " >>", 236}};
+InfoLineFormat              Config :: infoline_format_bottom_256 = {
+{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " - "},
+{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   "",     COLOR_RED, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " ("},
+{static_cast<Database::ColumnID>(Database::ALBUM_YEAR),    "",     COLOR_CYAN, -1, 0},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   ")"}
+};
 PlaylistColumns             Config :: browser_columns /* will be initialized later */;
-PlaylistColumns             Config :: playlist_columns /* will be initialized later */;
+PlaylistColumns             Config :: playlist_columns = {
+{static_cast<Database::ColumnID>(Database::TRACK_NUMBER),  COLOR_MAGENTA,  -1, 3},
+{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  COLOR_BLUE,     -1, 25, true},
+{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   COLOR_RED,      -1, 30, true},
+{static_cast<Database::ColumnID>(Database::TRACK_TITLE),   COLOR_YELLOW,   -1, 33, true},
+{static_cast<Database::ColumnID>(Database::ALBUM_STYLES),  COLOR_CYAN,     -1, 20, true},
+{static_cast<Database::ColumnID>(Database::TRACK_BPM),     COLOR_GREEN,    -1, 3}};
 PlaylistColumns             Config :: browser_columns_256 /* will be initialized later */;
-PlaylistColumns             Config :: playlist_columns_256 /* will be initialized later */;
-std::vector<std::string>    Config :: main_widgets = {"infoline","tabbar","readline","windows","progressbar"};
-std::vector<std::string>    Config :: tabs_widgets = {"splash","playlist","browser","info","help"};
+PlaylistColumns             Config :: playlist_columns_256 = {
+{static_cast<Database::ColumnID>(Database::TRACK_NUMBER),  97,   -1, 3},
+{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  24,   -1, 25, true},
+{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   160,  -1, 30, true},
+{static_cast<Database::ColumnID>(Database::TRACK_TITLE),   178,  -1, 33, true},
+{static_cast<Database::ColumnID>(Database::ALBUM_STYLES),  37,   -1, 20, true},
+{static_cast<Database::ColumnID>(Database::TRACK_BPM),     28,   -1, 3}};
+std::array<Views::TabWidgets, 5> Config :: tabs_widgets = {Views::TabWidgets::SPLASH,Views::TabWidgets::PLAYLIST,Views::TabWidgets::BROWSER,Views::TabWidgets::INFO,Views::TabWidgets::HELP};
+std::array<Views::MainWidgets, 5> Config :: main_widgets = {Views::MainWidgets::INFOLINE,Views::MainWidgets::TABBAR,Views::MainWidgets::READLINE,Views::MainWidgets::WINDOWS,Views::MainWidgets::PROGRESSBAR};

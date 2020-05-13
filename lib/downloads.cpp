@@ -1,6 +1,7 @@
 #include "downloads.hpp"
 #include <cstdlib>
 #include <climits>
+#include <cstring>
 #include <stdexcept>
 
 /* ============================================================================
@@ -70,18 +71,20 @@ BufferDownload :: BufferDownload(const std::string &url)
  * FileDownload
  * ==========================================================================*/
 
-static size_t write_stream_cb(char *data, size_t size, size_t nmemb, void *stream) {
-  static_cast<std::ofstream*>(stream)->write(data, std::streamsize(size*nmemb));
-  return size*nmemb;
+FileDownload :: FileDownload(const std::string &url, std::string file)
+: Download(url), _filename(std::move(file)), _fh(fopen(_filename.c_str(), "w"))
+{
+  if (! _fh) {
+#ifdef __cpp_exceptions
+    throw std::runtime_error(strerror(errno))
+#endif
+  }
+  setopt(CURLOPT_WRITEDATA, _fh);
 }
 
-FileDownload :: FileDownload(const std::string &url, std::string file)
-: Download(url), _filename(std::move(file))
-{
-  _stream.exceptions(std::ofstream::failbit|std::ofstream::badbit);
-  _stream.open(_filename, std::ios::binary);
-  setopt(CURLOPT_WRITEFUNCTION, write_stream_cb);
-  setopt(CURLOPT_WRITEDATA, &_stream);
+FileDownload :: ~FileDownload() {
+  if (_fh)
+    fclose(_fh);
 }
 
 /* ============================================================================
@@ -112,19 +115,16 @@ void Downloads :: setParallel(int parallel) {
   curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
 }
 
-void Downloads :: addDownload(Download* dl, Priority priority) {
-  if (priority == LOW)
-    _queue.push_back(dl);
-  else
-    _queue.push_front(dl);
+void Downloads :: addDownload(Download* dl) {
+  _queue.push_back(dl);
 }
 
 int Downloads :: work() noexcept {
   curl_multi_perform(_curl_multi, &_running_handles);
   while (_running_handles < _parallel && _queue.size()) {
     ++_running_handles;
-    Download *dl = _queue.front();
-    _queue.pop_front();
+    Download *dl = _queue.back();
+    _queue.pop_back();
     curl_multi_add_handle(_curl_multi, dl->curl_easy);
   }
 

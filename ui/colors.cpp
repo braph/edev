@@ -1,13 +1,12 @@
 #include "colors.hpp"
 
 #include <cctype>
-#include <algorithm>
 
 using namespace UI;
 
 // === UI::Color ==============================================================
 
-Color :: mapping Color :: colors[] = {
+Color::mapping Color :: colors[] = {
   {"none",      -1},
   {"white",     COLOR_WHITE},
   {"black",     COLOR_BLACK},
@@ -19,20 +18,20 @@ Color :: mapping Color :: colors[] = {
   {"magenta",   COLOR_MAGENTA}
 };
 
-short Color :: parse(const std::string& color, short on_error_return = -2) noexcept {
+Color::ParseResult Color :: parse(const std::string& color) noexcept {
   if (! color.empty()) {
     if (std::isdigit(color[0]))
-      return std::atoi(&color[0]);
+      return Color::ParseResult {short(std::atoi(color.c_str())), true};
 
     for (const auto& it : colors)
       if (color == it.name)
-        return it.value;
+        return Color::ParseResult {it.value, true};
   }
 
-  return on_error_return;
+  return Color::ParseResult {0, false};
 }
 
-std::string Color :: to_string(short color) {
+std::string Color :: to_string(short color) noexcept {
   for (const auto& it : colors)
     if (it.value == color)
       return it.name;
@@ -44,7 +43,7 @@ std::string Color :: to_string(short color) {
 
 // === UI::Attribute ==========================================================
 
-Attribute :: mapping Attribute :: attributes[] = {
+Attribute::mapping Attribute :: attributes[] = {
   {"bold",      A_BOLD},
   {"dim",       A_DIM},
   {"blink",     A_BLINK},
@@ -54,15 +53,15 @@ Attribute :: mapping Attribute :: attributes[] = {
   {"underline", A_UNDERLINE}
 };
 
-unsigned int Attribute :: parse(const std::string& attribute) noexcept {
+Attribute::ParseResult Attribute :: parse(const std::string& attribute) noexcept {
   for (const auto& e : attributes)
     if (attribute == e.name)
-      return e.value;
+      return Attribute::ParseResult {e.value, true};
 
-  return 0;
+  return Attribute::ParseResult {0, false};
 }
 
-std::string Attribute :: to_string(unsigned int attribute) {
+std::string Attribute :: to_string(unsigned int attribute) noexcept {
   for (const auto& e : attributes)
     if (attribute == e.value)
       return e.name;
@@ -72,33 +71,28 @@ std::string Attribute :: to_string(unsigned int attribute) {
 
 // === UI::Colors =============================================================
 
-#define MERGE_FG_BG(FG, BG) \
-  (static_cast<unsigned int>(FG) + \
-  (static_cast<unsigned int>(BG) << 16))
+int Colors :: last_id = 0;
+std::array<Colors::color_pair, 256> Colors :: color_pairs;
 
-std::vector<unsigned int> Colors :: color_pairs;
-int Colors :: last_id = 1;
+int Colors :: create_color_pair(short fg, short bg) noexcept {
+  int pair_id;
+  for (pair_id = 1; pair_id <= last_id; ++pair_id)
+    if (color_pairs[size_t(pair_id)].fg == fg && color_pairs[size_t(pair_id)].bg == bg)
+      return pair_id;
 
-int Colors :: create_color_pair(short fg, short bg) {
-  unsigned int color_pair = MERGE_FG_BG(fg, bg);
+  if (last_id == color_pairs.size())
+    return 0;
 
-  auto find_it = std::find(color_pairs.begin(), color_pairs.end(), color_pair);
-  if (find_it != color_pairs.end())
-    return std::distance(color_pairs.begin(), find_it);
-
-  int pair_id = last_id++;
+  color_pairs[size_t(pair_id)] = {fg, bg};
   init_pair(pair_id, fg, bg);
-  color_pairs.resize(size_t(last_id), MERGE_FG_BG(-2, -2));
-  color_pairs[size_t(pair_id)] = color_pair;
-  return pair_id;
+  return ++last_id;
 }
 
-unsigned int Colors :: set(short fg, short bg, unsigned int attributes) {
+unsigned int Colors :: set(short fg, short bg, unsigned int attributes) noexcept {
   return COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
 }
 
 void Colors :: reset() noexcept {
-  color_pairs.clear();
   last_id = 1;
 }
 
@@ -117,7 +111,7 @@ int main() {
   assert(UI::Color::parse("yellow")           == COLOR_YELLOW);
   assert(UI::Color::parse("magenta")          == COLOR_MAGENTA);
   assert(UI::Color::parse("123")              == 123);
-  assert(UI::Color::parse("no_color")         == -2);
+  assert(UI::Color::parse("no_color").ok      == false);
 
   assert(UI::Color::to_string(-1)             == "none");
   assert(UI::Color::to_string(COLOR_WHITE)    == "white");
@@ -130,11 +124,13 @@ int main() {
   assert(UI::Color::to_string(COLOR_MAGENTA)  == "magenta");
   assert(UI::Color::to_string(123)            == "123");
 
+  assert(UI::Attribute::parse("normal")         == A_NORMAL);       
   assert(UI::Attribute::parse("bold")           == A_BOLD);
   assert(UI::Attribute::parse("blink")          == A_BLINK);
   assert(UI::Attribute::parse("standout")       == A_STANDOUT);
   assert(UI::Attribute::parse("underline")      == A_UNDERLINE);
 
+  assert(UI::Attribute::to_string(A_NORMAL)     == "normal");
   assert(UI::Attribute::to_string(A_BOLD)       == "bold");
   assert(UI::Attribute::to_string(A_BLINK)      == "blink");
   assert(UI::Attribute::to_string(A_STANDOUT)   == "standout");

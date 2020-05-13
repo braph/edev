@@ -89,36 +89,38 @@ void split(const std::string& s, std::vector<std::string>& result, Warning& w)
 #ifdef TEST_SHELLSPLIT
 #include "test.hpp"
 
-std::vector<std::string> result; // Global, for checking if .clear works
+static std::vector<std::string> result; // Global (for checking if .clear works)
 
-void test(const std::string& line, const std::vector<std::string>& expected) {
+static void test(const char* line, const std::vector<std::string>& expected) {
   ShellSplit::split(line, result);
   if (result != expected) {
-    std::cout << "Result: ";
+    std::cout << "Input: " << line << "\nResult: ";
     for (const auto& e : result)
       std::cout << '"' << e << "\",";
     std::cout << '\n';
-    throw std::runtime_error("Test failed");
+    throw;
   }
 }
 
 int main() {
   TEST_BEGIN();
-  test("",        {});
-  test(" \t",     {});
-  test("1",       {"1"});
-  test(" 1",      {"1"});
-  test(" 1 ",     {"1"});
-  test("1 2",     {"1", "2"});
-  test("1 2 3",   {"1", "2", "3"});
-  test("'1'",     {"1"});
-  test("\"1\"",   {"1"});
-  test("' 1 '",   {" 1 "});
-  test("\" 1 \"", {" 1 "});
-  test("'a''b'",  {"ab"});
-  test("\"a\'\"", {"a\'"});
-  test("\'\\\'",  {"\\"});
-  // TODO: test escape; test nested quotes
+  test("",          {});
+  test(" \t",       {});
+  test("1",         {"1"});
+  test(" 1",        {"1"});
+  test(" 1 ",       {"1"});
+  test("1 2",       {"1", "2"});
+  test("1 2 3",     {"1", "2", "3"});
+  test("'1'",       {"1"});
+  test("\"1\"",     {"1"});
+  test("' 1 '",     {" 1 "});
+  test("\" 1 \"",   {" 1 "});
+  test("'a''b'",    {"ab"});
+  test("\"a\'\"",   {"a\'"});
+  test("\'\\\'",    {"\\"});
+  test("\"\\\\\"",  {"\\"});
+  test("'\"'",      {"\""});
+  test("\"'\"",     {"'"});
   TEST_END();
 }
 #endif

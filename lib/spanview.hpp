@@ -1,6 +1,8 @@
 #ifndef SPANVIEW_HPP
 #define SPANVIEW_HPP
 
+#include <cstddef>
+
 /* SpanView:
  * [0] [1] [2] [3] <- index
  * [a] [b]         <- Underlying container
@@ -9,19 +11,28 @@
  */
 template<typename TContainer>
 struct SpanView {
-  SpanView() : _container(NULL) {}
-  SpanView(TContainer& container) : _container(&container) {}
-  SpanView& operator=(const SpanView& rhs) { _container = rhs._container; return *this; }
+  SpanView()
+    : _container(NULL)
+  {}
 
-  typename TContainer::value_type get(size_t size, size_t index) {
+  SpanView(TContainer& container)
+    : _container(&container)
+  {}
+
+  SpanView& operator=(const SpanView& rhs)
+  { _container = rhs._container; return *this; }
+
+  typename TContainer::value_type get(const size_t size, const size_t index) {
     size_t i = _container->size() * index / size;
     return (*_container)[i];
   }
 
-  typename TContainer::value_type get2(size_t size, size_t index) {
-    size_t i = _container->size() * index * 2 / size;
-    if (i >= _container->size())
-      i = _container->size() - (i - _container->size() + 1);
+  // index=4 size=7 container_size=3
+  typename TContainer::value_type get2(const size_t size, const size_t index) {
+    const size_t container_size = _container->size();
+    size_t i = container_size * index * 2 / size;
+    if (i >= container_size)
+      i = container_size - (i - container_size + 1);
     return (*_container)[i];
   }
 

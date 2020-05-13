@@ -78,19 +78,19 @@ int main() {
   Config::init();
 
   for (int colors : {0, 8, 256}) {
-    if (colors <= COLORS) {
-      Theme::loadThemeByColors(colors); // TODO
+    if (colors > COLORS)
+      break;
+    Theme::loadThemeByColors(colors);
   
-      ProgressBar b;
-      b.layout({0,0}, {LINES,COLS});
-      for (;;)
-        for (float f = 0.0; f < 1; f += 0.01) {
-          b.setPercent(f);
-          b.noutrefresh();
-          doupdate();
-          usleep(1000 * 30);
-        }
-    }
+    ProgressBar b;
+    b.layout({0,0}, {LINES,COLS});
+    for (;;)
+      for (float f = 0.0; f < 1; f += 0.01) {
+        b.setPercent(f);
+        b.noutrefresh();
+        doupdate();
+        usleep(1000 * 30);
+      }
   }
 
   TEST_END();

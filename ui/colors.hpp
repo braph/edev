@@ -3,15 +3,21 @@
 
 #include CURSES_INC
 
-#include <vector>
+#include <array>
 #include <string>
 
 namespace UI {
 
 class Color {
 public:
-  static std::string to_string(short);
-  static short parse(const std::string&, short on_error_return) noexcept;
+  struct ParseResult {
+    short color;
+    bool  ok;
+    inline operator short() const noexcept { return color; }
+  };
+
+  static ParseResult parse(const std::string&) noexcept;
+  static std::string to_string(short) noexcept;
 private:
   struct mapping { const char* name; short value; };
   static mapping colors[];
@@ -19,8 +25,14 @@ private:
 
 class Attribute {
 public:
-  static std::string to_string(unsigned int);
-  static unsigned int parse(const std::string&) noexcept;
+  struct ParseResult {
+    unsigned int attribute;
+    bool         ok;
+    inline operator unsigned int() const noexcept { return attribute; }
+  };
+
+  static ParseResult parse(const std::string&) noexcept;
+  static std::string to_string(unsigned int) noexcept;
 private:
   struct mapping { const char* name; unsigned int value; };
   static mapping attributes[];
@@ -28,11 +40,12 @@ private:
 
 class Colors {
 public:
-  static int create_color_pair(short, short);
-  static unsigned int set(short fg, short bg = -1, unsigned int attributes = 0);
+  static int create_color_pair(short, short) noexcept;
+  static unsigned int set(short fg, short bg = -1, unsigned int attributes = 0) noexcept;
   static void reset() noexcept;
 private:
-  static std::vector<unsigned int> color_pairs;
+  struct color_pair { short fg; short bg; };
+  static std::array<color_pair, 256> color_pairs;
   static int last_id;
 };
 

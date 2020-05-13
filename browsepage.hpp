@@ -2,23 +2,28 @@
 #define BROWSEPAGE_HPP
 
 #include "lib/xml.hpp"
+#include "lib/iterator/iterator_pair.hpp"
 
 #include <ctime>
 #include <string>
 #include <vector>
+
+#ifndef NDEBUG
 #include <iosfwd>
+#endif
 
 struct Style {
   std::string url;
   std::string name;
 
-  Style(std::string url, std::string name)
+  inline Style(std::string url, std::string name)
   : url(std::move(url))
   , name(std::move(name))
-  {
-  }
+  {}
 
+#ifndef NDEBUG
   friend inline std::ostream& operator<<(std::ostream&, const Style&);
+#endif
 };
 
 struct Track {
@@ -30,13 +35,15 @@ struct Track {
   short       length;
   short       number;
 
-  Track()
+  inline Track()
   : bpm(0)
   , length(0)
   , number(0)
   {}
 
+#ifndef NDEBUG
   friend inline std::ostream& operator<<(std::ostream&, const Track&);
+#endif
 };
 
 struct Album {
@@ -54,7 +61,7 @@ struct Album {
   std::vector<Style> styles;
   std::vector<Track> tracks;
 
-  Album()
+  inline Album()
   : date(0)
   , download_count(0)
   , votes(0)
@@ -66,11 +73,13 @@ struct Album {
     archive_urls.reserve(3);
   }
 
-  inline bool empty() {
+  inline bool empty() const noexcept {
     return tracks.empty();
   }
 
+#ifndef NDEBUG
   friend inline std::ostream& operator<<(std::ostream&, const Album&);
+#endif
 };
 
 class BrowsePageParser {
@@ -83,8 +92,7 @@ private:
   Html::Doc doc;
   Xml::XPath xpath;
   Xml::XPathResult xpath_albums;
-  Xml::XPathResult::iterator xpath_albums_it;
-  Xml::XPathResult::iterator xpath_albums_end;
+  IteratorPair<Xml::XPathResult::iterator> xpath_albums_it;
 };
 
 #endif

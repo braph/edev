@@ -3,6 +3,7 @@
 
 // Stolen and adapted from https://github.com/alipha/cpp/blob/master/switch_pack/switch_pack.h
 
+// TODO: add  7bit-ascii pack (enables 1 more char) ?
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -17,21 +18,21 @@ using std::size_t;
 using std::uint8_t;
 using std::uint64_t;
 using conv_func = uint8_t(*)(uint8_t);
-enum:uint64_t { overflow = ~static_cast<uint64_t>(0) };
+enum : uint64_t { overflow = ~uint64_t(0) };
 
 // ============================================================================
 // Helper
 // ============================================================================
 
 constexpr int bitlength(unsigned char i) {
-  return (
+  return
     i < 2   ? 1 :
     i < 4   ? 2 :
     i < 8   ? 3 :
     i < 16  ? 4 :
     i < 32  ? 5 :
     i < 64  ? 6 :
-    i < 128 ? 7 : 8);
+    i < 128 ? 7 : 8;
 }
 
 template<conv_func conv>
@@ -69,13 +70,17 @@ template<
   size_t max_length = conv_max_strlen<conv>()
 >
 constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
-  static_assert(bit_shift == conv_shift_count<conv>(), "Template parameter is not meant to be set by the user!");
-  static_assert(max_length == conv_max_strlen<conv>(), "Template parameter is not meant to be set by the user!");
+  static_assert(bit_shift == conv_shift_count<conv>(), "DO NOT SET THIS TEMPLATE PARAMETER");
+  static_assert(max_length == conv_max_strlen<conv>(), "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
 
-  return i < N - 1
-    ? (static_cast<uint64_t>(conv(s[i])) << (i * bit_shift)) | pack_compiletime<conv>(s, i + 1)
-    : 0;
+  return
+    (i < N - 1) ? (
+      pack_compiletime<conv>(s, i + 1) |
+      uint64_t(conv(uint8_t(s[i]))) << (i * bit_shift)
+    ) : (
+      0
+    );
 }
 
 /**
@@ -84,31 +89,27 @@ constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
  * Returns the packed chars of `s` as an integer or `overflow` if the
  * input string exceeded the maximum length.
  */
-template<
-  conv_func conv,
-  size_t bit_shift = conv_shift_count<conv>(),
-  size_t max_length = conv_max_strlen<conv>()
->
+template< conv_func conv >
 uint64_t pack_runtime(const char* s) noexcept {
-  static_assert(bit_shift == conv_shift_count<conv>(), "Template parameter is not meant to be set by the user!");
-  static_assert(max_length == conv_max_strlen<conv>(), "Template parameter is not meant to be set by the user!");
+  enum : size_t {
+    bit_shift = conv_shift_count<conv>(),
+    max_length = conv_max_strlen<conv>()
+  };
 
   uint64_t result = 0;
 
   for (size_t i = 0; i < max_length && *s; ++i)
-    result |= static_cast<uint64_t>(conv(*s++)) << (i * bit_shift);
+    result |= uint64_t(conv(uint8_t(*s++))) << (i * bit_shift);
 
   return *s ? overflow : result;
 }
 
-template<
-  conv_func conv,
-  size_t bit_shift = conv_shift_count<conv>(),
-  size_t max_length = conv_max_strlen<conv>()
->
+template< conv_func conv >
 uint64_t pack_runtime(const char* s, size_t len) noexcept {
-  static_assert(bit_shift == conv_shift_count<conv>(), "Template parameter is not meant to be set by the user!");
-  static_assert(max_length == conv_max_strlen<conv>(), "Template parameter is not meant to be set by the user!");
+  enum : size_t {
+    bit_shift = conv_shift_count<conv>(),
+    max_length = conv_max_strlen<conv>()
+  };
 
   if (len > max_length)
     return overflow;
@@ -116,12 +117,11 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
   uint64_t result = 0;
   while (len) {
     --len;
-    result |= static_cast<uint64_t>(conv(s[len])) << (len * bit_shift);
+    result |= uint64_t(conv(uint8_t(s[len]))) << (len * bit_shift);
   }
 
   return result;
 }
-
 
 // ============================================================================
 // Building blocks for creating sets of possible `character sets`
@@ -185,39 +185,32 @@ inline constexpr uint8_t unmatched(uint8_t) {
 
 template< conv_func conv >
 struct packer {
-  // `const(!) char[]` is the only case where we want *compile time* implementation!
+  // `_const_ char[]` is the only case where we want *compile time* implementation!
   template<size_t N>
-  static inline constexpr uint64_t pack(const char (&s)[N]) noexcept {
-    return pack_compiletime<conv, N>(s, 0);
-  }
+  static inline constexpr uint64_t pack(const char (&s)[N]) noexcept
+  { return pack_compiletime<conv, N>(s, 0); }
 
   template<size_t N>
-  static inline constexpr uint64_t pack(char (&s)[N]) noexcept {
-    static_assert(N&&0, "Please use `pack_runtime` for non-const char");
-    return pack_compiletime<conv, N>(s, 0);
-  }
+  static inline constexpr uint64_t pack(char (&s)[N]) noexcept
+  { static_assert(N&&0, "Please use `pack_runtime` for non-const char"); return 0; }
 
-#if 0
-  static inline constexpr uint64_t pack(const char *s) noexcept {
-    static_assert(0, "pack_constexpr only works on `const char[]`");
-    return pack_compiletime<conv, N>(s, 0);
-  }
-#endif
+  // pack_runtime() ===========================================================
+  static inline uint64_t pack_runtime(const char* s) noexcept
+  { return StringPack::pack_runtime<conv>(s); }
 
-  // pack_runtime =============================================================
-  static inline uint64_t pack_runtime(const char* s) noexcept {
-    return StringPack::pack_runtime<conv>(s);
-  }
+  static inline uint64_t pack_runtime(const unsigned char* s) noexcept
+  { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s)); }
 
-  static inline uint64_t pack_runtime(const char* s, size_t len) noexcept {
-    return StringPack::pack_runtime<conv>(s, len);
-  }
+  static inline uint64_t pack_runtime(const char* s, size_t len) noexcept
+  { return StringPack::pack_runtime<conv>(s, len); }
 
-  static inline uint64_t pack_runtime(const std::string& s) noexcept {
-    return StringPack::pack_runtime<conv>(s.c_str(), s.size());
-  }
+  static inline uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept
+  { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s), len); }
 
-  // pack() ===================================================================
+  static inline uint64_t pack_runtime(const std::string& s) noexcept
+  { return StringPack::pack_runtime<conv>(s.c_str(), s.size()); }
+
+  // packer() =================================================================
   uint64_t _s;
 
   template<size_t N>
@@ -237,13 +230,11 @@ struct packer {
   }
 
   // Information ==============================================================
-  static inline constexpr size_t max_size() noexcept {
-    return conv_max_strlen<conv>();
-  }
+  static inline constexpr size_t max_size() noexcept
+  { return conv_max_strlen<conv>(); }
 
-  static inline constexpr int bit_shift() noexcept {
-    return conv_shift_count<conv>();
-  }
+  static inline constexpr int bit_shift() noexcept
+  { return conv_shift_count<conv>(); }
 };
 
 using Generic     = packer<all>;
@@ -265,7 +256,7 @@ using AlnumNoCase = packer<numeric<alpha_nocase<character<'_', unmatched>>>>;
 
 // Check if all pack algorithms give the same result
 #define test(CLASS, C_STRING) do { \
-  assert(CLASS::pack_runtime(C_STRING) == CLASS::pack(C_STRING)); \
+  assert(CLASS::pack_runtime(C_STRING)              == CLASS::pack(C_STRING)); \
   assert(CLASS::pack_runtime(std::string(C_STRING)) == CLASS::pack(C_STRING)); \
 } while(0)
 
@@ -276,16 +267,16 @@ int main() {
 
     const char* s = "123456789";
     switch (C::pack_runtime(s)) {
-      case C("123456789"):
-        std::cout << "Success!\n";
+      case C("123456789"): break;
+      default:             throw;
     }
   }
 
   {
     using SC = StringPack::AlphaNoCase;
     switch (SC::pack_runtime("progressBar")) {
-      case SC::pack("progressbar"):
-        std::cout << "Success!\n";
+      case SC::pack("progressbar"): break;
+      default:                      throw;
     }
   }
 

@@ -1,26 +1,26 @@
 #include "browsepage.hpp"
 
 #include "ektoplayer.hpp"
+#include "base64.cpp"
+
 #include "lib/sscan.hpp"
 #include "lib/cstring.hpp"
+#include "lib/stringpack.hpp"
 
-//#include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
-//#include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/classification.hpp> // is_any_of
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
 
 #include <string>
-#include <iostream>
-#include <algorithm>    
+#include <cctype>
 
-//using boost::algorithm::trim;
-//using boost::algorithm::trim_if;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
-//using boost::algorithm::erase_all;
+using pack = StringPack::Generic;
 
+static const auto is_comma = boost::algorithm::is_any_of(",");
+
+#ifndef NDEBUG
+#include <iostream>
 inline std::ostream& operator<<(std::ostream& o, const Style& s) {
   return o << s.url << '|' << s.name;
 }
@@ -54,80 +54,106 @@ inline std::ostream& operator<<(std::ostream& o, const Album& a) {
   o << "\nTracks:      "; for (auto& t : a.tracks)       { o << '\n' << t; }
   return o;
 }
+#endif
 
 static void fix_album_data(Album& album);
 static inline const char* safe_str(const char* s) { return (s ? s : ""); }
 
-static std::string base64_decode(const char* begin, const char* end) {
-  using namespace boost::archive::iterators;
-  using DecIt = transform_width<binary_from_base64<std::string::const_iterator>, 8, 6>;
-  std::string r;
-  r.reserve(size_t(end-begin));
-
-  try {
-    auto it_end = DecIt(end);
-    for (auto it = DecIt(begin); it != it_end; ++it)
-      r.push_back(*it);
-  } catch (...) {}
-
-  return r;
-}
-
 struct XPathExpressionCache {
-  std::vector<std::pair<std::string, xmlXPathCompExprPtr>> _compExprPtrs;
+  struct {
+    size_t len;
+    const char* str;
+    xmlXPathCompExprPtr compExpr;
+  } Entries[13];
 
-  template<size_t size>
-  xmlXPathCompExprPtr operator[](const char (&expr)[size]) {
-    return get(&expr[0], size - 1);
+  XPathExpressionCache() : Entries() {}
+
+  template<size_t N>
+  inline xmlXPathCompExprPtr operator[](const char (&expr)[N]) {
+    return get(&expr[0], N - 1);
   }
 
   xmlXPathCompExprPtr get(const char* expr, size_t len) {
-    for (const auto& pair : _compExprPtrs)
-      if (pair.first.length() == len && pair.first == expr)
-        return pair.second;
+    for (auto& e : Entries)
+      if (! e.compExpr) {
+        e.len = len;
+        e.str = expr;
+        return (e.compExpr = xmlXPathCompile(reinterpret_cast<const xmlChar*>(expr)));
+      }
+      else if (e.len == len && !std::strcmp(e.str, expr))
+        return e.compExpr;
 
-    _compExprPtrs.push_back({expr, xmlXPathCompile(reinterpret_cast<const xmlChar*>(expr))});
-    return _compExprPtrs.back().second;
+    abort();
   }
 };
 
 XPathExpressionCache cache;
 
-static void startElementUser(void* ctxt, const xmlChar* name, const xmlChar** _attrs) {
-  const char** attrs = reinterpret_cast<const char**>(_attrs);
+static void startElementUser(void* ctxt, const xmlChar* name, const xmlChar** attrs) {
+  // total heap usage: 7,827,521 allocs, 7,827,402 frees, 840,546,531 bytes allocated
+  // total heap usage: 7,429,129 allocs, 7,429,011 frees, 810,903,274 bytes allocated
+  enum AttributeEnum : unsigned int { CLASS = 1, HREF = 2, SRC = 4 };
+  unsigned int keep = 0;
+  switch (pack::pack_runtime(name)) {
+    case pack("a"):     keep = HREF;         break;
+    case pack("img"):   keep = SRC|CLASS;    break;
+    // Keep tags and "class"
+    case pack("div"):
+    case pack("span"):
+    case pack("p"):     keep = CLASS;
+    // Keep those tags (without attributes)
+    case pack("i"):
+    case pack("b"):
+    case pack("em"):    
+    case pack("strong"):
+    case pack("h1"):
+    case pack("br"):
+    case pack("script"): break;
+    default: return; // discard other tags
+  }
+  
+  if (attrs == reinterpret_cast<const xmlChar**>(1))
+    return xmlSAX2EndElement(ctxt, name);
 
-  const char* new_attrs[30];
   int i = 0;
-
-  if (attrs)
-    for (; *attrs; attrs += 2)
-      if (! std::strcmp(*attrs, "href") ||
-          ! std::strcmp(*attrs, "id") ||
-          ! std::strcmp(*attrs, "class") ||
-          ! std::strcmp(*attrs, "src")) {
-        new_attrs[i++] = *(attrs);
-        new_attrs[i++] = *(attrs+1);
+  const xmlChar* new_attrs[10] = {};
+  if (attrs) {
+    for (; keep && *attrs; attrs += 2) {
+      AttributeEnum ae;
+      switch (pack::pack_runtime(*attrs)) {
+        case pack("href"):  ae = HREF;  break;
+        case pack("class"): ae = CLASS; break;
+        case pack("src"):   ae = SRC;   break;
+        default: continue;
       }
 
-  new_attrs[i] = NULL;
+      keep -= ae;
+      new_attrs[i++] = *(attrs);
+      new_attrs[i++] = *(attrs+1);
+    }
+  }
 
-  xmlSAX2StartElement(ctxt,name,reinterpret_cast<const xmlChar**>(new_attrs));
+  xmlSAX2StartElement(ctxt, name, new_attrs);
+}
+
+static void endElementUser(void* ctxt, const xmlChar* name) {
+  startElementUser(ctxt, name, reinterpret_cast<const xmlChar**>(1));
 }
 
 BrowsePageParser :: BrowsePageParser(const std::string& source)
 : doc(Html::readDoc(source, NULL, NULL,
-      HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|
-      HTML_PARSE_COMPACT|HTML_PARSE_NOBLANKS))
+    HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_COMPACT|HTML_PARSE_NOBLANKS))
 , xpath(doc.xpath())
-, xpath_albums(xpath.query(cache["//div[starts-with(@id, 'post-')]"]))
-, xpath_albums_it(xpath_albums.begin())
-, xpath_albums_end(xpath_albums.end())
+, xpath_albums(xpath.query(cache["//div[@class = 'post']"]))
+, xpath_albums_it(xpath_albums)
 {
   xmlSetBufferAllocationScheme(XML_BUFFER_ALLOC_DOUBLEIT);
 
   htmlDefaultSAXHandler.comment = NULL;
   htmlDefaultSAXHandler.cdataBlock = NULL;
+  htmlDefaultSAXHandler.ignorableWhitespace = NULL;
   htmlDefaultSAXHandler.startElement = startElementUser;
+  htmlDefaultSAXHandler.endElement = endElementUser;
 }
 
 int BrowsePageParser :: num_pages() {
@@ -135,7 +161,7 @@ int BrowsePageParser :: num_pages() {
   auto result = xpath.query_string(cache["string(//span[@class = 'pages']/text())"]);
   if (result) {
     const char* s = result.c_str();
-    s = strrchr(s, ' ');
+    s = std::strrchr(s, ' ');
     if (s)
       return std::atoi(s);
   }
@@ -156,21 +182,22 @@ int BrowsePageParser :: get_base_url() {
 Album BrowsePageParser :: next_album() {
   Album album;
 
-  if (xpath_albums_it == xpath_albums_end)
+  if (! xpath_albums_it)
     return album;
 
-  Xml::Node post = *xpath_albums_it;
-  ++xpath_albums_it;
+  Xml::Node post = xpath_albums_it.next();
 
   // Date
   auto date = xpath.query_string(cache["string(.//span[@class = 'd']/text())"], post);
-  if (date) { // TODO: make this prettier + case insensitive
-    const char* months = "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec";
+  if (date) {
     std::tm t = {};
-    char month[32];
-    std::sscanf(date.c_str(), "%s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
-    month[3] = '\0';
+    char month[4] = {};
+    std::sscanf(date.c_str(), " %3c %*s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
     t.tm_year -= 1900;
+    month[0] = std::toupper(month[0]);
+    month[1] = std::toupper(month[1]);
+    month[2] = std::toupper(month[2]);
+    const char  months[] = "JAN" "FEB" "MAR" "APR" "MAY" "JUN" "JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
     const char* found_month = std::strstr(months, month);
     if (found_month)
       t.tm_mon = (months - found_month) / 3;
@@ -180,6 +207,7 @@ Album BrowsePageParser :: next_album() {
   // Download count
   auto dc = xpath.query_string(cache["string(.//span[@class = 'dc']//strong/text())"], post);
   if (dc) {
+    // TODO: fix this.
     album.download_count = std::atoi(erase_all(dc.c_str(), ','));
   }
 
@@ -230,11 +258,9 @@ Album BrowsePageParser :: next_album() {
     if (! (base64_end = std::strchr(++base64_begin, '"')))
       continue;
 
-    std::string result = base64_decode(base64_begin, base64_end);
-    split(tracks, result, is_any_of(","));
-
-    if (tracks.size())
-      break;
+    std::string result = b64decode(base64_begin, base64_end-base64_begin);
+    split(tracks, result, is_comma);//(","));
+    break;
   }
 
   // This should only happen on `.../dj-basilisk-the-colours-of-ektoplazm`
@@ -247,13 +273,12 @@ Album BrowsePageParser :: next_album() {
 
   // Assign metadata to track urls
   // - There may be multiple tracklists (evidence url?)
-  auto track_urls_iter = tracks.begin();
-  auto track_urls_end  = tracks.end();
+  auto track_urls_iter = make_iterator_pair(tracks);
   for (const auto& tracklist : xpath.query(cache[".//div[@class = 'tl']"], post)) {
     Track track;
     for (const auto& span : xpath.query(cache[".//span"], tracklist)) {
-      switch (span["class"][0]) {
-        case 'n':
+      switch (pack::pack_runtime(span["class"])) {
+        case pack("n"):
           if (! track.url.empty()) {
             album.tracks.push_back(std::move(track));
             track = Track();
@@ -262,19 +287,19 @@ Album BrowsePageParser :: next_album() {
           track.number = std::atoi(safe_str(span.nearestContent()));
           if (album.isSingleURL)
             track.url = *track_urls_iter;
-          else if (track_urls_iter != track_urls_end)
-            track.url = std::move(*track_urls_iter++);
+          else if (track_urls_iter)
+            track.url = std::move(track_urls_iter.next());
           break;
-        case 't':
+        case pack("t"):
           trim((track.title = span.allText()));
           break;
-        case 'r':
+        case pack("r"):
           trim((track.remix = span.allText()), "\t ()");
           break;
-        case 'a':
+        case pack("a"):
           trim((track.artist = span.allText()));
           break;
-        case 'd':
+        case pack("d"):
           const char* s = span.nearestContent();
           if (s) {
             if (std::strchr(s, ':')) { // "(4:32)"
@@ -302,7 +327,7 @@ static inline size_t find_dash(const std::string& s, size_t& dash_len) {
   size_t pos;
   if ((pos = s.find("–")) != std::string::npos) // Unicode dash (precedence!)
     dash_len = sizeof("–") - 1;
-  else if ((pos = s.find("-")) != std::string::npos) // ASCII dash
+  else if ((pos = s.find('-')) != std::string::npos) // ASCII dash
     dash_len = 1;
   return pos;
 }

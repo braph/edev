@@ -24,5 +24,5 @@ extern PlaylistColumns browser_columns;
 extern PlaylistColumns playlist_columns;
 extern PlaylistColumns browser_columns_256;
 extern PlaylistColumns playlist_columns_256;
-extern std::vector<std::string> main_widgets;
-extern std::vector<std::string> tabs_widgets;
+extern std::array<Views::TabWidgets, 5> tabs_widgets;
+extern std::array<Views::MainWidgets, 5> main_widgets;

@@ -3,6 +3,7 @@
 
 #include "views/playlist.hpp"
 #include "views/infoline.hpp"
+#include "views/mainwindow.hpp"
 
 #include <string>
 #include <vector>

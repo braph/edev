@@ -1,22 +1,28 @@
 #ifndef UPDATER_HPP
 #define UPDATER_HPP
 
+#include "lib/downloads.hpp"
+
 #include <string>
+#include <cstdint>
 
 class Album;
-class Downloads;
 namespace Database { class Database; }
 
 class Updater {
 public:
-  Updater(Database::Database&, Downloads&);
-  bool start(int pages); // 0->all, N=>from start, -N=>from end
+  Updater(Database::Database&)    noexcept;
+  bool start(int pages = INT_MAX) noexcept;
+  Downloads& downloads()          noexcept { return _downloads; }
 
 #ifndef TEST_UPDATER
 private:
 #endif
-  Database::Database& db;
-  Downloads& downloads;
+  Database::Database& _db;
+  Downloads _downloads;
+  int _max_pages;
+
+  void fetch_page(int) noexcept;
   void insert_album(Album&);
   void insert_browsepage(const std::string&);
 };

@@ -37,7 +37,7 @@ public:
 
 private:
   pid_t _pid;
-  bool closed; // TODO: _closed
+  bool _closed;
 
   pid_t open(std::function<void()>, bool, bool, bool) noexcept;
   void close_fds() noexcept;

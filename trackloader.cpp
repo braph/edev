@@ -1,13 +1,12 @@
 #include "trackloader.hpp"
 
-#include "lib/downloads.hpp"
-#include "lib/filesystem.hpp"
-#include "config.hpp"
 #include "ektoplayer.hpp"
+#include "config.hpp"
 #include "log.hpp"
 
-TrackLoader :: TrackLoader(Downloads& downloads)
-: downloads(downloads)
+#include "lib/filesystem.hpp"
+
+TrackLoader :: TrackLoader()
 {
 }
 
@@ -65,14 +64,14 @@ std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool f
   FileDownload* download = new FileDownload(track_url, destination_file.string());
   download->onFinished = [=](Download& _dl, CURLcode e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
+    log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(e), dl.httpCode());
     if (! (e == CURLE_OK && dl.httpCode() == 200)) {
       Filesystem::error_code ec;
       Filesystem::remove(dl.filename(), ec);
     }
-    log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(e), dl.httpCode());
   };
 
-  downloads.addDownload(download, Downloads::HIGH);
+  _downloads.addDownload(download);
   return download->filename();
 }
 

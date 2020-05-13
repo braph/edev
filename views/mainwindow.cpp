@@ -2,12 +2,10 @@
 #include "../bindings.hpp"
 #include "../config.hpp"
 
-#include "../lib/switch.hpp"
-
 using namespace UI;
 using namespace Views;
-using pack = StringPack::AlphaNoCase;
 
+#define case break;case
 MainWindow :: MainWindow(Context& ctxt)
 : infoLine()
 , progressBar()
@@ -22,32 +20,41 @@ MainWindow :: MainWindow(Context& ctxt)
 {
   readlineWidget.visible = false;
 
-  for (const auto& w : Config::main_widgets) {
-    switch (pack::pack_runtime(w)) {
-      case pack("infoline"):      addWidget(&infoLine);         break;
-      case pack("progressbar"):   addWidget(&progressBar);      break;
-      case pack("tabbar"):        addWidget(&tabBar);           break;
-      case pack("readline"):      addWidget(&readlineWidget);   break;
-      case pack("windows"):       addWidget(&windows);          break;
-      default: assert(!"not reached");
+  for (auto w : Config::main_widgets) {
+    switch (w) {
+      case MainWidgets::NONE:
+      case MainWidgets::INFOLINE:     addWidget(&infoLine);
+      case MainWidgets::PROGRESSBAR:  addWidget(&progressBar);
+      case MainWidgets::TABBAR:       addWidget(&tabBar);
+      case MainWidgets::READLINE:     addWidget(&readlineWidget);
+      case MainWidgets::WINDOWS:      addWidget(&windows);
     }
   }
 
   setCurrentIndex(indexOf(&windows));
 
-  for (const auto& w : Config::tabs_widgets) {
-    switch (pack::pack_runtime(w)) {
-      case pack("splash"):    windows.addWidget(&splash);       break;
-      case pack("playlist"):  windows.addWidget(&playlist);     break;
-      case pack("browser"):   windows.addWidget(&playlist);     break; /*TODO*/
-      case pack("info"):      windows.addWidget(&info);         break;
-      case pack("help"):      windows.addWidget(&help);         break;
-      default: assert(!"not reached");
+  for (auto w : Config::tabs_widgets) {
+    switch (w) {
+      case TabWidgets::NONE:
+      case TabWidgets::SPLASH:
+        windows.addWidget(&splash);
+        tabBar.addTab("splash");
+      case TabWidgets::PLAYLIST:
+        windows.addWidget(&playlist);
+        tabBar.addTab("playlist");
+      case TabWidgets::BROWSER:
+        windows.addWidget(&playlist); // TODO
+        tabBar.addTab("browser");
+      case TabWidgets::INFO:
+        windows.addWidget(&info);
+        tabBar.addTab("info");
+      case TabWidgets::HELP:
+        windows.addWidget(&help);
+        tabBar.addTab("help");
     }
-
-    tabBar.addTab(w);
   }
 }
+#undef case
 
 void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction callback) {
   readlineWidget.visible = true;

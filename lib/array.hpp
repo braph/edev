@@ -3,6 +3,7 @@
 
 /**
  * Wrapper for a dynamically allocated array
+ * XXX: This name is utterly bad
  */
 template<typename T>
 class Array {
@@ -17,13 +18,24 @@ public:
  ~Array()
   { delete[] _data; }
 
-  size_t   size()                   const noexcept { return _size;         }
-  T*       begin()                        noexcept { return &_data[0];     }
-  T*       end()                          noexcept { return &_data[_size]; }
-  T const* begin()                  const noexcept { return &_data[0];     }
-  T const* end()                    const noexcept { return &_data[_size]; }
-  T&       operator[](size_t index)       noexcept { return _data[index];  }
-  T const& operator[](size_t index) const noexcept { return _data[index];  }
+  // Access operations ========================================================
+
+  bool     empty()              const noexcept { return _size == 0;     }
+  size_t   size()               const noexcept { return _size;          }
+  size_t   max_size()           const noexcept { return _size;          } // ?
+  size_t   capacity()           const noexcept { return _size;          } // ?
+  T*       begin()                    noexcept { return &_data[0];      }
+  T const* begin()              const noexcept { return &_data[0];      }
+  T*       end()                      noexcept { return &_data[_size];  }
+  T const* end()                const noexcept { return &_data[_size];  }
+  T&       operator[](size_t i)       noexcept { return _data[i];       }
+  T const& operator[](size_t i) const noexcept { return _data[i];       }
+  T&       front()                    noexcept { return _data[0];       }
+  T const& front()              const noexcept { return _data[0];       }
+  T&       back()                     noexcept { return _data[_size-1]; }
+  T const& back()               const noexcept { return _data[_size-1]; }
+  T*       data()                     noexcept { return &_data[0];      }
+  T const* data()               const noexcept { return &_data[0];      }
 
 private:
   T*     _data;

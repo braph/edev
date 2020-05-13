@@ -1,18 +1,20 @@
 #ifndef TRACKLOADER_HPP
 #define TRACKLOADER_HPP
 
-class Downloads;
 #include "database.hpp" // TODO: get rid of this!
+
+#include "lib/downloads.hpp"
 
 #include <string>
 
 class TrackLoader {
 public:
+  TrackLoader();
   std::string getFileForTrack(Database::Tracks::Track, bool force_reload=false);
 //void downloadAlbum(const Database::Tracks::Track&);
-  TrackLoader(Downloads&);
+  Downloads& downloads() noexcept { return _downloads; }
 private:
-  Downloads& downloads;
+  Downloads _downloads;
 };
 
 #endif

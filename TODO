@@ -1,7 +1,5 @@
+- compress,nonnegative set
 - bit_tools, do it !!!
-- boost::algorithm::starts_with() -- replace?
-- getFileForTrack->rename and don't move the file!file
-- TrackLoader remove dependency Downloads
 - Context -> RegistryPattern -> or globals?
 - private -> protected
 - wtf xml.hpp that optimization did'nt work?!
@@ -17,12 +15,17 @@ x config: temp -> $TEMP
 - config: prefetch
 - Downloads: unique_ptr <<< shall Downloads own a Download?
 - Browsepage: more scanner usage
+- [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
 - xml.hpp: iterators
 - Vector: __enter__ __leave__
-- [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
-- replace cout/cerr/fstreams
 - remove exceptions
 - replace ui/colors vector<unsigned>
+- packedvector::operator[] ---- const char* get(size_t i) noexcept { // TODO: this should be const!
+- This is what you to NEXT!
+- config.hpp:
+-   remove exceptions
+- add pprintpp
+- CURLMOPT_MAX_TOTAL_CONNECTIONS
 
 total heap usage: 6,802 allocs, 6,312 frees, 4,567,167 bytes allocated
 

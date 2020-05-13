@@ -6,26 +6,35 @@
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp" // XXX
 #include "../lib/steppablesearch.hpp"
-
-#include <vector>
+#include "../lib/staticvector.hpp"
 
 struct PlaylistColumnFormat {
-  enum Justification { Right, Left };
+  enum class Justify : unsigned char { Left, Right };
 
   Database::ColumnID tag;
   short fg;
   short bg;
   short size;
   bool relative;
-  enum Justification justify;
+  Justify justify;
 
-  PlaylistColumnFormat()
-    : tag(Database::COLUMN_NONE), fg(-1), bg(-1), size(0), relative(false), justify(Left)
-  {
-  }
+  PlaylistColumnFormat(
+    Database::ColumnID tag_ = Database::COLUMN_NONE,
+    short fg_ = -1,
+    short bg_ = -1,
+    short size_ = 0,
+    bool relative_ = false,
+    Justify justify_ = Justify::Left)
+  : tag(tag_)
+  , fg(fg_)
+  , bg(bg_)
+  , size(size_)
+  , relative(relative_)
+  , justify(justify_)
+  {}
 };
 
-typedef std::vector<PlaylistColumnFormat> PlaylistColumns;
+using PlaylistColumns = StaticVector<PlaylistColumnFormat, 10>;
 
 namespace Views {
 

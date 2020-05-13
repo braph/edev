@@ -2,7 +2,6 @@
 
 #include "ektoplayer.hpp"
 #include "trackloader.hpp"
-#include "lib/downloads.hpp"
 #include "database.hpp"
 #include "bindings.hpp"
 #include "updater.hpp"
@@ -12,18 +11,18 @@
 #include "log.hpp"
 #include "views/mainwindow.hpp"
 
-#include <locale.h>
+#include "lib/cstring.hpp"
+
 #include <libxml/xmlversion.h>
 
-#include <boost/algorithm/string/predicate.hpp>
-
+#include <clocale>
 #include <csignal>
 #include <type_traits>
 
 namespace fs = Filesystem;
 
-static volatile int currentSIGNAL;
-static void on_SIGNAL(int sig) { currentSIGNAL = sig; }
+static volatile int current_signal;
+static void on_signal(int sig) { current_signal = sig; }
 
 class Application {
 public:
@@ -33,7 +32,6 @@ public:
   void run();
 private:
   Database::Database database;
-  Downloads downloads;
   Updater updater;
   TrackLoader trackloader;
   Mpg123Player player;
@@ -46,9 +44,8 @@ private:
 
 Application :: Application()
 : database()
-, downloads()
-, updater(database, downloads)
-, trackloader(downloads)
+, updater(database)
+, trackloader()
 , player()
 {
   try {
@@ -60,7 +57,6 @@ Application :: Application()
 
   ctxt.player = &player;
   ctxt.database = &database;
-  ctxt.downloads = &downloads;
   ctxt.trackloader = &trackloader;
 }
 
@@ -68,8 +64,12 @@ Application :: ~Application() {
   endwin();
   cleanup_files();
 
-  database.shrink_to_fit(); // TODO: maybe alloc fails - write unshrinked first?
-  const char* err = database.save(Config::database_file);
+  const char* err;
+  // Write unoptimized database just in case shrink() fails
+  if (! (err = database.save(Config::database_file))) {
+    database.shrink_to_fit();
+    err = database.save(Config::database_file);
+  }
   if (err)
     printf("Error saving database to file: %s\n", err);
 
@@ -83,7 +83,7 @@ void Application :: init() {
          "\r\n");
  
   // Use the locale from the environment
-  setlocale(LC_ALL, "");
+  std::setlocale(LC_ALL, "");
 
   // Initialize curses
   initscr();
@@ -139,28 +139,28 @@ void Application :: init() {
     database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
     database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
     database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
-    database.pool_meta.reserve(EKTOPLAZM_META_SIZE);
-    database.pool_desc.reserve(EKTOPLAZM_DESC_SIZE);
-    database.pool_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
-    database.pool_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
-    database.pool_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
-    database.pool_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
-    database.pool_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+    database.chunk_meta.reserve(EKTOPLAZM_META_SIZE);
+    database.chunk_desc.reserve(EKTOPLAZM_DESC_SIZE);
+    database.chunk_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
+    database.chunk_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
+    database.chunk_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
+    database.chunk_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
+    database.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
   }
 
   // All colors are beautiful
   Theme::loadThemeByColors(Config::use_colors != -1 ? Config::use_colors : COLORS);
 
-  downloads.setParallel(2);
+  updater.downloads().setParallel(10);
 }
 
 void Application :: run() {
   print_db_stats();
 
   if (database.tracks.size() < 42)
-    updater.start(0); // Fetch all pages
+    updater.start(); // Fetch all pages
   //else if (Config::small_update_pages > 0)
-  //  updater.start(-Config::small_update_pages); // Fetch last N pages
+  //  updater.start(Config::small_update_pages); // Fetch last N pages
 
   Views::MainWindow mainwindow(ctxt);
   ctxt.mainwindow = &mainwindow;
@@ -189,12 +189,12 @@ WINDOW_RESIZE:
   mainwindow.draw();
 
 MAINLOOP:
-  switch (currentSIGNAL) {
+  switch (current_signal) {
     case SIGINT:
     case SIGTERM:
       return;
     case SIGWINCH:
-      currentSIGNAL = 0;
+      current_signal = 0;
       goto WINDOW_RESIZE;
   }
 
@@ -232,15 +232,18 @@ MAINLOOP:
 
   // Do as much download work as possible, be only interrupted by the user
   wtimeout(win, 0);
-  while (downloads.work() /*XXX*/) {
+  while (trackloader.downloads().work() || updater.downloads().work()) {
     if (((key = wgetch(win)) != ERR))
       goto HANDLE_KEY;
   }
 
-  if (downloads.runningDownloads() || downloads.queuedDownloads())
+  if (trackloader.downloads().runningDownloads() ||
+      trackloader.downloads().queuedDownloads() ||
+      updater.downloads().runningDownloads() ||
+      updater.downloads().queuedDownloads())
     wtimeout(win, 100); // Short timeout, want to continue downloading soon
   else if (player.isStopped() || player.isPaused())
-    wtimeout(win, -1); // We have *nothing* to do, wait until user hits a key
+    wtimeout(win, -1);  // We have *nothing* to do, wait until user hits a key
   else
     wtimeout(win, 900); // In playing state we need some UI refreshes
 
@@ -263,7 +266,7 @@ HANDLE_KEY:
 void Application :: cleanup_files() {
   Filesystem::error_code e;
   for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
-    if (boost::algorithm::starts_with(f.path().filename().string(), EKTOPLAZM_TEMP_FILE_PREFIX))
+    if (strprefix(f.path().filename().c_str(), EKTOPLAZM_TEMP_FILE_PREFIX))
       Filesystem::remove(f, e);
 }
 
@@ -273,7 +276,7 @@ void Application :: print_db_stats() {
     log_write("%s (%zu): ", table->name, table->size());
 #if DATABASE_USE_PACKED_VECTOR
     for (const auto& column : table->columns)
-      log_write("%zu|", column->bits());
+      log_write("%d|", column->bits());
 #endif
     log_write("\n");
   }
@@ -281,9 +284,9 @@ void Application :: print_db_stats() {
 
 int main() {
   LIBXML_TEST_VERSION;
-  std::signal(SIGINT, on_SIGNAL);
-  std::signal(SIGTERM, on_SIGNAL);
-  std::signal(SIGWINCH, on_SIGNAL);
+  std::signal(SIGINT, on_signal);
+  std::signal(SIGTERM, on_signal);
+  std::signal(SIGWINCH, on_signal);
 
 #ifndef NDEBUG
   log_write("Running a DEBUG build!\n");

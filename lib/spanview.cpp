@@ -1,27 +1,31 @@
-#include "generic.hpp"
+#include "spanview.hpp"
 
-#ifdef TEST_GENERIC
+#ifdef TEST_SPANVIEW
 #include "test.hpp"
 #include <vector>
 
-void dump(std::vector<int> vec) {
+static void dump(std::vector<int> vec) {
   for (auto it = vec.cbegin(); it != vec.cend(); ++it)
     std::cout << *it << ',';
   std::cout << std::endl;
 }
 
-void test_span_get(std::vector<int> input, size_t output_size, std::vector<int> expected) {
+static void test_span_get(std::vector<int> input, size_t output_size, std::vector<int> expected) {
   SpanView<std::vector<int>> span(input);
   for (size_t i = 0; i < output_size; ++i)
     if (! (span.get(output_size, i) == expected[i]))
       throw std::runtime_error("test_get()");
 }
 
-void test_span_get2(std::vector<int> input, size_t output_size, std::vector<int> expected) {
+static void test_span_get2(std::vector<int> input, size_t output_size, std::vector<int> expected) {
   SpanView<std::vector<int>> span(input);
-  for (size_t i = 0; i < output_size; ++i)
-    if (! (span.get2(output_size, i) == expected[i]))
+  std::cout << std::endl;
+  for (size_t i = 0; i < output_size; ++i) {
+    std::cout << span.get2(output_size, i) << ',';
+    if (! (span.get2(output_size, i) == expected[i])) {
       throw std::runtime_error("test_get2()");
+    }
+  }
 }
 
 int main() {

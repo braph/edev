@@ -3,9 +3,9 @@
 
 #include <curl/curl.h>
 
-#include <deque>
 #include <string>
-#include <fstream>
+#include <vector>
+#include <cstdio>
 #include <functional>
 
 class Downloads;
@@ -62,12 +62,13 @@ private:
 class FileDownload : public Download {
 public:
   FileDownload(const std::string&, std::string);
+ ~FileDownload();
 
   const std::string& filename() const noexcept { return _filename; }
 
 private:
   std::string _filename;
-  std::ofstream _stream;
+  FILE* _fh;
 };
 
 /* ============================================================================
@@ -76,21 +77,20 @@ private:
 
 class Downloads {
 public:
-  enum Priority { LOW, HIGH };
-
   Downloads();
  ~Downloads();
   void setParallel(int);
-  void addDownload(Download*, Priority);
+  void addDownload(Download*);
   int work() noexcept;
 
-  std::deque<Download*>& queue()  noexcept { return _queue;                   }
+  int parallel()            const noexcept { return _parallel;                }
+  std::vector<Download*>& queue() noexcept { return _queue;                   }
   size_t runningDownloads() const noexcept { return size_t(_running_handles); }
   size_t queuedDownloads()  const noexcept { return _queue.size();            }
 
 private:
   CURLM* _curl_multi;
-  std::deque<Download*> _queue;
+  std::vector<Download*> _queue;
   int _parallel;
   int _running_handles;
 };

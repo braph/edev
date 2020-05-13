@@ -68,9 +68,9 @@ void TrackRenderer :: operator()(
     // Clear the column field with spaces
     mvwhline(_win, y, x, ' ', colwidth + 1);
 
-    if (column.justify == PlaylistColumnFormat::Left)
+    if (column.justify == PlaylistColumnFormat::Justify::Left)
       mvwaddnwstr(_win, y, x, value, colwidth);
-    else if (column.justify == PlaylistColumnFormat::Right) {
+    else if (column.justify == PlaylistColumnFormat::Justify::Right) {
       if (int(len) < colwidth)
         mvwaddwstr(_win, y, x + colwidth - int(len), value); // TODO
       else

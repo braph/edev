@@ -130,7 +130,7 @@ Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
 #undef YELLOW
 #undef MAGENTA
 
-bool Theme :: set(ThemeID theme, const std::string &name, short fg, short bg, unsigned int attributes) {
+bool Theme :: set(ThemeID theme, const std::string& name, short fg, short bg, unsigned int attributes) {
   const char* names[ELEMENTID_ENUM_LAST] = {
     "default",
     "url",

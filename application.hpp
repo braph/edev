@@ -5,7 +5,6 @@ namespace Database { class Database; }
 namespace Views { class MainWindow; }
 class Mpg123Player;
 class TrackLoader;
-class Downloads;
 
 struct Context {
   Database::Database*
@@ -16,8 +15,6 @@ struct Context {
     mainwindow;
   TrackLoader*
     trackloader;
-  Downloads*
-    downloads;
 };
 
 #endif

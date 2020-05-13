@@ -1,10 +1,9 @@
 #include "player.hpp"
-
 #include "log.hpp"
 
 #include "lib/process.hpp"
-#include "lib/cstring.hpp"
-#include "lib/switch.hpp"
+#include "lib/cstring.hpp" // temp_sprintf
+#include "lib/stringpack.hpp"
 
 #include <fcntl.h>
 
@@ -23,11 +22,11 @@ Mpg123Player :: Mpg123Player()
 , _seconds_remaining(0)
 , _process(nullptr)
 {
-//_stdout_buffer.reserve(256);
 }
 
 void Mpg123Player :: reset() noexcept {
   _state = STOPPED;
+  _failed = 0;
   _channels = 0;
   _sample_rate = 0;
   _seconds_total = 0;
@@ -37,11 +36,7 @@ void Mpg123Player :: reset() noexcept {
 }
 
 void Mpg123Player :: play(const std::string &file) noexcept {
-  if (_file != file) {
-    _file = file;
-    _sample_rate = 0;
-    _channels = 0;
-  }
+  _file = file;
   play();
 }
 
@@ -52,8 +47,7 @@ void Mpg123Player :: play() noexcept {
 }
 
 void Mpg123Player :: stop() noexcept {
-  if (_process)
-    _process = nullptr;
+  _process = nullptr;
   reset();
 }
 
@@ -71,6 +65,8 @@ void Mpg123Player :: work() noexcept {
     fd = _process->stderr_pipe.fd();
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
   }
+
+  read_stdout();
 
   if (_state == LOADING)
     *_process << "SILENCE\nL " << _file << '\n';
@@ -108,6 +104,7 @@ void Mpg123Player :: read_stdout() noexcept {
  *   @FORMAT 44100 2
  *   @E Unknown command or no arguments: foo
  */
+#define case break;case
 void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
   //log_write("PARSE: %s\n", line);
   char* rest = const_cast<char*>(std::strchr(line, ' '));
@@ -115,13 +112,12 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
     return;
 
   using pack = StringPack::Generic;
-  switch (pack::pack_runtime(line, rest-line)) {
+  switch (pack::pack_runtime(line, size_t(rest-line))) {
     case pack("@P"): /* Playing State: 0|1|2  */
       _state = static_cast<State>(std::atoi(rest));
       if (_state == STOPPED) {
-        if (_failed) { // Try again if playback stopped because of failure
+        if (_failed) // Try again if playback stopped because of failure
           _state = LOADING;
-        }
         else
           _track_completed = true;
       }
@@ -129,40 +125,34 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
         _track_completed = false;
         _failed = 0;
       }
-      break;
-    case pack("@E"): /* Error */ ++_failed; break;
-    case pack("@I"): /* Info  */ break;
-    case pack("@J"): /* Jump  */ break;
-    case pack("@R"): /* ????  */ break;
-    case pack("@S"): /* ????  */ break;
-    case pack("@F"): {
-      // @F 77 17466 2.01 456.25
+    case pack("@E"): /* Error */ ++_failed;
+    case pack("@I"): /* Info  */
+    case pack("@J"): /* Jump  */
+    case pack("@R"): /* ????  */
+    case pack("@S"): /* ????  */
+    case pack("@F"): // @F 77 17466 2.01 456.25
       std::strtoimax(rest, &rest, 10);
       std::strtoimax(rest, &rest, 10);
-      float played = std::strtof(rest, &rest);
-      float remaining = std::strtof(rest, &rest);
-      _seconds_played    = played;
-      _seconds_remaining = remaining;
+      _seconds_played    = static_cast<int>(std::strtof(rest, &rest));
+      _seconds_remaining = static_cast<int>(std::strtof(rest, &rest));
       _seconds_total     = _seconds_played + _seconds_remaining;
-      break;
-    }
-    case pack("@SAMPLE"):
+    case pack("@SAMPLE"): // @SAMPLE 16063 21920052
       if (_sample_rate) {
-        int samples_played = std::strtoimax(rest, &rest, 10);
-        int samples_total  = std::strtoimax(rest, &rest, 10);
-        _seconds_played = samples_played / _sample_rate;
-        _seconds_total  = samples_total  / _sample_rate;
+        _seconds_played = std::strtoimax(rest, &rest, 10) / _sample_rate;
+        _seconds_total  = std::strtoimax(rest, &rest, 10) / _sample_rate;
       }
-      break;
-    case pack("@FORMAT"):
+    case pack("@FORMAT"): // @FORMAT 44100 2
       _sample_rate = std::strtoimax(rest, &rest, 10);
-      _channels = std::strtoimax(rest, &rest, 10);
+      _channels    = std::strtoimax(rest, &rest, 10);
       break;
     default:
-      //log_write("parse_output(): %s\n", line);
+#ifndef NDEBUG
+      log_write("mpg123: %s\n", line);
+#endif
       break;
   }
 }
+#undef case
 
 void Mpg123Player :: position(int seconds) noexcept {
   if (_process && _process->running())

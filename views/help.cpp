@@ -62,6 +62,18 @@ void Help :: draw() {
   wresize(win, y, size.width);
 }
 
+bool Help :: handleKey(int n) {
+  switch (Bindings::pad[n]) {
+  case Actions::UP:         up();         return true;
+  case Actions::DOWN:       down();       return true;
+  case Actions::PAGE_UP:    page_up();    return true;
+  case Actions::PAGE_DOWN:  page_down();  return true;
+  case Actions::TOP:        top();        return true;
+  case Actions::BOTTOM:     bottom();     return true;
+  default:                                return false;
+  }
+}
+
 #ifdef TEST_HELP
 #include "../test.hpp"
 int main() {

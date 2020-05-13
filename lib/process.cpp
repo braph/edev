@@ -10,7 +10,7 @@
 
 Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
 : _pid(-1)
-, closed(true)
+, _closed(true)
 {
   open(function, pipe_stdin, pipe_stdout, pipe_stderr);
 }
@@ -68,7 +68,7 @@ pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe
   if (pipe_stdout) stdout_pipe.open(stdout_p[0]);
   if (pipe_stderr) stderr_pipe.open(stderr_p[0]);
   
-  closed = false;
+  _closed = false;
   this->_pid = pid;
   return pid;
 }
@@ -79,7 +79,7 @@ int Process :: get_exit_status() noexcept {
 
   int exit_status;
   waitpid(_pid, &exit_status, 0);
-  closed = true;
+  _closed = true;
   close_fds();
 
   if (exit_status >= 256)
@@ -95,7 +95,7 @@ bool Process :: try_get_exit_status(int &exit_status) noexcept {
   if (p == 0)
     return false;
 
-  closed = true;
+  _closed = true;
   close_fds();
 
   if (exit_status >= 256)
@@ -117,7 +117,7 @@ void Process :: close_fds() noexcept {
 }
 
 void Process :: kill(bool force) noexcept {
-  if (_pid > 0 && !closed) {
+  if (_pid > 0 && !_closed) {
     if (force)
       ::kill(-_pid, SIGTERM);
     else

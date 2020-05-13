@@ -11,8 +11,11 @@
   catch (int) { assert(!#__VA_ARGS__); } \
   catch (...) { /* OK */ }
 
+#define assert0(...) \
+  if (! (__VA_ARGS__)) assert(!#__VA_ARGS__)
+
 #ifndef streq
-#define streq(A,B) (!strcmp(A,B))
+#define streq(A,B) (!std::strcmp(A,B))
 #endif
 
 #define TEST_BEGIN() \

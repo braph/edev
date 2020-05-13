@@ -24,16 +24,19 @@ InfoLine :: InfoLine()
 , track_position(0)
 , state(Mpg123Player::STOPPED)
 {
-  if (Theme::current == Theme::THEME_256) {
-     fmt_top    = &Config::infoline_format_top_256;
-     fmt_bottom = &Config::infoline_format_bottom_256;
-  }
-  else if (Theme::current == Theme::THEME_8) {
+  switch (Theme::current) {
+  case Theme::THEME_256:
+    fmt_top     = &Config::infoline_format_top_256;
+    fmt_bottom  = &Config::infoline_format_bottom_256;
+    break;
+  case Theme::THEME_8:
+     fmt_top    = &Config::infoline_format_top;
+     fmt_bottom = &Config::infoline_format_bottom;
+     break;
+  default: // TODO: infoline_format_top_mono
      fmt_top    = &Config::infoline_format_top;
      fmt_bottom = &Config::infoline_format_bottom;
   }
-  else
-    abort(); // TODO
   draw();
 }
 

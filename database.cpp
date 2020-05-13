@@ -2,10 +2,11 @@
 
 #include "log.hpp"
 
+#include "lib/raii/file.hpp"
+
 #include <climits>
 #include <cstring>
 #include <cstdio>
-#include <unordered_map>
 
 #define DB_ABI_VERSION      1
 #define DB_ENDIANNESS_CHECK 0xFEFF
@@ -35,13 +36,14 @@ struct Dumper {
     return !_error;
   }
 
+  // TODO: change reinterpret_cast to memcpy + template_is_integral
   void dump(size_t value) noexcept
   { write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
   void dump(uint16_t value) noexcept
   { write(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  void dump(StringPool& p) noexcept
+  void dump(StringChunk& p) noexcept
   { dump(BITSOF(char), size_t(p.size()), reinterpret_cast<char*>(p.data())); }
 
   void dump(DynamicPackedVector& v) noexcept
@@ -59,13 +61,14 @@ private:
   int _error;
 
   void write(char* buf, size_t size) noexcept {
-    _error |=! ::fwrite(buf, size, 1, fs);
+    _error |= !::fwrite(buf, size, 1, fs);
   }
 
+  // maybe better name
   void dump(size_t bits, size_t count, char* data) noexcept {
     dump(bits);
     dump(count);
-    write(data, std::streamsize(size_for_bits(bits*count)));
+    write(data, size_for_bits(bits*count));
     dump(bits);
     dump(count);
   }
@@ -81,10 +84,10 @@ struct Loader {
 
   const char* what() const noexcept {
     switch (_error) {
-      case Success: return strerror(0);
-      case InvalidBitCountInHeader: return "Invalid bit count in header";
-      case InvalidBitCountInFooter: return "Invalid bit count in footer";
-      case InvalidElemCountInFooter: return "Invalid element count in footer";
+      default:                        return strerror(0);
+      case InvalidBitCountInHeader:   return "Invalid bit count in header";
+      case InvalidBitCountInFooter:   return "Invalid bit count in footer";
+      case InvalidElemCountInFooter:  return "Invalid element count in footer";
     }
   }
 
@@ -103,10 +106,10 @@ struct Loader {
   void load(uint16_t& value) noexcept
   { read(reinterpret_cast<char*>(&value), sizeof(value)); }
 
-  void load(StringPool& pool) noexcept {
+  void load(StringChunk& chunk) noexcept {
     readHeader(BITSOF(char));
-    pool.resize(elem_count);
-    readData(reinterpret_cast<char*>(pool.data()));
+    chunk.resize(elem_count);
+    readData(reinterpret_cast<char*>(chunk.data()));
   }
 
   void load(DynamicPackedVector& vec) noexcept {
@@ -146,7 +149,7 @@ private:
 
   void readData(char* buf) noexcept {
     size_t check_bits = 0xDEAD, check_count = 0;
-    read(buf, std::streamsize(size_for_bits(elem_bits*elem_count)));
+    read(buf, size_for_bits(elem_bits*elem_count));
     read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
     read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
     if (check_bits != elem_bits)
@@ -161,96 +164,81 @@ private:
  * ==========================================================================*/
 
 Database :: Database()
-: styles(*this, pool_style_url, pool_meta)
-, albums(*this, pool_album_url, pool_cover_url, pool_archive_url, pool_desc, pool_meta)
-, tracks(*this, pool_track_url, pool_meta)
+: styles(*this, chunk_style_url, chunk_meta)
+, albums(*this, chunk_album_url, chunk_cover_url, chunk_archive_url, chunk_desc, chunk_meta)
+, tracks(*this, chunk_track_url, chunk_meta)
 , tables({&styles, &albums, &tracks})
-, pools({&pool_meta, &pool_desc, &pool_style_url, &pool_album_url,
-    &pool_track_url, &pool_cover_url, &pool_archive_url})
+, chunks({&chunk_meta, &chunk_desc, &chunk_style_url, &chunk_album_url,
+    &chunk_track_url, &chunk_cover_url, &chunk_archive_url})
 {
 }
 
 const char* Database :: load(const std::string& file) noexcept {
   uint16_t check;
-  const char* err = NULL;
-  FILE* fh = fopen(file.c_str(), "r");
+  RAII::FILE fh( fopen(file.c_str(), "r") );
   if (! fh)
     return strerror(errno);
 
   Loader l(fh);
   l.load(check);
-  if (check != DB_ENDIANNESS_CHECK) {
-    err = "Database endianess mismatch";
-    goto END;
-  }
+  if (check != DB_ENDIANNESS_CHECK)
+    return "Database endianess mismatch";
 
   l.load(check);
-  if (check != DB_ABI_VERSION) {
-    err = "Database ABI version mismatch";
-    goto END;
-  }
+  if (check != DB_ABI_VERSION)
+    return "Database ABI version mismatch";
 
-  for (auto p : pools)
+  for (auto p : chunks)
     l.load(*p);
 
   for (auto t : tables)
     l.load(*t);
 
-  if (! l)
-    err = l.what();
-
-END:
-  fclose(fh);
-  return err;
+  return l ? NULL : l.what();
 }
 
 const char* Database :: save(const std::string& file) noexcept {
-  FILE* fh = fopen(file.c_str(), "w");
+  RAII::FILE fh( fopen(file.c_str(), "w") );
   if (! fh)
     return strerror(errno);
 
   Dumper d(fh);
   d.dump(uint16_t(DB_ENDIANNESS_CHECK));
   d.dump(uint16_t(DB_ABI_VERSION));
-  for (auto p : pools)
+  for (auto p : chunks)
     d.dump(*p);
   for (auto t : tables)
     d.dump(*t);
 
-  const char* err = NULL;
-  if (! d)
-    err = strerror(EIO);
-
-  fclose(fh);
-  return err;
+  return d ? NULL : strerror(EIO);
 }
 
 void Database :: shrink_to_fit() {
-  shrink_pool_to_fit(pool_style_url, {&styles.url});
-  shrink_pool_to_fit(pool_track_url, {&tracks.url});
-  shrink_pool_to_fit(pool_album_url, {&albums.url});
-  shrink_pool_to_fit(pool_cover_url, {&albums.cover_url});
-  shrink_pool_to_fit(pool_desc,      {&albums.description});
-  shrink_pool_to_fit(pool_archive_url,
+  shrink_chunk_to_fit(chunk_style_url, {&styles.url});
+  shrink_chunk_to_fit(chunk_track_url, {&tracks.url});
+  shrink_chunk_to_fit(chunk_album_url, {&albums.url});
+  shrink_chunk_to_fit(chunk_cover_url, {&albums.cover_url});
+  shrink_chunk_to_fit(chunk_desc,      {&albums.description});
+  shrink_chunk_to_fit(chunk_archive_url,
     {&albums.archive_mp3, &albums.archive_wav, &albums.archive_flac});
-  shrink_pool_to_fit(pool_meta, {&styles.name, &albums.title,
+  shrink_chunk_to_fit(chunk_meta, {&styles.name, &albums.title,
     &albums.artist, &tracks.title, &tracks.artist, &tracks.remix});
 
   for (auto& table : tables)
     table->shrink_to_fit();
 }
 
-void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Column*> columns) {
-  if (pool.is_shrinked())
+void Database :: shrink_chunk_to_fit(StringChunk& chunk, std::initializer_list<Column*> columns) {
+  if (chunk.is_shrinked())
     return;
-  log_write("shrinking pool ... ");
+  log_write("shrinking chunk ... ");
 
-  StringPool::Shrinker shrinker = pool.get_shrinker();
+  StringChunk::Shrinker shrinker = chunk.get_shrinker();
   for (auto col : columns)
     for (auto id : *col)
       shrinker.add(id);
 
-  shrinker.shrink_pool();
+  shrinker.shrink();
 
   for (auto& column : columns)
     for (Column::iterator it = column->begin(); it != column->end(); ++it)
@@ -265,11 +253,11 @@ void Database :: shrink_pool_to_fit(StringPool& pool, std::initializer_list<Colu
 
 /* Find a record by its URL or create one if it could not be found */
 template<typename TTable>
-static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, CString url, bool create) {
+static typename TTable::value_type find_by_url(TTable& table, StringChunk& chunk, CString url, bool create) {
   if (url.empty())
     return typename TTable::value_type(NULL, 0);
 
-  int strId = pool.find(url);
+  int strId = chunk.find(url);
   if (strId) {
     auto pos = std::find(table.url.begin(), table.url.end(), strId);
     if (pos != table.url.end())
@@ -278,7 +266,7 @@ static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, 
 
   if (create) {
     if (! strId)
-      strId = pool.add_unchecked(url);
+      strId = chunk.add_unchecked(url);
 
     size_t pos = table.size();
     table.resize(pos+1);
@@ -294,7 +282,7 @@ static typename TTable::value_type find_by_url(TTable& table, StringPool& pool, 
 // ============================================================================
 
 Styles::Style Styles::find(CString url, bool create) {
-  return find_by_url(*this, db.pool_style_url, url, create);
+  return find_by_url(*this, db.chunk_style_url, url, create);
 }
 
 Field Styles::Style::operator[](ColumnID id) const {
@@ -310,7 +298,7 @@ Field Styles::Style::operator[](ColumnID id) const {
 // ============================================================================
 
 Albums::Album Albums::find(CString url, bool create) {
-  return find_by_url(*this, db.pool_album_url, url, create);
+  return find_by_url(*this, db.chunk_album_url, url, create);
 }
 
 Field Albums::Album::operator[](ColumnID id) const {
@@ -326,13 +314,12 @@ Field Albums::Album::operator[](ColumnID id) const {
   case ALBUM_VOTES:           return Field(votes());
   case ALBUM_DOWNLOAD_COUNT:  return Field(download_count());
   default:
-    time_t stamp = date();
-    struct tm t;
-    localtime_r(&stamp, &t);
+    std::time_t stamp = date();
+    std::tm* t = std::localtime(&stamp); // not thread safe
     switch (static_cast<AlbumColumnID>(id)) {
-    case ALBUM_DAY:           return Field(t.tm_mday);
-    case ALBUM_MONTH:         return Field(t.tm_mon + 1);
-    case ALBUM_YEAR:          return Field(t.tm_year + 1900);
+    case ALBUM_DAY:           return Field(t->tm_mday);
+    case ALBUM_MONTH:         return Field(t->tm_mon + 1);
+    case ALBUM_YEAR:          return Field(t->tm_year + 1900);
     default:                  return Field(REPORT_BUG);
     }
   }
@@ -343,14 +330,14 @@ Field Albums::Album::operator[](ColumnID id) const {
 // ============================================================================
 
 Tracks::Track Tracks::find(CString url, bool create) {
-  return find_by_url(*this, db.pool_track_url, url, create);
+  return find_by_url(*this, db.chunk_track_url, url, create);
 }
 
 Albums::Album Tracks::Track::album() const noexcept {
   return table->db.albums[size_t(table->album_id[id])];
 }
 
-Field Tracks::Track::operator[](ColumnID id) const {
+Field Tracks::Track::operator[](ColumnID id) const { // XXX: noexcept
   switch (static_cast<TrackColumnID>(id)) {
   case TRACK_TITLE:     return Field(title());
   case TRACK_ARTIST:    return Field(artist());
@@ -435,8 +422,8 @@ int main () {
       assert(streq(db.tracks[i].title(), db2.tracks[i].title()));
     for (size_t i = 0; i < db.albums.size(); ++i)
       assert(streq(db.albums[i].title(), db2.albums[i].title()));
-    for (const auto& pool : db2.pools)
-      assert(pool->is_shrinked());
+    for (const auto& chunk : db2.chunks)
+      assert(chunk->is_shrinked());
     db2.save(TEST_DB ".shrinked");
   }
 

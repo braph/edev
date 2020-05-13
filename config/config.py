@@ -14,25 +14,73 @@ lateinit  = object()
 # - c_default: Default value converted to the C storage type
 # - lateinit:  If set to True, $set($default) is called to initialize the value
 
-DEFAULT_INFOLINE_FORMAT_TOP = '''"\
+colfmt = lambda s: s.replace("column(", "static_cast<Database::ColumnID>(Database::")
+
+INFOLINE_FORMAT_TOP = '''"\
   '<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"'''
 
-DEFAULT_INFOLINE_FORMAT_BOTTOM = '''"\
+INFOLINE_FORMAT_TOP_CVALUE = colfmt('''{
+{column(COLUMN_NONE), "<< ", COLOR_BLACK},
+{column(TRACK_TITLE), "",    COLOR_YELLOW, -1, A_BOLD},
+{column(COLUMN_NONE), " >>", COLOR_BLACK}}''')
+
+INFOLINE_FORMAT_BOTTOM = '''"\
   artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"'''
 
-DEFAULT_INFOLINE_FORMAT_TOP_256 = '''"\
+INFOLINE_FORMAT_BOTTOM_CVALUE = colfmt('''{
+{column(TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
+{column(COLUMN_NONE),   " - "},
+{column(ALBUM_TITLE),   "",     COLOR_RED, -1, A_BOLD},
+{column(COLUMN_NONE),   " ("},
+{column(ALBUM_YEAR),    "",     COLOR_CYAN, -1, 0},
+{column(COLUMN_NONE),   ")"}
+}''')
+
+INFOLINE_FORMAT_TOP_256 = '''"\
   '<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"'''
 
-DEFAULT_INFOLINE_FORMAT_BOTTOM_256 = '''"\
+INFOLINE_FORMAT_TOP_256_CVALUE = colfmt('''{
+{column(COLUMN_NONE), "<< ", 236},
+{column(TRACK_TITLE), "",    178, -1, A_BOLD},
+{column(COLUMN_NONE), " >>", 236}}''')
+
+INFOLINE_FORMAT_BOTTOM_256 = '''"\
   artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"'''
 
-DEFAULT_PLAYLIST_COLUMNS = '''"\
+INFOLINE_FORMAT_BOTTOM_256_CVALUE = colfmt('''{
+{column(TRACK_ARTIST),  "",     24, -1, A_BOLD},
+{column(COLUMN_NONE),   " - "},
+{column(ALBUM_TITLE),   "",     160, -1, A_BOLD},
+{column(COLUMN_NONE),   " ("},
+{column(ALBUM_YEAR),    "",     37, -1, 0},
+{column(COLUMN_NONE),   ")"}
+}''')
+
+
+PLAYLIST_COLUMNS = '''"\
   number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%} \
   title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}"'''
 
-DEFAULT_PLAYLIST_COLUMNS_256 = '''"\
+PLAYLIST_COLUMNS_CVALUE = colfmt('''{
+{column(TRACK_NUMBER),  COLOR_MAGENTA,  -1, 3},
+{column(TRACK_ARTIST),  COLOR_BLUE,     -1, 25, true},
+{column(ALBUM_TITLE),   COLOR_RED,      -1, 30, true},
+{column(TRACK_TITLE),   COLOR_YELLOW,   -1, 33, true},
+{column(ALBUM_STYLES),  COLOR_CYAN,     -1, 20, true},
+{column(TRACK_BPM),     COLOR_GREEN,    -1, 3}}''')
+
+PLAYLIST_COLUMNS_256 = '''"\
   number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%} \
   title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}"'''
+
+PLAYLIST_COLUMNS_256_CVALUE = colfmt('''{
+{column(TRACK_NUMBER),  97,   -1, 3},
+{column(TRACK_ARTIST),  24,   -1, 25, true},
+{column(ALBUM_TITLE),   160,  -1, 30, true},
+{column(TRACK_TITLE),   178,  -1, 33, true},
+{column(ALBUM_STYLES),  37,   -1, 20, true},
+{column(TRACK_BPM),     28,   -1, 3}}''')
+
 
 options = [
     ('database_file', {
@@ -112,25 +160,25 @@ options = [
 #       }),
     ('playlist.columns', {
         type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
-        default: DEFAULT_PLAYLIST_COLUMNS,
+        default: PLAYLIST_COLUMNS,
+        c_default: PLAYLIST_COLUMNS_CVALUE,
         help: 'Columns of playlist',
-        lateinit: True
         }),
     ('playlist.columns_256', {
         type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
-        default: DEFAULT_PLAYLIST_COLUMNS_256,
+        default: PLAYLIST_COLUMNS_256,
+        c_default: PLAYLIST_COLUMNS_256_CVALUE,
         help: 'Columns of playlist (256 colors)',
-        lateinit: True
         }),
     ('browser.columns', {
         type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
-        default: DEFAULT_PLAYLIST_COLUMNS,
+        default: PLAYLIST_COLUMNS,
         help: 'Columns of browser',
         lateinit: True
         }),
     ('browser.columns_256', {
         type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
-        default: DEFAULT_PLAYLIST_COLUMNS_256,
+        default: PLAYLIST_COLUMNS_256,
         help: 'Columns of browser (256 colors)',
         lateinit: True
         }),
@@ -156,27 +204,27 @@ options = [
         }),
     ('infoline.format_top', {
         type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
-        default: DEFAULT_INFOLINE_FORMAT_TOP,
+        default: INFOLINE_FORMAT_TOP,
+        c_default: INFOLINE_FORMAT_TOP_CVALUE,
         help: 'Format of first line in infoline',
-        lateinit: True
         }),
     ('infoline.format_top_256', {
         type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
-        default: DEFAULT_INFOLINE_FORMAT_TOP_256,
+        default: INFOLINE_FORMAT_TOP_256,
+        c_default: INFOLINE_FORMAT_TOP_256_CVALUE,
         help: 'Format of first line in infoline (256 colors)',
-        lateinit: True
         }),
     ('infoline.format_bottom', {
         type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
-        default: DEFAULT_INFOLINE_FORMAT_BOTTOM,
+        default: INFOLINE_FORMAT_BOTTOM,
+        c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
         help: 'Format of second line in infoline',
-        lateinit: True
         }),
     ('infoline.format_bottom_256', {
         type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
-        default: DEFAULT_INFOLINE_FORMAT_BOTTOM_256,
+        default: INFOLINE_FORMAT_BOTTOM_256,
+        c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
         help: 'Format of second line in infoline (256 colors)',
-        lateinit: True
         }),
     ('tabbar.display', {
         type: 'bool', set: 'opt_parse_bool',
@@ -184,15 +232,15 @@ options = [
         help: 'Enable/disable tabbar TODO: do we need this?',
         }),
     ('tabs.widgets', {
-        type: 'std::vector<std::string>', set: 'opt_parse_tabs_widgets',
+        type: 'std::array<Views::TabWidgets, 5>', set: 'opt_parse_tabs_widgets',
         default: '"splash,playlist,browser,info,help"',
-        c_default: '{"splash","playlist","browser","info","help"}',
+        c_default: '{Views::TabWidgets::SPLASH,Views::TabWidgets::PLAYLIST,Views::TabWidgets::BROWSER,Views::TabWidgets::INFO,Views::TabWidgets::HELP}',
         help: 'Specify widget order of tabbar (left to right)',
         }),
     ('main.widgets', {
-        type: 'std::vector<std::string>', set: 'opt_parse_main_widgets',
+        type: 'std::array<Views::MainWidgets, 5>', set: 'opt_parse_main_widgets',
         default: '"infoline,tabbar,readline,windows,progressbar"',
-        c_default: '{"infoline","tabbar","readline","windows","progressbar"}',
+        c_default: '{Views::MainWidgets::INFOLINE,Views::MainWidgets::TABBAR,Views::MainWidgets::READLINE,Views::MainWidgets::WINDOWS,Views::MainWidgets::PROGRESSBAR}',
         help: 'Specify widgets to show (up to down)',
     }),
 ]

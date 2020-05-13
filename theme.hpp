@@ -6,11 +6,12 @@
 class Theme {
 public:
   struct Definition {
-    short fg, bg;
+    short fg;
+    short bg;
     unsigned int attributes;
 
-    Definition(short fg = -2, short bg = -2, unsigned int attributes = 0)
-      : fg(fg), bg(bg), attributes(attributes)
+    Definition(short fg_ = -2, short bg_ = -2, unsigned int attributes_ = 0)
+      : fg(fg_), bg(bg_), attributes(attributes_)
     {
     }
   };

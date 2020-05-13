@@ -81,20 +81,23 @@ int main() {
   TEST_BEGIN();
   NCURSES_INIT();
 
-  Theme::loadThemeByColors(256); // TODO
-
   TabBar b;
   b.layout({0,0}, {LINES,COLS});
-  for (auto s : {"Tab1", "Tab2", "Tab3"})
+  for (const auto s : {"Tab1", "Tab2", "Tab3"})
     b.addTab(s);
 
-  for (;;)
+  for (int colors : {0, 8, 256}) {
+    if (colors > COLORS)
+      break;
+    Theme::loadThemeByColors(colors);
+
     for (int i = 0; i < 3; ++i) {
       b.setCurrentIndex(i);
       b.noutrefresh();
       doupdate();
       usleep(500 * 1000);
     }
+  }
 
   TEST_END();
 }

@@ -10,6 +10,8 @@
 
 #define STRLEN(S) (sizeof(S)-1)
 
+static inline const char* ensure_string(const char* s) { return (s ? s : ""); }
+
 // ============================================================================
 
 struct CString {
@@ -33,6 +35,10 @@ struct CString {
     : _s(s.c_str())
     , _len(s.length())
   {}
+
+  const char* c_str() const noexcept {
+    return _s;
+  }
 
   operator const char*() const noexcept {
     return _s;
@@ -76,6 +82,10 @@ struct CWString {
     : _s(s.c_str())
     , _len(s.length())
   {}
+
+  const wchar_t* c_str() const noexcept {
+    return _s;
+  }
 
   operator const wchar_t*() const noexcept {
     return _s;
@@ -146,6 +156,20 @@ private:
 
 // ============================================================================
 
+template<size_t N>
+inline bool strprefix(const char* s, const char (&prefix)[N]) {
+  return !std::strncmp(s, prefix, N-1);
+}
+
+static bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
+  return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
+}
+
+template<size_t N>
+inline bool ends_with(const std::string& s, const char (&prefix)[N]) {
+  return ends_with(&s[0], s.size(), prefix, N - 1);
+}
+
 static inline char* erase_all(char* str, char c) {
   char* it = str;
   do {
@@ -165,6 +189,12 @@ static inline std::string& trim(std::string& s, const char* chars = " \n\t\f\v")
 
   return s;
 }
+
+#if 0
+void split(std::vector<std::string>& r, const std::string& s, const char c) {
+  r.clear();
+}
+#endif
 
 char*    toNarrowChar(wchar_t);
 wchar_t* toWideString(CString, size_t* len = NULL);

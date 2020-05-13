@@ -1,11 +1,12 @@
 #include "bindings.hpp"
-#define C(K) (K%32)
+
+#define C(K) (K % 32)
+
 namespace Bindings {
 
 Actions::ActionID global[KEY_MAX];
 Actions::ActionID playlist[KEY_MAX];
-Actions::ActionID info[KEY_MAX];
-Actions::ActionID help[KEY_MAX];
+Actions::ActionID pad[KEY_MAX];
 
 void init() {
 #define _ global
@@ -29,7 +30,6 @@ void init() {
   _[C('l')]                               = Actions::REDRAW;
 //_[C('r')]                               = RELOAD;
 //_[C('U')]                               = UPDATE;
-
   _['q']                                  = Actions::QUIT;
 #undef _
 
@@ -46,41 +46,48 @@ void init() {
   _['N']                                  = Actions::SEARCH_PREV;
   _['o']                                  = Actions::PLAYLIST_GOTO_CURRENT;
 #undef _
+
+#define _ pad
+  _['k']              = _[KEY_UP]         = Actions::UP;
+  _['j']              = _[KEY_DOWN]       = Actions::DOWN;
+  _[C('u')]           = _[KEY_PPAGE]      = Actions::PAGE_UP;
+  _[C('d')]           = _[KEY_NPAGE]      = Actions::PAGE_DOWN;
+  _['g']              = _[KEY_HOME]       = Actions::TOP;
+  _['G']              = _[KEY_END]        = Actions::BOTTOM;
+#undef _
 }
 
 } // namespace Bindings
 
-/*
-#ifdef BLAAH
-  // nav: help, info, browser, playlist
-   @bindings[:playlist] = {
-      # selection
-      :'playlist.toggle_selection' => ['^v'                          ],
-      # search
-      :'playlist.search_next'    => [?n                              ],
-      :'playlist.search_prev'    => [?N                              ],
-      :'playlist.search_up'      => [??                              ],
-      :'playlist.search_down'    => [?/                              ],
-      # playlist
-      :'playlist.download_album' => [?$                              ],
-      :'playlist.reload'         => [?r                              ],
-      :'playlist.clear'          => [?c                              ],
-      :'playlist.delete'         => [?d                              ],
-      # other
-      :'player.toggle'           => [' '                             ]
-   }
-   @bindings[:browser] = {
-      # selection
-      :'browser.toggle_selection' => ['^v'                           ],
-      # search
-      :'browser.search_next'     => [?n                              ],
-      :'browser.search_prev'     => [?N                              ],
-      :'browser.search_up'       => [??                              ],
-      :'browser.search_down'     => [?/                              ],
-      # browser
-      :'browser.add_to_playlist' => [' ', ?a                         ],
-      :'browser.enter'           => [         ICurses::KEY_ENTER     ],
-      :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]
-   }
-#endif
-// */
+/* nav: help, info, browser, playlist
+
+@bindings[:playlist] = {
+  # selection
+  :'playlist.toggle_selection' => ['^v'                          ],
+  # search
+  :'playlist.search_next'    => [?n                              ],
+  :'playlist.search_prev'    => [?N                              ],
+  :'playlist.search_up'      => [??                              ],
+  :'playlist.search_down'    => [?/                              ],
+  # playlist
+  :'playlist.download_album' => [?$                              ],
+  :'playlist.reload'         => [?r                              ],
+  :'playlist.clear'          => [?c                              ],
+  :'playlist.delete'         => [?d                              ],
+  # other
+  :'player.toggle'           => [' '                             ]
+}
+
+@bindings[:browser] = {
+  # selection
+  :'browser.toggle_selection' => ['^v'                           ],
+  # search
+  :'browser.search_next'     => [?n                              ],
+  :'browser.search_prev'     => [?N                              ],
+  :'browser.search_up'       => [??                              ],
+  :'browser.search_down'     => [?/                              ],
+  # browser
+  :'browser.add_to_playlist' => [' ', ?a                         ],
+  :'browser.enter'           => [         ICurses::KEY_ENTER     ],
+  :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]
+} */

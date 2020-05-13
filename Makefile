@@ -13,20 +13,23 @@ WARNINGS += -Wpessimizing-move -Wredundant-move
 STD = c++11
 CURSES_INC = "<ncurses.h>"
 
+CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -pg -g $(WARNINGS)
-CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g
+#CXXFLAGS := -std=$(STD) -fno-rtti -O2 -g $(WARNINGS)
+#CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC) 
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 CONFIG.deps   = lib/shellsplit.o lib/filesystem.o lib/cstring.o lib/xml.o
-DATABASE.deps = lib/stringpool.o lib/packedvector.o
+DATABASE.deps = lib/stringchunk.o lib/packedvector.o
 THEME.deps    = ui/colors.o
 PLAYER.deps   = lib/process.o
+UPDATER.deps  = markdown.o
 VIEWS         = $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 VIEWS         += widgets/listwidget.hpp widgets/readline.o
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
-	browsepage.o updater.o $(VIEWS) ui/container.o \
+	browsepage.o updater.o $(UPDATER.deps) $(VIEWS) ui/container.o \
 	 player.o $(PLAYER.deps) actions.o bindings.o lib/downloads.o ektoplayer.o trackloader.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) application.cpp $^
 
@@ -38,8 +41,8 @@ clean:
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-noexcept_objs = database.o actions.o bindings.o ui/colors.o ektoplayer.o theme.o player.o \
-								$(addprefix lib/, downloads.o filesystem.o shellsplit.o stringpool.o  process.o) \
+noexcept_objs = database.o actions.o bindings.o ektoplayer.o theme.o markdown.o player.o ui/colors.o \
+								$(addprefix lib/, downloads.o filesystem.o shellsplit.o stringchunk.o  process.o) \
 								$(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 $(noexcept_objs): %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fno-exceptions -c $< -o $@
@@ -54,7 +57,7 @@ TERMINAL = xterm -e # Used for running ncurses tests
 
 tests: \
 	test_shellsplit \
-	test_stringpool \
+	test_strinchunk \
 	test_filesystem \
 	test_ektoplayer \
 	test_colors test_theme \
@@ -73,8 +76,8 @@ test_shellsplit:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT lib/shellsplit.cpp $^
 	$(VALGRIND) ./a.out
 
-test_stringpool:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGPOOL lib/stringpool.cpp $^
+test_stringchunk:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGchunk lib/stringchunk.cpp $^
 	$(VALGRIND) ./a.out
 
 test_filesystem:
@@ -109,6 +112,10 @@ test_player:
 #	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_GENERIC generic.cpp $^
 #	$(VALGRIND) ./a.out
 
+test_spanview:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPANVIEW lib/spanview.cpp $^
+	$(VALGRIND) ./a.out
+
 test_ui:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UI ui.cpp $^
 	$(VALGRIND) ./a.out
@@ -121,7 +128,7 @@ test_browsepage:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
 	$(VALGRIND) ./a.out
 
-test_updater: database.o $(DATABASE.deps) browsepage.o lib/downloads.o ektoplayer.o
+test_updater: $(UPDATER.deps) database.o $(DATABASE.deps) browsepage.o lib/downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 

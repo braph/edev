@@ -18,6 +18,24 @@
 
 namespace Views {
 
+enum class MainWidgets : unsigned char {
+  NONE,
+  INFOLINE,
+  PROGRESSBAR,
+  TABBAR,
+  READLINE,
+  WINDOWS
+};
+
+enum class TabWidgets : unsigned char {
+  NONE,
+  SPLASH,
+  PLAYLIST,
+  BROWSER,
+  INFO,
+  HELP
+};
+  
 class MainWindow : public UI::VerticalContainer {
 public:
   Views::InfoLine       infoLine;
