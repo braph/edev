@@ -31,13 +31,15 @@ public:
     scrollok(win, TRUE);
   }
 
-  TContainer* list() const noexcept    { return m_list; }
-  void list(TContainer *list) noexcept { m_list = list; }
+  TContainer* list()          const noexcept { return m_list;          }
+  void list(TContainer *list)       noexcept { m_list = list;          }
 
-  int activeIndex() const noexcept   { return m_active; }
-  void activeIndex(int idx) noexcept { m_active = idx; draw(); }
+  int  activeIndex()          const noexcept { return m_active;        }
+  void activeIndex(int idx)         noexcept { m_active = idx; draw(); }
 
-  int cursorIndex() const { return empty() ? -1 : m_selected; }
+  int cursorIndex() const noexcept
+  { return empty() ? -1 : m_selected; }
+
   void cursorIndex(int idx) {
     m_selected = idx;
     m_cursor = size.height / 2;
@@ -54,7 +56,7 @@ public:
     return (*m_list)[static_cast<size_type>(m_active)];
   }
 
-  void layout(UI::Pos pos, UI::Size size) {
+  void layout(UI::Pos pos, UI::Size size) override {
     if (size != this->size) {
       this->size = size;
       wresize(win, size.height, size.width);
@@ -72,7 +74,7 @@ public:
     m_selected = clamp(m_selected,  0, containerSize() - 1);
   }
 
-  void draw() {
+  void draw() override {
     erase();
     _clamp();
 
@@ -152,7 +154,7 @@ CHANGE_CURSOR_POSITION:
   void center()    { force_cursorpos(size.height / 2); }
   */
 
-  bool handleMouse(MEVENT& m) {
+  bool handleMouse(MEVENT& m) override {
     if (wmouse_trafo(win, &m.y, &m.x, false)) {
       scroll_cursor(m.y - m_cursor);
       return true;

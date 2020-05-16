@@ -21,8 +21,8 @@
 
 namespace fs = Filesystem;
 
-static volatile int current_signal;
-static void on_signal(int sig) { current_signal = sig; }
+static volatile int caught_signal;
+static void on_signal(int sig) { caught_signal = sig; }
 
 class Application {
 public:
@@ -189,12 +189,12 @@ WINDOW_RESIZE:
   mainwindow.draw();
 
 MAINLOOP:
-  switch (current_signal) {
+  switch (caught_signal) {
     case SIGINT:
     case SIGTERM:
       return;
     case SIGWINCH:
-      current_signal = 0;
+      caught_signal = 0;
       goto WINDOW_RESIZE;
   }
 
@@ -237,10 +237,8 @@ MAINLOOP:
       goto HANDLE_KEY;
   }
 
-  if (trackloader.downloads().runningDownloads() ||
-      trackloader.downloads().queuedDownloads() ||
-      updater.downloads().runningDownloads() ||
-      updater.downloads().queuedDownloads())
+  if (trackloader.downloads().runningDownloads() || trackloader.downloads().queuedDownloads()
+      ||  updater.downloads().runningDownloads() || updater.downloads().queuedDownloads())
     wtimeout(win, 100); // Short timeout, want to continue downloading soon
   else if (player.isStopped() || player.isPaused())
     wtimeout(win, -1);  // We have *nothing* to do, wait until user hits a key
@@ -272,10 +270,10 @@ void Application :: cleanup_files() {
 
 void Application :: print_db_stats() {
   log_write("Database statistics:\n");
-  for (const auto& table : database.tables) {
+  for (const auto table : database.tables) {
     log_write("%s (%zu): ", table->name, table->size());
 #if DATABASE_USE_PACKED_VECTOR
-    for (const auto& column : table->columns)
+    for (const auto column : table->columns)
       log_write("%d|", column->bits());
 #endif
     log_write("\n");
@@ -298,7 +296,7 @@ int main() {
   }
   catch (const std::exception &e) {
     endwin();
-    printf("%s\n", e.what());
+    std::printf("%s\n", e.what());
     return 1;
   }
 

@@ -2,8 +2,8 @@
 #define MPG123_PLAYER_HPP
 
 #include <string>
-#include <cstdint>
 #include <memory>
+#include <cstdint>
 
 #include "lib/process.hpp"
 
@@ -18,16 +18,15 @@ public:
 
   Mpg123Player();
 
-  void work() noexcept;
-
-  void play() noexcept;
-  void play(const std::string&) noexcept;
-  void stop() noexcept;
-  void pause() noexcept;
-  void toggle() noexcept;
-  void position(int) noexcept;
-  void seekForward(int) noexcept;
-  void seekBackward(int) noexcept;
+  void work()             noexcept;
+  void play()             noexcept;
+  void play(std::string)  noexcept;
+  void stop()             noexcept;
+  void pause()            noexcept;
+  void toggle()           noexcept;
+  void position(int)      noexcept;
+  void seekForward(int)   noexcept;
+  void seekBackward(int)  noexcept;
 
   State state()            const noexcept { return _state;            }
   bool  isStopped()        const noexcept { return _state == STOPPED; }
@@ -53,9 +52,9 @@ private:
   std::unique_ptr<Process> _process;
   std::string _stdout_buffer;
 
-  void reset() noexcept;
-  void read_stderr() noexcept;
-  void read_stdout() noexcept;
+  void reset()                        noexcept;
+  void read_stderr()                  noexcept;
+  void read_stdout()                  noexcept;
   void parse_stdout_line(const char*) noexcept;
 };
 

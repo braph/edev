@@ -12,13 +12,14 @@ class ReadlineWidget : public UI::Window {
 public:
   ReadlineWidget();
 
+  void draw()                         override;
+  void layout(UI::Pos, UI::Size)      override;
+  bool handleKey(int)                 override;
+
+  void setPrompt(std::string)         noexcept;
+
   using onFinishFunction = std::function<void(std::string, bool)>;
   onFinishFunction onFinish;
-
-  void draw();
-  void layout(UI::Pos, UI::Size);
-  bool handleKey(int);
-  void setPrompt(std::string);
 
 private:
   std::string _prompt;

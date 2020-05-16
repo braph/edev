@@ -1,8 +1,8 @@
 #include "playlist.hpp"
 
-#include "../widgets/listwidget.hpp"
 #include "mainwindow.hpp"
 #include "rm_trackstr.cpp" //XXX
+#include "../widgets/listwidget.hpp"
 #include "../config.hpp"
 #include "../ui/colors.hpp"
 #include "../theme.hpp"
@@ -16,6 +16,7 @@
 
 using namespace UI;
 using namespace Views;
+using ElementID = Theme::ElementID;
 
 /* ============================================================================
  * TrackRenderer - display a track as a row with columns
@@ -52,7 +53,7 @@ void TrackRenderer :: operator()(
 
   for (const auto& column : m_columns) {
     if (selection)
-      wattrset(_win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
+      wattrset(_win, Theme::get(ElementID::LIST_ITEM_SELECTION) | additional_attributes);
     else
       wattrset(_win, Colors::set(column.fg, column.bg, additional_attributes));
 
@@ -103,27 +104,32 @@ bool Playlist :: handleKey(int key) {
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
     case Actions::SEARCH:
-       ctxt.mainwindow->readline("Search: ", [&](const std::string& line, bool notEOF) {
-           trackSearch.startSearch(this->playlist,
-             [=](const Database::Tracks::Track& track) {
-                for (const auto& column : Config::playlist_columns)
-                  if (boost::algorithm::icontains(trackField(track, column.tag), line))
-                    return true;
-                return false;
-            });
+       ctxt.mainwindow->readline("Search: ", [&](std::string line, bool) {
+         trackSearch.startSearch(this->playlist,
+           [=](const Database::Tracks::Track& track) {
+              for (const auto& column : Config::playlist_columns)
+                if (boost::algorithm::icontains(trackField(track, column.tag), line))
+                  return true;
+              return false;
+          });
 
-           if (trackSearch.next())
-             cursorIndex(trackSearch.index());
-         });
+         if (trackSearch.next())
+           cursorIndex(trackSearch.index());
+       });
        break;
-    case Actions::SEARCH_NEXT: if (trackSearch.next())
-                                 cursorIndex(trackSearch.index());
-                               break;
-    case Actions::SEARCH_PREV: if (trackSearch.prev())
-                                 cursorIndex(trackSearch.index());
-                               break;
 
-    default: Actions::call(ctxt, Bindings::playlist[key]);
+    case Actions::SEARCH_NEXT:
+       if (trackSearch.next())
+         cursorIndex(trackSearch.index());
+       break;
+
+    case Actions::SEARCH_PREV:
+       if (trackSearch.prev())
+         cursorIndex(trackSearch.index());
+       break;
+
+    default:
+       Actions::call(ctxt, Bindings::playlist[key]);
     }
     return true;
   }

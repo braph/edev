@@ -1,60 +1,57 @@
 #include "readline.hpp"
 
-// Readline should never attempt to read a char from STDIN.
-static int readline_input_available_dummy(void) { return 0; }
+namespace {
 
-// We don't want any completion
-static char *readline_completion_dummy(const char*, int) { return NULL; }
+  // The C callbacks need to refer to a widget object
+  ReadlineWidget *widgetInstance;
 
-// The C callbacks need to refer to a widget object
-static ReadlineWidget *widgetInstance;
+  // Readline should never attempt to read a char from STDIN.
+  int readline_input_available_dummy(void) { return 0; }
 
-static void readline_forward_redisplay() {
-  if (widgetInstance)
-    widgetInstance->draw();
-}
+  // We don't want any completion
+  char *readline_completion_dummy(const char*, int) { return NULL; }
 
-static void readline_forward_finished(char *line) {
-  std::string result;
-  if (line) {
-    result = line;
-    free(line);
+  void readline_forward_redisplay() {
+    if (widgetInstance)
+      widgetInstance->draw();
   }
-  if (widgetInstance)
-    if (widgetInstance->onFinish)
-      widgetInstance->onFinish(result, static_cast<bool>(line));
-}
+
+  void readline_forward_finished(char *line) {
+    std::string result;
+    if (line) {
+      result = line;
+      free(line);
+    }
+    if (widgetInstance && widgetInstance->onFinish)
+      widgetInstance->onFinish(result, !line);
+  }
+
+} // namespace (anonymous)
 
 ReadlineWidget :: ReadlineWidget()
-: UI::Window({0,0}, {1,0})
+  : UI::Window({0,0}, {1,0})
 {
   keypad(win, false);
 
   rl_initialize();
-  rl_catch_signals = 0;
-  rl_catch_sigwinch = 0;
-  rl_deprep_term_function = NULL;
-  rl_prep_term_function = NULL;
-  rl_change_environment = 0;
-  rl_input_available_hook = readline_input_available_dummy;
+  rl_catch_signals             = 0;
+  rl_catch_sigwinch            = 0;
+  rl_deprep_term_function      = NULL;
+  rl_prep_term_function        = NULL;
+  rl_change_environment        = 0;
+  rl_input_available_hook      = readline_input_available_dummy;
   rl_completion_entry_function = readline_completion_dummy;
-  rl_redisplay_function = readline_forward_redisplay;
+  rl_redisplay_function        = readline_forward_redisplay;
   rl_callback_handler_install("", readline_forward_finished);
 }
 
 void ReadlineWidget :: layout(UI::Pos pos, UI::Size size) {
   size.height = 1;
-  if (size != this->size) {
-    this->size = size;
-    wresize(win, size.height, size.width);
-  }
-  if (pos != this->pos) {
-    this->pos = pos;
-    mvwin(win, pos.y, pos.x);
-  }
+  resize(size);
+  setPos(pos);
 }
 
-void ReadlineWidget :: setPrompt(std::string prompt) {
+void ReadlineWidget :: setPrompt(std::string prompt) noexcept {
   _prompt = std::move(prompt);
 }
 
@@ -86,11 +83,11 @@ int main() {
   ReadlineWidget w;
   w.layout({0,0}, {LINES, COLS});
   w.setPrompt("> ");
-  w.onFinish = [](std::string s, bool notEOF) {
-    if (notEOF)
-      std::cerr << "Line: " << s << std::endl;
+  w.onFinish = [](std::string s, bool isEOF) {
+    if (isEOF)
+      std::cerr << "EOF\n";
     else
-      std::cerr << "EOF" << std::endl;
+      std::cerr << "Line: " << s << std::endl;
   };
 
   for (;;) {

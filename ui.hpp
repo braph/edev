@@ -23,11 +23,6 @@
 #include <cstdarg>
 #endif
 
-/* Notes:
- * - `waddstr`
- * - Prefer waddnstr(s, strlen(s)) rather waddstr(s), as wadd
- */
-
 namespace UI {
 
 struct Pos {
@@ -36,19 +31,22 @@ struct Pos {
 
   inline Pos()                               noexcept : y(0),   x(0)   {}
   inline Pos(int y, int x)                   noexcept : y(y),   x(x)   {}
+  //inline Pos(const Pos& p)                   noexcept : y(p.y), x(p.x) {}
   inline Pos(const MEVENT& m)                noexcept : y(m.y), x(m.x) {}
   inline bool operator==(const Pos& p) const noexcept { return y == p.y && x == p.x; }
   inline bool operator!=(const Pos& p) const noexcept { return y != p.y || x != p.x; }
   inline bool operator>=(const Pos& p) const noexcept { return y >= p.y && x >= p.x; }
   inline bool operator<=(const Pos& p) const noexcept { return y <= p.y && x <= p.x; }
   inline bool operator< (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
-  inline bool operator> (const Pos& p) const noexcept { return y <  p.y && x <  p.x; }
+  inline bool operator> (const Pos& p) const noexcept { return y >  p.y && x >  p.x; }
+
+  inline Pos calc(int y, int x) const noexcept
+  { return Pos(this->y + y, this->x + x); }
 
 #ifndef NDEBUG
-  inline operator const char*() noexcept {
-    static char _[50];
-    sprintf(_, "UI::Pos(%d,%d)", y, x);
-    return _;
+  inline operator const char*() const noexcept {
+    static char _[32];
+    return sprintf(_, "UI::Pos(%d,%d)", y, x), _;
   }
 #endif
 };
@@ -57,19 +55,23 @@ struct Size {
   int height;
   int width;
 
-  inline Size()                               noexcept : height(0),      width(0)     {}
-  inline Size(int height, int width)          noexcept : height(height), width(width) {}
-  inline bool operator==(const Size& s) const noexcept { return s.height == height && s.width == width; }
-  inline bool operator!=(const Size& s) const noexcept { return s.height != height || s.width != width; }
+  inline Size()                               noexcept : height(0),        width(0)       {}
+  inline Size(int height, int width)          noexcept : height(height),   width(width)   {}
+  //inline Size(const Size& s)                  noexcept : height(s.height), width(s.width) {}
+  inline bool operator==(const Size& s) const noexcept { return height == s.height && width == s.width; }
+  inline bool operator!=(const Size& s) const noexcept { return height != s.height || width != s.width; }
+  inline bool operator>=(const Size& s) const noexcept { return height >= s.height && width >= s.width; }
+  inline bool operator<=(const Size& s) const noexcept { return height <= s.height && width <= s.width; }
+  inline bool operator< (const Size& s) const noexcept { return height <  s.height && width <  s.width; }
+  inline bool operator> (const Size& s) const noexcept { return height >  s.height && width >  s.width; }
 
   inline Size calc(int height, int width) const noexcept
   { return Size(this->height + height, this->width + width); }
 
 #ifndef NDEBUG
-  inline operator const char*() noexcept {
-    static char _[50];
-    sprintf(_, "UI::Size(%d,%d)", height, width);
-    return _;
+  inline operator const char*() const noexcept {
+    static char _[32];
+    return sprintf(_, "UI::Size(%d,%d)", height, width), _;
   }
 #endif
 };
@@ -80,19 +82,17 @@ public:
   Size size;
   bool visible;
 
-  virtual void draw() = 0;
-  virtual void layout(Pos pos, Size size) = 0;
-  virtual void noutrefresh() = 0;
-  virtual bool handleKey(int) { return false; }
+  Widget() noexcept
+  : pos(0,0), size(0,0), visible(true)
+  {}
+
+  virtual ~Widget()                 {};
+  virtual void draw()               = 0;
+  virtual void layout(Pos, Size)    = 0;
+  virtual void noutrefresh()        = 0;
+  virtual bool handleKey(int)       { return false; }
   virtual bool handleMouse(MEVENT&) { return false; }
   virtual WINDOW* getWINDOW() const noexcept = 0;
-
-  Widget()
-  : pos(0,0), size(0,0), visible(true)
-  {
-  }
-
-  virtual ~Widget() {};
 };
 
 /* Drawable: Windows and Pads, they share the same functionality */
@@ -104,9 +104,6 @@ struct WidgetDrawable : public Widget {
 
   inline WINDOW *getWINDOW() const noexcept
   { return win; }
-
-  inline Pos cursorPos() const noexcept
-  { Pos pos; getyx(win, pos.y, pos.x); return pos; }
 
   // ==========================================================================
   // Stream << operators
@@ -125,24 +122,6 @@ struct WidgetDrawable : public Widget {
 
   inline WidgetDrawable& operator<<(const wchar_t* s) noexcept
   { waddwstr(win, s); return *this; }
-
-  // char[] / wchar_t[] --> `N` may NOT be actual strlen!
-  template<size_t N>
-  inline WidgetDrawable& operator<<(char (&s)[N]) noexcept
-  { waddstr(win, s); return *this; }
-
-  template<size_t N>
-  inline WidgetDrawable& operator<<(wchar_t (&s)[N]) noexcept
-  { waddwstr(win, s); return *this; }
-
-  // const char[] / const wchar_t[] --> Pretty safe to use `N`
-  template<size_t N>
-  inline WidgetDrawable& operator<<(const char (&s)[N]) noexcept
-  { waddnstr(win, s, N-1); return *this; }
-
-  template<size_t N>
-  inline WidgetDrawable& operator<<(const wchar_t (&s)[N]) noexcept
-  { waddnwstr(win, s, N-1); return *this; }
 
   // std::string / std::wstring
   inline WidgetDrawable& operator<<(const std::string& s) noexcept
@@ -171,24 +150,6 @@ struct WidgetDrawable : public Widget {
 
   inline int addStr(const wchar_t* s) noexcept
   { return waddwstr(win, s); }
-
-  // char[] / wchar_t[] --> `N` may NOT be actual strlen!
-  template<size_t N>
-  inline int addStr(char (&s)[N]) noexcept
-  { return waddstr(win, s); }
-
-  template<size_t N>
-  inline int addStr(wchar_t (&s)[N]) noexcept
-  { return waddwstr(win, s); }
-
-  // const char[] / const wchar_t[] --> Pretty safe to use `N`
-  template<size_t N>
-  inline int addStr(const char (&s)[N]) noexcept
-  { return waddnstr(win, s, N-1); }
-
-  template<size_t N>
-  inline int addStr(const wchar_t (&s)[N]) noexcept
-  { return waddnwstr(win, s, N-1); }
 
   // std::string / std::wstring
   inline int addStr(const std::string& s) noexcept
@@ -228,15 +189,6 @@ struct WidgetDrawable : public Widget {
   inline int mvAddStr(int y, int x, const wchar_t* s) noexcept
   { return mvwaddwstr(win, y, x, s); }
 
-  // char[] / wchar_t[] --> `N` may NOT be actual strlen!
-  template<size_t N>
-  inline int mvAddStr(int y, int x, char (&s)[N]) noexcept
-  { return mvwaddstr(win, y, x, s); }
-
-  template<size_t N>
-  inline int mvAddStr(int y, int x, wchar_t (&s)[N]) noexcept
-  { return mvwaddwstr(win, y, x, s); }
-
   // std::string / std::wstring
   inline int mvAddStr(int y, int x, const std::string& s) noexcept
   { return mvwaddnstr(win, y, x, s.c_str(), s.size()); }
@@ -268,12 +220,30 @@ struct WidgetDrawable : public Widget {
   inline int attrSet(unsigned int attrs) noexcept
   { return wattrset(win, attrs); }
 
+  // cursor-methods ===========================================================
+  inline int  getCursorX()                const noexcept { return getcurx(win); }
+  inline int  getCursorY()                const noexcept { return getcury(win); }
+  inline void getCursorYX(int& y, int& x) const noexcept { getyx(win, y, x);    }
+
   // misc methods =============================================================
   inline int clear() noexcept
   { return wclear(win); }
 
   inline int erase() noexcept
   { return werase(win); }
+
+  inline int resize(int height, int width) noexcept
+  { return wresize(win, height, width); } // TODO: set size
+
+  inline int resize(UI::Size new_size) noexcept
+  { return wresize(win, new_size.height, new_size.width); } // TODO: set size
+
+  inline Pos cursorPos() const noexcept
+  { Pos p; getyx(win, p.y, p.x); return p; }
+
+  inline int setPos(UI::Pos new_pos) noexcept
+  { return mvwin(win, new_pos.y, new_pos.x); } // TODO: set pos
+
 };
 
 class Window : public WidgetDrawable {

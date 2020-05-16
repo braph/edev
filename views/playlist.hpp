@@ -2,7 +2,7 @@
 #define VIEWS_PLAYLIST_HPP
 
 #include "../application.hpp"
-#include "../database.hpp" // XXX ger rid of this
+#include "../database.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp" // XXX
 #include "../lib/steppablesearch.hpp"
@@ -49,8 +49,11 @@ private:
 class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
   Playlist(Context&);
+
+  bool handleKey(int) override;
+
   std::vector<Database::Tracks::Track> playlist;
-  bool handleKey(int);
+
 private:
   Context& ctxt;
   TrackRenderer trackRenderer;

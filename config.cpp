@@ -2,16 +2,19 @@
 
 #include "ektoplayer.hpp"
 #include "ui/colors.hpp"
+#include "bindings.hpp"
 #include "lib/algorithm.hpp"
 #include "lib/filesystem.hpp"
 #include "lib/shellsplit.hpp"
 #include "lib/stringpack.hpp"
 #include "lib/raii/file.hpp"
+#include "lib/iterator/iterator_pair.hpp"
 
 #include <cstdio>
 #include <cinttypes>
 
 using namespace Views;
+using ThemeID = Theme::ThemeID;
 using pack = StringPack::AlnumNoCase;
 
 // Parsing functions for primitives ===========================================
@@ -54,23 +57,23 @@ static int opt_parse_use_colors(const std::string& s) {
 
 static short opt_parse_color(const std::string& s) {
   auto color = UI::Color::parse(s);
-  if (! color.ok)
-    throw std::invalid_argument(s + ": Invalid color");
-  return color;
+  if (color.ok)
+    return color;
+  throw std::invalid_argument(s + ": Invalid color");
 }
 
 static unsigned int opt_parse_attribute(const std::string& s) {
   auto attr = UI::Attribute::parse(s);
-  if (! attr.ok)
-    throw std::invalid_argument(s + ": Invalid attribute");
-  return attr;
+  if (attr.ok)
+    return attr;
+  throw std::invalid_argument(s + ": Invalid attribute");
 }
 
 static Database::ColumnID opt_parse_column(const std::string& s) {
   Database::ColumnID column = Database::columnIDFromStr(s);
-  if (column == Database::COLUMN_NONE)
-    throw std::invalid_argument(s + ": No such column");
-  return column;
+  if (column != Database::COLUMN_NONE)
+    return column;
+  throw std::invalid_argument(s + ": No such column");
 }
       
 // Parsing functions for complex objects ======================================
@@ -291,40 +294,37 @@ void Config :: set(const std::vector<std::string>& args) {
   }
 }
 
-void Config :: color(const std::vector<std::string>& args) {
+void Config :: color(ThemeID themeId, const std::vector<std::string>& args) {
   checkArgCount(args, 3, INT_MAX);
 
-#if /*TODO*/ 0
-  auto it = make_iterator_pair(args);
+  auto it = make_iterator_pair(args.begin() + 1, args.end());
+  const auto& element = it.next();
+  Theme::ElementID elementId = Theme::elementByString(element);
+  if (elementId == Theme::ElementID::COUNT)
+    throw std::invalid_argument(element + ": Invalid theme element");
 
-  Theme::ThemeID theme;
-  using pack = ;
-  switch (pack::pack_runtime(it.next())) {
-    case pack("color_mono"): theme = Theme::MONO;   break;
-    case pack("color"):      theme = Theme::EIGHT;  break;
-    case pack("color_256"):  theme = Theme::FULL;   break;
-    default:                 throw std::invalid_argument(args[0] + ": Invalid theme");
-  }
-
-  const std::string& themeElement = it.next();
-  short fg = parse(it.next());
-  short bg = parse(it.next());
+  short fg = opt_parse_color(it.next());
+  short bg = (it.has_next() ? opt_parse_color(it.next()) : -2);
   unsigned int attrs = 0;
-  while (it)
-    attrs |= parse(it.next());
-#endif
+  while (it.has_next())
+    attrs |= opt_parse_attribute(it.next());
+
+  Theme::set(themeId, elementId, fg, bg, attrs);
 }
 
 void Config :: bind(const std::vector<std::string>& args) {
-  abort();
+  checkArgCount(args, 2, 2);
 }
 
 void Config :: unbind(const std::vector<std::string>& args) {
-  abort();
+  checkArgCount(args, 2, 2);
 }
 
 void Config :: unbind_all(const std::vector<std::string>& args) {
-  abort();
+  checkArgCount(args, 1, 1);
+  std::memset(Bindings::pad,      0, sizeof(Bindings::pad));
+  std::memset(Bindings::global,   0, sizeof(Bindings::global));
+  std::memset(Bindings::playlist, 0, sizeof(Bindings::playlist));
 }
 
 static bool getnextline(FILE* fh, std::string& line) {
@@ -358,9 +358,9 @@ void Config :: read(const std::string &file) {
 
       switch (pack::pack_runtime(args[0])) {
         case pack("set"):        Config::set(args);        break;
-        case pack("color"):      Config::color(args);      break;
-        case pack("color_256"):  Config::color(args);      break;
-        case pack("color_mono"): Config::color(args);      break;
+        case pack("color"):      Config::color(ThemeID::THEME_8,    args); break;
+        case pack("color_256"):  Config::color(ThemeID::THEME_256,  args); break;
+        case pack("color_mono"): Config::color(ThemeID::THEME_MONO, args); break;
         case pack("bind"):       Config::bind(args);       break;
         case pack("unbind"):     Config::unbind(args);     break;
         case pack("unbind_all"): Config::unbind_all(args); break;

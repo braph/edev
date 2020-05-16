@@ -8,8 +8,6 @@
 #include <cstdio>
 #include <cstdarg>
 
-#define STRLEN(S) (sizeof(S)-1)
-
 static inline const char* ensure_string(const char* s) { return (s ? s : ""); }
 
 // ============================================================================

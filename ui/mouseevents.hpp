@@ -33,14 +33,15 @@ struct MouseEvents {
   using iterator       = typename std::vector<MouseEvent>::iterator;
   using const_iterator = typename std::vector<MouseEvent>::const_iterator;
 
-  iterator       begin()        noexcept { return events.begin();  }
-  iterator       end()          noexcept { return events.end();    }
-  const_iterator begin()  const noexcept { return events.begin();  }
-  const_iterator end()    const noexcept { return events.end();    }
-  const_iterator cbegin() const noexcept { return events.cbegin(); }
-  const_iterator cend()   const noexcept { return events.cend();   }
-  size_t         size()   const noexcept { return events.size();   }
-  void           clear()        noexcept { events.clear();         }
+  void           clear()              noexcept { events.clear();         }
+  iterator       begin()              noexcept { return events.begin();  }
+  iterator       end()                noexcept { return events.end();    }
+  const_iterator begin()        const noexcept { return events.begin();  }
+  const_iterator end()          const noexcept { return events.end();    }
+  const_iterator cbegin()       const noexcept { return events.cbegin(); }
+  const_iterator cend()         const noexcept { return events.cend();   }
+  size_t         size()         const noexcept { return events.size();   }
+  MouseEvent&    operator[](size_t i) noexcept { return events[i];       }
 
   iterator find(const Pos& mousePos) noexcept {
     return std::find_if(begin(), end(), [&](const MouseEvent& event) {

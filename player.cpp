@@ -35,8 +35,8 @@ void Mpg123Player :: reset() noexcept {
   _track_completed = false;
 }
 
-void Mpg123Player :: play(const std::string &file) noexcept {
-  _file = file;
+void Mpg123Player :: play(std::string file) noexcept {
+  _file = std::move(file);
   play();
 }
 
@@ -104,13 +104,13 @@ void Mpg123Player :: read_stdout() noexcept {
  *   @FORMAT 44100 2
  *   @E Unknown command or no arguments: foo
  */
-#define case break;case
 void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
   //log_write("PARSE: %s\n", line);
   char* rest = const_cast<char*>(std::strchr(line, ' '));
   if (! rest)
     return;
 
+#define case break;case
   using pack = StringPack::Generic;
   switch (pack::pack_runtime(line, size_t(rest-line))) {
     case pack("@P"): /* Playing State: 0|1|2  */
@@ -133,8 +133,8 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
     case pack("@F"): // @F 77 17466 2.01 456.25
       std::strtoimax(rest, &rest, 10);
       std::strtoimax(rest, &rest, 10);
-      _seconds_played    = static_cast<int>(std::strtof(rest, &rest));
-      _seconds_remaining = static_cast<int>(std::strtof(rest, &rest));
+      _seconds_played    = int(std::strtof(rest, &rest));
+      _seconds_remaining = int(std::strtof(rest, &rest));
       _seconds_total     = _seconds_played + _seconds_remaining;
     case pack("@SAMPLE"): // @SAMPLE 16063 21920052
       if (_sample_rate) {

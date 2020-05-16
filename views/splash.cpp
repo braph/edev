@@ -56,14 +56,15 @@ void Splash :: draw() {
   auto bubbleFading    = ArrayView<const short>(colorFading_0);
   auto signatureFading = ArrayView<const short>(colorFading_0);
 
-  if (Theme::current == Theme::THEME_256) {
-    logoFading            = logoFading_256;
-    bubbleFading          = bubbleFading_256;
-    signatureFading       = signatureFading_256;
-  } else if (Theme::current == Theme::THEME_8) {
-    logoFading            = logoFading_8;
-    bubbleFading          = bubbleFading_8;
-    signatureFading       = signatureFading_8;
+  if (Theme::current == Theme::ThemeID::THEME_8) {
+    logoFading         = logoFading_8;
+    bubbleFading       = bubbleFading_8;
+    signatureFading    = signatureFading_8;
+  }
+  else if (Theme::current == Theme::ThemeID::THEME_256) {
+    logoFading         = logoFading_256;
+    bubbleFading       = bubbleFading_256;
+    signatureFading    = signatureFading_256;
   }
 
   SpanView<ArrayView<const short>> fader;
@@ -88,9 +89,8 @@ void Splash :: draw() {
   for (int i = 0; i < BUBBLES_SIZE; ++i) {
     const int x = BUBBLES[i][0];
     const int y = BUBBLES[i][1];
-    mvAddCh(top_pad + y - 1, left_pad + x + 1,
-        '_' | setFG(fader.get(LOGO_HEIGHT, unsigned(y - 1))));
-    attrSet(setFG(fader.get(LOGO_HEIGHT, unsigned(y))));
+    mvAddCh(top_pad + y - 1, left_pad + x + 1, '_' | setFG(fader.get(LOGO_HEIGHT, size_t(y - 1))));
+    attrSet(setFG(fader.get(LOGO_HEIGHT, size_t(y))));
     mvAddStr(top_pad + y, left_pad + x, "(_)");
   }
 
@@ -117,7 +117,7 @@ int main() {
   Widget *s = new Views::Splash;
   s->layout({10,10}, {20,80});
 
-  for (auto theme : {Theme::THEME_MONO, Theme::THEME_8, Theme::THEME_256}) {
+  for (auto theme : {Theme::ThemeID::THEME_MONO, Theme::ThemeID::THEME_8, Theme::ThemeID::THEME_256}) {
     Theme::current = theme;
     s->draw();
     s->noutrefresh();

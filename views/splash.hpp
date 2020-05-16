@@ -7,7 +7,7 @@ namespace Views {
   
 class Splash : public UI::Window {
 public:
-  void draw();
+  void draw() override;
 };
 
 } // namespace Views

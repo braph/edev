@@ -1,7 +1,6 @@
 #include "theme.hpp"
 #include "ui/colors.hpp"
 
-// Undef, just to be sure
 #undef DEFAULT
 #undef WHITE
 #undef BLACK
@@ -23,10 +22,10 @@
 #define MAGENTA    COLOR_MAGENTA
 
 Theme::ThemeID Theme :: current;
-unsigned int   Theme :: loaded[ELEMENTID_ENUM_LAST];
+unsigned int   Theme :: loaded[size_t(ElementID::COUNT)];
 
 #define _ Theme :: Definition
-Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
+Theme::Definition Theme :: themes[size_t(ThemeID::COUNT)][size_t(ElementID::COUNT)] = {
   { // ========================= Mono (no colors) =============================
     /* DEFAULT                */ _(-1, -1                       ),
     /* URL                    */ _(DEFAULT, DEFAULT, A_UNDERLINE),
@@ -130,59 +129,36 @@ Theme::Definition Theme :: themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST] = {
 #undef YELLOW
 #undef MAGENTA
 
-bool Theme :: set(ThemeID theme, const std::string& name, short fg, short bg, unsigned int attributes) {
-  const char* names[ELEMENTID_ENUM_LAST] = {
-    "default",
-    "url",
-
-    "info.head",
-    "info.tag",
-    "info.value",
-    "info.description",
-    "info.file",
-    "info.download_percent",
-    "info.download_error",
-
-    "progressbar.progress",
-    "progressbar.rest",
-
-    "tabbar.selected",
-    "tabbar.unselected",
-
-    "list.item_even",
-    "list.item_odd",
-    "list.item_selection",
-
-    "infoline.position",
-    "infoline.state",
-
-    "help.widget_name",
-    "help.key_name",
-    "help.command_name",
-    "help.command_desc",
+Theme::ElementID Theme :: elementByString(const std::string& name) noexcept {
+#define X(ENUM, STRING) STRING,
+  const char* names[size_t(ElementID::COUNT)] = {
+    THEME_ELEMENT_IDS
   };
+#undef X
 
-  for (size_t i = 0; i < THEMEID_ENUM_LAST; ++i)
-    if (name == names[i]) {
-      themes[theme][i] = Theme::Definition(fg, bg, attributes);
-      return true;
-    }
-
-  return false;
+  size_t i;
+  for (i = 0; i < size_t(ElementID::COUNT); ++i)
+    if (name == names[i])
+      break;
+  return static_cast<Theme::ElementID>(i);
 }
 
-unsigned int Theme :: get(ElementID id) {
-  return loaded[id];
+void Theme :: set(ThemeID theme, ElementID element, short fg, short bg, unsigned int attributes) noexcept {
+  themes[int(theme)][int(element)] = Theme::Definition(fg, bg, attributes);
 }
 
-void Theme :: loadTheme(ThemeID theme) {
+unsigned int Theme :: get(ElementID id) noexcept {
+  return loaded[int(id)];
+}
+
+void Theme :: loadTheme(ThemeID theme) noexcept {
   UI::Colors::reset();
 
   current = theme;
-  Theme::Definition fallback = themes[theme][DEFAULT];
+  Theme::Definition fallback = themes[int(theme)][int(ElementID::DEFAULT)];
 
-  for (size_t i = 0; i < ELEMENTID_ENUM_LAST; ++i) {
-    Theme::Definition td = themes[theme][i];
+  for (size_t i = 0; i < size_t(ElementID::COUNT); ++i) {
+    Theme::Definition td = themes[int(theme)][i];
     loaded[i] = UI::Colors::set(
       (td.fg == -2 ? fallback.fg : td.fg),
       (td.bg == -2 ? fallback.bg : td.bg),
@@ -191,8 +167,11 @@ void Theme :: loadTheme(ThemeID theme) {
   }
 }
 
-void Theme :: loadThemeByColors(int colors) {
-  loadTheme((colors >= 256 ? THEME_256 : (colors >= 8 ? THEME_8 : THEME_MONO)));
+void Theme :: loadThemeByColors(int colors) noexcept {
+  loadTheme(
+    colors >= 256 ? ThemeID::THEME_256 :
+    colors >= 8   ? ThemeID::THEME_8 :
+    ThemeID::THEME_MONO);
 }
 
 #ifdef TEST_THEME

@@ -3,6 +3,36 @@
 
 #include <string>
 
+#define THEME_ELEMENT_IDS                             \
+  X(DEFAULT,                "default")                \
+  X(URL,                    "url")                    \
+                                                      \
+  X(INFO_HEAD,              "info.head")              \
+  X(INFO_TAG,               "info.tag")               \
+  X(INFO_VALUE,             "info.value")             \
+  X(INFO_DESCRIPTION,       "info.description")       \
+  X(INFO_DOWNLOAD_FILE,     "info.file")              \
+  X(INFO_DOWNLOAD_PERCENT,  "info.download_percent")  \
+  X(INFO_DOWNLOAD_ERROR,    "info.download_error")    \
+                                                      \
+  X(PROGRESSBAR_PROGRESS,   "progressbar.progress")   \
+  X(PROGRESSBAR_REST,       "progressbar.rest")       \
+                                                      \
+  X(TABBAR_SELECTED,        "tabbar.selected")        \
+  X(TABBAR_UNSELECTED,      "tabbar.unselected")      \
+                                                      \
+  X(LIST_ITEM_EVEN,         "list.item_even")         \
+  X(LIST_ITEM_ODD,          "list.item_odd")          \
+  X(LIST_ITEM_SELECTION,    "list.item_selection")    \
+                                                      \
+  X(INFOLINE_POSITION,      "infoline.position")      \
+  X(INFOLINE_STATE,         "infoline.state")         \
+                                                      \
+  X(HELP_WIDGET_NAME,       "help.widget_name")       \
+  X(HELP_KEY_NAME,          "help.key_name")          \
+  X(HELP_COMMAND_NAME,      "help.command_name")      \
+  X(HELP_COMMAND_DESC,      "help.command_desc")      \
+
 class Theme {
 public:
   struct Definition {
@@ -16,56 +46,31 @@ public:
     }
   };
 
-  enum ThemeID {
+  enum class ThemeID {
     THEME_MONO,
     THEME_8,
     THEME_256,
-    THEMEID_ENUM_LAST
+    COUNT
   };
 
-  enum ElementID {
-    DEFAULT,
-    URL,
-
-    INFO_HEAD,
-    INFO_TAG,
-    INFO_VALUE,
-    INFO_DESCRIPTION,
-    INFO_DOWNLOAD_FILE,
-    INFO_DOWNLOAD_PERCENT,
-    INFO_DOWNLOAD_ERROR,
-
-    PROGRESSBAR_PROGRESS,
-    PROGRESSBAR_REST,
-
-    TABBAR_SELECTED,
-    TABBAR_UNSELECTED,
-
-    LIST_ITEM_EVEN,
-    LIST_ITEM_ODD,
-    LIST_ITEM_SELECTION,
-
-    INFOLINE_POSITION,
-    INFOLINE_STATE,
-
-    HELP_WIDGET_NAME,
-    HELP_KEY_NAME,
-    HELP_COMMAND_NAME,
-    HELP_COMMAND_DESC,
-
-    ELEMENTID_ENUM_LAST
+#define X(ENUM, STRING) ENUM,
+  enum class ElementID {
+    THEME_ELEMENT_IDS
+    COUNT
   };
+#undef X
 
   static ThemeID current;
 
-  static bool set(ThemeID, const std::string&, short, short, unsigned int);
-  static unsigned int get(ElementID);
-  static void loadTheme(ThemeID);
-  static void loadThemeByColors(int);
+  static void set(ThemeID, ElementID, short, short, unsigned int) noexcept;
+  static unsigned int get(ElementID)                              noexcept;
+  static void loadTheme(ThemeID)                                  noexcept;
+  static void loadThemeByColors(int)                              noexcept;
+  static ElementID elementByString(const std::string&)            noexcept;
 
 private:
-  static Definition themes[THEMEID_ENUM_LAST][ELEMENTID_ENUM_LAST];
-  static unsigned int loaded[ELEMENTID_ENUM_LAST];
+  static Definition themes[size_t(ThemeID::COUNT)][size_t(ElementID::COUNT)];
+  static unsigned int loaded[size_t(ElementID::COUNT)];
 };
 
 #endif

@@ -1,3 +1,4 @@
+- Downloads: unique_ptr <<< shall Downloads own a Download?
 - compress,nonnegative set
 - bit_tools, do it !!!
 - Context -> RegistryPattern -> or globals?
@@ -13,30 +14,32 @@
 - vol. 3 ?
 x config: temp -> $TEMP
 - config: prefetch
-- Downloads: unique_ptr <<< shall Downloads own a Download?
 - Browsepage: more scanner usage
 - [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
 - xml.hpp: iterators
 - Vector: __enter__ __leave__
-- remove exceptions
-- replace ui/colors vector<unsigned>
 - packedvector::operator[] ---- const char* get(size_t i) noexcept { // TODO: this should be const!
 - This is what you to NEXT!
 - config.hpp:
 -   remove exceptions
 - add pprintpp
 - CURLMOPT_MAX_TOTAL_CONNECTIONS
+- ui.hpp: those overloads do practially NOTHIGN.
 
 total heap usage: 6,802 allocs, 6,312 frees, 4,567,167 bytes allocated
+
+==1314210==     in use at exit: 603,411 bytes in 484 blocks
+==1314210==   total heap usage: 8,661,332 allocs, 8,660,848 frees, 1,039,173,842 bytes allocated
+
+==1315635==     in use at exit: 603,516 bytes in 487 blocks
+==1315635==   total heap usage: 8,659,546 allocs, 8,659,059 frees, 999,741,896 bytes allocated
+
 
 ===============================================================================
 
 - application.cpp
   - Preload playlist
   - What to do when the database has updated?
-- downloads.cpp
-  - Maybe add a --tries option to the Download base class?!
-  - Micro optimiation: Preallocate buffer for downloads (50*1024 for BrowsePage src)
 - Add views/browser.cpp
     if (selection)
       color = UI::Colors.get("list.item_selection");

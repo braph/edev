@@ -19,14 +19,12 @@ Color::mapping Color :: colors[] = {
 };
 
 Color::ParseResult Color :: parse(const std::string& color) noexcept {
-  if (! color.empty()) {
-    if (std::isdigit(color[0]))
-      return Color::ParseResult {short(std::atoi(color.c_str())), true};
+  for (const auto& it : colors)
+    if (color == it.name)
+      return Color::ParseResult {it.value, true};
 
-    for (const auto& it : colors)
-      if (color == it.name)
-        return Color::ParseResult {it.value, true};
-  }
+  if (std::isdigit(color[0]))
+    return Color::ParseResult {short(std::atoi(color.c_str())), true};
 
   return Color::ParseResult {0, false};
 }
@@ -37,8 +35,7 @@ std::string Color :: to_string(short color) noexcept {
       return it.name;
 
   char _[10];
-  sprintf(_, "%hd", color);
-  return _;
+  return sprintf(_, "%hd", color), _;
 }
 
 // === UI::Attribute ==========================================================

@@ -17,6 +17,7 @@ static const char state_to_string[4][STATE_LEN+1] = {
 
 using namespace UI;
 using namespace Views;
+using ElementID = Theme::ElementID;
 
 InfoLine :: InfoLine()
 : UI::Window({0,0}, {2,0})
@@ -25,36 +26,36 @@ InfoLine :: InfoLine()
 , state(Mpg123Player::STOPPED)
 {
   switch (Theme::current) {
-  case Theme::THEME_256:
+  case Theme::ThemeID::THEME_256:
     fmt_top     = &Config::infoline_format_top_256;
     fmt_bottom  = &Config::infoline_format_bottom_256;
     break;
-  case Theme::THEME_8:
+  case Theme::ThemeID::THEME_8:
      fmt_top    = &Config::infoline_format_top;
      fmt_bottom = &Config::infoline_format_bottom;
      break;
-  default: // TODO: infoline_format_top_mono
+  case Theme::ThemeID::THEME_MONO: // TODO: infoline_format_top_mono
      fmt_top    = &Config::infoline_format_top;
      fmt_bottom = &Config::infoline_format_bottom;
   }
   draw();
 }
 
-void InfoLine :: setTrack(Database::Tracks::Track track) {
+void InfoLine :: setTrack(Database::Tracks::Track track) noexcept {
   if (track != this->track) {
     this->track = track;
     draw(); // we need werase()
   }
 }
 
-void InfoLine :: setState(Mpg123Player::State state) {
+void InfoLine :: setState(Mpg123Player::State state) noexcept {
   if (state != this->state) {
     this->state = state;
     draw_state();
   }
 }
 
-void InfoLine :: setPositionAndLength(int position, int length) {
+void InfoLine :: setPositionAndLength(int position, int length) noexcept {
   if (position != this->track_position || length != this->track_length) {
     track_position = position;
     track_length   = length;
@@ -75,15 +76,13 @@ void InfoLine :: layout(Pos pos, Size size) {
 }
 
 void InfoLine :: draw_state() {
-  attrSet(Theme::get(Theme::INFOLINE_STATE));
+  attrSet(Theme::get(ElementID::INFOLINE_STATE));
   mvAddStr(0, size.width - STATE_LEN, state_to_string[state]);
 }
 
 void InfoLine :: draw_position_and_length() {
-  attrSet(Theme::get(Theme::INFOLINE_POSITION));
-  mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]",
-      track_position/60, track_position%60,
-      track_length/60, track_length%60);
+  attrSet(Theme::get(ElementID::INFOLINE_POSITION));
+  mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", track_position/60, track_position%60, track_length/60, track_length%60);
 }
 
 void InfoLine :: draw_track_info() {

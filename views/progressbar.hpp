@@ -11,13 +11,13 @@ class ProgressBar : public UI::Pad {
 public:
   ProgressBar();
 
-  void draw();
-  void layout(UI::Pos, UI::Size);
+  void draw()                         override;
+  void layout(UI::Pos, UI::Size)      override;
+  bool handleMouse(MEVENT&)           override;
 
-  void setPercent(float);
+  void setPercent(float)              noexcept;
 
   std::function<void(float)> percentChanged;
-  bool handleMouse(MEVENT&);
 };
 
 } // namespace Views

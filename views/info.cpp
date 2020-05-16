@@ -6,11 +6,13 @@
 #include "../config.hpp"
 #include "../player.hpp"
 #include "../url_handler.hpp"
+#include "../log.hpp"
 #include "../ui/colors.hpp"
 #include "../lib/filesystem.hpp"
 
 using namespace UI;
 using namespace Views;
+using ElementID = Theme::ElementID;
 
 #define START_HEADING    1
 #define START_TAG        3
@@ -19,50 +21,6 @@ using namespace Views;
 #define START_INFO_VALUE 26
 #define TRY_LINE_BREAK   70 // Try to break the line on next space
 #define FORCE_LINE_BREAK 85 // Forces line breaks even in words
-
-// XXX Ncurses deals with multibyte characters if setlocale() is called
-#define toWideString(...) __VA_ARGS__
-
-void Info :: layout(Pos pos, Size size) {
-  this->pos  = pos;
-  this->size = size;
-  wresize(win, 110, 110);
-  pad_minrow = 0;
-  pad_mincol = 0;
-}
-
-void Info :: setCurrentTrack(Database::Tracks::Track track) {
-  if (track != currentTrack) {
-    currentTrack = track;
-    draw();
-  }
-}
-
-inline void Info :: drawHeading(int y, CString heading) {
-  attrSet(Theme::get(Theme::INFO_HEAD));
-  mvAddStr(y, START_HEADING, heading);
-}
-
-void Info :: drawTag(int y, CString tag) {
-  attrSet(Theme::get(Theme::INFO_TAG));
-  mvAddStr(y, START_TAG, tag);
-  attrSet(Theme::get(Theme::INFO_VALUE));
-  moveCursor(y, START_TAG_VALUE);
-}
-
-void Info :: drawInfo(int y, CString info) {
-  attrSet(Theme::get(Theme::INFO_TAG));
-  mvAddStr(y, START_INFO, toWideString(info));
-  attrSet(Theme::get(Theme::INFO_VALUE));
-  moveCursor(y, START_INFO_VALUE);
-}
-
-void Info :: drawLink(CString url, CString title) {
-  attrSet(Theme::get(Theme::URL));
-  UI::Pos start = cursorPos();
-  addStr(toWideString(title));
-  clickableURLs.add(start, cursorPos(), {std::string(url), std::string(title)});
-}
 
 struct MarkupParser {
   const char* it;
@@ -73,7 +31,7 @@ struct MarkupParser {
     mbtowc(NULL, NULL, 0); // Reset internal state
   }
 
-  wchar_t nextChar() {
+  wchar_t next_char() {
     wchar_t c;
     for (;;) {
       int n = mbtowc(&c, it, MB_CUR_MAX);
@@ -101,10 +59,51 @@ struct MarkupParser {
   }
 };
 
+void Info :: layout(Pos pos, Size size) {
+  this->pos  = pos;
+  this->size = size;
+  resize(110, size.width);
+  pad_minrow = 0;
+  pad_mincol = 0;
+}
+
+void Info :: setCurrentTrack(Database::Tracks::Track track) {
+  if (track != currentTrack) {
+    currentTrack = track;
+    draw();
+  }
+}
+
+inline void Info :: drawHeading(int y, const char* heading) {
+  attrSet(Theme::get(ElementID::INFO_HEAD));
+  mvAddStr(y, START_HEADING, heading);
+}
+
+void Info :: drawTag(int y, const char* tag) {
+  attrSet(Theme::get(ElementID::INFO_TAG));
+  mvAddStr(y, START_TAG, tag);
+  attrSet(Theme::get(ElementID::INFO_VALUE));
+  moveCursor(y, START_TAG_VALUE);
+}
+
+void Info :: drawInfo(int y, const char* info) {
+  attrSet(Theme::get(ElementID::INFO_TAG));
+  mvAddStr(y, START_INFO, toWideString(info));
+  attrSet(Theme::get(ElementID::INFO_VALUE));
+  moveCursor(y, START_INFO_VALUE);
+}
+
+void Info :: drawLink(const std::string& url, const std::string& title) {
+  attrSet(Theme::get(ElementID::URL));
+  UI::Pos start = cursorPos();
+  addStr(toWideString(title));
+  clickableURLs.add(start, cursorPos(), {url, title});
+}
+
 void Info :: draw() {
   clickableURLs.clear();
   clear();
-  int y = 1;
+  int x, y = 1;
 
   if (currentTrack) {
     std::string buffer;
@@ -173,11 +172,10 @@ void Info :: draw() {
     drawHeading(y++, "Description");
     moveCursor(y, START_TAG);
     MarkupParser markupParser(album.description());
-    std::string linkURL;
-    std::string linkText;
+    std::string linkURL, linkText;
     wchar_t c;
-    while ((c = markupParser.nextChar())) {
-      unsigned attr = Theme::get(Theme::INFO_VALUE);
+    while ((c = markupParser.next_char())) {
+      unsigned int attr = Theme::get(ElementID::INFO_VALUE);
       if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
       if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
 
@@ -191,8 +189,7 @@ void Info :: draw() {
         continue;
       }
 
-      int x;
-      getyx(win, y, x);
+      getCursorYX(y, x);
       if (x < 3)                                moveCursor(y,   START_TAG);
       else if (x >= FORCE_LINE_BREAK)           moveCursor(y+1, START_TAG);
       else if (x >= TRY_LINE_BREAK && c == ' ') moveCursor(y+1, START_TAG-1);
@@ -211,7 +208,7 @@ void Info :: draw() {
       *this << c;
     }
 
-    y = getcury(win) + 2;
+    y = getCursorY() + 2;
   }
 
   // Player ===================================================================
@@ -243,12 +240,9 @@ void Info :: draw() {
 
   // URLs ===================================================================
   drawHeading(y++, "URLs");
-  int urlCount = clickableURLs.size();
-  for (const auto& event : clickableURLs) {
-    if (--urlCount >= 2) {
-      drawInfo(y++, event.data.title);
-      mvAddStr(y++, START_INFO + 2, toWideString(event.data.url));
-    }
+  for (size_t i = 0; i < clickableURLs.size() - 2; ++i) {
+    drawInfo(y++, clickableURLs[i].data.title.c_str());
+    mvAddStr(y++, START_INFO + 2, toWideString(clickableURLs[i].data.url));
   }
 }
 
@@ -275,3 +269,4 @@ bool Info :: handleMouse(MEVENT& m) {
   }
   return false;
 }
+

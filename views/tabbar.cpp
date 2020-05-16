@@ -3,42 +3,37 @@
 #include "../theme.hpp"
 
 using namespace Views;
+using ElementID = Theme::ElementID;
 
-TabBar :: TabBar()
+TabBar :: TabBar() noexcept
 : UI::Window({0,0}, {1,0})
 , _current(0)
 {
 }
 
-void TabBar :: addTab(std::string label) {
+void TabBar :: addTab(std::string label) noexcept {
   _tabs.push_back(std::move(label));
   draw();
 }
 
-void TabBar :: setCurrentIndex(int index) {
+void TabBar :: setCurrentIndex(int index) noexcept {
   if (index >= 0 && index < count())
     _current = index;
   draw();
 }
 
-int TabBar :: currentIndex() const {
+int TabBar :: currentIndex() const noexcept {
   return _current;
 }
 
-int TabBar :: count() const {
+int TabBar :: count() const noexcept {
   return int(_tabs.size());
 }
 
 void TabBar :: layout(UI::Pos pos, UI::Size size) {
   size.height = 1;
-  if (size != this->size) {
-    this->size = size;
-    wresize(win, size.height, size.width);
-  }
-  if (pos != this->pos) {
-    this->pos = pos;
-    mvwin(win, pos.y, pos.x);
-  }
+  resize(size);
+  setPos(pos);
 }
 
 void TabBar :: draw() {
@@ -48,9 +43,9 @@ void TabBar :: draw() {
   int i = 0;
   for (const auto &label : _tabs) {
     if (i++ == _current)
-      attrSet(Theme::get(Theme::TABBAR_SELECTED));
+      attrSet(Theme::get(ElementID::TABBAR_SELECTED));
     else
-      attrSet(Theme::get(Theme::TABBAR_UNSELECTED));
+      attrSet(Theme::get(ElementID::TABBAR_UNSELECTED));
 
     addCh(' ');
     addStr(label);

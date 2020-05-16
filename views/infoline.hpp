@@ -1,11 +1,13 @@
 #ifndef VIEWS_PLAYINGINFO_HPP
 #define VIEWS_PLAYINGINFO_HPP
 
-#include "../ui.hpp"
-#include "../database.hpp" // XXX get rid of this
 #include "../application.hpp"
+#include "../database.hpp"
 #include "../player.hpp"
+#include "../ui.hpp"
+
 #include "../lib/staticvector.hpp"
+
 #include <string>
 
 namespace Views {
@@ -22,12 +24,13 @@ struct InfoLineFormatString {
     std::string text_ = "",
     short fg_ = -1,
     short bg_ = -1,
-    unsigned int attributes_ = 0)
-  : fg(fg_)
-  , bg(bg_)
-  , attributes(attributes_)
-  , text(text_)
-  , tag(tag_)
+    unsigned int attributes_ = 0
+  )
+    : fg(fg_)
+    , bg(bg_)
+    , attributes(attributes_)
+    , text(text_)
+    , tag(tag_)
   {}
 };
 
@@ -37,11 +40,13 @@ class InfoLine : public UI::Window {
   // XXX Slot: clicked -> player.toggle
 public:
   InfoLine();
-  void setState(Mpg123Player::State);
-  void setTrack(Database::Tracks::Track);
-  void setPositionAndLength(int, int);
-  void draw();
-  void layout(UI::Pos, UI::Size);
+
+  void draw()                             override;
+  void layout(UI::Pos, UI::Size)          override;
+
+  void setState(Mpg123Player::State)      noexcept;
+  void setTrack(Database::Tracks::Track)  noexcept;
+  void setPositionAndLength(int, int)     noexcept;
 
 private:
   Database::Tracks::Track track;

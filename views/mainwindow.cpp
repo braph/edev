@@ -61,8 +61,8 @@ void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction
   readlineWidget.setPrompt(std::move(prompt));
   int oldWidget = currentIndex();
   setCurrentIndex(indexOf(&readlineWidget));
-  readlineWidget.onFinish = [=](std::string line, bool notEOF) {
-    callback(line, notEOF);
+  readlineWidget.onFinish = [=](std::string line, bool isEOF) {
+    callback(line, isEOF);
     readlineWidget.visible = false;
     setCurrentIndex(oldWidget);
     layout(pos, size); // TODO: is this an design error? draw on setC,

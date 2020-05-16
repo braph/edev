@@ -7,9 +7,9 @@ namespace Views {
 
 class Help : public UI::Pad {
 public:
-  void draw();
-  void layout(UI::Pos, UI::Size);
-  bool handleKey(int);
+  void draw()                         override;
+  void layout(UI::Pos, UI::Size)      override;
+  bool handleKey(int)                 override;
 };
 
 } // namespace Views

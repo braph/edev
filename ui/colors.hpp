@@ -16,8 +16,8 @@ public:
     inline operator short() const noexcept { return color; }
   };
 
-  static ParseResult parse(const std::string&) noexcept;
-  static std::string to_string(short) noexcept;
+  static ParseResult parse(const std::string&)  noexcept;
+  static std::string to_string(short)           noexcept;
 private:
   struct mapping { const char* name; short value; };
   static mapping colors[];
@@ -31,8 +31,8 @@ public:
     inline operator unsigned int() const noexcept { return attribute; }
   };
 
-  static ParseResult parse(const std::string&) noexcept;
-  static std::string to_string(unsigned int) noexcept;
+  static ParseResult parse(const std::string&)  noexcept;
+  static std::string to_string(unsigned int)    noexcept;
 private:
   struct mapping { const char* name; unsigned int value; };
   static mapping attributes[];
@@ -40,9 +40,9 @@ private:
 
 class Colors {
 public:
-  static int create_color_pair(short, short) noexcept;
+  static void reset()                         noexcept;
+  static int create_color_pair(short, short)  noexcept;
   static unsigned int set(short fg, short bg = -1, unsigned int attributes = 0) noexcept;
-  static void reset() noexcept;
 private:
   struct color_pair { short fg; short bg; };
   static std::array<color_pair, 256> color_pairs;

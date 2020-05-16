@@ -38,6 +38,13 @@ enum class TabWidgets : unsigned char {
   
 class MainWindow : public UI::VerticalContainer {
 public:
+  MainWindow(Context&);
+
+  void layout(UI::Pos, UI::Size)    override;
+  bool handleKey(int)               override;
+
+  void readline(std::string, ReadlineWidget::onFinishFunction);
+
   Views::InfoLine       infoLine;
   Views::ProgressBar    progressBar;
   Views::TabBar         tabBar;
@@ -48,10 +55,6 @@ public:
   Views::Info           info;
   Views::Help           help;
   Context&              ctxt;
-  MainWindow(Context&);
-  void layout(UI::Pos, UI::Size);
-  bool handleKey(int);
-  void readline(std::string, ReadlineWidget::onFinishFunction);
 };
 
 } // namespace Views

@@ -7,7 +7,7 @@
 namespace RAII {
 
 struct FileDeleter {
-  void operator()(std::FILE* file) {
+  inline void operator()(std::FILE* file) {
     fclose(file);
   }
 };
@@ -15,7 +15,7 @@ struct FileDeleter {
 struct FILE : public std::unique_ptr<std::FILE, FileDeleter> {
   using std::unique_ptr<std::FILE, FileDeleter>::unique_ptr;
 
-  operator std::FILE*() const noexcept {
+  inline operator std::FILE*() const noexcept {
     return get();
   }
 };

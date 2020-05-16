@@ -69,9 +69,7 @@ struct XPathExpressionCache {
   XPathExpressionCache() : Entries() {}
 
   template<size_t N>
-  inline xmlXPathCompExprPtr operator[](const char (&expr)[N]) {
-    return get(&expr[0], N - 1);
-  }
+  inline xmlXPathCompExprPtr operator[](const char (&s)[N]) { return get(s, N); }
 
   xmlXPathCompExprPtr get(const char* expr, size_t len) {
     for (auto& e : Entries)
@@ -192,7 +190,7 @@ Album BrowsePageParser :: next_album() {
   if (date) {
     std::tm t = {};
     char month[4] = {};
-    std::sscanf(date.c_str(), " %3c %*s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
+    std::sscanf(date.c_str(), " %3c%*s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
     t.tm_year -= 1900;
     month[0] = std::toupper(month[0]);
     month[1] = std::toupper(month[1]);
