@@ -86,9 +86,8 @@ void TrackRenderer :: operator()(
  * Playlist
  * ==========================================================================*/
 
-Playlist :: Playlist(Context& ctxt)
-: ctxt(ctxt)
-, trackRenderer(Config::playlist_columns)
+Playlist :: Playlist()
+: trackRenderer(Config::playlist_columns)
 {
   this->itemRenderer = trackRenderer;
   this->list(&this->playlist);

@@ -24,6 +24,8 @@ namespace fs = Filesystem;
 static volatile int caught_signal;
 static void on_signal(int sig) { caught_signal = sig; }
 
+Context ctxt;
+
 class Application {
 public:
   Application();
@@ -35,7 +37,6 @@ private:
   Updater updater;
   TrackLoader trackloader;
   Mpg123Player player;
-  Context ctxt;
   const char* error;
 
   void print_db_stats();
@@ -162,7 +163,7 @@ void Application :: run() {
   //else if (Config::small_update_pages > 0)
   //  updater.start(Config::small_update_pages); // Fetch last N pages
 
-  Views::MainWindow mainwindow(ctxt);
+  Views::MainWindow mainwindow;
   ctxt.mainwindow = &mainwindow;
 
   // Connecting widgets events

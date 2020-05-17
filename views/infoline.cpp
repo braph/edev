@@ -3,10 +3,13 @@
 #include "../config.hpp"
 #include "../theme.hpp"
 #include "../ui/colors.hpp"
+#include "rm_trackstr.cpp" // XXX
 
 #include <cstring>
 
 #define STOPPED_HEADING "- Ektoplayer -"
+#define STOPPED_HEADING_LEN (sizeof(STOPPED_HEADING) - 1)
+
 #define STATE_LEN 9
 static const char state_to_string[4][STATE_LEN+1] = {
   /* 0 */ "[stopped]",
@@ -88,7 +91,7 @@ void InfoLine :: draw_position_and_length() {
 void InfoLine :: draw_track_info() {
   if (! track) {
     attrSet(0);
-    mvAddStr(1, size.width / 2 - int((sizeof(STOPPED_HEADING)-1) / 2), STOPPED_HEADING);
+    mvAddStr(1, size.width / 2 - int(STOPPED_HEADING_LEN / 2), STOPPED_HEADING);
   } else {
     print_formatted_strings(0, *fmt_top);
     print_formatted_strings(1, *fmt_bottom);
@@ -102,21 +105,19 @@ void InfoLine :: draw() {
   draw_state();
 }
 
-#include "rm_trackstr.cpp"
-
 void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
   size_t sum = 0;
 
   for (const auto& fmt : format) {
     size_t len;
     if (fmt.text.length())
-      len = ::mbstowcs(NULL, fmt.text.c_str(), 0);
+      len = std::mbstowcs(NULL, fmt.text.c_str(), 0);
     else
-      len = ::mbstowcs(NULL, trackField(track, fmt.tag), 0);
-    sum += len; // TODO: Error handling...
+      len = std::mbstowcs(NULL, trackField(track, fmt.tag), 0);
+    sum += len; // TODO: Error handling of mbstowcs
   }
 
-  moveCursor(y, size.width/2 - int(sum/2));
+  moveCursor(y, size.width / 2 - int(sum / 2));
   for (const auto& fmt : format) {
     attrSet(UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())

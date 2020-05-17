@@ -3,8 +3,8 @@
 
 #include "../ui.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
 #include <functional>
 
 namespace Views {

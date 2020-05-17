@@ -30,7 +30,7 @@ static const unsigned char SIGNATURE[SIGNATURE_HEIGHT][SIGNATURE_WIDTH+1] = {
 };
 
 #define BUBBLES_SIZE 6
-static const char BUBBLES[][2] = {{6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9}};
+static const char BUBBLES[BUBBLES_SIZE][2] = {{6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9}};
 
 static const short colorFading_0[]       = {-1};
 

@@ -13,4 +13,6 @@ struct Context {
   TrackLoader*         trackloader;
 };
 
+extern Context ctxt;
+
 #endif

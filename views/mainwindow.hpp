@@ -38,7 +38,7 @@ enum class TabWidgets : unsigned char {
   
 class MainWindow : public UI::VerticalContainer {
 public:
-  MainWindow(Context&);
+  MainWindow();
 
   void layout(UI::Pos, UI::Size)    override;
   bool handleKey(int)               override;
@@ -54,7 +54,6 @@ public:
   Views::Playlist       playlist;
   Views::Info           info;
   Views::Help           help;
-  Context&              ctxt;
 };
 
 } // namespace Views

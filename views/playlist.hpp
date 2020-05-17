@@ -48,14 +48,13 @@ private:
 
 class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
-  Playlist(Context&);
+  Playlist();
 
   bool handleKey(int) override;
 
   std::vector<Database::Tracks::Track> playlist;
 
 private:
-  Context& ctxt;
   TrackRenderer trackRenderer;
   SteppableSearch<std::vector<Database::Tracks::Track>> trackSearch;
 };

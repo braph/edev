@@ -12,8 +12,6 @@ namespace Views {
 
 class Info : public UI::Pad {
 public:
-  Info(Context& ctxt) : ctxt(ctxt) {}
-
   void draw()                         override;
   void layout(UI::Pos, UI::Size)      override;
   bool handleKey(int)                 override;
@@ -24,14 +22,13 @@ public:
 private:
   struct UrlAndTitle { std::string url, title; };
 
-  Context& ctxt;
   Database::Tracks::Track currentTrack;
   UI::MouseEvents<UrlAndTitle> clickableURLs;
 
-  void drawHeading(int, const char*);
-  void drawTag(int, const char*);
-  void drawInfo(int, const char*);
-  void drawLink(const std::string&, const std::string&);
+  void drawHeading(int, const char*)       noexcept;
+  void drawTag(int, const char*)           noexcept;
+  void drawInfo(int, const char*)          noexcept;
+  void drawLink(std::string, std::string)  noexcept;
 };
 
 } // namespace Views
