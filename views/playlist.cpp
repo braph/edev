@@ -104,7 +104,7 @@ bool Playlist :: handleKey(int key) {
     case Actions::PAGE_DOWN: page_down();  break;
     case Actions::SEARCH:
        ctxt.mainwindow->readline("Search: ", [&](std::string line, bool) {
-         trackSearch.startSearch(this->playlist,
+         trackSearch.start_search(this->playlist,
            [=](const Database::Tracks::Track& track) {
               for (const auto& column : Config::playlist_columns)
                 if (boost::algorithm::icontains(trackField(track, column.tag), line))

@@ -11,15 +11,15 @@ class ArrayView {
 public:
   using value_type = T;
 
-  ArrayView()
-  : _array(NULL)
-  , _size(0)
+  ArrayView() noexcept
+    : _array(NULL)
+    , _size(0)
   {}
 
   template<size_t N>
-  ArrayView(T (&array)[N])
-  : _array(&array[0])
-  , _size(N)
+  ArrayView(T (&array)[N]) noexcept
+    : _array(&array[0])
+    , _size(N)
   {}
 
   value_type& operator[](size_t index) noexcept

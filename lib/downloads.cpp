@@ -110,7 +110,7 @@ Downloads :: ~Downloads() {
   curl_global_cleanup();
 }
 
-void Downloads :: setParallel(int parallel) {
+void Downloads :: parallel(int parallel) noexcept {
   _parallel = parallel;
   curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
 }

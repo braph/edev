@@ -16,7 +16,7 @@ public:
 
   // Constructors =============================================================
 
-  StaticVector()
+  StaticVector() noexcept
   : _size(0)
   {}
 

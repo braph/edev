@@ -18,7 +18,7 @@ struct PipeStream {
 
  ~PipeStream() {
    close();
- }
+  }
 
   inline operator bool()  const noexcept { return _fd >= 0; }
   inline bool operator!() const noexcept { return _fd < 0;  }

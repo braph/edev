@@ -96,7 +96,7 @@ void Application :: init() {
 
     Bindings::init();
     Config::init();
-    updater.downloads().setParallel(10);
+    updater.downloads().parallel(10);
 
     e = "Error while reading configuration file";
     if (fs::exists(Ektoplayer::config_file()))

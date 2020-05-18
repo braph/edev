@@ -68,7 +68,7 @@ public:
 
 private:
   std::string _filename;
-  FILE* _fh;
+  std::FILE* _fh;
 };
 
 /* ============================================================================
@@ -79,11 +79,12 @@ class Downloads {
 public:
   Downloads();
  ~Downloads();
-  void setParallel(int);
+
   void addDownload(Download*);
   int work() noexcept;
 
-  int parallel()            const noexcept { return _parallel;                }
+  void parallel(int)              noexcept;
+  int  parallel()           const noexcept { return _parallel;                }
   std::vector<Download*>& queue() noexcept { return _queue;                   }
   size_t runningDownloads() const noexcept { return size_t(_running_handles); }
   size_t queuedDownloads()  const noexcept { return _queue.size();            }

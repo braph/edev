@@ -19,22 +19,22 @@ public:
   using reference         = typename TContainer::reference;//&;
   using iterator          = GenericIterator;
 
-  GenericIterator() noexcept
+  inline GenericIterator() noexcept
     : container(NULL)
     , idx(0)
   {}
 
-  GenericIterator(TContainer* container, size_t idx) noexcept
+  inline GenericIterator(TContainer* container, size_t idx) noexcept
     : container(container)
     , idx(idx)
   {}
 
-  GenericIterator(const GenericIterator& rhs) noexcept
+  inline GenericIterator(const GenericIterator& rhs) noexcept
     : container(rhs.container)
     , idx(rhs.idx)
   {}
 
-  iterator& operator=(const iterator&it) noexcept {
+  inline iterator& operator=(const iterator&it) noexcept {
     container = it.container;
     idx = it.idx;
     return *this;
@@ -47,17 +47,17 @@ public:
   inline bool operator<=(const iterator&it) const noexcept { return idx <= it.idx; }
   inline bool operator>=(const iterator&it) const noexcept { return idx >= it.idx; }
 
-  reference operator*()              const noexcept { return (*container)[idx]; }
-  reference operator[](ptrdiff_t n)  const noexcept { return *(*this + n);      }
+  inline reference operator*()              const noexcept { return (*container)[idx]; }
+  inline reference operator[](ptrdiff_t n)  const noexcept { return *(*this + n);      }
 
-  iterator& operator++() noexcept    { ++idx; return *this; }
-  iterator& operator--() noexcept    { --idx; return *this; }
-  iterator  operator++(int) noexcept { iterator old = *this; ++idx; return old; }
-  iterator  operator--(int) noexcept { iterator old = *this; --idx; return old; }
-  iterator& operator+=(ptrdiff_t n) noexcept       { idx += n; return *this;            }
-  iterator& operator-=(ptrdiff_t n) noexcept       { idx -= n; return *this;            }
-  iterator  operator+ (ptrdiff_t n) const noexcept { iterator i = *this; return i += n; }
-  iterator  operator- (ptrdiff_t n) const noexcept { iterator i = *this; return i -= n; }
+  inline iterator& operator++()                   noexcept { ++idx; return *this;                     }
+  inline iterator& operator--()                   noexcept { --idx; return *this;                     }
+  inline iterator  operator++(int)                noexcept { iterator old = *this; ++idx; return old; }
+  inline iterator  operator--(int)                noexcept { iterator old = *this; --idx; return old; }
+  inline iterator& operator+=(ptrdiff_t n)        noexcept { idx += n; return *this;                  }
+  inline iterator& operator-=(ptrdiff_t n)        noexcept { idx -= n; return *this;                  }
+  inline iterator  operator+ (ptrdiff_t n)  const noexcept { iterator i = *this; return i += n;       }
+  inline iterator  operator- (ptrdiff_t n)  const noexcept { iterator i = *this; return i -= n;       }
 
   inline ptrdiff_t operator- (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) - static_cast<ptrdiff_t>(it.idx); }
@@ -65,7 +65,7 @@ public:
   inline ptrdiff_t operator+ (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) + static_cast<ptrdiff_t>(it.idx); }
 
-  size_t index()
+  inline size_t index()
   { return idx; }
 
 private:

@@ -12,7 +12,7 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
       if (Database::AlbumColumnID(id) == Database::ALBUM_STYLES) {
         buf[0] = '\0';
         const char* comma = "";
-        for (auto id : extract_set_bits(unsigned(f.value.i))) {
+        for (size_t id : extract_set_bits(unsigned(f.value.i))) {
           strcat(buf, comma);
           strcat(buf, track.table->db.styles[id].name());
           comma = "|";

@@ -27,7 +27,6 @@ struct SpanView {
     return (*_container)[i];
   }
 
-  // index=4 size=7 container_size=3
   typename TContainer::value_type get2(const size_t size, const size_t index) {
     const size_t container_size = _container->size();
     size_t i = container_size * index * 2 / size;

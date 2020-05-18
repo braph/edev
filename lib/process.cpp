@@ -9,8 +9,8 @@
 #include <stdexcept>
 
 Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
-: _pid(-1)
-, _closed(true)
+  : _pid(-1)
+  , _closed(true)
 {
   open(function, pipe_stdin, pipe_stdout, pipe_stderr);
 }
@@ -125,7 +125,7 @@ void Process :: kill(bool force) noexcept {
   }
 }
 
-Process :: ~Process() noexcept {
+Process :: ~Process() {
   close_fds();
 }
 

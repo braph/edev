@@ -12,28 +12,28 @@ public:
   using reference = GenericReference;
   using value_type = typename TContainer::value_type;
 
-  GenericReference(TContainer* container, size_t index)
-  : _container(container)
-  , _index(index)
+  inline GenericReference(TContainer* container, size_t index) noexcept
+    : _container(container)
+    , _index(index)
   {}
 
-  reference& operator=(const value_type& value) {
+  inline reference& operator=(const value_type& value) {
     _container->set(_index, value);
     return *this;
   }
 
-  reference& operator=(const reference& rhs) {
+  inline reference& operator=(const reference& rhs) {
     _container->set(_index, rhs._container[rhs._index]);
     return *this;
   }
 
-  operator value_type() const noexcept {
+  inline operator value_type() const noexcept {
     return _container->get(_index);
   }
 
 private:
   TContainer* _container;
-  size_t _index;
+  size_t      _index;
 };
 
 #endif
