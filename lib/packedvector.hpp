@@ -133,7 +133,7 @@ private:
 public:
   DynamicPackedVector() : _vec(1) { }
 
-  using data_type = uint32_t;
+  using data_type    = uint32_t;
   using reference    = GenericReference<DynamicPackedVector>;
   using iterator     = GenericIterator<DynamicPackedVector>;
   using value_type   = int;

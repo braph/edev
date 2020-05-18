@@ -8,7 +8,6 @@
 class Actions {
 public:
   enum ActionID : unsigned char {
-#define X(ENUM, STR) ENUM,
 #define XACTIONS \
   X(NONE,                   "none")                   \
   X(UP,                     "up")                     \
@@ -37,21 +36,21 @@ public:
   X(PLAYLIST_PLAY,          "playlist.play")          \
   X(PLAYLIST_NEXT,          "playlist.next")          \
   X(PLAYLIST_PREV,          "playlist.prev")          \
+  X(PLAYLIST_CLEAR,         "playlist.clear")         \
+  X(PLAYLIST_DELETE,        "playlist.delete")        \
   X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current")  \
+  X(UPDATE,                 "database.update")        \
   X(REDRAW,                 "redraw")                 \
   X(QUIT,                   "quit")
+#define X(ENUM, STR) ENUM,
   XACTIONS
+#undef X
   ACTIONID_ENUM_LAST
   };
-#undef X
 
-  static int call(Context&, ActionID);
+  static int call(ActionID);
   static ActionID parse(const std::string&);
   static const char* to_string(ActionID);
 };
-
-#ifndef ACTIONS_EXPORT_XACTIONS
-#undef XActions
-#endif
 
 #endif

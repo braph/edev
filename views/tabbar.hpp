@@ -18,7 +18,7 @@ public:
   bool  handleMouse(MEVENT&)          override;
 
   void  addTab(std::string)           noexcept;
-  void  setCurrentIndex(int)          noexcept;
+  void  currentIndex(int)             noexcept;
   int   currentIndex()          const noexcept;
   int   count()                 const noexcept;
 

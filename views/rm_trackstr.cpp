@@ -1,7 +1,7 @@
-#include "../lib/packedvector.hpp"
+#include "../lib/bit_tools.hpp"
 
 static const char* trackField(const Database::Tracks::Track &track, Database::ColumnID id) {
-  static char buf[128];
+  static char buf[256];
 
   Database::Field f = track[id];
   switch (f.type) {
@@ -12,13 +12,11 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
       if (Database::AlbumColumnID(id) == Database::ALBUM_STYLES) {
         buf[0] = '\0';
         const char* comma = "";
-        Database::StylesArray styleIDs(unsigned(f.value.i));
-        for (auto id : styleIDs)
-          if (id) {
-            strcat(buf, comma);
-            strcat(buf, track.table->db.styles[id].name());
-            comma = "|";
-          }
+        for (auto id : extract_set_bits(unsigned(f.value.i))) {
+          strcat(buf, comma);
+          strcat(buf, track.table->db.styles[id].name());
+          comma = "|";
+        }
       }
       else {
         sprintf(buf, "%02d", f.value.i);

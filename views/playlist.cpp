@@ -128,7 +128,7 @@ bool Playlist :: handleKey(int key) {
        break;
 
     default:
-       Actions::call(ctxt, Bindings::playlist[key]);
+       Actions::call(Bindings::playlist[key]);
     }
     return true;
   }

@@ -40,12 +40,12 @@ public:
     return *this;
   } 
 
-  bool operator==(const iterator&it) const noexcept { return idx == it.idx; }
-  bool operator!=(const iterator&it) const noexcept { return idx != it.idx; }
-  bool operator< (const iterator&it) const noexcept { return idx <  it.idx; }
-  bool operator> (const iterator&it) const noexcept { return idx >  it.idx; }
-  bool operator<=(const iterator&it) const noexcept { return idx <= it.idx; }
-  bool operator>=(const iterator&it) const noexcept { return idx >= it.idx; }
+  inline bool operator==(const iterator&it) const noexcept { return idx == it.idx; }
+  inline bool operator!=(const iterator&it) const noexcept { return idx != it.idx; }
+  inline bool operator< (const iterator&it) const noexcept { return idx <  it.idx; }
+  inline bool operator> (const iterator&it) const noexcept { return idx >  it.idx; }
+  inline bool operator<=(const iterator&it) const noexcept { return idx <= it.idx; }
+  inline bool operator>=(const iterator&it) const noexcept { return idx >= it.idx; }
 
   reference operator*()              const noexcept { return (*container)[idx]; }
   reference operator[](ptrdiff_t n)  const noexcept { return *(*this + n);      }
@@ -59,10 +59,10 @@ public:
   iterator  operator+ (ptrdiff_t n) const noexcept { iterator i = *this; return i += n; }
   iterator  operator- (ptrdiff_t n) const noexcept { iterator i = *this; return i -= n; }
 
-  ptrdiff_t operator- (const iterator&it) const noexcept
+  inline ptrdiff_t operator- (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) - static_cast<ptrdiff_t>(it.idx); }
 
-  ptrdiff_t operator+ (const iterator&it) const noexcept
+  inline ptrdiff_t operator+ (const iterator&it) const noexcept
   { return static_cast<ptrdiff_t>(idx) + static_cast<ptrdiff_t>(it.idx); }
 
   size_t index()

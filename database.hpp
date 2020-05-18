@@ -188,8 +188,6 @@ using Column = DynamicPackedVector;
 using Column = std::vector<int>;
 #endif
 
-using StylesArray = TinyPackedArray<5, uint32_t>;
-
 // === Base class for all tables ============================================
 struct Table {
   const char* name;
@@ -480,7 +478,7 @@ public:
   StringChunk chunk_archive_url;
   std::array<StringChunk*, 7> chunks;
 
-  Database();
+  Database() noexcept;
 
   std::vector<Styles::Style> getStyles()
   { return std::vector<Styles::Style>(styles.begin(), styles.end()); }

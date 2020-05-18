@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <cstdarg>
 
-// TODO: maybe make this a variadic template ifndef NDEBUG?
 #if defined(__GNUC__) || defined(__clang__)
   __attribute__((__format__(__printf__, 1, 2)))
 #endif

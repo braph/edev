@@ -1,7 +1,7 @@
-#define ACTIONS_EXPORT_XACTIONS
 #include "actions.hpp"
 
 #include "player.hpp"
+#include "updater.hpp"
 #include "database.hpp"
 #include "trackloader.hpp"
 #include "views/mainwindow.hpp"
@@ -9,7 +9,7 @@
 #include <csignal>
 #include <cassert>
 
-int Actions :: call(Context& ctxt, ActionID id) {
+int Actions :: call(ActionID id) {
   int index;
 
   switch (id) {
@@ -20,6 +20,9 @@ int Actions :: call(Context& ctxt, ActionID id) {
     break;
   case REDRAW:
     std::raise(SIGWINCH);
+    break;
+  case UPDATE:
+    ctxt.updater->start();
     break;
 
   // Player
@@ -97,8 +100,8 @@ SELECT_TAB:
       index = ctxt.mainwindow->windows.count() - 1;
     else if (index >= ctxt.mainwindow->windows.count())
       index = 0;
-    ctxt.mainwindow->windows.setCurrentIndex(index);
-    ctxt.mainwindow->tabBar.setCurrentIndex(index);
+    ctxt.mainwindow->windows.currentIndex(index);
+    ctxt.mainwindow->tabBar.currentIndex(index);
     break;
 
   // Silence warnings
@@ -121,10 +124,11 @@ SELECT_TAB:
 static const char *action_strings[Actions::ACTIONID_ENUM_LAST] = {
 #define X(ENUM, STR) STR,
   XACTIONS
+#undef X
 };
 
 Actions::ActionID Actions :: parse(const std::string& s) {
-  for (size_t i = 0; i < Actions::ACTIONID_ENUM_LAST; ++i)
+  for (int i = 0; i < Actions::ACTIONID_ENUM_LAST; ++i)
     if (s == action_strings[i])
       return static_cast<Actions::ActionID>(i);
   return Actions::ACTIONID_ENUM_LAST;

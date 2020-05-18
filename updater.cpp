@@ -80,6 +80,7 @@ void Updater :: fetch_page(int page) noexcept {
 }
 
 bool Updater :: start(int pages) noexcept {
+  log_write("Started database update (max %d pages)\n", pages);
   _max_pages = pages;
 
   if (! (_downloads.runningDownloads() + _downloads.queuedDownloads()))
@@ -91,18 +92,14 @@ bool Updater :: start(int pages) noexcept {
 
 void Updater :: insert_album(Album& album) {
   // Album Styles =============================================================
-  Database::StylesArray albumStyleIDs;
+  unsigned albumStyleIDs = 0;
   for (auto &style : album.styles) {
     Ektoplayer::url_shrink(style.url, EKTOPLAZM_STYLE_BASE_URL);
     auto styleRecord = _db.styles.find(style.url, true);
     if (! *(styleRecord.name()))
       styleRecord.name(style.name);
-    albumStyleIDs.push_back(styleRecord.id);
+    albumStyleIDs |= (1U << (styleRecord.id - 1));
   }
-  if (albumStyleIDs.size() > 3)
-    log_write("%s\n", album.url.c_str());
-  // Move large IDs to the end, this compresses bitwidth of styleIDs.value
-  std::sort(albumStyleIDs.begin(), albumStyleIDs.end(), std::greater<uint8_t>());
 
   // Album ====================================================================
   Ektoplayer::url_shrink(album.url, EKTOPLAZM_ALBUM_BASE_URL);
@@ -118,7 +115,7 @@ void Updater :: insert_album(Album& album) {
   albumRecord.rating(album.rating);
   albumRecord.votes(album.votes);
   albumRecord.download_count(album.download_count);
-  albumRecord.styles(int(albumStyleIDs.data())); // XXX: cast silences warning
+  albumRecord.styles(int(albumStyleIDs));
 
   // Album archive URLs =======================================================
   for (auto &u : album.archive_urls) {

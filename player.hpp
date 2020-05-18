@@ -27,6 +27,7 @@ public:
   void position(int)      noexcept;
   void seekForward(int)   noexcept;
   void seekBackward(int)  noexcept;
+  void volume(int)        noexcept;
 
   State state()            const noexcept { return _state;            }
   bool  isStopped()        const noexcept { return _state == STOPPED; }

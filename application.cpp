@@ -21,10 +21,10 @@
 
 namespace fs = Filesystem;
 
+Context ctxt;
+
 static volatile int caught_signal;
 static void on_signal(int sig) { caught_signal = sig; }
-
-Context ctxt;
 
 class Application {
 public:
@@ -32,12 +32,12 @@ public:
  ~Application();
   void init();
   void run();
+
 private:
-  Database::Database database;
-  Updater updater;
-  TrackLoader trackloader;
-  Mpg123Player player;
-  const char* error;
+  Database::Database  database;
+  Updater             updater;
+  TrackLoader         trackloader;
+  Mpg123Player        player;
 
   void print_db_stats();
   void cleanup_files();
@@ -49,20 +49,15 @@ Application :: Application()
 , trackloader()
 , player()
 {
-  try {
-    init();
-  }
-  catch (const std::exception &e) {
-    throw std::runtime_error(std::string(error) + ": " + e.what());
-  }
-
-  ctxt.player = &player;
-  ctxt.database = &database;
+  ctxt.player      = &player;
+  ctxt.database    = &database;
   ctxt.trackloader = &trackloader;
+  ctxt.updater     = &updater;
+  init();
 }
 
 Application :: ~Application() {
-  endwin();
+  ::endwin();
   cleanup_files();
 
   const char* err;
@@ -72,96 +67,101 @@ Application :: ~Application() {
     err = database.save(Config::database_file);
   }
   if (err)
-    printf("Error saving database to file: %s\n", err);
+    std::printf("Error saving database to file: %s\n", err);
 
   log_write("Terminated gracefully.\n");
 }
 
 void Application :: init() {
-  // Set terminal title
-  printf("\033]0;ektoplayer\007" // *xterm
-         "\033kektoplayer\033\\" // screen/tmux
-         "\r\n");
- 
-  // Use the locale from the environment
-  std::setlocale(LC_ALL, "");
+  const char* e = REPORT_BUG;
 
-  // Initialize curses
-  initscr();
-  cbreak();
-  noecho();
-  start_color();
-  use_default_colors();
-  curs_set(0);
-  mousemask(ALL_MOUSE_EVENTS, NULL);
-  wresize(stdscr, 1, 1); // Save some bytes...
+  try {
+    // Set terminal title
+    std::printf("\033]0;ektoplayer\007" // *xterm
+                "\033kektoplayer\033\\" // screen/tmux
+                "\r\n");
+   
+    // Use the locale from the environment
+    std::setlocale(LC_ALL, "");
 
-  error = REPORT_BUG;
-  Bindings::init();
-  Config::init();
+    // Initialize curses
+    ::initscr();
+    ::cbreak();
+    ::noecho();
+    ::start_color();
+    ::use_default_colors();
+    ::curs_set(0);
+    ::mousemask(ALL_MOUSE_EVENTS, NULL);
+    ::wresize(stdscr, 1, 1); // Save some bytes...
 
-  error = "Error while reading configuration file";
-  if (fs::exists(Ektoplayer::config_file()))
-    Config::read(Ektoplayer::config_file().string());
+    Bindings::init();
+    Config::init();
+    updater.downloads().setParallel(10);
 
-  error = "Could not create config directory";
-  fs::create_directories(Ektoplayer::config_dir());
+    e = "Error while reading configuration file";
+    if (fs::exists(Ektoplayer::config_file()))
+      Config::read(Ektoplayer::config_file().string());
 
-  error = "Could not create cache directory";
-  if (Config::use_cache)
-    if (! fs::is_directory(Config::cache_dir))
-      fs::create_directory(Config::cache_dir);
+    e = "Could not create config directory";
+    fs::create_directories(Ektoplayer::config_dir());
 
-  error = "Could not create temp_dir";
-  if (! fs::is_directory(Config::temp_dir))
-    fs::create_directory(Config::temp_dir);
+    e = "Could not create cache directory";
+    if (Config::use_cache)
+      if (! fs::is_directory(Config::cache_dir))
+        fs::create_directory(Config::cache_dir);
 
-  error = "Could not create download_dir";
-  if (! fs::is_directory(Config::download_dir))
-    fs::create_directory(Config::download_dir);
+    e = "Could not create temp_dir";
+    if (! fs::is_directory(Config::temp_dir))
+      fs::create_directory(Config::temp_dir);
 
-  error = "Could not create archive_dir";
-  if (! fs::is_directory(Config::archive_dir))
-    fs::create_directory(Config::archive_dir);
+    e = "Could not create download_dir";
+    if (! fs::is_directory(Config::download_dir))
+      fs::create_directory(Config::download_dir);
 
-  error = "Error opening log file";
-  if (! std::freopen(Config::log_file.c_str(), "a", stderr))
-    throw std::runtime_error(std::strerror(errno));
-  setvbuf(stderr, NULL, _IOLBF, 0);
+    e = "Could not create archive_dir";
+    if (! fs::is_directory(Config::archive_dir))
+      fs::create_directory(Config::archive_dir);
 
-  error = "Error opening database file. Try again, then delete it. Sorry!";
-  if (fs::exists(Config::database_file)) {
-    const char* err = database.load(Config::database_file);
-    if (err)
-      throw std::runtime_error(err);
+    e = "Error opening log file";
+    if (! std::freopen(Config::log_file.c_str(), "a", stderr))
+      throw std::runtime_error(std::strerror(errno));
+    std::setvbuf(stderr, NULL, _IOLBF, 0);
+
+    e = "Error opening database file. Try again, then delete it. Sorry!";
+    if (fs::exists(Config::database_file)) {
+      const char* err = database.load(Config::database_file);
+      if (err)
+        throw std::runtime_error(err);
+    }
+    else {
+      // The database will *at least* hold this amount of data
+      database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
+      database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
+      database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
+      database.chunk_meta.reserve(EKTOPLAZM_META_SIZE);
+      database.chunk_desc.reserve(EKTOPLAZM_DESC_SIZE);
+      database.chunk_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
+      database.chunk_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
+      database.chunk_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
+      database.chunk_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
+      database.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+    }
+
+    // All colors are beautiful
+    Theme::loadThemeByColors(Config::use_colors != -1 ? Config::use_colors : COLORS);
   }
-  else {
-    // The database will *at least* hold this amount of data
-    database.styles.reserve(EKTOPLAZM_STYLE_COUNT);
-    database.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
-    database.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
-    database.chunk_meta.reserve(EKTOPLAZM_META_SIZE);
-    database.chunk_desc.reserve(EKTOPLAZM_DESC_SIZE);
-    database.chunk_cover_url.reserve(EKTOPLAZM_COVER_URL_SIZE);
-    database.chunk_album_url.reserve(EKTOPLAZM_ALBUM_URL_SIZE);
-    database.chunk_track_url.reserve(EKTOPLAZM_TRACK_URL_SIZE);
-    database.chunk_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
-    database.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
+  catch (const std::exception &ex) {
+    throw std::runtime_error(std::string(e) + ": " + ex.what());
   }
-
-  // All colors are beautiful
-  Theme::loadThemeByColors(Config::use_colors != -1 ? Config::use_colors : COLORS);
-
-  updater.downloads().setParallel(10);
 }
 
 void Application :: run() {
   print_db_stats();
 
-  if (database.tracks.size() < 42)
-    updater.start(); // Fetch all pages
-  //else if (Config::small_update_pages > 0)
-  //  updater.start(Config::small_update_pages); // Fetch last N pages
+  if (database.tracks.size() < 1000)
+    updater.start();
+  else if (Config::small_update_pages > 0)
+    updater.start(Config::small_update_pages);
 
   Views::MainWindow mainwindow;
   ctxt.mainwindow = &mainwindow;
@@ -173,8 +173,8 @@ void Application :: run() {
   };
 
   mainwindow.tabBar.indexChanged = [&](int index) {
-    mainwindow.tabBar.setCurrentIndex(index);
-    mainwindow.windows.setCurrentIndex(index);
+    mainwindow.tabBar.currentIndex(index);
+    mainwindow.windows.currentIndex(index);
   };
 
   int key;
@@ -217,7 +217,7 @@ MAINLOOP:
   }
 
   if (player.isTrackCompleted())
-    Actions::call(ctxt, Actions::PLAYLIST_NEXT);
+    Actions::call(Actions::PLAYLIST_NEXT);
 
   mainwindow.progressBar.setPercent(player.percent());
   mainwindow.infoLine.setPositionAndLength(player.position(), player.length());
@@ -296,7 +296,7 @@ int main() {
     app.run();
   }
   catch (const std::exception &e) {
-    endwin();
+    ::endwin();
     std::printf("%s\n", e.what());
     return 1;
   }

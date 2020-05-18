@@ -29,7 +29,7 @@ MainWindow :: MainWindow()
     }
   }
 
-  setCurrentIndex(indexOf(&windows));
+  currentWidget(&windows);
 
   for (auto w : Config::tabs_widgets) {
     switch (w) {
@@ -63,11 +63,11 @@ void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction
   readlineWidget.visible = true;
   readlineWidget.setPrompt(std::move(prompt));
   int oldWidget = currentIndex();
-  setCurrentIndex(indexOf(&readlineWidget));
+  currentWidget(&readlineWidget);
   readlineWidget.onFinish = [=](std::string line, bool isEOF) {
     callback(line, isEOF);
     readlineWidget.visible = false;
-    setCurrentIndex(oldWidget);
+    currentIndex(oldWidget);
     layout(pos, size); // TODO: is this an design error? draw on setC,
     draw();
     noutrefresh();
@@ -98,7 +98,7 @@ void MainWindow :: layout(Pos pos, Size size) {
 
 bool MainWindow :: handleKey(int key) {
   if (! VerticalContainer::handleKey(key))
-    Actions::call(ctxt, Bindings::global[key]);
+    Actions::call(Bindings::global[key]);
   return true;
 }
 

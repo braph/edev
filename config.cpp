@@ -56,15 +56,15 @@ static int opt_parse_use_colors(const std::string& s) {
 }
 
 static short opt_parse_color(const std::string& s) {
-  auto color = UI::Color::parse(s);
-  if (color.ok)
+  short color = UI::Color::parse(s);
+  if (color != UI::Color::Invalid)
     return color;
   throw std::invalid_argument(s + ": Invalid color");
 }
 
 static unsigned int opt_parse_attribute(const std::string& s) {
-  auto attr = UI::Attribute::parse(s);
-  if (attr.ok)
+  unsigned int attr = UI::Attribute::parse(s);
+  if (attr != UI::Attribute::Invalid)
     return attr;
   throw std::invalid_argument(s + ": Invalid attribute");
 }

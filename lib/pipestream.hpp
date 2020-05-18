@@ -5,6 +5,7 @@
 
 #include <string>
 #include <cstring>
+#include <cstdio>
 
 struct PipeStream {
   PipeStream() noexcept
@@ -64,13 +65,12 @@ struct PipeStream {
     return ::write(_fd, s, std::strlen(s));
   }
 
-  // TODO: writef(printf)
-
 #if 0
   template<typename T>
-  ssize_t write(const T& value) {
-    std::string s = std::to_string(value);
-    return ::write(fd, s.c_str(), s.size());
+  ssize_t write(T value) {
+    char buf[32];
+    size_t len = std::sprintf(buf, format_specifiers::print::specifier<T>::value, value);
+    return ::write(_fd, buf, len);
   }
 #endif
 

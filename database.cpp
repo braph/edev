@@ -163,7 +163,7 @@ private:
  * Database
  * ==========================================================================*/
 
-Database :: Database()
+Database :: Database() noexcept
 : styles(*this, chunk_style_url, chunk_meta)
 , albums(*this, chunk_album_url, chunk_cover_url, chunk_archive_url, chunk_desc, chunk_meta)
 , tracks(*this, chunk_track_url, chunk_meta)

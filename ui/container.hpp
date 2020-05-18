@@ -9,20 +9,22 @@ namespace UI {
 
 class GenericContainer : public Widget {
 public:
-  GenericContainer();
-  void draw();
-  void noutrefresh();
-  bool handleKey(int);
-  bool handleMouse(MEVENT&);
+  GenericContainer()               noexcept;
 
-  WINDOW* getWINDOW() const noexcept;
-  Widget* currentWidget() const;
-  int     indexOf(Widget*) const;
-  int     currentIndex() const;
+  void draw()                      override;
+  void noutrefresh()               override;
+  bool handleKey(int)              override;
+  bool handleMouse(MEVENT&)        override;
+  WINDOW* getWINDOW()              const noexcept override;
+
   void    addWidget(Widget*);
-  void    setCurrentIndex(int);
-  bool    empty() const;
-  int     count() const;
+  Widget* currentWidget()          const noexcept;
+  void    currentWidget(Widget*)         noexcept;
+  int     currentIndex()           const noexcept;
+  void    currentIndex(int)              noexcept;
+  int     indexOf(Widget*)         const noexcept;
+  bool    empty()                  const noexcept;
+  int     count()                  const noexcept;
 
 protected:
   std::vector<Widget*> _widgets;
@@ -31,17 +33,19 @@ protected:
 
 class VerticalContainer : public GenericContainer {
 public:
-  VerticalContainer();
-  void layout(Pos, Size);
+  VerticalContainer()              noexcept;
+
+  void layout(Pos, Size)           override;
 };
 
 class StackedContainer : public GenericContainer {
 public:
-  StackedContainer();
-  void draw();
-  void noutrefresh();
-  void layout(Pos, Size);
-  bool handleMouse(MEVENT&);
+  StackedContainer()               noexcept;
+
+  void draw()                      override;
+  void noutrefresh()               override;
+  void layout(Pos, Size)           override;
+  bool handleMouse(MEVENT&)        override;
 };
 
 } // namespace UI

@@ -16,7 +16,7 @@ void TabBar :: addTab(std::string label) noexcept {
   draw();
 }
 
-void TabBar :: setCurrentIndex(int index) noexcept {
+void TabBar :: currentIndex(int index) noexcept {
   if (index >= 0 && index < count())
     _current = index;
   draw();
@@ -87,7 +87,7 @@ int main() {
     Theme::loadThemeByColors(colors);
 
     for (int i = 0; i < 3; ++i) {
-      b.setCurrentIndex(i);
+      b.currentIndex(i);
       b.noutrefresh();
       doupdate();
       usleep(500 * 1000);

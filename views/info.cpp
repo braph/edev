@@ -8,6 +8,7 @@
 #include "../url_handler.hpp"
 #include "../ui/colors.hpp"
 #include "../lib/filesystem.hpp"
+#include "../lib/bit_tools.hpp"
 
 using namespace UI;
 using namespace Views;
@@ -143,13 +144,11 @@ void Info :: draw() {
     *this << time_format(album.date(), "%B %d, %Y");
 
     drawTag(y++, "Styles");
-    Database::StylesArray styleIDs(unsigned(album.styles()));
     const char* comma = "";
-    for (auto id : styleIDs)
-      if (id) {
-        *this << comma << track.table->db.styles[id].name();
-        comma = ", ";
-      }
+    for (auto id : extract_set_bits(unsigned(album.styles()))) {
+      *this << comma << track.table->db.styles[id].name();
+      comma = ", ";
+    }
 
     drawTag(y++, "Downloads");
     *this << album.download_count();

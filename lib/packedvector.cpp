@@ -238,10 +238,14 @@ struct VectorTester {
     _check( expect_it == expect_end );
   }
 
-  void check_all() {
-    check_empty();
-    check_size();
-  }
+ ~VectorTester() {
+   check_empty();
+   check_size();
+   check_front();
+   check_back();
+   check_equals_using_iterator_access();
+   check_equals_using_index_access();
+ }
 };
 
 int main() {
@@ -249,15 +253,17 @@ int main() {
 
   using V = VectorTester<int, std::vector<int>, DynamicPackedVector>;
 
-  {
-    V v;
-    v.check_all();
-    assert(v.testee.capacity() == 0);
+  { V v; } //assert(v.testee.capacity() == 0);
 
-    // Basic
+  {
+    V v; // push_back
     for (int i = 0; i < 1024; ++i)
       v.push_back(i);
-    v.check_all();
+  }
+
+  { V v; // emplace_back
+    for (int i = 0; i < 1024; ++i)
+      v.emplace_back(i); }
 
     // Clear
     v.clear();
@@ -267,6 +273,7 @@ int main() {
     for (int i = 0; i <= INT_MAX; i *= 2)
       v.push_back(i);
     v.check_all();
+    v.clear();
 
     // Direct access (get)
     for (int i = 0) {}

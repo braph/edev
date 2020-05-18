@@ -144,7 +144,7 @@ options = [
         }),
     ('small_update_pages', {
         type: 'int', set: 'opt_parse_int',
-        default: '5',
+        default: '3',
         help: 'How many pages should be fetched after start',
         }),
     ('use_colors', {

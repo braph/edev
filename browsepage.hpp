@@ -16,7 +16,7 @@ struct Style {
   std::string url;
   std::string name;
 
-  inline Style(std::string url, std::string name)
+  inline Style(std::string url, std::string name) noexcept
   : url(std::move(url))
   , name(std::move(name))
   {}
@@ -35,7 +35,7 @@ struct Track {
   short       length;
   short       number;
 
-  inline Track()
+  inline Track() noexcept
   : bpm(0)
   , length(0)
   , number(0)
@@ -61,7 +61,7 @@ struct Album {
   std::vector<Style> styles;
   std::vector<Track> tracks;
 
-  inline Album()
+  inline Album() noexcept
   : date(0)
   , download_count(0)
   , votes(0)

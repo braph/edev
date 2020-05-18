@@ -9,10 +9,10 @@
 #include <cstdlib>
 
 static inline void open_image(const std::string& url) {
-  if (fork() != 0)
+  if (::fork() != 0)
     return;
 
-  execl("/bin/sh", "sh", "-c",
+  ::execl("/bin/sh", "sh", "-c",
     "URL=$1; shift;"
     "for CMD; do :|$CMD \"$URL\" && break;"
     "done >/dev/null 2>/dev/null", 
@@ -44,8 +44,8 @@ static inline void open_url(const std::string& url) {
     open_image(url);
     break;
   default:
-    if (fork() == 0) {
-      execlp("xdg-open", "xdg-open", url.c_str(), NULL);
+    if (::fork() == 0) {
+      ::execlp("xdg-open", "xdg-open", url.c_str(), NULL);
       std::exit(0);
     }
   }

@@ -23,7 +23,7 @@ namespace {
       free(line);
     }
     if (widgetInstance && widgetInstance->onFinish)
-      widgetInstance->onFinish(result, !line);
+      widgetInstance->onFinish(std::move(result), !line);
   }
 
 } // namespace (anonymous)

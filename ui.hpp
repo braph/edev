@@ -1,12 +1,9 @@
 #ifndef UI_HPP
 #define UI_HPP
 
-#include "lib/algorithm.hpp" // clamp XXX
-
 #include CURSES_INC
 
 #include <string>
-#include <cstdio>//XXX
 
 #ifdef __cpp_exceptions
 #include <stdexcept>
@@ -31,7 +28,6 @@ struct Pos {
 
   inline Pos()                               noexcept : y(0),   x(0)   {}
   inline Pos(int y, int x)                   noexcept : y(y),   x(x)   {}
-  //inline Pos(const Pos& p)                   noexcept : y(p.y), x(p.x) {}
   inline Pos(const MEVENT& m)                noexcept : y(m.y), x(m.x) {}
   inline bool operator==(const Pos& p) const noexcept { return y == p.y && x == p.x; }
   inline bool operator!=(const Pos& p) const noexcept { return y != p.y || x != p.x; }
@@ -57,7 +53,6 @@ struct Size {
 
   inline Size()                               noexcept : height(0),        width(0)       {}
   inline Size(int height, int width)          noexcept : height(height),   width(width)   {}
-  //inline Size(const Size& s)                  noexcept : height(s.height), width(s.width) {}
   inline bool operator==(const Size& s) const noexcept { return height == s.height && width == s.width; }
   inline bool operator!=(const Size& s) const noexcept { return height != s.height || width != s.width; }
   inline bool operator>=(const Size& s) const noexcept { return height >= s.height && width >= s.width; }
@@ -72,6 +67,27 @@ struct Size {
   inline operator const char*() const noexcept {
     static char _[32];
     return sprintf(_, "UI::Size(%d,%d)", height, width), _;
+  }
+#endif
+};
+
+struct Rectangle {
+  Pos start;
+  Pos stop;
+
+  inline Rectangle(const Pos& start, const Pos& stop) noexcept
+  : start(start)
+  , stop(stop)
+  {}
+
+  inline bool encloses(const Pos& pos) const noexcept {
+    return pos >= start && pos <= stop;
+  }
+
+#ifndef NDEBUG
+  inline operator const char*() const noexcept {
+    static char _[96];
+    return sprintf(_, "UI::Rectangle(%d,%d, %d,%d)", start.y, start.x, stop.y, stop.x), _;
   }
 #endif
 };
@@ -309,12 +325,26 @@ public:
   void page_down()  { down(size.height / 2); }
 
   void up(int n = 1) {
-    pad_minrow = clamp(pad_minrow - n, 0, getmaxy(win));
+    pad_minrow -= n;
+    if (pad_minrow < 0)
+      pad_minrow = 0;
+    else {
+      int max_y = getmaxy(win);
+      if (pad_minrow > max_y)
+        pad_minrow = max_y;
+    }
     noutrefresh();
   }
 
   void down(int n = 1) {
-    pad_minrow = clamp(pad_minrow + n, 0, getmaxy(win) - size.height);
+    pad_minrow += n;
+    if (pad_minrow < 0)
+      pad_minrow = 0;
+    else {
+      int max_y = getmaxy(win) - size.height;
+      if (pad_minrow > max_y)
+        pad_minrow = max_y;
+    }
     noutrefresh();
   }
 

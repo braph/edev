@@ -1,11 +1,13 @@
 #include "container.hpp"
 using namespace UI;
 
+#define CURRENT_WIDGET _widgets[size_t(_current)]
+
 /* ============================================================================
  * GenericContainer
  * ==========================================================================*/
 
-GenericContainer :: GenericContainer()
+GenericContainer :: GenericContainer() noexcept
 : _current(0)
 {
 }
@@ -30,60 +32,58 @@ bool GenericContainer :: handleMouse(MEVENT& m) {
 }
 
 bool GenericContainer :: handleKey(int key) {
-  if (! empty())
-    return currentWidget()->handleKey(key);
-  return false;
+  return empty() ? false : CURRENT_WIDGET->handleKey(key);
+}
+
+WINDOW* GenericContainer :: getWINDOW() const noexcept {
+  return empty() ? NULL : CURRENT_WIDGET->getWINDOW();
 }
 
 void GenericContainer :: addWidget(Widget* widget) {
   _widgets.push_back(widget);
 }
 
-WINDOW* GenericContainer :: getWINDOW() const noexcept {
-  if (! empty())
-    return currentWidget()->getWINDOW();
-  return NULL;
-}
-
-int GenericContainer :: currentIndex() const {
+int GenericContainer :: currentIndex() const noexcept {
   return _current;
 }
 
-Widget* GenericContainer :: currentWidget() const {
-  if (! empty())
-    return _widgets[size_t(_current)];
-  return NULL;
-}
-
-int GenericContainer :: indexOf(Widget* widget) const {
-  int idx = 0;
-  for (const auto& w : _widgets) {
-    if (w == widget)
-      return idx;
-    ++idx;
-  }
-  return -1;
-}
-
-void GenericContainer :: setCurrentIndex(int index) {
+void GenericContainer :: currentIndex(int index) noexcept {
   if (index >= 0 && index < count())
     _current = index;
   draw();
 }
 
-int GenericContainer :: count() const {
+Widget* GenericContainer :: currentWidget() const noexcept {
+  return empty() ? NULL : CURRENT_WIDGET;
+}
+
+void GenericContainer :: currentWidget(Widget* widget) noexcept {
+  for (size_t i = 0; i < _widgets.size(); ++i)
+    if (_widgets[i] == widget)
+      _current = int(i);
+}
+
+int GenericContainer :: indexOf(Widget* widget) const noexcept {
+  for (size_t i = 0; i < _widgets.size(); ++i)
+    if (_widgets[i] == widget)
+      return i;
+
+  return -1;
+}
+
+int GenericContainer :: count() const noexcept {
   return int(_widgets.size());
 }
 
-bool GenericContainer :: empty() const {
-  return count() == 0;
+bool GenericContainer :: empty() const noexcept {
+  return _widgets.empty();
 }
 
 /* ============================================================================
  * VerticalContainer
  * ==========================================================================*/
 
-VerticalContainer :: VerticalContainer()
+VerticalContainer :: VerticalContainer() noexcept
 : GenericContainer()
 {
 }
@@ -103,24 +103,24 @@ void VerticalContainer :: layout(Pos pos, Size size) {
  * StackedContainer
  * ==========================================================================*/
 
-StackedContainer :: StackedContainer()
+StackedContainer :: StackedContainer() noexcept
 : GenericContainer()
 {
 }
 
 void StackedContainer :: draw() {
-  if (! empty() && currentWidget()->visible)
-    currentWidget()->draw();
+  if (! empty() && CURRENT_WIDGET->visible)
+    CURRENT_WIDGET->draw();
 }
 
 void StackedContainer :: noutrefresh() {
-  if (! empty() && currentWidget()->visible)
-    currentWidget()->noutrefresh();
+  if (! empty() && CURRENT_WIDGET->visible)
+    CURRENT_WIDGET->noutrefresh();
 }
 
 bool StackedContainer :: handleMouse(MEVENT& m) {
-  if (! empty() && currentWidget()->visible)
-    return currentWidget()->handleMouse(m);
+  if (! empty() && CURRENT_WIDGET->visible)
+    return CURRENT_WIDGET->handleMouse(m);
   return false;
 }
 

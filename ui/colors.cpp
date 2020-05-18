@@ -1,6 +1,6 @@
 #include "colors.hpp"
 
-#include <cctype>
+#include <cinttypes>
 
 using namespace UI;
 
@@ -18,15 +18,17 @@ Color::mapping Color :: colors[] = {
   {"magenta",   COLOR_MAGENTA}
 };
 
-Color::ParseResult Color :: parse(const std::string& color) noexcept {
+short Color :: parse(const std::string& color) noexcept {
   for (const auto& it : colors)
     if (color == it.name)
-      return Color::ParseResult {it.value, true};
+      return it.value;
 
-  if (std::isdigit(color[0]))
-    return Color::ParseResult {short(std::atoi(color.c_str())), true};
+  char *end;
+  std::intmax_t i = std::strtoimax(color.c_str(), &end, 10);
+  if (! color.empty() && !*end && i >= -1 && i <= 256)
+    return i;
 
-  return Color::ParseResult {0, false};
+  return Invalid;
 }
 
 std::string Color :: to_string(short color) noexcept {
@@ -50,12 +52,12 @@ Attribute::mapping Attribute :: attributes[] = {
   {"underline", A_UNDERLINE}
 };
 
-Attribute::ParseResult Attribute :: parse(const std::string& attribute) noexcept {
+unsigned int Attribute :: parse(const std::string& attribute) noexcept {
   for (const auto& e : attributes)
     if (attribute == e.name)
-      return Attribute::ParseResult {e.value, true};
+      return e.value;
 
-  return Attribute::ParseResult {0, false};
+  return Invalid;
 }
 
 std::string Attribute :: to_string(unsigned int attribute) noexcept {
@@ -108,7 +110,7 @@ int main() {
   assert(UI::Color::parse("yellow")           == COLOR_YELLOW);
   assert(UI::Color::parse("magenta")          == COLOR_MAGENTA);
   assert(UI::Color::parse("123")              == 123);
-  assert(UI::Color::parse("no_color").ok      == false);
+  assert(UI::Color::parse("no_color")         == UI::Color::Invalid);
 
   assert(UI::Color::to_string(-1)             == "none");
   assert(UI::Color::to_string(COLOR_WHITE)    == "white");

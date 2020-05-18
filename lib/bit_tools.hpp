@@ -1,12 +1,23 @@
 #ifndef BIT_TOOLS_HPP
 #define BIT_TOOLS_HPP
 
+#include "staticvector.hpp"
+
 #include <limits>
 #include <climits>
 #include <cstddef>
 #include <type_traits>
 
 #define BITSOF(T) (CHAR_BIT * sizeof(T))
+
+template<typename TInt>
+StaticVector<signed char, sizeof(TInt) * 8> extract_set_bits(TInt value) {
+  StaticVector<signed char, sizeof(TInt) * 8> result {};
+  for (int i = 0; i < sizeof(TInt) * 8; ++i)
+    if (value & (1 << i))
+      result.push_back(i + 1);
+  return result;
+}
 
 // Unsigned ===================================================================
 static inline int bitlength(unsigned long long n) noexcept {

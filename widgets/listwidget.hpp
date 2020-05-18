@@ -2,6 +2,7 @@
 #define WIDGETS_LISTWIDGET_HPP
 
 #include "../ui.hpp"
+#include "../lib/algorithm.hpp" // clamp
 
 #include <sstream>
 #include <climits>

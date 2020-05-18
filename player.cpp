@@ -110,10 +110,26 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
   if (! rest)
     return;
 
-#define case break;case
   using pack = StringPack::Generic;
   switch (pack::pack_runtime(line, size_t(rest-line))) {
-    case pack("@P"): /* Playing State: 0|1|2  */
+    case pack("@SAMPLE"): // 16063 21920052
+      if (_sample_rate) {
+        _seconds_played = std::strtoimax(rest, &rest, 10) / _sample_rate;
+        _seconds_total  = std::strtoimax(rest, &rest, 10) / _sample_rate;
+      }
+      break;
+    case pack("@FORMAT"): // 44100 2
+      _sample_rate = std::strtoimax(rest, &rest, 10);
+      _channels    = std::strtoimax(rest, &rest, 10);
+      break;
+    case pack("@F"): // 77 17466 2.01 456.25
+      std::strtoimax(rest, &rest, 10);
+      std::strtoimax(rest, &rest, 10);
+      _seconds_played    = int(std::strtof(rest, &rest));
+      _seconds_remaining = int(std::strtof(rest, &rest));
+      _seconds_total     = _seconds_played + _seconds_remaining;
+      break;
+    case pack("@P"): // 0|1|2
       _state = static_cast<State>(std::atoi(rest));
       if (_state == STOPPED) {
         if (_failed) // Try again if playback stopped because of failure
@@ -125,34 +141,20 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
         _track_completed = false;
         _failed = 0;
       }
+      break;
     case pack("@E"): /* Error */ ++_failed;
     case pack("@I"): /* Info  */
     case pack("@J"): /* Jump  */
     case pack("@R"): /* ????  */
     case pack("@S"): /* ????  */
-    case pack("@F"): // @F 77 17466 2.01 456.25
-      std::strtoimax(rest, &rest, 10);
-      std::strtoimax(rest, &rest, 10);
-      _seconds_played    = int(std::strtof(rest, &rest));
-      _seconds_remaining = int(std::strtof(rest, &rest));
-      _seconds_total     = _seconds_played + _seconds_remaining;
-    case pack("@SAMPLE"): // @SAMPLE 16063 21920052
-      if (_sample_rate) {
-        _seconds_played = std::strtoimax(rest, &rest, 10) / _sample_rate;
-        _seconds_total  = std::strtoimax(rest, &rest, 10) / _sample_rate;
-      }
-    case pack("@FORMAT"): // @FORMAT 44100 2
-      _sample_rate = std::strtoimax(rest, &rest, 10);
-      _channels    = std::strtoimax(rest, &rest, 10);
       break;
-    default:
 #ifndef NDEBUG
+    default:
       log_write("mpg123: %s\n", line);
-#endif
       break;
+#endif
   }
 }
-#undef case
 
 void Mpg123Player :: position(int seconds) noexcept {
   if (_process && _process->running())
@@ -180,12 +182,10 @@ void Mpg123Player :: toggle() noexcept {
     *_process << "P\n";
 }
 
-#ifdef USE_VOLUME
 void Mpg123Player :: volume(int volume) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("VOLUME %d\n", volume);
 }
-#endif
 
 #ifdef TEST_PLAYER
 #include "test.hpp"
