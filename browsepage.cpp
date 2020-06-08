@@ -1,8 +1,8 @@
 #include "browsepage.hpp"
 
 #include "ektoplayer.hpp"
-#include "base64.cpp"
 
+#include "lib/base64.hpp"
 #include "lib/sscan.hpp"
 #include "lib/cstring.hpp"
 #include "lib/stringpack.hpp"
@@ -256,7 +256,7 @@ Album BrowsePageParser :: next_album() {
     if (! (base64_end = std::strchr(++base64_begin, '"')))
       continue;
 
-    std::string result = b64decode(base64_begin, base64_end-base64_begin);
+    std::string result = base64::decode(base64_begin, size_t(base64_end-base64_begin));
     split(tracks, result, is_comma);//(","));XXX
     break;
   }

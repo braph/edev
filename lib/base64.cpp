@@ -1,4 +1,9 @@
+#include "base64.hpp"
+
+// Originally taken from:
 // https://stackoverflow.com/questions/342409/how-do-i-base64-encode-decode-in-c/41094722#41094722
+
+namespace base64 {
 
 static const char B64index_[256] = {
   0,    0,    0,    0,    0,    0,    0,    0,
@@ -23,7 +28,7 @@ static inline int B64index(unsigned char i) {
   return static_cast<int>(B64index_[i]);
 }
 
-std::string b64decode(const char* data, const size_t len)
+std::string decode(const char* data, const size_t len)
 {
   const unsigned char* p = reinterpret_cast<const unsigned char*>(data);
   const size_t pad = len > 0 && (len % 4 || p[len - 1] == '=');
@@ -49,5 +54,8 @@ std::string b64decode(const char* data, const size_t len)
       str.push_back(n >> 8 & 0xFF);
     }
   }
+
   return str;
 }
+
+} // namespace base64
