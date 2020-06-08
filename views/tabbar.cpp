@@ -41,14 +41,13 @@ void TabBar :: draw() {
   moveCursor(0, 0);
 
   int i = 0;
-  for (const auto &label : _tabs) {
+  for (const auto& label : _tabs) {
     if (i++ == _current)
       attrSet(Theme::get(ElementID::TABBAR_SELECTED));
     else
       attrSet(Theme::get(ElementID::TABBAR_UNSELECTED));
 
-    addCh(' ');
-    addStr(label);
+    *this << ' ' << label;
   }
 }
 

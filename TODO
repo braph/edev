@@ -1,3 +1,7 @@
+NACHDEM ICH EINGEWIESEN WURDE:
+-     233624  a.out
+
+- add filenames to error messages
 - searchup/down
 - bit_tools, do it !!!
 - Vector: __enter__ __leave__
@@ -17,7 +21,7 @@ x config: temp -> $TEMP
 - Browsepage: more scanner usage
 - [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
 - xml.hpp: iterators
-- This is what you to NEXT!
+- This is what you do NEXT!
 - config.hpp: remove exceptions
 - add pprintpp
 

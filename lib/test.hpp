@@ -2,7 +2,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstring>
-#include <unistd.h>
 #undef NDEBUG
 #include <cassert>
 

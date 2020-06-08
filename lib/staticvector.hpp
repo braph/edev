@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cassert>
+#include <cstddef>
 
 /**
  * Stack allocated vector
