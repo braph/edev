@@ -20,16 +20,17 @@ CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS)
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC) 
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
-CONFIG.deps   = lib/shellsplit.o lib/filesystem.o lib/cstring.o lib/xml.o
-DATABASE.deps = lib/stringchunk.o lib/packedvector.o
-THEME.deps    = ui/colors.o
-PLAYER.deps   = lib/process.o
-UPDATER.deps  = markdown.o
-VIEWS         = $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
-VIEWS         += widgets/listwidget.hpp widgets/readline.o
+CONFIG.deps   	= lib/shellsplit.o lib/filesystem.o lib/cstring.o lib/xml.o
+DATABASE.deps 	= lib/stringchunk.o lib/packedvector.o
+BROWSEPAGE.deps = lib/base64.o
+THEME.deps    	= ui/colors.o
+PLAYER.deps   	= lib/process.o
+UPDATER.deps  	= markdown.o
+VIEWS         	= $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
+VIEWS         	+= widgets/listwidget.hpp widgets/readline.o
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
-	browsepage.o updater.o $(UPDATER.deps) $(VIEWS) ui/container.o \
+	browsepage.o $(BROWSEPAGE.deps) updater.o $(UPDATER.deps) $(VIEWS) ui/container.o \
 	 player.o $(PLAYER.deps) actions.o bindings.o lib/downloads.o ektoplayer.o trackloader.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) application.cpp $^
 
@@ -124,7 +125,7 @@ test_xml:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_XML lib/xml.cpp $^
 	$(VALGRIND) ./a.out
 
-test_browsepage:
+test_browsepage: $(BROWSEPAGE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
 	$(VALGRIND) ./a.out
 
