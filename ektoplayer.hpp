@@ -4,6 +4,8 @@
 #include "lib/filesystem.hpp"
 
 #include <string>
+#include <cstdio>
+#include <cstdarg>
 
 #define VERSION                     "0.0.0"
 #define GITHUB_URL                  "https://github.com/braph/ektoplayer"
@@ -14,7 +16,7 @@
 #define EKTOPLAZM_TRACK_BASE_URL    EKTOPLAZM_URL "/audio/"
 #define EKTOPLAZM_STYLE_BASE_URL    EKTOPLAZM_URL "/style/"
 #define EKTOPLAZM_ARCHIVE_BASE_URL  EKTOPLAZM_URL "/files/"
-#define EKTOPLAZM_TEMP_FILE_PREFIX  "~ekto-"
+#define EKTOPLAZM_TEMP_FILE_PREFIX  "~ekto~-"
 #define REPORT_BUG                  "REPORT A BUG, PLEASE!"
 #define TEST_DB                     "/tmp/ektoplayer-test.db"
 
@@ -45,7 +47,7 @@ static inline Filesystem::path config_file() {
 /// Return an ektoplazm browse url
 static inline std::string browse_url(int page = 1) {
   char buf[sizeof(EKTOPLAZM_BROWSE_URL "/page/") + 10];
-  sprintf(buf, EKTOPLAZM_BROWSE_URL "/page/%d", page);
+  std::sprintf(buf, EKTOPLAZM_BROWSE_URL "/page/%d", page);
 
   if (page <= 1)
     buf[sizeof(EKTOPLAZM_BROWSE_URL) - 1] = '\0';
@@ -80,5 +82,17 @@ std::string& url_shrink(std::string&, const char*, const char* suffix = NULL);
 std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 
 } // namespace Ektoplayer
+
+
+#if defined(__GNUC__) || defined(__clang__)
+  __attribute__((__format__(__printf__, 1, 2)))
+#endif
+static inline void log_write(const char* format, ...) noexcept {
+  va_list ap;
+  va_start(ap, format);
+  vfprintf(stderr, format, ap);
+  va_end(ap);
+}
+
 
 #endif

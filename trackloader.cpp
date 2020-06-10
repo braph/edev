@@ -2,7 +2,6 @@
 
 #include "ektoplayer.hpp"
 #include "config.hpp"
-#include "log.hpp"
 
 #include "lib/filesystem.hpp"
 

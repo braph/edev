@@ -4,7 +4,6 @@
 #include "browsepage.hpp"
 #include "database.hpp"
 #include "markdown.hpp"
-#include "log.hpp"
 
 #include "lib/stringpack.hpp"
 #include "lib/downloads.hpp"

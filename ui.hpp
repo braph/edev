@@ -2,6 +2,8 @@
 #define UI_HPP
 
 #include CURSES_INC
+#undef  NCURSES_OK_ADDR // See ncurses.h ...
+#define NCURSES_OK_ADDR(...) (TRUE)
 
 #include <string>
 
@@ -42,7 +44,7 @@ struct Pos {
 #ifndef NDEBUG
   inline operator const char*() const noexcept {
     static char _[32];
-    return sprintf(_, "UI::Pos(%d,%d)", y, x), _;
+    return std::sprintf(_, "UI::Pos(%d,%d)", y, x), _;
   }
 #endif
 };
@@ -66,7 +68,7 @@ struct Size {
 #ifndef NDEBUG
   inline operator const char*() const noexcept {
     static char _[32];
-    return sprintf(_, "UI::Size(%d,%d)", height, width), _;
+    return std::sprintf(_, "UI::Size(%d,%d)", height, width), _;
   }
 #endif
 };
@@ -87,7 +89,7 @@ struct Rectangle {
 #ifndef NDEBUG
   inline operator const char*() const noexcept {
     static char _[96];
-    return sprintf(_, "UI::Rectangle(%d,%d, %d,%d)", start.y, start.x, stop.y, stop.x), _;
+    return std::sprintf(_, "UI::Rectangle(%d,%d, %d,%d)", start.y, start.x, stop.y, stop.x), _;
   }
 #endif
 };
@@ -240,6 +242,8 @@ struct WidgetDrawable : public Widget {
   inline int  getCursorX()                const noexcept { return getcurx(win); }
   inline int  getCursorY()                const noexcept { return getcury(win); }
   inline void getCursorYX(int& y, int& x) const noexcept { getyx(win, y, x);    }
+  inline Pos  cursorPos()                 const noexcept
+  { Pos p; getyx(win, p.y, p.x); return p; }
 
   // misc methods =============================================================
   inline int clear() noexcept
@@ -253,9 +257,6 @@ struct WidgetDrawable : public Widget {
 
   inline int resize(UI::Size new_size) noexcept
   { return wresize(win, new_size.height, new_size.width); } // TODO: set size
-
-  inline Pos cursorPos() const noexcept
-  { Pos p; getyx(win, p.y, p.x); return p; }
 
   inline int setPos(UI::Pos new_pos) noexcept
   { return mvwin(win, new_pos.y, new_pos.x); } // TODO: set pos

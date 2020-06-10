@@ -8,7 +8,6 @@
 #include "player.hpp"
 #include "config.hpp"
 #include "theme.hpp"
-#include "log.hpp"
 #include "views/mainwindow.hpp"
 
 #include "lib/cstring.hpp"

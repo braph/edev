@@ -30,16 +30,19 @@ InfoLine :: InfoLine()
 {
   switch (Theme::current) {
   case Theme::ThemeID::THEME_256:
-    fmt_top     = &Config::infoline_format_top_256;
-    fmt_bottom  = &Config::infoline_format_bottom_256;
+    fmt_top    = &Config::infoline_format_top_256;
+    fmt_bottom = &Config::infoline_format_bottom_256;
     break;
   case Theme::ThemeID::THEME_8:
-     fmt_top    = &Config::infoline_format_top;
-     fmt_bottom = &Config::infoline_format_bottom;
-     break;
+    fmt_top    = &Config::infoline_format_top;
+    fmt_bottom = &Config::infoline_format_bottom;
+    break;
   case Theme::ThemeID::THEME_MONO: // TODO: infoline_format_top_mono
-     fmt_top    = &Config::infoline_format_top;
-     fmt_bottom = &Config::infoline_format_bottom;
+    fmt_top    = &Config::infoline_format_top;
+    fmt_bottom = &Config::infoline_format_bottom;
+    break;
+  case Theme::ThemeID::COUNT:
+    break;
   }
   draw();
 }
@@ -47,7 +50,7 @@ InfoLine :: InfoLine()
 void InfoLine :: setTrack(Database::Tracks::Track track) noexcept {
   if (track != this->track) {
     this->track = track;
-    draw(); // we need werase()
+    draw(); // draw(), we need to clear screen
   }
 }
 

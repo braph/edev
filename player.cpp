@@ -1,5 +1,6 @@
 #include "player.hpp"
-#include "log.hpp"
+
+#include "ektoplayer.hpp"
 
 #include "lib/process.hpp"
 #include "lib/cstring.hpp" // temp_sprintf

@@ -1,6 +1,6 @@
 #include "database.hpp"
 
-#include "log.hpp"
+#include "ektoplayer.hpp"
 
 #include "lib/raii/file.hpp"
 
