@@ -1,146 +1,120 @@
 #include "theme.hpp"
 #include "ui/colors.hpp"
 
-#undef DEFAULT
-#undef WHITE
-#undef BLACK
-#undef RED
-#undef BLUE
-#undef CYAN
-#undef GREEN
-#undef YELLOW
-#undef MAGENTA
+#include "lib/hash.hpp"
 
-#define DEFAULT    -2
-#define WHITE      COLOR_WHITE
-#define BLACK      COLOR_BLACK
-#define RED        COLOR_RED
-#define BLUE       COLOR_BLUE
-#define CYAN       COLOR_CYAN
-#define GREEN      COLOR_GREEN
-#define YELLOW     COLOR_YELLOW
-#define MAGENTA    COLOR_MAGENTA
+enum {
+  deflt   = -2,
+  none    = -1,
+  white   = COLOR_WHITE,
+  black   = COLOR_BLACK,
+  red     = COLOR_RED,
+  blue    = COLOR_BLUE,
+  cyan    = COLOR_CYAN,
+  green   = COLOR_GREEN,
+  yellow  = COLOR_YELLOW,
+  magenta = COLOR_MAGENTA,
+};
 
-Theme::ThemeID Theme :: current;
-unsigned int   Theme :: loaded[size_t(ElementID::COUNT)];
+Theme::ThemeID    Theme :: current;
+unsigned int      Theme :: loaded[int(ElementID::COUNT)];
+Theme::Definition Theme :: themes[int(ThemeID::COUNT)][int(ElementID::COUNT)] = {
+  { // ------------------------ Mono (no colors) ------------
+    /* DEFAULT               */ {-1, -1                     },
+    /* URL                   */ {deflt, deflt, A_UNDERLINE, },
 
-#define _ Theme :: Definition
-Theme::Definition Theme :: themes[size_t(ThemeID::COUNT)][size_t(ElementID::COUNT)] = {
-  { // ========================= Mono (no colors) =============================
-    /* DEFAULT                */ _(-1, -1                       ),
-    /* URL                    */ _(DEFAULT, DEFAULT, A_UNDERLINE),
+    /* INFO_HEAD             */ {                           },
+    /* INFO_TAG              */ {                           },
+    /* INFO_VALUE            */ {                           },
+    /* INFO_DESCRIPTION      */ {                           },
+    /* INFO_DOWNLOAD_FILE    */ {                           },
+    /* INFO_DOWNLOAD_PERCENT */ {                           },
+    /* INFO_DOWNLOAD_ERROR   */ {                           },
 
-    /* INFO_HEAD              */ _(                             ),
-    /* INFO_TAG               */ _(                             ),
-    /* INFO_VALUE             */ _(                             ),
-    /* INFO_DESCRIPTION       */ _(                             ),
-    /* INFO_DOWNLOAD_FILE     */ _(                             ),
-    /* INFO_DOWNLOAD_PERCENT  */ _(                             ),
-    /* INFO_DOWNLOAD_ERROR    */ _(                             ),
+    /* PROGRESSBAR_PROGRESS  */ {                           },
+    /* PROGRESSBAR_REST      */ {                           },
 
-    /* PROGRESSBAR_PROGRESS   */ _(                             ),
-    /* PROGRESSBAR_REST       */ _(                             ),
+    /* TABBAR_SELECTED       */ {deflt, deflt, A_BOLD       },
+    /* TABBAR_UNSELECTED     */ {                           },
 
-    /* TABBAR_SELECTED        */ _(DEFAULT, DEFAULT, A_BOLD     ),
-    /* TABBAR_UNSELECTED      */ _(                             ),
+    /* LIST_ITEM_EVEN        */ {                           },
+    /* LIST_ITEM_ODD         */ {                           },
+    /* LIST_ITEM_SELECTION   */ {                           },
 
-    /* LIST_ITEM_EVEN         */ _(                             ),
-    /* LIST_ITEM_ODD          */ _(                             ),
-    /* LIST_ITEM_SELECTION    */ _(                             ),
+    /* INFOLINE_POSITION     */ {                           },
+    /* INFOLINE_STATE        */ {                           },
 
-    /* INFOLINE_POSITION      */ _(                             ),
-    /* INFOLINE_STATE         */ _(                             ),
-
-    /* HELP_WIDGET_NAME       */ _(DEFAULT, DEFAULT, A_BOLD     ),
-    /* HELP_KEY_NAME          */ _(                             ),
-    /* HELP_COMMAND_NAME      */ _(                             ),
-    /* HELP_COMMAND_DESC      */ _(                             )
+    /* HELP_WIDGET_NAME      */ {deflt, deflt, A_BOLD       },
+    /* HELP_KEY_NAME         */ {                           },
+    /* HELP_COMMAND_NAME     */ {                           },
+    /* HELP_COMMAND_DESC     */ {                           }
   },
-  { // ========================= 8 Colors (default) ===========================
-    /* DEFAULT                */ _(-1, -1                       ),
-    /* URL                    */ _(MAGENTA, DEFAULT, A_UNDERLINE),
+  { // ------------------------ 8 Colors (default) ----------
+    /* DEFAULT               */ {-1, -1                     },
+    /* URL                   */ {magenta, deflt, A_UNDERLINE},
 
-    /* INFO_HEAD              */ _(BLUE, DEFAULT, A_BOLD        ),
-    /* INFO_TAG               */ _(BLUE                         ),
-    /* INFO_VALUE             */ _(MAGENTA                      ),
-    /* INFO_DESCRIPTION       */ _(BLUE                         ),
-    /* INFO_DOWNLOAD_FILE     */ _(BLUE                         ),
-    /* INFO_DOWNLOAD_PERCENT  */ _(MAGENTA                      ),
-    /* INFO_DOWNLOAD_ERROR    */ _(RED                          ),
+    /* INFO_HEAD             */ {blue, deflt, A_BOLD        },
+    /* INFO_TAG              */ {blue                       },
+    /* INFO_VALUE            */ {magenta                    },
+    /* INFO_DESCRIPTION      */ {blue                       },
+    /* INFO_DOWNLOAD_FILE    */ {blue                       },
+    /* INFO_DOWNLOAD_PERCENT */ {magenta                    },
+    /* INFO_DOWNLOAD_ERROR   */ {red                        },
 
-    /* PROGRESSBAR_PROGRESS   */ _(BLUE                         ),
-    /* PROGRESSBAR_REST       */ _(BLACK                        ),
+    /* PROGRESSBAR_PROGRESS  */ {blue                       },
+    /* PROGRESSBAR_REST      */ {black                      },
 
-    /* TABBAR_SELECTED        */ _(BLUE                         ),
-    /* TABBAR_UNSELECTED      */ _(WHITE                        ),
+    /* TABBAR_SELECTED       */ {blue                       },
+    /* TABBAR_UNSELECTED     */ {white                      },
 
-    /* LIST_ITEM_EVEN         */ _(BLUE                         ),
-    /* LIST_ITEM_ODD          */ _(BLUE                         ),
-    /* LIST_ITEM_SELECTION    */ _(MAGENTA                      ),
+    /* LIST_ITEM_EVEN        */ {blue                       },
+    /* LIST_ITEM_ODD         */ {blue                       },
+    /* LIST_ITEM_SELECTION   */ {magenta                    },
 
-    /* INFOLINE_POSITION      */ _(MAGENTA                      ),
-    /* INFOLINE_STATE         */ _(CYAN                         ),
+    /* INFOLINE_POSITION     */ {magenta                    },
+    /* INFOLINE_STATE        */ {cyan                       },
 
-    /* HELP_WIDGET_NAME       */ _(BLUE, DEFAULT, A_BOLD        ),
-    /* HELP_KEY_NAME          */ _(BLUE                         ),
-    /* HELP_COMMAND_NAME      */ _(MAGENTA                      ),
-    /* HELP_COMMAND_DESC      */ _(YELLOW                       )
+    /* HELP_WIDGET_NAME      */ {blue, deflt, A_BOLD        },
+    /* HELP_KEY_NAME         */ {blue                       },
+    /* HELP_COMMAND_NAME     */ {magenta                    },
+    /* HELP_COMMAND_DESC     */ {yellow                     }
   },
-  { // ========================= 256 Colors ===================================
-    /* DEFAULT                */ _(WHITE, -1                    ), // 233
-    /* URL                    */ _(97, DEFAULT, A_UNDERLINE     ),
+  { // ------------------------ 256 Colors ------------------
+    /* DEFAULT               */ {white, -1                  }, // 233
+    /* URL                   */ {97, deflt, A_UNDERLINE     },
 
-    /* INFO_HEAD              */ _(32, DEFAULT, A_BOLD          ),
-    /* INFO_TAG               */ _(74                           ),
-    /* INFO_VALUE             */ _(67                           ),
-    /* INFO_DESCRIPTION       */ _(67                           ),
-    /* INFO_DOWNLOAD_FILE     */ _(75                           ),
-    /* INFO_DOWNLOAD_PERCENT  */ _(68                           ),
-    /* INFO_DOWNLOAD_ERROR    */ _(RED                          ),
+    /* INFO_HEAD             */ {32, deflt, A_BOLD          },
+    /* INFO_TAG              */ {74                         },
+    /* INFO_VALUE            */ {67                         },
+    /* INFO_DESCRIPTION      */ {67                         },
+    /* INFO_DOWNLOAD_FILE    */ {75                         },
+    /* INFO_DOWNLOAD_PERCENT */ {68                         },
+    /* INFO_DOWNLOAD_ERROR   */ {red                        },
 
-    /* PROGRESSBAR_PROGRESS   */ _(23                           ),
-    /* PROGRESSBAR_REST       */ _(BLACK                        ),
+    /* PROGRESSBAR_PROGRESS  */ {23                         },
+    /* PROGRESSBAR_REST      */ {black                      },
 
-    /* TABBAR_SELECTED        */ _(75                           ),
-    /* TABBAR_UNSELECTED      */ _(250                          ),
+    /* TABBAR_SELECTED       */ {75                         },
+    /* TABBAR_UNSELECTED     */ {250                        },
 
-    /* LIST_ITEM_EVEN         */ _(26                           ),
-    /* LIST_ITEM_ODD          */ _(25                           ),
-    /* LIST_ITEM_SELECTION    */ _(97                           ),
+    /* LIST_ITEM_EVEN        */ {26                         },
+    /* LIST_ITEM_ODD         */ {25                         },
+    /* LIST_ITEM_SELECTION   */ {97                         },
 
-    /* INFOLINE_POSITION      */ _(97                           ),
-    /* INFOLINE_STATE         */ _(37                           ),
+    /* INFOLINE_POSITION     */ {97                         },
+    /* INFOLINE_STATE        */ {37                         },
 
-    /* HELP_WIDGET_NAME       */ _(33, DEFAULT, A_BOLD          ),
-    /* HELP_KEY_NAME          */ _(75                           ),
-    /* HELP_COMMAND_NAME      */ _(68                           ),
-    /* HELP_COMMAND_DESC      */ _(29                           )
+    /* HELP_WIDGET_NAME      */ {33, deflt, A_BOLD          },
+    /* HELP_KEY_NAME         */ {75                         },
+    /* HELP_COMMAND_NAME     */ {68                         },
+    /* HELP_COMMAND_DESC     */ {29                         }
   }
 };
 
-#undef _
-#undef DEFAULT
-#undef WHITE
-#undef BLACK
-#undef RED
-#undef BLUE
-#undef CYAN
-#undef GREEN
-#undef YELLOW
-#undef MAGENTA
-
 Theme::ElementID Theme :: elementByString(const std::string& name) noexcept {
-#define X(ENUM, STRING) STRING,
-  const char* names[size_t(ElementID::COUNT)] = {
-    THEME_ELEMENT_IDS
-  };
-#undef X
-
-  size_t i;
-  for (i = 0; i < size_t(ElementID::COUNT); ++i)
-    if (name == names[i])
-      break;
-  return static_cast<Theme::ElementID>(i);
+#define X(ENUM, STRING) case Hash::lose_lose(STRING): return ElementID::ENUM;
+  switch (Hash::lose_lose(name)) { THEME_ELEMENT_IDS }
+  return ElementID::COUNT;
 }
 
 void Theme :: set(ThemeID theme, ElementID element, short fg, short bg, unsigned int attributes) noexcept {
@@ -157,7 +131,7 @@ void Theme :: loadTheme(ThemeID theme) noexcept {
   current = theme;
   Theme::Definition fallback = themes[int(theme)][int(ElementID::DEFAULT)];
 
-  for (size_t i = 0; i < size_t(ElementID::COUNT); ++i) {
+  for (int i = 0; i < int(ElementID::COUNT); ++i) {
     Theme::Definition td = themes[int(theme)][i];
     loaded[i] = UI::Colors::set(
       (td.fg == -2 ? fallback.fg : td.fg),

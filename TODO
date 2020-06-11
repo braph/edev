@@ -1,9 +1,10 @@
 NACHDEM ICH EINGEWIESEN WURDE:
 -     233624  a.out
 -     2976    bindings.o
-ERSTE AENDERUNG NACH DER EINWEISUNG: changed bindings from c-array to std::array
--     233624  a.out
--     2976    bindings.o
+
+- add exceptions.... yeah i'm stupid.
+- sscan.hpp to replace scanf
+- ensure constexpr and noexcept!
 
 - add filenames to error messages
 - searchup/down
