@@ -1,3 +1,5 @@
+#include "../ektoplayer.hpp"
+
 #include "../lib/bit_tools.hpp"
 
 static const char* trackField(const Database::Tracks::Track &track, Database::ColumnID id) {
