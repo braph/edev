@@ -29,7 +29,7 @@ struct InfoLineFormatString {
     : fg(fg_)
     , bg(bg_)
     , attributes(attributes_)
-    , text(text_)
+    , text(std::move(text_))
     , tag(tag_)
   {}
 };

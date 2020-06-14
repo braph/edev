@@ -11,7 +11,7 @@ class Mpg123Player {
 public:
   enum State : uint8_t {
     STOPPED = 0, // <-.
-    PAUSED  = 1, //    } Mpg123 
+    PAUSED  = 1, //    } Mpg123
     PLAYING = 2, // <-'
     LOADING = 3, // <--- New introduced
   };

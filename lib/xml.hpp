@@ -100,7 +100,7 @@ public:
   const char* name()            const noexcept { return reinterpret_cast<const char*>(m_attr->name); }
   Attribute   next()            const noexcept { return Attribute(m_attr->next); }
 
-  std::string value() const { 
+  std::string value() const {
     xmlChar* _ = ::xmlNodeListGetString(m_attr->doc, m_attr->children, 1);
     std::string value = reinterpret_cast<const char*>(_);
     ::xmlFree(_);

@@ -4,7 +4,9 @@
 
 #include "lib/raii/file.hpp"
 
+#include <type_traits>
 #include <climits>
+#include <cstdint>
 #include <cstring>
 #include <cstdio>
 
@@ -13,149 +15,115 @@
 
 namespace Database {
 
-/* ============================================================================
- * Dumper / Loader
- * ============================================================================
- * Helpers for saving and reading containers to/from disk.
- *
- * Binary format for containers:
- *   size_t elem_bits  : Bit width of one element
- *   size_t elem_count : Element count
- *   void*  data[]     : Data
- *   size_t elem_bits  : Bit width of one element -.
- *   size_t elem_count : Element count            -'-> Used for validation
- */
-
 struct Dumper {
   Dumper(FILE* fh)
     : fs(fh)
-    , _error(0)
   {}
 
-  operator bool() const noexcept {
-    return !_error;
+  void dump(StringChunk& p) {
+    const size_t size = size_t(p.size());
+    dump(size);
+    write(reinterpret_cast<char*>(p.data()), size);
+    dump(size);
   }
 
-  // TODO: change reinterpret_cast to memcpy + template_is_integral
-  void dump(size_t value) noexcept
-  { write(reinterpret_cast<char*>(&value), sizeof(value)); }
-
-  void dump(uint16_t value) noexcept
-  { write(reinterpret_cast<char*>(&value), sizeof(value)); }
-
-  void dump(StringChunk& p) noexcept
-  { dump(BITSOF(char), size_t(p.size()), reinterpret_cast<char*>(p.data())); }
-
-  void dump(DynamicPackedVector& v) noexcept
-  { dump(size_t(v.bits()), v.size(), reinterpret_cast<char*>(v.data())); }
+  void dump(DynamicPackedVector& v) {
+    const uint8_t bits = v.bits();
+    const size_t  size = v.size();
+    dump(bits);
+    dump(size);
+    write(reinterpret_cast<char*>(v.data()), size_for_bits(bits * size));
+    dump(bits);
+    dump(size);
+  }
 
   template<typename T>
-  void dump(std::vector<T>& v) noexcept
-  { dump(BITSOF(T), v.size(), reinterpret_cast<char*>(v.data())); }
+  void dump(std::vector<T>& v) {
+    const uint8_t bytes = sizeof(T);
+    const size_t  size  = v.size();
+    dump(bytes);
+    dump(size);
+    write(reinterpret_cast<char*>(v.data()), bytes * size);
+    dump(bytes);
+    dump(size);
+  }
 
-  void dump(Table& t) noexcept
-  { for (const auto& col : t.columns) { dump(*col); } }
+  template<typename T>
+  inline void dump(T value) {
+    static_assert(std::is_arithmetic<T>::value, "T not an integer");
+    write(reinterpret_cast<char*>(&value), sizeof(value));
+  }
+
+  void dump(Table& t) {
+    for (const auto col : t.columns)
+      dump(*col);
+  }
 
 private:
   FILE* fs;
-  int _error;
 
-  void write(char* buf, size_t size) noexcept {
-    _error |= !::fwrite(buf, size, 1, fs);
-  }
-
-  // maybe better name
-  void dump(size_t bits, size_t count, char* data) noexcept {
-    dump(bits);
-    dump(count);
-    write(data, size_for_bits(bits*count));
-    dump(bits);
-    dump(count);
+  void write(char* buf, size_t size) {
+    if (::fwrite(buf, size, 1, fs) != 1)
+      throw std::runtime_error(strerror(EIO));
   }
 };
 
 struct Loader {
-  enum Error {
-    Success = 0,
-    InvalidBitCountInHeader,
-    InvalidBitCountInFooter,
-    InvalidElemCountInFooter
-  };
-
-  const char* what() const noexcept {
-    switch (_error) {
-      default:                        return strerror(0);
-      case InvalidBitCountInHeader:   return "Invalid bit count in header";
-      case InvalidBitCountInFooter:   return "Invalid bit count in footer";
-      case InvalidElemCountInFooter:  return "Invalid element count in footer";
-    }
-  }
-
-  operator bool() const noexcept {
-    return ! _error;
-  }
-
   Loader(FILE* fs)
     : fs(fs)
-    , _error(Success)
   {}
 
-  void load(size_t& value) noexcept
-  { read(reinterpret_cast<char*>(&value), sizeof(value)); }
+#define MSG_BAD_FOOTER "bad footer"
 
-  void load(uint16_t& value) noexcept
-  { read(reinterpret_cast<char*>(&value), sizeof(value)); }
-
-  void load(StringChunk& chunk) noexcept {
-    readHeader(BITSOF(char));
-    chunk.resize(elem_count);
-    readData(reinterpret_cast<char*>(chunk.data()));
+  void load(StringChunk& chunk) {
+    const size_t size = load<size_t>();
+    chunk.resize(size);
+    read(reinterpret_cast<char*>(chunk.data()), size);
+    if (load<size_t>() != size)
+      throw std::runtime_error(MSG_BAD_FOOTER);
   }
 
-  void load(DynamicPackedVector& vec) noexcept {
-    readHeader();
-    vec.reserve(elem_count, elem_bits);
-    vec.resize(elem_count);
-    readData(reinterpret_cast<char*>(vec.data()));
+  void load(DynamicPackedVector& vec) {
+    const uint8_t bits = load<uint8_t>();
+    const size_t  size = load<size_t>();
+    vec.reserve(size, bits);
+    vec.resize(size);
+    read(reinterpret_cast<char*>(vec.data()), size_for_bits(bits * size));
+    if (load<uint8_t>() != bits) throw std::runtime_error(MSG_BAD_FOOTER);
+    if (load<size_t>() != size)  throw std::runtime_error(MSG_BAD_FOOTER);
   }
 
   template<typename T>
-  void load(std::vector<T>& v) noexcept {
-    readHeader(BITSOF(T));
-    v.resize(elem_count);
-    readData(reinterpret_cast<char*>(v.data()));
+  void load(std::vector<T>& v) {
+    const uint8_t bytes = load<uint8_t>();
+    const size_t  size  = load<size_t>();
+    if (bytes != sizeof(T))
+      throw std::runtime_error("byte count != sizeof(T)");
+    v.resize(size);
+    read(reinterpret_cast<char*>(v.data()), size);
+    if (load<uint8_t>() != bytes) throw std::runtime_error(MSG_BAD_FOOTER);
+    if (load<size_t>() != size)   throw std::runtime_error(MSG_BAD_FOOTER);
   }
 
-  void load(Table& t) noexcept
-  { for (const auto& col : t.columns) { load(*col); } }
+  template<typename T>
+  inline T load() {
+    T value;
+    static_assert(std::is_arithmetic<T>::value, "T not an integer");
+    read(reinterpret_cast<char*>(&value), sizeof(value));
+    return value;
+  }
+
+  void load(Table& t) {
+    for (const auto& col : t.columns)
+      load(*col);
+  }
 
 private:
   FILE* fs;
-  Error _error;
-  size_t elem_bits;
-  size_t elem_count;
 
-  void read(char* buf, size_t size) noexcept {
-    fread(buf, size, 1, fs);
-  }
-
-  void readHeader(size_t expected_bits = 0) noexcept {
-    elem_bits = 0; elem_count = 0;
-    load(elem_bits);
-    load(elem_count);
-    if (elem_bits == 0 || (expected_bits && elem_bits != expected_bits))
-      _error = InvalidBitCountInHeader;
-  }
-
-  void readData(char* buf) noexcept {
-    size_t check_bits = 0xDEAD, check_count = 0;
-    read(buf, size_for_bits(elem_bits*elem_count));
-    read(reinterpret_cast<char*>(&check_bits),  sizeof(check_bits));
-    read(reinterpret_cast<char*>(&check_count), sizeof(check_count));
-    if (check_bits != elem_bits)
-      _error = InvalidBitCountInFooter;
-    if (check_count != elem_count)
-      _error = InvalidElemCountInFooter;
+  void read(char* buf, size_t size) {
+    if (::fread(buf, size, 1, fs) != 1)
+      throw std::runtime_error(strerror(EIO));
   }
 };
 
@@ -173,44 +141,37 @@ Database :: Database() noexcept
 {
 }
 
-const char* Database :: load(const std::string& file) noexcept {
-  uint16_t check;
+void Database :: load(const std::string& file) {
   RAII::FILE fh( fopen(file.c_str(), "r") );
   if (! fh)
-    return strerror(errno);
+    throw std::runtime_error(strerror(errno));
 
   Loader l(fh);
-  l.load(check);
-  if (check != DB_ENDIANNESS_CHECK)
-    return "Database endianess mismatch";
+  if (l.load<uint16_t>() != DB_ENDIANNESS_CHECK)
+    throw std::runtime_error("Database endianess mismatch");
 
-  l.load(check);
-  if (check != DB_ABI_VERSION)
-    return "Database ABI version mismatch";
+  if (l.load<uint16_t>() != DB_ABI_VERSION)
+    throw std::runtime_error("Database ABI version mismatch");
 
   for (auto p : chunks)
     l.load(*p);
 
   for (auto t : tables)
     l.load(*t);
-
-  return l ? NULL : l.what();
 }
 
-const char* Database :: save(const std::string& file) noexcept {
+void Database :: save(const std::string& file) {
   RAII::FILE fh( fopen(file.c_str(), "w") );
   if (! fh)
-    return strerror(errno);
+    throw std::runtime_error(strerror(errno));
 
   Dumper d(fh);
-  d.dump(uint16_t(DB_ENDIANNESS_CHECK));
-  d.dump(uint16_t(DB_ABI_VERSION));
+  d.dump<uint16_t>(DB_ENDIANNESS_CHECK);
+  d.dump<uint16_t>(DB_ABI_VERSION);
   for (auto p : chunks)
     d.dump(*p);
   for (auto t : tables)
     d.dump(*t);
-
-  return d ? NULL : strerror(EIO);
 }
 
 void Database :: shrink_to_fit() {

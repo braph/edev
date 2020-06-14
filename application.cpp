@@ -59,14 +59,14 @@ Application :: ~Application() {
   ::endwin();
   cleanup_files();
 
-  const char* err;
-  // Write unoptimized database just in case shrink() fails
-  if (! (err = database.save(Config::database_file))) {
+  try {
+    // Write unoptimized database just in case shrink() fails
+    database.save(Config::database_file);
     database.shrink_to_fit();
-    err = database.save(Config::database_file);
+    database.save(Config::database_file);
+  } catch (std::exception& e) {
+    std::printf("Error saving database to file: %s\n", e.what());
   }
-  if (err)
-    std::printf("Error saving database to file: %s\n", err);
 
   log_write("Terminated gracefully.\n");
 }
@@ -126,12 +126,9 @@ void Application :: init() {
       throw std::runtime_error(std::strerror(errno));
     std::setvbuf(stderr, NULL, _IOLBF, 0);
 
-    e = "Error opening database file. Try again, then delete it. Sorry!";
-    if (fs::exists(Config::database_file)) {
-      const char* err = database.load(Config::database_file);
-      if (err)
-        throw std::runtime_error(err);
-    }
+    e = "Error reading database file. Try again, then delete it. Sorry!";
+    if (fs::exists(Config::database_file))
+      database.load(Config::database_file);
     else {
       // The database will *at least* hold this amount of data
       database.styles.reserve(EKTOPLAZM_STYLE_COUNT);

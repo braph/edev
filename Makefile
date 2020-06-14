@@ -42,7 +42,7 @@ clean:
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-noexcept_objs = database.o actions.o bindings.o ektoplayer.o theme.o markdown.o player.o ui/colors.o \
+noexcept_objs = actions.o bindings.o ektoplayer.o theme.o markdown.o player.o ui/colors.o \
 								$(addprefix lib/, downloads.o filesystem.o shellsplit.o stringchunk.o  process.o) \
 								$(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 $(noexcept_objs): %.o: %.cpp
@@ -129,7 +129,7 @@ test_browsepage: $(BROWSEPAGE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
 	$(VALGRIND) ./a.out
 
-test_updater: $(UPDATER.deps) database.o $(DATABASE.deps) browsepage.o lib/downloads.o ektoplayer.o
+test_updater: $(UPDATER.deps) database.o $(DATABASE.deps) $(BROWSEPAGE.deps) browsepage.o lib/downloads.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 

@@ -104,7 +104,7 @@ int main() {
     assert(url == _);
   }
 
-  // Cover URL: 
+  // Cover URL:
   // Not all cover URLs end in .jpg ( woodsworthy-call-of-the-ancestors-300x300.png )
   // Test if url_shrink/url_expand do not create faulty urls
   {

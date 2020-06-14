@@ -123,7 +123,7 @@ int main() {
   assert(UI::Color::to_string(COLOR_MAGENTA)  == "magenta");
   assert(UI::Color::to_string(123)            == "123");
 
-  assert(UI::Attribute::parse("normal")         == A_NORMAL);       
+  assert(UI::Attribute::parse("normal")         == A_NORMAL);
   assert(UI::Attribute::parse("bold")           == A_BOLD);
   assert(UI::Attribute::parse("blink")          == A_BLINK);
   assert(UI::Attribute::parse("standout")       == A_STANDOUT);

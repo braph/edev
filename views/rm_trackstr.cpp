@@ -33,7 +33,7 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
     case Database::Field::TIME:
       return REPORT_BUG;
 
-    default:     
+    default:
       return REPORT_BUG;
   }
 }

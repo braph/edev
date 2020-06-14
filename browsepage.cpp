@@ -102,14 +102,14 @@ static void startElementUser(void* ctxt, const xmlChar* name, const xmlChar** at
     // Keep those tags (without attributes)
     case pack("i"):
     case pack("b"):
-    case pack("em"):    
+    case pack("em"):
     case pack("strong"):
     case pack("h1"):
     case pack("br"):
     case pack("script"): break;
     default: return; // discard other tags
   }
-  
+
   if (attrs == reinterpret_cast<const xmlChar**>(1))
     return xmlSAX2EndElement(ctxt, name);
 
@@ -210,7 +210,7 @@ Album BrowsePageParser :: next_album() {
   }
 
   // Rating, Voting count
-  // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong> 
+  // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong>
   auto strongs = xpath.query(cache[".//p[@class = 'postmetadata']//span[@class = 'd']//strong"], post);
   album.rating = std::atof(safe_str(strongs[0].nearestContent()));
   album.votes  = std::atoi(safe_str(strongs[1].nearestContent()));

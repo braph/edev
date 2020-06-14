@@ -15,7 +15,7 @@ static inline void open_image(const std::string& url) {
   ::execl("/bin/sh", "sh", "-c",
     "URL=$1; shift;"
     "for CMD; do :|$CMD \"$URL\" && break;"
-    "done >/dev/null 2>/dev/null", 
+    "done >/dev/null 2>/dev/null",
 
     // argv[0]
     "open_image",

@@ -13,7 +13,7 @@
 
 #include <cstring>
 
-#define BROWSEPAGE_HTML_SIZE (60 * 1024) /* Bytes */
+#define BROWSEPAGE_HTML_SIZE (60 * 1024) // bytes
 
 static std::string& clean_str(std::string& s) {
   size_t pos = 0;
@@ -202,8 +202,6 @@ static void read_file_into_string(const std::string& file, std::string& s) {
 int main() {
   TEST_BEGIN();
   Database::Database db;
-  Downloads downloads;
-  downloads.setParallel(10);
 
   db.styles.reserve(EKTOPLAZM_STYLE_COUNT);
   db.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
@@ -217,22 +215,22 @@ int main() {
   db.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
 
   {
+    Updater updater(db);
+    updater.downloads().parallel(10);
 #ifdef USE_FILESYSTEM
     printf("Updating using filesystem ...\n");
-    Updater u(db, downloads);
     Filesystem::error_code e;
 
     string src;
     for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
       read_file_into_string(f.path().string(), src);
-      u.insert_browsepage(src);
+      updater.insert_browsepage(src);
     }
 #else
     printf("Updating using network ...\n");
     abort();
-    Updater u(db, downloads);
-    u.start(0);
-    while (downloads.work()) { usleep(300 * 10); }
+    updater.start();
+    while (updater.downloads().work()) { usleep(3000); }
 #endif
   }
 

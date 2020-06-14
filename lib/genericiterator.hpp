@@ -38,7 +38,7 @@ public:
     container = it.container;
     idx = it.idx;
     return *this;
-  } 
+  }
 
   inline bool operator==(const iterator&it) const noexcept { return idx == it.idx; }
   inline bool operator!=(const iterator&it) const noexcept { return idx != it.idx; }

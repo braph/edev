@@ -183,7 +183,7 @@ struct WidgetDrawable : public Widget {
   int printW(const char* fmt, ...) noexcept {
     va_list ap;
     va_start(ap, fmt);
-    int ret = vw_printw(win, fmt, ap); 
+    int ret = vw_printw(win, fmt, ap);
     va_end(ap);
     return ret;
   }
@@ -223,7 +223,7 @@ struct WidgetDrawable : public Widget {
     if (OK == wmove(win, y, x)) {
       va_list ap;
       va_start(ap, fmt);
-      ret = vw_printw(win, fmt, ap); 
+      ret = vw_printw(win, fmt, ap);
       va_end(ap);
     }
     return ret;

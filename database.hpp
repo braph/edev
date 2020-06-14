@@ -6,7 +6,6 @@
 #include "lib/packedvector.hpp"
 #include "lib/stringchunk.hpp"
 #include "lib/stringpack.hpp"
-#include "ektoplayer.hpp" // REPORT_BUG
 
 #include <array>
 #include <vector>
@@ -160,23 +159,23 @@ struct Field {
   Value value;
   Type  type;
 
-  inline Field(ccstr s)   noexcept { setString(s);  }
-  inline Field(int i)     noexcept { setInteger(i); }
-  inline Field(float f)   noexcept { setFloat(f);   }
-  inline Field(time_t t)  noexcept { setTime(t);    }
+  inline Field(ccstr s)           noexcept { set_string(s);  }
+  inline Field(int i)             noexcept { set_integer(i); }
+  inline Field(float f)           noexcept { set_float(f);   }
+  inline Field(time_t t)          noexcept { set_time(t);    }
 
-  inline void setString(ccstr s) noexcept { type = STRING;  value.s = s; }
-  inline void setInteger(int i)  noexcept { type = INTEGER; value.i = i; }
-  inline void setFloat(float f)  noexcept { type = FLOAT;   value.f = f; }
-  inline void setTime(time_t t)  noexcept { type = TIME;    value.t = t; }
+  inline void set_string(ccstr s) noexcept { type = STRING;  value.s = s; }
+  inline void set_integer(int i)  noexcept { type = INTEGER; value.i = i; }
+  inline void set_float(float f)  noexcept { type = FLOAT;   value.f = f; }
+  inline void set_time(time_t t)  noexcept { type = TIME;    value.t = t; }
 
-  int compare(const Field &rhs) const noexcept {
+  int compare(const Field rhs) const noexcept {
     assert(type == rhs.type);
     switch (type) {
     case STRING:  return std::strcmp(value.s, rhs.value.s);
-    case INTEGER: return this->value.i - rhs.value.i;
-    case FLOAT:   return this->value.f - rhs.value.f;
-    case TIME:    return this->value.t - rhs.value.t;
+    case INTEGER: return value.i - rhs.value.i;
+    case FLOAT:   return value.f - rhs.value.f;
+    case TIME:    return value.t - rhs.value.t;
     }
   }
 };
@@ -309,8 +308,9 @@ struct Albums : public Table {
   struct Album : public Record<Albums*> {
     using Record::Record;
 
-    static int shrinkDate(time_t T) { return (T / 60 / 60 / 24 - 10000);   }
-    static time_t expandDate(int T) { return ((T + 10000) * 60 * 60 * 24); }
+    // HELPER
+    static inline int date_shrink(time_t t) { return ((t / 60 / 60 / 24) - 10000); }
+    static inline time_t date_expand(int t) { return ((t + 10000) * 60 * 60 * 24); }
 
     // GETTER
     Field  operator[](ColumnID) const;
@@ -322,7 +322,7 @@ struct Albums : public Table {
     ccstr  archive_mp3_url()   const noexcept { return table->archive_mp3.get(id);     }
     ccstr  archive_wav_url()   const noexcept { return table->archive_wav.get(id);     }
     ccstr  archive_flac_url()  const noexcept { return table->archive_flac.get(id);    }
-    time_t date()              const noexcept { return expandDate(table->date[id]);    }
+    time_t date()              const noexcept { return date_expand(table->date[id]);   }
     float  rating()            const noexcept { return float(table->rating[id]) / 100; }
     int    votes()             const noexcept { return table->votes[id];               }
     int    download_count()    const noexcept { return table->download_count[id];      }
@@ -336,7 +336,7 @@ struct Albums : public Table {
     void   archive_mp3_url(CString s)  { table->archive_mp3.set(id, s);       }
     void   archive_wav_url(CString s)  { table->archive_wav.set(id, s);       }
     void   archive_flac_url(CString s) { table->archive_flac.set(id, s);      }
-    void   date(time_t t)              { table->date[id] = shrinkDate(t);     }
+    void   date(time_t t)              { table->date[id] = date_shrink(t);    }
     void   rating(float i)             { table->rating[id] = i * 100;         }
     void   votes(int i)                { table->votes[id] = i;                }
     void   download_count(int i)       { table->download_count[id] = i;       }
@@ -433,7 +433,7 @@ public:
   , order(order) {}
 
   template<typename T>
-  bool operator()(const T& a, const T& b) const noexcept {
+  bool operator()(const T a, const T b) const noexcept {
     int ret = a[column].compare(b[column]);
     return (order == SortOrder::ASCENDING ? ret < 0 : ret > 0);
   }
@@ -449,7 +449,7 @@ public:
   : column(column), op(op), field(value) {}
 
   template<typename T>
-  bool operator()(const T& t) const noexcept {
+  bool operator()(const T t) const noexcept {
     int ret = t[column].compare(field);
     switch (op) {
     case Operator::EQUAL:         return ! (ret == 0);
@@ -480,18 +480,18 @@ public:
 
   Database() noexcept;
 
-  std::vector<Styles::Style> getStyles()
+  void load(const std::string&);
+  void save(const std::string&);
+  void shrink_to_fit();
+
+  inline std::vector<Styles::Style> getStyles()
   { return std::vector<Styles::Style>(styles.begin(), styles.end()); }
   
-  std::vector<Albums::Album> getAlbums()
+  inline std::vector<Albums::Album> getAlbums()
   { return std::vector<Albums::Album>(albums.begin(), albums.end()); }
 
-  std::vector<Tracks::Track> getTracks()
+  inline std::vector<Tracks::Track> getTracks()
   { return std::vector<Tracks::Track>(tracks.begin(), tracks.end()); }
-
-  const char* load(const std::string&) noexcept;
-  const char* save(const std::string&) noexcept;
-  void shrink_to_fit();
 
 private:
   void shrink_chunk_to_fit(StringChunk&, std::initializer_list<Column*>);

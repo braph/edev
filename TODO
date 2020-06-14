@@ -1,53 +1,65 @@
-NACHDEM ICH EINGEWIESEN WURDE:
--     233624  a.out
--     2976    bindings.o
+TODO
+  - browsepage.cpp / updater.cpp:
+    Ensure that exceptions will be logged instead of terminating the program
 
-- add exceptions.... yeah i'm stupid.
-- sscan.hpp to replace scanf
-- ensure constexpr and noexcept!
+  - Add filenames to error messages (WHICH FILES?!)
 
-- add filenames to error messages
-- searchup/down
-- bit_tools, do it !!!
-- Vector: __enter__ __leave__
-- packedvector::operator[] ---- const char* get(size_t i) noexcept { // TODO: this should be const!
+  - Maybe we want to replace ActionID::SEARCH by ActionID::SEARCH_UP + ActionID::SEARCH_DOWN
 
-- Downloads: unique_ptr <<< shall Downloads own a Download?
-- private -> protected
-- wtf xml.hpp that optimization did'nt work?!
-- cstring -> starts_with <<< NO ???
-- Errhandling on trackloader/filedownload - what to do on excp?
-- Config: Themes set()
-- Make the Result class a Generic. Do std::sort() etc, by providing lambdas
-- keybindings: ^R, maybe even F5 for reloading, ^S for saving?
-- vol. 3 ?
-x config: temp -> $TEMP
-- config: prefetch
-- Browsepage: more scanner usage
-- [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
-- xml.hpp: iterators
-- This is what you do NEXT!
-- config.hpp: remove exceptions
-- add pprintpp
+  - lib/bit_tools.hpp:
+    - not portable yet (check if __builtin_clz is available and provide alternatives)
+    - replace_bits/extract_bits...
 
-total heap usage: 6,802 allocs, 6,312 frees, 4,567,167 bytes allocated
+  - lib/packedvector.hpp:
+    - is a complete mess
+    - add tests (including performance tests!)
+    - add support for const-references/const-iterators, maybe even reverse iterators?!
+        packedvector::operator[] ---- const char* get(size_t i) noexcept { // TODO: this should be const!
+    - maybe rename `__enter__` and `__leave__`
 
-==1314210==     in use at exit: 603,411 bytes in 484 blocks
-==1314210==   total heap usage: 8,661,332 allocs, 8,660,848 frees, 1,039,173,842 bytes allocated
+  - lib/downloads.cpp:
+    - Downloads :: addDownload(Download*): Should this own the passed download?
 
-==1315635==     in use at exit: 603,516 bytes in 487 blocks
-==1315635==   total heap usage: 8,659,546 allocs, 8,659,059 frees, 999,741,896 bytes allocated
+  - trackloader.cpp / lib/downloads.cpp:
+    - Exceptions? Are they logged yet?!
+    - Add code for downloading a whole album (keybinding `$`?)
+    - Add code for playing a file from a downloaded album
+
+  - Write a complete sample config file (or a generator for it)
+
+  - browsepage.cpp:
+    sscanf() has a parsing error on date (everything is 1997)
+
+  - playlist:
+    ^S for saving?
+
+  - Add a browser
+
+  - application.cpp / playlist.cpp:
+    App crashes on start if playlist is empty!
+
+MAYBE
+  - Create a "StringScan" class that replaces sscanf() and use it in browsepage.cpp
+    [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
+  - Instead of having multiple settings for each terminal setup (MONO/8/256 - infoline.format_top/infoline.format_top_256)
+    we could only use the setting for 256 colors and deduce the setting for 8-bit terminals
+  - Maybe we should add the `pprintpp` library instead of using printf()? Hey, it's zero cost!
+  - config.cpp:
+    - Probe for $TMPDIR/$TEMP instead of using hardcoded /tmp for download directory
+    - change option `prefetch` from bool to float and use it in `application.cpp` loop
+  - xml.hpp:
+    messy code... iterators?!
+  - keybindings:
+    ^R/F5 for reloading the browser after a database update has been done
+  - lib/cstring.hpp
+    - merge char/wchar_t classes into a templated class like basic_string<>
+    - add starts_with and other functions?
+  - application.cpp:
+    - make the application object global for accessing player/updater/etc. instead of using a context object
 
 
-===============================================================================
-
-- application.cpp
-  - Preload playlist
-  - What to do when the database has updated?
-- Add views/browser.cpp
-    if (selection)
-      color = UI::Colors.get("list.item_selection");
-    else if (index % 2 == 0)
-      color = UI::Colors.get("list.item_even");
-    else
-      color = UI::Colors.get("list.item_odd");
+NOTES
+  - I observed that the `constexpr` qualifier increases the binary size
+  - Is there a `return value optimization` in a class initializer list?
+  - private -> protected
+  - wtf xml.hpp that optimization did'nt work?!

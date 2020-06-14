@@ -16,7 +16,7 @@ static int call_level = 0;
 #define __enter__(FMT, ...) \
   printf("%*s%s(" FMT ")\n", call_level++, "", __PRETTY_FUNCTION__, __VA_ARGS__)
 #define __leave__() --call_level
-#define debug(FMT, ...) printf("%*s" FMT "\n", call_level, "", __VA_ARGS__) 
+#define debug(FMT, ...) printf("%*s" FMT "\n", call_level, "", __VA_ARGS__)
 #else
 #define __enter__(...) (void)0
 #define __leave__(...) (void)0
@@ -86,11 +86,11 @@ public:
   iterator   end()                  noexcept { return iterator(this, size()); }
   size_t     size()           const noexcept { return _size;      }
   bool       empty()          const noexcept { return _size == 0; }
-  void       clear()                noexcept { _size = 0;         } 
+  void       clear()                noexcept { _size = 0;         }
   data_type* data()                 noexcept { return _data;      }
   size_t     capacity()       const noexcept { return _capacity;  }
   void       shrink_to_fit()                 { /* TODO */         }
-  
+ 
   void    push_back(value_type);
   void    reserve(size_t);
   void    resize(size_t n, value_type value = 0);
