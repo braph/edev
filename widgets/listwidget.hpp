@@ -54,7 +54,7 @@ public:
 
   /// Only if activeIndex() != -1
   value_type getActiveItem() const {
-    return (*m_list)[static_cast<size_type>(m_active)];
+    return (*m_list)[size_type(m_active)];
   }
 
   void layout(UI::Pos pos, UI::Size size) override {
@@ -79,7 +79,8 @@ public:
     erase();
     _clamp();
 
-    if (! m_list) return;
+    if (empty())
+      return;
 
     int idx  =  clamp(m_selected - m_cursor, 0, containerSize() - 1); //XXX
     int line = 0;
@@ -139,12 +140,12 @@ CHANGE_CURSOR_POSITION:
   }
 
   // === Navigation === //
-  void up(int n = 1)   { scroll_cursor(-n); }
-  void down(int n = 1) { scroll_cursor(n);  }
+  void up(int n = 1)   { scroll_cursor(-n);                        }
+  void down(int n = 1) { scroll_cursor(n);                         }
   void top()           { m_cursor = m_selected = 0;        draw(); }
   void bottom()        { m_cursor = m_selected = INT_MAX;  draw(); }
-  void page_up()       { scroll_items(-size.height / 2); }
-  void page_down()     { scroll_items(size.height / 2); }
+  void page_up()       { scroll_items(-size.height / 2);           }
+  void page_down()     { scroll_items(size.height / 2);            }
   void gotoSelected() {
     m_cursor = size.height / 2;
     m_selected = m_active;
@@ -167,7 +168,7 @@ CHANGE_CURSOR_POSITION:
   { return containerSize() == 0; }
 
   int containerSize() const noexcept
-  { return static_cast<int>(m_list ? m_list->size() : 0); }
+  { return int(m_list ? m_list->size() : 0); }
 
 private:
   int m_cursor;
@@ -181,7 +182,7 @@ private:
     if (! itemRenderer)
       return;
     moveCursor(line, 0);
-    itemRenderer(win, size.width, (*m_list)[static_cast<size_t>(item_idx)], item_idx, cursor, item_idx == m_active);
+    itemRenderer(win, size.width, (*m_list)[size_t(item_idx)], item_idx, cursor, item_idx == m_active);
   }
 
   inline void unselect_item() {

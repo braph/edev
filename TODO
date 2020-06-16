@@ -35,12 +35,9 @@ TODO
 
   - Add a browser
 
-  - application.cpp / playlist.cpp:
-    App crashes on start if playlist is empty!
-
 MAYBE
   - Create a "StringScan" class that replaces sscanf() and use it in browsepage.cpp
-    [try_]{read,peek,eat}_[span_]{re,str,char,char_of}
+    [try_]{read,peek,search,skip,eat}_[span_]{re,str,char,char_of}
   - Instead of having multiple settings for each terminal setup (MONO/8/256 - infoline.format_top/infoline.format_top_256)
     we could only use the setting for 256 colors and deduce the setting for 8-bit terminals
   - Maybe we should add the `pprintpp` library instead of using printf()? Hey, it's zero cost!
