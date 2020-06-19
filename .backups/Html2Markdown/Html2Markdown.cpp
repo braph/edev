@@ -1,3 +1,4 @@
+// DOM version of Html2Markdown
 
 struct Html2Markup {
   std::string result;
