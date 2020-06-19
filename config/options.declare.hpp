@@ -1,13 +1,13 @@
 extern int use_colors;
 extern int small_update_pages;
 extern int playlist_load_newest;
-extern bool prefetch;
 extern bool use_cache;
 extern bool tabbar_display;
 extern bool infoline_display;
 extern bool progressbar_display;
 extern bool delete_after_extraction;
 extern bool auto_extract_to_archive_dir;
+extern float prefetch;
 extern wchar_t progressbar_rest_char;
 extern wchar_t progressbar_progress_char;
 extern std::string log_file;

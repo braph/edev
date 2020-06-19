@@ -27,6 +27,14 @@ static int opt_parse_int(const std::string& s) {
   return i;
 }
 
+static float opt_parse_float(const std::string& s) {
+  char *end;
+  float f = std::strtof(s.c_str(), &end);
+  if (s.empty() || *end)
+    throw std::invalid_argument(s + ": Not a float");
+  return f;
+}
+
 static bool opt_parse_bool(const std::string& s) {
   switch (pack::pack_runtime(s)) {
     case pack("true"):  return true;

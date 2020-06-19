@@ -43,7 +43,6 @@ MAYBE
   - Maybe we should add the `pprintpp` library instead of using printf()? Hey, it's zero cost!
   - config.cpp:
     - Probe for $TMPDIR/$TEMP instead of using hardcoded /tmp for download directory
-    - change option `prefetch` from bool to float and use it in `application.cpp` loop
   - xml.hpp:
     messy code... iterators?!
   - keybindings:

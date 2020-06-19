@@ -176,8 +176,7 @@ void Application :: run() {
   int key;
   WINDOW *win;
   MEVENT mouse;
-  Database::Tracks::Track nextTrack;
-  Database::Tracks::Track currentPrefetching;
+  Database::Tracks::Track prefetching_track;
 
   mainwindow.playlist.playlist = database.getTracks();
 
@@ -198,17 +197,17 @@ MAINLOOP:
   player.work();
 
   // Song prefetching
-  if (Config::prefetch
+  if (Config::prefetch > 0.0
+      && player.percent() >= Config::prefetch
       && player.isPlaying()
       && player.length() >= 30
-      && player.percent() >= 0.5
       && mainwindow.playlist.containerSize() >= 2)
   {
     auto list = mainwindow.playlist.list();
-    nextTrack = (*list)[size_t(mainwindow.playlist.activeIndex() + 1) % list->size()];
-    if (nextTrack != currentPrefetching) {
-      trackloader.getFileForTrack(nextTrack);
-      currentPrefetching = nextTrack;
+    auto next_track = (*list)[size_t(mainwindow.playlist.activeIndex() + 1) % list->size()];
+    if (next_track != prefetching_track) {
+      trackloader.getFileForTrack(next_track);
+      prefetching_track = next_track;
     }
   }
 

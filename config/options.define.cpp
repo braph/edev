@@ -1,13 +1,13 @@
 int                         Config :: use_colors = -1;
 int                         Config :: small_update_pages = 3;
 int                         Config :: playlist_load_newest = 1000;
-bool                        Config :: prefetch = true;
 bool                        Config :: use_cache = true;
 bool                        Config :: tabbar_display = true;
 bool                        Config :: infoline_display = true;
 bool                        Config :: progressbar_display = true;
 bool                        Config :: delete_after_extraction = true;
 bool                        Config :: auto_extract_to_archive_dir = true;
+float                       Config :: prefetch = 0.50;
 wchar_t                     Config :: progressbar_rest_char = '~';
 wchar_t                     Config :: progressbar_progress_char = '~';
 std::string                 Config :: log_file /* will be initialized later */;

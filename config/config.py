@@ -138,9 +138,9 @@ options = [
         help: "Enable/disable local mp3 cache.\nIf this option is disabled, the downloaded mp3 files won't be moved from `cache_dir`.\nInstead they will reside in `temp_dir` and will be deleted on application exit.",
         }),
     ('prefetch', {
-        type: 'bool', set: 'opt_parse_bool',
-        default: 'true',
-        help: 'Enable prefetching the next track do be played',
+        type: 'float', set: 'opt_parse_float',
+        default: '0.50',
+        help: 'Specify after how many percent the next track shall be prefetched. Set it to 0 to disable it.',
         }),
     ('small_update_pages', {
         type: 'int', set: 'opt_parse_int',
