@@ -17,7 +17,7 @@ lateinit  = object()
 colfmt = lambda s: s.replace("column(", "static_cast<Database::ColumnID>(Database::")
 
 INFOLINE_FORMAT_TOP = '''"\
-  '<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"'''
+'<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"'''
 
 INFOLINE_FORMAT_TOP_CVALUE = colfmt('''{
 {column(COLUMN_NONE), "<< ", COLOR_BLACK},
@@ -25,7 +25,7 @@ INFOLINE_FORMAT_TOP_CVALUE = colfmt('''{
 {column(COLUMN_NONE), " >>", COLOR_BLACK}}''')
 
 INFOLINE_FORMAT_BOTTOM = '''"\
-  artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"'''
+artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"'''
 
 INFOLINE_FORMAT_BOTTOM_CVALUE = colfmt('''{
 {column(TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
@@ -37,7 +37,7 @@ INFOLINE_FORMAT_BOTTOM_CVALUE = colfmt('''{
 }''')
 
 INFOLINE_FORMAT_TOP_256 = '''"\
-  '<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"'''
+'<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"'''
 
 INFOLINE_FORMAT_TOP_256_CVALUE = colfmt('''{
 {column(COLUMN_NONE), "<< ", 236},
@@ -45,7 +45,7 @@ INFOLINE_FORMAT_TOP_256_CVALUE = colfmt('''{
 {column(COLUMN_NONE), " >>", 236}}''')
 
 INFOLINE_FORMAT_BOTTOM_256 = '''"\
-  artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"'''
+artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"'''
 
 INFOLINE_FORMAT_BOTTOM_256_CVALUE = colfmt('''{
 {column(TRACK_ARTIST),  "",     24, -1, A_BOLD},
@@ -58,8 +58,8 @@ INFOLINE_FORMAT_BOTTOM_256_CVALUE = colfmt('''{
 
 
 PLAYLIST_COLUMNS = '''"\
-  number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%} \
-  title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}"'''
+number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%} \
+title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}"'''
 
 PLAYLIST_COLUMNS_CVALUE = colfmt('''{
 {column(TRACK_NUMBER),  COLOR_MAGENTA,  -1, 3},
@@ -70,8 +70,8 @@ PLAYLIST_COLUMNS_CVALUE = colfmt('''{
 {column(TRACK_BPM),     COLOR_GREEN,    -1, 3}}''')
 
 PLAYLIST_COLUMNS_256 = '''"\
-  number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%} \
-  title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}"'''
+number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%} \
+title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}"'''
 
 PLAYLIST_COLUMNS_256_CVALUE = colfmt('''{
 {column(TRACK_NUMBER),  97,   -1, 3},
@@ -247,6 +247,20 @@ options = [
 
 NAME = 0
 
+# Configuration file ==========================================================
+with open('ektoplayer.rc', 'w') as fh:
+    #options.sort(key=lambda o: o[NAME])
+    #options.sort(key=lambda o: len(o[NAME]))
+    #options.sort(key=lambda o: o[1][type])
+    #options.sort(key=lambda o: len(o[1][type]))
+
+    for name, o in options:
+        print('#', o[help].replace('\n', '\n# '), file=fh)
+        print('set', name, o[default], file=fh)
+
+    print("# vim: filetype=sh", file=fh)
+
+# CPP files ===================================================================
 with open('options.declare.hpp', 'w') as fh:
     options.sort(key=lambda o: o[NAME])
     options.sort(key=lambda o: len(o[NAME]))
@@ -296,4 +310,3 @@ with open('options.initialize.cpp', 'w') as fh:
             print('%s = %s(%s);' % (
                 name.replace('.', '_'), o[set], o[default]
                 ), file=fh)
-

@@ -1,5 +1,5 @@
 int                         Config :: use_colors = -1;
-int                         Config :: small_update_pages = 5;
+int                         Config :: small_update_pages = 3;
 int                         Config :: playlist_load_newest = 1000;
 bool                        Config :: prefetch = true;
 bool                        Config :: use_cache = true;
