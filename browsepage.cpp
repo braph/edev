@@ -209,7 +209,7 @@ Album BrowsePageParser :: next_album() {
 
   // Some albums only have one MP3 url for multiple tracks
   if (tracks.size() == 1)
-    album.isSingleURL = true;
+    album.is_single_url = true;
 
   // Assign metadata to track urls
   // - There may be multiple tracklists (evidence url?)
@@ -225,7 +225,7 @@ Album BrowsePageParser :: next_album() {
           }
 
           track.number = std::atoi(safe_str(span.nearestContent()));
-          if (album.isSingleURL)
+          if (album.is_single_url)
             track.url = *track_urls_iter;
           else if (track_urls_iter)
             track.url = std::move(track_urls_iter.next());

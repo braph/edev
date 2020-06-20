@@ -56,7 +56,7 @@ struct Album {
   int         download_count;
   int         votes;
   float       rating;
-  bool        isSingleURL;
+  bool        is_single_url;
   std::vector<std::string> archive_urls;
   std::vector<Style> styles;
   std::vector<Track> tracks;
@@ -66,7 +66,7 @@ struct Album {
   , download_count(0)
   , votes(0)
   , rating(0)
-  , isSingleURL(false)
+  , is_single_url(false)
   {
     styles.reserve(3);
     tracks.reserve(11);

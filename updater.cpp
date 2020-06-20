@@ -138,7 +138,7 @@ void Updater :: insert_album(Album& album) {
 
     // The track URL is used as a primary key. If an album has only one file
     // we need to create a unique URL for each track.
-    if (album.isSingleURL) {
+    if (album.is_single_url) {
       char _[20];
       sprintf(_, ".mp3#%d", track.number);
       track.url += _;
