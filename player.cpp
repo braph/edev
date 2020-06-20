@@ -162,12 +162,12 @@ void Mpg123Player :: position(int seconds) noexcept {
     *_process << temp_sprintf<20>("J %ds\n", seconds);
 }
 
-void Mpg123Player :: seekForward(int seconds) noexcept {
+void Mpg123Player :: seek_forward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J +%ds\n", seconds);
 }
 
-void Mpg123Player :: seekBackward(int seconds) noexcept {
+void Mpg123Player :: seek_backward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J -%ds\n", seconds);
 }
@@ -195,18 +195,18 @@ int main() {
   TEST_BEGIN();
 
   Mpg123Player player;
-  assert (! player.isPlaying());
-  assert (! player.isPaused());
-  assert (  player.isStopped());
+  assert (! player.is_playing());
+  assert (! player.is_paused());
+  assert (  player.is_stopped());
   assert (! player.position());
   assert (! player.length());
   assert (! player.percent());
   player.play("/home/braph/.cache/ektoplayer/aerodromme-crop-circle.mp3");
   sleep(3);
   player.work();
-  assert (  player.isPlaying());
-  assert (! player.isPaused());
-  assert (! player.isStopped());
+  assert (  player.is_playing());
+  assert (! player.is_paused());
+  assert (! player.is_stopped());
   assert (  player.position());
   assert (  player.length());
   assert (  player.percent());

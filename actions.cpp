@@ -27,10 +27,10 @@ int Actions :: call(ActionID id) {
 
   // Player
   case PLAYER_FORWARD:
-    ctxt.player->seekForward(10);
+    ctxt.player->seek_forward(10);
     break;
   case PLAYER_BACKWARD:
-    ctxt.player->seekBackward(10);
+    ctxt.player->seek_backward(10);
     break;
   case PLAYER_STOP:
     ctxt.player->stop();
@@ -68,7 +68,7 @@ PLAYLIST_PLAY:
     ctxt.mainwindow->playlist.activeIndex(index);
     if (! ctxt.mainwindow->playlist.empty() && ctxt.mainwindow->playlist.activeIndex() >= 0) {
       auto track = ctxt.mainwindow->playlist.getActiveItem();
-      ctxt.player->play(ctxt.trackloader->getFileForTrack(track, false));
+      ctxt.player->play(ctxt.trackloader->get_file_for_track(track, false));
     }
     break;
 

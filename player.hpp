@@ -25,20 +25,20 @@ public:
   void pause()            noexcept;
   void toggle()           noexcept;
   void position(int)      noexcept;
-  void seekForward(int)   noexcept;
-  void seekBackward(int)  noexcept;
+  void seek_forward(int)  noexcept;
+  void seek_backward(int) noexcept;
   void volume(int)        noexcept;
 
-  State state()            const noexcept { return _state;            }
-  bool  isStopped()        const noexcept { return _state == STOPPED; }
-  bool  isPlaying()        const noexcept { return _state == PLAYING; }
-  bool  isPaused()         const noexcept { return _state == PAUSED;  }
-  bool  isLoading()        const noexcept { return _state == LOADING; }
-  bool  isTrackCompleted() const noexcept { return _track_completed;  }
-  int   position()         const noexcept { return _seconds_played;   }
-  int   length()           const noexcept { return _seconds_total;    }
-  float percent()          const noexcept { return (length() ? float(position()) / length() : 0); }
-  void  percent(float p)         noexcept { position(length() * p);   }
+  State state()              const noexcept { return _state;            }
+  bool  is_stopped()         const noexcept { return _state == STOPPED; }
+  bool  is_playing()         const noexcept { return _state == PLAYING; }
+  bool  is_paused()          const noexcept { return _state == PAUSED;  }
+  bool  is_loading()         const noexcept { return _state == LOADING; }
+  bool  is_track_completed() const noexcept { return _track_completed;  }
+  int   position()           const noexcept { return _seconds_played;   }
+  int   length()             const noexcept { return _seconds_total;    }
+  float percent()            const noexcept { return (length() ? float(position()) / length() : 0); }
+  void  percent(float p)           noexcept { position(length() * p);   }
 
 private:
   std::string _file;

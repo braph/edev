@@ -182,7 +182,7 @@ static void test_warning(const Database::Albums::Album& album, const char* msg)
 { printf("ALBUM: %s: %s\n",  album.url(), msg); }
 
 static void test_warning(const Database::Tracks::Track& track, const char* msg)
-{ printf("TRACK: %s in album %s: %s", track.url(), track.album().url(), msg); }
+{ printf("TRACK: %s in album %s: %s\n", track.url(), track.album().url(), msg); }
 
 #define warn_if(OBJECT, ...) \
   if (__VA_ARGS__) test_warning(OBJECT, #__VA_ARGS__)
@@ -201,8 +201,8 @@ static void read_file_into_string(const std::string& file, std::string& s) {
 // - Updater also covers some tests of BrowsePage and Database
 int main() {
   TEST_BEGIN();
-  Database::Database db;
 
+  Database::Database db;
   db.styles.reserve(EKTOPLAZM_STYLE_COUNT);
   db.albums.reserve(EKTOPLAZM_ALBUM_COUNT);
   db.tracks.reserve(EKTOPLAZM_TRACK_COUNT);
@@ -214,41 +214,39 @@ int main() {
   db.chunk_style_url.reserve(EKTOPLAZM_STYLE_URL_SIZE);
   db.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
 
-  {
-    Updater updater(db);
-    updater.downloads().parallel(10);
+  // Perform a database update ================================================
+  Updater updater(db);
+  updater.downloads().parallel(10);
 #ifdef USE_FILESYSTEM
-    printf("Updating using filesystem ...\n");
-    Filesystem::error_code e;
+  printf("Updating using filesystem ...\n");
+  Filesystem::error_code e;
 
-    string src;
-    for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
-      read_file_into_string(f.path().string(), src);
-      updater.insert_browsepage(src);
-    }
-#else
-    printf("Updating using network ...\n");
-    abort();
-    updater.start();
-    while (updater.downloads().work()) { usleep(3000); }
-#endif
+  string src;
+  for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
+    read_file_into_string(f.path().string(), src);
+    updater.insert_browsepage(src);
   }
+#else
+  printf("Updating using network ...\n");
+  abort();
+  updater.start();
+  while (updater.downloads().work()) { usleep(3000); }
+#endif
 
-  { // Save the database and ensure that the amount of data is the same
-    size_t tracks_size = db.tracks.size();
-    size_t albums_size = db.albums.size();
-    printf("Inserted %zu tracks\n", tracks_size);
-    printf("Inserted %zu albums\n", albums_size);
-    printf("Saving database to " TEST_DB "\n");
-    db.save(TEST_DB);
-    { // Check if the data has not been altered
-      Database::Database db2;
-      db2.load(TEST_DB);
-      assert(tracks_size == db2.tracks.size());
-      assert(albums_size == db2.albums.size());
-      assert(streq(db.tracks[tracks_size-1].url(),         db2.tracks[tracks_size-1].url()));
-      assert(streq(db.albums[albums_size-1].description(), db2.albums[albums_size-1].description()));
-    }
+  // Save the database and ensure that the amount of data is the same =========
+  const size_t tracks_size = db.tracks.size();
+  const size_t albums_size = db.albums.size();
+  printf("Inserted %zu tracks\n", tracks_size);
+  printf("Inserted %zu albums\n", albums_size);
+  printf("Saving database to " TEST_DB "\n");
+  db.save(TEST_DB);
+  { // Check if the data has not been altered
+    Database::Database db2;
+    db2.load(TEST_DB);
+    assert(tracks_size == db2.tracks.size());
+    assert(albums_size == db2.albums.size());
+    assert(streq(db.tracks[tracks_size-1].url(),         db2.tracks[tracks_size-1].url()));
+    assert(streq(db.albums[albums_size-1].description(), db2.albums[albums_size-1].description()));
   }
   
   // Tests of BrowsePage ======================================================
@@ -270,25 +268,25 @@ int main() {
     warn_if(album, strlen(album.artist()) < 1);
   }
 
-  // Print out defines
-  struct { const char* name; StringChunk& chunk; }
+  // Print out defines ========================================================
+  printf("#define EKTOPLAZM_STYLE_COUNT       %zu\n", db.styles.size());
+  printf("#define EKTOPLAZM_ALBUM_COUNT       %zu\n", db.albums.size());
+  printf("#define EKTOPLAZM_TRACK_COUNT       %zu\n", db.tracks.size());
+
+  const struct { const char* define; StringChunk& chunk; }
   chunks[] = {
-    {"META",        db.chunk_meta},
-    {"DESC",        db.chunk_desc},
-    {"STYLE_URL",   db.chunk_style_url},
-    {"ALBUM_URL",   db.chunk_album_url},
-    {"TRACK_URL",   db.chunk_track_url},
-    {"COVER_URL",   db.chunk_cover_url},
-    {"ARCHIVE_URL", db.chunk_archive_url},
+    {"EKTOPLAZM_META_SIZE       ",        db.chunk_meta},
+    {"EKTOPLAZM_DESC_SIZE       ",        db.chunk_desc},
+    {"EKTOPLAZM_STYLE_URL_SIZE  ",   db.chunk_style_url},
+    {"EKTOPLAZM_ALBUM_URL_SIZE  ",   db.chunk_album_url},
+    {"EKTOPLAZM_TRACK_URL_SIZE  ",   db.chunk_track_url},
+    {"EKTOPLAZM_COVER_URL_SIZE  ",   db.chunk_cover_url},
+    {"EKTOPLAZM_ARCHIVE_URL_SIZE", db.chunk_archive_url},
   };
 
-  printf("#define EKTOPLAZM_STYLE_COUNT %zu\n", db.styles.size());
-  printf("#define EKTOPLAZM_ALBUM_COUNT %zu\n", db.albums.size());
-  printf("#define EKTOPLAZM_TRACK_COUNT %zu\n", db.tracks.size());
-
   for (const auto& p : chunks)
-    printf("#define EKTOPLAZM_%s_SIZE %zu // average length: %zu\n",
-        p.name, p.chunk.size(), p.chunk.size() / p.chunk.count());
+    printf("#define %s % -10d // average length: %d\n",
+        p.define, p.chunk.size(), p.chunk.size() / p.chunk.count());
 
   TEST_END();
 }

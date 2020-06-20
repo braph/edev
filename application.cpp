@@ -199,19 +199,19 @@ MAINLOOP:
   // Song prefetching
   if (Config::prefetch > 0.0
       && player.percent() >= Config::prefetch
-      && player.isPlaying()
+      && player.is_playing()
       && player.length() >= 30
       && mainwindow.playlist.containerSize() >= 2)
   {
     auto list = mainwindow.playlist.list();
     auto next_track = (*list)[size_t(mainwindow.playlist.activeIndex() + 1) % list->size()];
     if (next_track != prefetching_track) {
-      trackloader.getFileForTrack(next_track);
+      trackloader.get_file_for_track(next_track);
       prefetching_track = next_track;
     }
   }
 
-  if (player.isTrackCompleted())
+  if (player.is_track_completed())
     Actions::call(Actions::PLAYLIST_NEXT);
 
   mainwindow.progressBar.setPercent(player.percent());
@@ -236,7 +236,7 @@ MAINLOOP:
   if (trackloader.downloads().runningDownloads() || trackloader.downloads().queuedDownloads()
       ||  updater.downloads().runningDownloads() || updater.downloads().queuedDownloads())
     wtimeout(win, 100); // Short timeout, want to continue downloading soon
-  else if (player.isStopped() || player.isPaused())
+  else if (player.is_stopped() || player.is_paused())
     wtimeout(win, -1);  // We have *nothing* to do, wait until user hits a key
   else
     wtimeout(win, 900); // In playing state we need some UI refreshes

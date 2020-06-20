@@ -9,7 +9,7 @@ TrackLoader :: TrackLoader()
 {
 }
 
-std::string TrackLoader :: getFileForTrack(Database::Tracks::Track track, bool force_download) {
+std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, bool force_download) {
 #if 0
   std::string archive_mp3_url = track.archive_mp3_url();
 
