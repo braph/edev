@@ -67,103 +67,103 @@ void Info :: layout(Pos pos, Size size) {
   pad_mincol = 0;
 }
 
-void Info :: setCurrentTrack(Database::Tracks::Track track) {
-  if (track != currentTrack) {
-    currentTrack = track;
+void Info :: track(Database::Tracks::Track track) {
+  if (track != _track) {
+    _track = track;
     draw();
   }
 }
 
-inline void Info :: drawHeading(int y, const char* heading) noexcept {
+inline void Info :: draw_heading(int y, const char* heading) noexcept {
   attrSet(Theme::get(ElementID::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
 
-void Info :: drawTag(int y, const char* tag) noexcept {
+void Info :: draw_tag(int y, const char* tag) noexcept {
   attrSet(Theme::get(ElementID::INFO_TAG));
   mvAddStr(y, START_TAG, tag);
   attrSet(Theme::get(ElementID::INFO_VALUE));
   moveCursor(y, START_TAG_VALUE);
 }
 
-void Info :: drawInfo(int y, const char* info) noexcept {
+void Info :: draw_info(int y, const char* info) noexcept {
   attrSet(Theme::get(ElementID::INFO_TAG));
   mvAddStr(y, START_INFO, toWideString(info));
   attrSet(Theme::get(ElementID::INFO_VALUE));
   moveCursor(y, START_INFO_VALUE);
 }
 
-void Info :: drawLink(std::string url, std::string title) noexcept {
+void Info :: draw_link(std::string url, std::string title) noexcept {
   attrSet(Theme::get(ElementID::URL));
   UI::Pos start = cursorPos();
   addStr(toWideString(title));
-  clickableURLs.add(start, cursorPos(), {std::move(url), std::move(title)});
+  _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
 }
 
 void Info :: draw() {
   clear();
-  clickableURLs.clear();
+  _clickable_urls.clear();
   int x, y = 1;
 
-  if (currentTrack) {
-    const auto& track = currentTrack;
-    const auto& album = currentTrack.album();
+  if (_track) {
+    const auto& track = _track;
+    const auto& album = _track.album();
 
     // Track ==================================================================
-    drawHeading(y++, "Current track");
-    drawTag(y++, "Title");
+    draw_heading(y++, "Current track");
+    draw_tag(y++, "Title");
     *this << toWideString(track.title());
     if (*track.remix())
       *this << " (" << toWideString(track.remix()) << ')';
 
-    drawTag(y++, "Artist");
+    draw_tag(y++, "Artist");
     *this << toWideString(track.artist());
 
-    drawTag(y++, "Number");
+    draw_tag(y++, "Number");
     printW("%02d", track.number());
 
-    drawTag(y++, "BPM");
+    draw_tag(y++, "BPM");
     *this << track.bpm();
 
-    drawTag(y++, "Length");
+    draw_tag(y++, "Length");
     printW("%02d:%02d", ctxt.player->length()/60, ctxt.player->length()%60);
 
     // Album ==================================================================
     y++;
-    drawHeading(y++, "Current album");
+    draw_heading(y++, "Current album");
 
-    drawTag(y++, "Album");
+    draw_tag(y++, "Album");
     std::string album_url = album.url();
     Ektoplayer::url_expand(album_url, EKTOPLAZM_ALBUM_BASE_URL);
-    drawLink(std::move(album_url), album.title());
+    draw_link(std::move(album_url), album.title());
 
-    drawTag(y++, "Artist");
+    draw_tag(y++, "Artist");
     *this << toWideString(album.artist());
 
-    drawTag(y++, "Date");
+    draw_tag(y++, "Date");
     *this << time_format(album.date(), "%B %d, %Y");
 
-    drawTag(y++, "Styles");
+    draw_tag(y++, "Styles");
     const char* comma = "";
     for (auto id : extract_set_bits(unsigned(album.styles()))) {
       *this << comma << track.table->db.styles[id].name();
       comma = ", ";
     }
 
-    drawTag(y++, "Downloads");
+    draw_tag(y++, "Downloads");
     *this << album.download_count();
 
-    drawTag(y++, "Rating");
+    draw_tag(y++, "Rating");
     printW("%2.2f%% (%d Votes)", album.rating(), album.votes());
 
-    drawTag(y++, "Cover");
+    draw_tag(y++, "Cover");
     std::string cover_url = album.cover_url();
     Ektoplayer::url_expand(cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-    drawLink(std::move(cover_url), "Cover");
+    draw_link(std::move(cover_url), "Cover");
 
     // Description ============================================================
     y++;
-    drawHeading(y++, "Description");
+    draw_heading(y++, "Description");
     moveCursor(y, START_TAG);
     MarkupParser markupParser(album.description());
     std::string linkURL, linkText;
@@ -188,7 +188,7 @@ void Info :: draw() {
             linkURL = "Protected e-mail";
           else
             linkURL = "http://" + linkURL; // http?s stripped off, updater.cpp
-          drawLink(std::move(linkURL), std::move(linkText));
+          draw_link(std::move(linkURL), std::move(linkText));
         }
 
         attrSet(attr);
@@ -200,41 +200,41 @@ void Info :: draw() {
   }
 
   // Player ===================================================================
-  drawHeading(y++, "Player");
-  drawInfo(y++, "Version");
+  draw_heading(y++, "Player");
+  draw_info(y++, "Version");
   *this << VERSION;
 
-  drawInfo(y++, "Tracks in database");
+  draw_info(y++, "Tracks in database");
   *this << ctxt.database->tracks.size();
 
-  drawInfo(y++, "Albums in database");
+  draw_info(y++, "Albums in database");
   *this << ctxt.database->albums.size();
 
-  drawInfo(y++, "Tracks in playlist");
+  draw_info(y++, "Tracks in playlist");
   *this << ctxt.mainwindow->playlist.list()->size();
 
-  drawInfo(y++, "Cache dir size");
+  draw_info(y++, "Cache dir size");
   *this << Filesystem::dir_size(Config::cache_dir) / 1024 / 1024 << "MB";
 
-  drawInfo(y++, "Archive dir size");
+  draw_info(y++, "Archive dir size");
   *this << Filesystem::dir_size(Config::archive_dir) / 1024 / 1024 << "MB";
 
-  drawInfo(y++, "Ektoplazm URL");
-  drawLink(EKTOPLAZM_URL, EKTOPLAZM_URL);
+  draw_info(y++, "Ektoplazm URL");
+  draw_link(EKTOPLAZM_URL, EKTOPLAZM_URL);
 
-  drawInfo(y++, "Github URL");
-  drawLink(GITHUB_URL, GITHUB_URL);
+  draw_info(y++, "Github URL");
+  draw_link(GITHUB_URL, GITHUB_URL);
 
   // URLs ===================================================================
   y++;
-  drawHeading(y++, "URLs");
-  for (size_t i = 0; i < clickableURLs.size() - 2; ++i) {
-    drawInfo(y++, clickableURLs[i].data.title.c_str());
-    mvAddStr(y++, START_INFO + 2, toWideString(clickableURLs[i].data.url));
+  draw_heading(y++, "URLs");
+  for (size_t i = 0; i < _clickable_urls.size() - 2; ++i) {
+    draw_info(y++, _clickable_urls[i].data.title.c_str());
+    mvAddStr(y++, START_INFO + 2, toWideString(_clickable_urls[i].data.url));
   }
 }
 
-bool Info :: handleKey(int n) {
+bool Info :: handle_key(int n) {
   switch (Bindings::pad[n]) {
   case Actions::UP:         up();         return true;
   case Actions::DOWN:       down();       return true;
@@ -246,12 +246,12 @@ bool Info :: handleKey(int n) {
   }
 }
 
-bool Info :: handleMouse(MEVENT& m) {
+bool Info :: handle_mouse(MEVENT& m) {
   if (wmouse_trafo(win, &m.y, &m.x, false)) {
     m.y += pad_minrow;
     m.x += pad_mincol;
-    auto event = clickableURLs.find(m);
-    if (event != clickableURLs.end())
+    auto event = _clickable_urls.find(m);
+    if (event != _clickable_urls.end())
       open_url(event->data.url);
     return true;
   }

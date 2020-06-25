@@ -4,7 +4,7 @@
 #include "../application.hpp"
 #include "../database.hpp"
 #include "../ui/container.hpp"
-#include "../widgets/listwidget.hpp" // XXX
+#include "../widgets/listwidget.hpp"
 #include "../lib/steppablesearch.hpp"
 #include "../lib/staticvector.hpp"
 
@@ -50,13 +50,13 @@ class Playlist : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
   Playlist();
 
-  bool handleKey(int) override;
+  bool handle_key(int) override;
 
   std::vector<Database::Tracks::Track> playlist;
 
 private:
-  TrackRenderer trackRenderer;
-  SteppableSearch<std::vector<Database::Tracks::Track>> trackSearch;
+  TrackRenderer _track_renderer;
+  SteppableSearch<std::vector<Database::Tracks::Track>> _track_search;
 };
 
 } // namespace Views

@@ -63,7 +63,7 @@ void Help :: draw() {
   }
 }
 
-bool Help :: handleKey(int n) {
+bool Help :: handle_key(int n) {
   switch (Bindings::pad[n]) {
   case Actions::UP:         up();         return true;
   case Actions::DOWN:       down();       return true;

@@ -52,47 +52,47 @@ int Actions :: call(ActionID id) {
 
   // Playlist
   case PLAYLIST_GOTO_CURRENT:
-    ctxt.mainwindow->playlist.gotoSelected();
+    ctxt.mainwindow->playlist.goto_selected();
     break;
   case PLAYLIST_NEXT:
-    index = ctxt.mainwindow->playlist.activeIndex() + 1;
+    index = ctxt.mainwindow->playlist.active_index() + 1;
     goto PLAYLIST_PLAY;
   case PLAYLIST_PREV:
-    index = ctxt.mainwindow->playlist.activeIndex() - 1;
+    index = ctxt.mainwindow->playlist.active_index() - 1;
     goto PLAYLIST_PLAY;
   case PLAYLIST_PLAY:
-    index = ctxt.mainwindow->playlist.cursorIndex();
+    index = ctxt.mainwindow->playlist.cursor_index();
     goto PLAYLIST_PLAY;
 
 PLAYLIST_PLAY:
-    ctxt.mainwindow->playlist.activeIndex(index);
-    if (! ctxt.mainwindow->playlist.empty() && ctxt.mainwindow->playlist.activeIndex() >= 0) {
-      auto track = ctxt.mainwindow->playlist.getActiveItem();
+    ctxt.mainwindow->playlist.active_index(index);
+    if (! ctxt.mainwindow->playlist.empty() && ctxt.mainwindow->playlist.active_index() >= 0) {
+      auto track = ctxt.mainwindow->playlist.active_item();
       ctxt.player->play(ctxt.trackloader->get_file_for_track(track, false));
     }
     break;
 
   // Windows
   case TABS_NEXT:
-    index = ctxt.mainwindow->windows.currentIndex() + 1;
+    index = ctxt.mainwindow->windows.current_index() + 1;
     goto SELECT_TAB;
   case TABS_PREV:
-    index = ctxt.mainwindow->windows.currentIndex() - 1;
+    index = ctxt.mainwindow->windows.current_index() - 1;
     goto SELECT_TAB;
   case SPLASH_SHOW:
-    index = ctxt.mainwindow->windows.indexOf(&ctxt.mainwindow->splash);
+    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->splash);
     goto SELECT_TAB;
   case PLAYLIST_SHOW:
-    index = ctxt.mainwindow->windows.indexOf(&ctxt.mainwindow->playlist);
+    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->playlist);
     goto SELECT_TAB;
   case BROWSER_SHOW:
-    index = ctxt.mainwindow->windows.indexOf(&ctxt.mainwindow->playlist); // TODO [later]
+    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->playlist); // TODO [later]
     goto SELECT_TAB;
   case INFO_SHOW:
-    index = ctxt.mainwindow->windows.indexOf(&ctxt.mainwindow->info);
+    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->info);
     goto SELECT_TAB;
   case HELP_SHOW:
-    index = ctxt.mainwindow->windows.indexOf(&ctxt.mainwindow->help);
+    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->help);
     goto SELECT_TAB;
 
 SELECT_TAB:
@@ -100,8 +100,8 @@ SELECT_TAB:
       index = ctxt.mainwindow->windows.count() - 1;
     else if (index >= ctxt.mainwindow->windows.count())
       index = 0;
-    ctxt.mainwindow->windows.currentIndex(index);
-    ctxt.mainwindow->tabBar.currentIndex(index);
+    ctxt.mainwindow->windows.current_index(index);
+    ctxt.mainwindow->tabBar.current_index(index);
     break;
 
   // Silence warnings

@@ -13,11 +13,11 @@ public:
 
   void draw()                         override;
   void layout(UI::Pos, UI::Size)      override;
-  bool handleMouse(MEVENT&)           override;
+  bool handle_mouse(MEVENT&)          override;
 
-  void setPercent(float)              noexcept;
+  void percent(float)                 noexcept;
 
-  std::function<void(float)> percentChanged;
+  std::function<void(float)> percent_changed;
 };
 
 } // namespace Views

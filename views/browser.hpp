@@ -5,7 +5,7 @@
 #include "../bindings.hpp"
 #include "../database.hpp"
 #include "../ui/container.hpp"
-#include "../widgets/listwidget.hpp" // XXX
+#include "../widgets/listwidget.hpp"
 
 #include <vector>
 
@@ -58,7 +58,7 @@ void Filters :: apply(TrackList& trackList) {
 class TagList : public UI::ListWidget<vector<const char*>> {
 public:
   TagList();
-  void bool handleKey(int);
+  void bool handle_key(int);
 private:
   std::vector<const char*> list;
 };
@@ -70,7 +70,7 @@ TagList :: TagList() {
     items.push_back(id.to_string());
 }
 
-bool TagList :: handleKey(int key) {
+bool TagList :: handle_key(int key) {
   if (Bindings::playlist[key]) {
     switch (Bindings::playlist[key]) {
     case Actions::TOP:       top();        break;
@@ -90,7 +90,7 @@ bool TagList :: handleKey(int key) {
 class ValueList : public UI::ListWidget<vector<const char*>> {
 public:
   ValueList();
-  void bool handleKey(int);
+  void bool handle_key(int);
   void loadFoo();
 private:
   std::vector<const char*> list;
@@ -125,9 +125,9 @@ Browser :: Browser()
 , _trackListWidget()
 , _database(database)
 {
-  addWidget(&_tagListWidget);
-  addWidget(&_valueListWidget);
-  addWidget(&_trackListWidget);
+  add_widget(&_tagListWidget);
+  add_widget(&_valueListWidget);
+  add_widget(&_trackListWidget);
 
   _tagListWidget.onKeyPress = [&](int key) {
 
@@ -155,7 +155,7 @@ class Browser : public ListWidget<std::vector<Database::Tracks::Track>> {
 public:
   Browser(Actions&, Database&);
   std::vector<BrowserItem> items;
-  bool handleKey(int);
+  bool handle_key(int);
 private:
   Actions& actions;
   Database& database;

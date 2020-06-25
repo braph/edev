@@ -13,16 +13,16 @@ public:
 
   void draw()                      override;
   void noutrefresh()               override;
-  bool handleKey(int)              override;
-  bool handleMouse(MEVENT&)        override;
+  bool handle_key(int)             override;
+  bool handle_mouse(MEVENT&)       override;
   WINDOW* getWINDOW()              const noexcept override;
 
-  void    addWidget(Widget*);
-  Widget* currentWidget()          const noexcept;
-  void    currentWidget(Widget*)         noexcept;
-  int     currentIndex()           const noexcept;
-  void    currentIndex(int)              noexcept;
-  int     indexOf(Widget*)         const noexcept;
+  void    add_widget(Widget*);
+  Widget* current_widget()         const noexcept;
+  void    current_widget(Widget*)        noexcept;
+  int     current_index()          const noexcept;
+  void    current_index(int)             noexcept;
+  int     index_of(Widget*)        const noexcept;
   bool    empty()                  const noexcept;
   int     count()                  const noexcept;
 
@@ -45,7 +45,7 @@ public:
   void draw()                      override;
   void noutrefresh()               override;
   void layout(Pos, Size)           override;
-  bool handleMouse(MEVENT&)        override;
+  bool handle_mouse(MEVENT&)       override;
 };
 
 } // namespace UI

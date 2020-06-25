@@ -108,8 +108,8 @@ public:
   virtual void draw()               = 0;
   virtual void layout(Pos, Size)    = 0;
   virtual void noutrefresh()        = 0;
-  virtual bool handleKey(int)       { return false; }
-  virtual bool handleMouse(MEVENT&) { return false; }
+  virtual bool handle_key(int)       { return false; }
+  virtual bool handle_mouse(MEVENT&) { return false; }
   virtual WINDOW* getWINDOW() const noexcept = 0;
 };
 

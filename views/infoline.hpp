@@ -44,17 +44,17 @@ public:
   void draw()                             override;
   void layout(UI::Pos, UI::Size)          override;
 
-  void setState(Mpg123Player::State)      noexcept;
-  void setTrack(Database::Tracks::Track)  noexcept;
-  void setPositionAndLength(int, int)     noexcept;
+  void state(Mpg123Player::State)         noexcept;
+  void track(Database::Tracks::Track)     noexcept;
+  void set_position_and_length(int, int)  noexcept;
 
 private:
-  Database::Tracks::Track track;
-  InfoLineFormat*         fmt_top;
-  InfoLineFormat*         fmt_bottom;
-  int                     track_length;
-  int                     track_position;
-  Mpg123Player::State     state;
+  Database::Tracks::Track _track;
+  InfoLineFormat*         _fmt_top;
+  InfoLineFormat*         _fmt_bottom;
+  int                     _track_length;
+  int                     _track_position;
+  Mpg123Player::State     _state;
 
   void print_formatted_strings(int, const InfoLineFormat&);
   void draw_position_and_length();

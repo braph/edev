@@ -342,9 +342,9 @@ int main () {
   assert (strlen(db.albums[0].url()) == 0);
   assert (strlen(db.tracks[0].url()) == 0);
 
-  auto styles = db.getStyles();
-  auto albums = db.getAlbums();
-  auto tracks = db.getTracks();
+  auto styles = db.get_styles();
+  auto albums = db.get_albums();
+  auto tracks = db.get_tracks();
 
   if (db.tracks.size() < 100)
     throw runtime_error("Sorry, I need a database with some data, please run the updater ...");

@@ -14,21 +14,21 @@ class Info : public UI::Pad {
 public:
   void draw()                         override;
   void layout(UI::Pos, UI::Size)      override;
-  bool handleKey(int)                 override;
-  bool handleMouse(MEVENT&)           override;
+  bool handle_key(int)                override;
+  bool handle_mouse(MEVENT&)          override;
 
-  void setCurrentTrack(Database::Tracks::Track);
+  void track(Database::Tracks::Track) noexcept;
 
 private:
   struct UrlAndTitle { std::string url, title; };
 
-  Database::Tracks::Track currentTrack;
-  UI::MouseEvents<UrlAndTitle> clickableURLs;
+  Database::Tracks::Track _track;
+  UI::MouseEvents<UrlAndTitle> _clickable_urls;
 
-  void drawHeading(int, const char*)       noexcept;
-  void drawTag(int, const char*)           noexcept;
-  void drawInfo(int, const char*)          noexcept;
-  void drawLink(std::string, std::string)  noexcept;
+  void draw_heading(int, const char*)       noexcept;
+  void draw_tag(int, const char*)           noexcept;
+  void draw_info(int, const char*)          noexcept;
+  void draw_link(std::string, std::string)  noexcept;
 };
 
 } // namespace Views

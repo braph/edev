@@ -111,7 +111,7 @@ Theme::Definition Theme :: themes[int(ThemeID::COUNT)][int(ElementID::COUNT)] = 
   }
 };
 
-Theme::ElementID Theme :: elementByString(const std::string& name) noexcept {
+Theme::ElementID Theme :: element_by_string(const std::string& name) noexcept {
 #define X(ENUM, STRING) case Hash::lose_lose(STRING): return ElementID::ENUM;
   switch (Hash::lose_lose(name)) { THEME_ELEMENT_IDS }
   return ElementID::COUNT;
@@ -125,7 +125,7 @@ unsigned int Theme :: get(ElementID id) noexcept {
   return loaded[int(id)];
 }
 
-void Theme :: loadTheme(ThemeID theme) noexcept {
+void Theme :: load_theme(ThemeID theme) noexcept {
   UI::Colors::reset();
 
   current = theme;
@@ -141,8 +141,8 @@ void Theme :: loadTheme(ThemeID theme) noexcept {
   }
 }
 
-void Theme :: loadThemeByColors(int colors) noexcept {
-  loadTheme(
+void Theme :: load_theme_by_colors(int colors) noexcept {
+  load_theme(
     colors >= 256 ? ThemeID::THEME_256 :
     colors >= 8   ? ThemeID::THEME_8 :
     ThemeID::THEME_MONO);

@@ -1,7 +1,7 @@
 #ifndef TRACKLOADER_HPP
 #define TRACKLOADER_HPP
 
-#include "database.hpp" // TODO: get rid of this!
+#include "database.hpp"
 
 #include "lib/downloads.hpp"
 

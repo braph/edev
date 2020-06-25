@@ -21,11 +21,11 @@ MainWindow :: MainWindow()
   for (auto w : Config::main_widgets) {
     switch (w) {
     case MainWidgets::NONE:                                       break;
-    case MainWidgets::INFOLINE:     addWidget(&infoLine);         break;
-    case MainWidgets::PROGRESSBAR:  addWidget(&progressBar);      break;
-    case MainWidgets::TABBAR:       addWidget(&tabBar);           break;
-    case MainWidgets::READLINE:     addWidget(&readlineWidget);   break;
-    case MainWidgets::WINDOWS:      addWidget(&windows);          break;
+    case MainWidgets::INFOLINE:     add_widget(&infoLine);         break;
+    case MainWidgets::PROGRESSBAR:  add_widget(&progressBar);      break;
+    case MainWidgets::TABBAR:       add_widget(&tabBar);           break;
+    case MainWidgets::READLINE:     add_widget(&readlineWidget);   break;
+    case MainWidgets::WINDOWS:      add_widget(&windows);          break;
     }
   }
 
@@ -36,24 +36,24 @@ MainWindow :: MainWindow()
     case TabWidgets::NONE:
       break;
     case TabWidgets::SPLASH:
-      windows.addWidget(&splash);
-      tabBar.addTab("splash");
+      windows.add_widget(&splash);
+      tabBar.add_tab("splash");
       break;
     case TabWidgets::PLAYLIST:
-      windows.addWidget(&playlist);
-      tabBar.addTab("playlist");
+      windows.add_widget(&playlist);
+      tabBar.add_tab("playlist");
       break;
     case TabWidgets::BROWSER:
-      windows.addWidget(&playlist); // TODO
-      tabBar.addTab("browser");
+      windows.add_widget(&playlist); // TODO
+      tabBar.add_tab("browser");
       break;
     case TabWidgets::INFO:
-      windows.addWidget(&info);
-      tabBar.addTab("info");
+      windows.add_widget(&info);
+      tabBar.add_tab("info");
       break;
     case TabWidgets::HELP:
-      windows.addWidget(&help);
-      tabBar.addTab("help");
+      windows.add_widget(&help);
+      tabBar.add_tab("help");
       break;
     }
   }
@@ -62,12 +62,12 @@ MainWindow :: MainWindow()
 void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction callback) {
   readlineWidget.visible = true;
   readlineWidget.setPrompt(std::move(prompt));
-  int oldWidget = currentIndex();
+  int oldWidget = current_index();
   currentWidget(&readlineWidget);
   readlineWidget.onFinish = [=](std::string line, bool isEOF) {
     callback(line, isEOF);
     readlineWidget.visible = false;
-    currentIndex(oldWidget);
+    current_index(oldWidget);
     layout(pos, size); // TODO: is this an design error? draw on setC,
     draw();
     noutrefresh();
@@ -96,8 +96,8 @@ void MainWindow :: layout(Pos pos, Size size) {
   VerticalContainer::layout(this->pos, this->size);
 }
 
-bool MainWindow :: handleKey(int key) {
-  if (! VerticalContainer::handleKey(key))
+bool MainWindow :: handle_key(int key) {
+  if (! VerticalContainer::handle_key(key))
     Actions::call(Bindings::global[key]);
   return true;
 }

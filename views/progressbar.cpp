@@ -15,7 +15,7 @@ using namespace Views;
 using ElementID = Theme::ElementID;
 
 /* The progressbar is drawed only *once* in layout().
- * It is positioned in the right place later by setPercent() */
+ * It is positioned in the right place later by percent() */
 
 ProgressBar :: ProgressBar()
 : UI::Pad({0,0}, {1,COLS*2})
@@ -57,14 +57,14 @@ void ProgressBar :: layout(Pos pos, Size size) {
     *this << Config::progressbar_rest_char;
 }
 
-void ProgressBar :: setPercent(float percent) noexcept {
+void ProgressBar :: percent(float percent) noexcept {
   pad_mincol = size.width - (percent * size.width);
 }
 
-bool ProgressBar :: handleMouse(MEVENT& m) {
+bool ProgressBar :: handle_mouse(MEVENT& m) {
   if (m.y == pos.y /* + size.height - 1 */) {
-    if (percentChanged)
-      percentChanged(float(m.x + 1) / size.width);
+    if (percent_changed)
+      percent_changed(float(m.x + 1) / size.width);
     return true;
   }
   return false;
@@ -87,7 +87,7 @@ int main() {
     b.layout({0,0}, {LINES,COLS});
     for (;;)
       for (float f = 0.0; f < 1; f += 0.01) {
-        b.setPercent(f);
+        b.percent(f);
         b.noutrefresh();
         doupdate();
         usleep(1000 * 30);

@@ -7,7 +7,7 @@
 
 #include <cstring>
 
-#define STOPPED_HEADING "- Ektoplayer -"
+#define STOPPED_HEADING      "- Ektoplayer -"
 #define STOPPED_HEADING_LEN (sizeof(STOPPED_HEADING) - 1)
 
 #define STATE_LEN 9
@@ -24,22 +24,22 @@ using ElementID = Theme::ElementID;
 
 InfoLine :: InfoLine()
 : UI::Window({0,0}, {2,0})
-, track_length(0)
-, track_position(0)
-, state(Mpg123Player::STOPPED)
+, _track_length(0)
+, _track_position(0)
+, _state(Mpg123Player::STOPPED)
 {
   switch (Theme::current) {
   case Theme::ThemeID::THEME_256:
-    fmt_top    = &Config::infoline_format_top_256;
-    fmt_bottom = &Config::infoline_format_bottom_256;
+    _fmt_top    = &Config::infoline_format_top_256;
+    _fmt_bottom = &Config::infoline_format_bottom_256;
     break;
   case Theme::ThemeID::THEME_8:
-    fmt_top    = &Config::infoline_format_top;
-    fmt_bottom = &Config::infoline_format_bottom;
+    _fmt_top    = &Config::infoline_format_top;
+    _fmt_bottom = &Config::infoline_format_bottom;
     break;
   case Theme::ThemeID::THEME_MONO: // TODO: infoline_format_top_mono
-    fmt_top    = &Config::infoline_format_top;
-    fmt_bottom = &Config::infoline_format_bottom;
+    _fmt_top    = &Config::infoline_format_top;
+    _fmt_bottom = &Config::infoline_format_bottom;
     break;
   case Theme::ThemeID::COUNT:
     break;
@@ -47,24 +47,24 @@ InfoLine :: InfoLine()
   draw();
 }
 
-void InfoLine :: setTrack(Database::Tracks::Track track) noexcept {
-  if (track != this->track) {
-    this->track = track;
+void InfoLine :: track(Database::Tracks::Track track) noexcept {
+  if (track != _track) {
+    _track = track;
     draw(); // draw(), we need to clear screen
   }
 }
 
-void InfoLine :: setState(Mpg123Player::State state) noexcept {
-  if (state != this->state) {
-    this->state = state;
+void InfoLine :: state(Mpg123Player::State state) noexcept {
+  if (state != _state) {
+    _state = state;
     draw_state();
   }
 }
 
-void InfoLine :: setPositionAndLength(int position, int length) noexcept {
-  if (position != this->track_position || length != this->track_length) {
-    track_position = position;
-    track_length   = length;
+void InfoLine :: set_position_and_length(int position, int length) noexcept {
+  if (position != _track_position || length != _track_length) {
+    _track_position = position;
+    _track_length   = length;
     draw_position_and_length();
   }
 }
@@ -83,21 +83,21 @@ void InfoLine :: layout(Pos pos, Size size) {
 
 void InfoLine :: draw_state() {
   attrSet(Theme::get(ElementID::INFOLINE_STATE));
-  mvAddStr(0, size.width - STATE_LEN, state_to_string[state]);
+  mvAddStr(0, size.width - STATE_LEN, state_to_string[_state]);
 }
 
 void InfoLine :: draw_position_and_length() {
   attrSet(Theme::get(ElementID::INFOLINE_POSITION));
-  mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", track_position/60, track_position%60, track_length/60, track_length%60);
+  mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", _track_position/60, _track_position%60, _track_length/60, _track_length%60);
 }
 
 void InfoLine :: draw_track_info() {
-  if (! track) {
+  if (! _track) {
     attrSet(0);
     mvAddStr(1, size.width / 2 - int(STOPPED_HEADING_LEN / 2), STOPPED_HEADING);
   } else {
-    print_formatted_strings(0, *fmt_top);
-    print_formatted_strings(1, *fmt_bottom);
+    print_formatted_strings(0, *_fmt_top);
+    print_formatted_strings(1, *_fmt_bottom);
   }
 }
 
@@ -112,12 +112,18 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
   size_t sum = 0;
 
   for (const auto& fmt : format) {
-    size_t len;
+    const char* s;
+
     if (fmt.text.length())
-      len = std::mbstowcs(NULL, fmt.text.c_str(), 0);
+      s = fmt.text.c_str();
     else
-      len = std::mbstowcs(NULL, trackField(track, fmt.tag), 0);
-    sum += len; // TODO: Error handling of mbstowcs
+      s = trackField(_track, fmt.tag);
+
+    size_t len = std::mbstowcs(NULL, s, 0);
+    if (len == size_t(-1))
+      len = std::strlen(s);
+
+    sum += len;
   }
 
   moveCursor(y, size.width / 2 - int(sum / 2));
@@ -126,7 +132,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
     if (fmt.text.length())
       *this << toWideString(fmt.text);
     else
-      *this << toWideString(trackField(track, fmt.tag));
+      *this << toWideString(trackField(_track, fmt.tag));
   }
 }
 

@@ -11,18 +11,18 @@ TabBar :: TabBar() noexcept
 {
 }
 
-void TabBar :: addTab(std::string label) noexcept {
+void TabBar :: add_tab(std::string label) noexcept {
   _tabs.push_back(std::move(label));
   draw();
 }
 
-void TabBar :: currentIndex(int index) noexcept {
+void TabBar :: current_index(int index) noexcept {
   if (index >= 0 && index < count())
     _current = index;
   draw();
 }
 
-int TabBar :: currentIndex() const noexcept {
+int TabBar :: current_index() const noexcept {
   return _current;
 }
 
@@ -51,14 +51,14 @@ void TabBar :: draw() {
   }
 }
 
-bool TabBar :: handleMouse(MEVENT& m) {
+bool TabBar :: handle_mouse(MEVENT& m) {
   if (m.y == pos.y /* + size.height - 1 */) {
     int label_x = 0;
     for (size_t index = 0; index < _tabs.size(); ++index) {
       label_x += int(_tabs[index].length()) + 1;
       if (m.x <= label_x) {
-        if (indexChanged)
-          indexChanged(index);
+        if (index_changed)
+          index_changed(index);
         break;
       }
     }
@@ -78,15 +78,15 @@ int main() {
   TabBar b;
   b.layout({0,0}, {LINES,COLS});
   for (const auto s : {"Tab1", "Tab2", "Tab3"})
-    b.addTab(s);
+    b.add_tab(s);
 
   for (int colors : {0, 8, 256}) {
     if (colors > COLORS)
       break;
-    Theme::loadThemeByColors(colors);
+    Theme::load_theme_by_colors(colors);
 
     for (int i = 0; i < 3; ++i) {
-      b.currentIndex(i);
+      b.current_index(i);
       b.noutrefresh();
       doupdate();
       usleep(500 * 1000);

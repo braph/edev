@@ -9,7 +9,7 @@ class Help : public UI::Pad {
 public:
   void draw()                         override;
   void layout(UI::Pos, UI::Size)      override;
-  bool handleKey(int)                 override;
+  bool handle_key(int)                override;
 };
 
 } // namespace Views

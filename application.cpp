@@ -144,7 +144,7 @@ void Application :: init() {
     }
 
     // All colors are beautiful
-    Theme::loadThemeByColors(Config::use_colors != -1 ? Config::use_colors : COLORS);
+    Theme::load_theme_by_colors(Config::use_colors != -1 ? Config::use_colors : COLORS);
   }
   catch (const std::exception &ex) {
     throw std::runtime_error(std::string(e) + ": " + ex.what());
@@ -163,14 +163,14 @@ void Application :: run() {
   ctxt.mainwindow = &mainwindow;
 
   // Connecting widgets events
-  mainwindow.progressBar.percentChanged = [&](float percent) {
+  mainwindow.progressBar.percent_changed = [&](float percent) {
     player.percent(percent);
-    mainwindow.progressBar.setPercent(percent);
+    mainwindow.progressBar.percent(percent);
   };
 
-  mainwindow.tabBar.indexChanged = [&](int index) {
-    mainwindow.tabBar.currentIndex(index);
-    mainwindow.windows.currentIndex(index);
+  mainwindow.tabBar.index_changed = [&](int index) {
+    mainwindow.tabBar.current_index(index);
+    mainwindow.windows.current_index(index);
   };
 
   int key;
@@ -178,7 +178,7 @@ void Application :: run() {
   MEVENT mouse;
   Database::Tracks::Track prefetching_track;
 
-  mainwindow.playlist.playlist = database.getTracks();
+  mainwindow.playlist.playlist = database.get_tracks();
 
 WINDOW_RESIZE:
   mainwindow.layout({0,0}, {LINES,COLS});
@@ -201,10 +201,10 @@ MAINLOOP:
       && player.percent() >= Config::prefetch
       && player.is_playing()
       && player.length() >= 30
-      && mainwindow.playlist.containerSize() >= 2)
+      && mainwindow.playlist.container_size() >= 2)
   {
     auto list = mainwindow.playlist.list();
-    auto next_track = (*list)[size_t(mainwindow.playlist.activeIndex() + 1) % list->size()];
+    auto next_track = (*list)[size_t(mainwindow.playlist.active_index() + 1) % list->size()];
     if (next_track != prefetching_track) {
       trackloader.get_file_for_track(next_track);
       prefetching_track = next_track;
@@ -214,12 +214,12 @@ MAINLOOP:
   if (player.is_track_completed())
     Actions::call(Actions::PLAYLIST_NEXT);
 
-  mainwindow.progressBar.setPercent(player.percent());
-  mainwindow.infoLine.setPositionAndLength(player.position(), player.length());
-  mainwindow.infoLine.setState(player.state());
-  if (!mainwindow.playlist.empty() && mainwindow.playlist.activeIndex() >= 0) {
-    mainwindow.infoLine.setTrack(mainwindow.playlist.getActiveItem());
-    mainwindow.info.setCurrentTrack(mainwindow.playlist.getActiveItem());
+  mainwindow.progressBar.percent(player.percent());
+  mainwindow.infoLine.set_position_and_length(player.position(), player.length());
+  mainwindow.infoLine.state(player.state());
+  if (!mainwindow.playlist.empty() && mainwindow.playlist.active_index() >= 0) {
+    mainwindow.infoLine.track(mainwindow.playlist.active_item());
+    mainwindow.info.track(mainwindow.playlist.active_item());
   }
   mainwindow.noutrefresh();
   doupdate();
@@ -233,8 +233,8 @@ MAINLOOP:
       goto HANDLE_KEY;
   }
 
-  if (trackloader.downloads().runningDownloads() || trackloader.downloads().queuedDownloads()
-      ||  updater.downloads().runningDownloads() || updater.downloads().queuedDownloads())
+  if (trackloader.downloads().running_downloads() || trackloader.downloads().queued_downloads()
+      ||  updater.downloads().running_downloads() || updater.downloads().queued_downloads())
     wtimeout(win, 100); // Short timeout, want to continue downloading soon
   else if (player.is_stopped() || player.is_paused())
     wtimeout(win, -1);  // We have *nothing* to do, wait until user hits a key
@@ -248,10 +248,10 @@ HANDLE_KEY:
       break;
     case KEY_MOUSE:
       if (OK == getmouse(&mouse))
-        mainwindow.handleMouse(mouse);
+        mainwindow.handle_mouse(mouse);
       break;
     default:
-      mainwindow.handleKey(key);
+      mainwindow.handle_key(key);
   }
 
   goto MAINLOOP;

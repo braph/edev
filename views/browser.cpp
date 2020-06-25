@@ -35,7 +35,7 @@ BrowserFilterSelector :: BrowserFilterSelector() {
     items.push_back(id.to_string());
 }
 
-bool BrowserFilterSelector :: handleKey(int key) {
+bool BrowserFilterSelector :: handle_key(int key) {
   browser.addFilter("????");
 }
 
@@ -52,7 +52,7 @@ void Browser :: load() {
 
 }
 
-bool Browser :: handleKey(int key) {
+bool Browser :: handle_key(int key) {
   if (currentListWidget == normal && type == addFilter) {
 
   }
@@ -88,7 +88,7 @@ int main() {
   assert(db.tracks.size() > 10);
 
   BrowserItemRenderer renderer(Config::playlist_columns);
-  auto tracks = db.getTracks();
+  auto tracks = db.get_tracks();
 
   testListItemRenderer(tracks, renderer);
 

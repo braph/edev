@@ -82,7 +82,7 @@ bool Updater :: start(int pages) noexcept {
   log_write("Started database update (max %d pages)\n", pages);
   _max_pages = pages;
 
-  if (! (_downloads.runningDownloads() + _downloads.queuedDownloads()))
+  if (! (_downloads.running_downloads() + _downloads.queued_downloads()))
     for (int i = 1; i <= _downloads.parallel(); ++i)
       fetch_page(i);
 
@@ -251,18 +251,18 @@ int main() {
   
   // Tests of BrowsePage ======================================================
   // - are all styles valid?
-  for (auto style : db.getStyles()) {
+  for (auto style : db.get_styles()) {
     warn_if(style, strlen(style.url()) < 3);
     warn_if(style, strlen(style.name()) < 3);
   }
   // - are all tracks valid?
-  for (auto track : db.getTracks()) {
+  for (auto track : db.get_tracks()) {
     warn_if(track, strlen(track.url()) < 3);
     warn_if(track, strlen(track.title()) < 1);
     warn_if(track, strlen(track.artist()) < 1);
   }
   // - are all albums valid?
-  for (auto album : db.getAlbums()) {
+  for (auto album : db.get_albums()) {
     warn_if(album, strlen(album.url()) < 3);
     warn_if(album, strlen(album.title()) < 1);
     warn_if(album, strlen(album.artist()) < 1);

@@ -41,7 +41,7 @@ public:
   MainWindow();
 
   void layout(UI::Pos, UI::Size)    override;
-  bool handleKey(int)               override;
+  bool handle_key(int)              override;
 
   void readline(std::string, ReadlineWidget::onFinishFunction);
 

@@ -15,14 +15,14 @@ public:
 
   void  draw()                        override;
   void  layout(UI::Pos, UI::Size)     override;
-  bool  handleMouse(MEVENT&)          override;
+  bool  handle_mouse(MEVENT&)         override;
 
-  void  addTab(std::string)           noexcept;
-  void  currentIndex(int)             noexcept;
-  int   currentIndex()          const noexcept;
+  void  add_tab(std::string)          noexcept;
+  void  current_index(int)            noexcept;
+  int   current_index()         const noexcept;
   int   count()                 const noexcept;
 
-  std::function<void(int)> indexChanged;
+  std::function<void(int)> index_changed;
 
 private:
   std::vector<std::string> _tabs;

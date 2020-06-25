@@ -14,9 +14,9 @@ public:
 
   void draw()                         override;
   void layout(UI::Pos, UI::Size)      override;
-  bool handleKey(int)                 override;
+  bool handle_key(int)                override;
 
-  void setPrompt(std::string)         noexcept;
+  void set_prompt(std::string)        noexcept;
 
   using onFinishFunction = std::function<void(std::string, bool)>;
   onFinishFunction onFinish;

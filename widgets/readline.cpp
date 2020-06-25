@@ -64,7 +64,7 @@ void ReadlineWidget :: draw() {
   mvwchgat(win, 0, x + rl_point, 1, A_STANDOUT, 0, NULL);
 }
 
-bool ReadlineWidget :: handleKey(int key) {
+bool ReadlineWidget :: handle_key(int key) {
   widgetInstance = this;
   wtimeout(win, 0);
   rl_stuff_char(key);
@@ -95,7 +95,7 @@ int main() {
     int key = wgetch(w.getWINDOW());
     if (key == ERR)
       continue;
-    w.handleKey(key);
+    w.handle_key(key);
     w.draw();
     w.noutrefresh();
     doupdate();

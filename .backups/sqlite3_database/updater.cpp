@@ -63,7 +63,7 @@ void Updater :: update() {
   BrowsePage firstPage(src);
 
   // Insert styles first, as the albums link to them
-  insert_styles(firstPage.getStyles(src));
+  insert_styles(firstPage.get_styles(src));
 
   // Insert first page
   insert_browsepage(firstPage);

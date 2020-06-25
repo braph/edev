@@ -484,13 +484,13 @@ public:
   void save(const std::string&);
   void shrink_to_fit();
 
-  inline std::vector<Styles::Style> getStyles()
+  inline std::vector<Styles::Style> get_styles()
   { return std::vector<Styles::Style>(styles.begin(), styles.end()); }
   
-  inline std::vector<Albums::Album> getAlbums()
+  inline std::vector<Albums::Album> get_albums()
   { return std::vector<Albums::Album>(albums.begin(), albums.end()); }
 
-  inline std::vector<Tracks::Track> getTracks()
+  inline std::vector<Tracks::Track> get_tracks()
   { return std::vector<Tracks::Track>(tracks.begin(), tracks.end()); }
 
 private:

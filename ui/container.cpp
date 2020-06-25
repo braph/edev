@@ -24,46 +24,46 @@ void GenericContainer :: noutrefresh() {
       w->noutrefresh();
 }
 
-bool GenericContainer :: handleMouse(MEVENT& m) {
+bool GenericContainer :: handle_mouse(MEVENT& m) {
   for (const auto& w : _widgets)
-    if (w->visible && w->handleMouse(m))
+    if (w->visible && w->handle_mouse(m))
       return true;
   return false;
 }
 
-bool GenericContainer :: handleKey(int key) {
-  return empty() ? false : CURRENT_WIDGET->handleKey(key);
+bool GenericContainer :: handle_key(int key) {
+  return empty() ? false : CURRENT_WIDGET->handle_key(key);
 }
 
 WINDOW* GenericContainer :: getWINDOW() const noexcept {
   return empty() ? NULL : CURRENT_WIDGET->getWINDOW();
 }
 
-void GenericContainer :: addWidget(Widget* widget) {
+void GenericContainer :: add_widget(Widget* widget) {
   _widgets.push_back(widget);
 }
 
-int GenericContainer :: currentIndex() const noexcept {
+int GenericContainer :: current_index() const noexcept {
   return _current;
 }
 
-void GenericContainer :: currentIndex(int index) noexcept {
+void GenericContainer :: current_index(int index) noexcept {
   if (index >= 0 && index < count())
     _current = index;
   draw();
 }
 
-Widget* GenericContainer :: currentWidget() const noexcept {
+Widget* GenericContainer :: current_widget() const noexcept {
   return empty() ? NULL : CURRENT_WIDGET;
 }
 
-void GenericContainer :: currentWidget(Widget* widget) noexcept {
+void GenericContainer :: current_widget(Widget* widget) noexcept {
   for (size_t i = 0; i < _widgets.size(); ++i)
     if (_widgets[i] == widget)
       _current = int(i);
 }
 
-int GenericContainer :: indexOf(Widget* widget) const noexcept {
+int GenericContainer :: index_of(Widget* widget) const noexcept {
   for (size_t i = 0; i < _widgets.size(); ++i)
     if (_widgets[i] == widget)
       return i;
@@ -118,9 +118,9 @@ void StackedContainer :: noutrefresh() {
     CURRENT_WIDGET->noutrefresh();
 }
 
-bool StackedContainer :: handleMouse(MEVENT& m) {
+bool StackedContainer :: handle_mouse(MEVENT& m) {
   if (! empty() && CURRENT_WIDGET->visible)
-    return CURRENT_WIDGET->handleMouse(m);
+    return CURRENT_WIDGET->handle_mouse(m);
   return false;
 }
 

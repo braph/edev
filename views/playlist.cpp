@@ -87,13 +87,13 @@ void TrackRenderer :: operator()(
  * ==========================================================================*/
 
 Playlist :: Playlist()
-: trackRenderer(Config::playlist_columns)
+: _track_renderer(Config::playlist_columns)
 {
-  this->itemRenderer = trackRenderer;
+  this->itemRenderer = _track_renderer;
   this->list(&this->playlist);
 }
 
-bool Playlist :: handleKey(int key) {
+bool Playlist :: handle_key(int key) {
   if (Bindings::playlist[key]) {
     switch (Bindings::playlist[key]) {
     case Actions::TOP:       top();        break;
@@ -104,7 +104,7 @@ bool Playlist :: handleKey(int key) {
     case Actions::PAGE_DOWN: page_down();  break;
     case Actions::SEARCH:
        ctxt.mainwindow->readline("Search: ", [&](std::string line, bool) {
-         trackSearch.start_search(this->playlist,
+         _track_search.start_search(this->playlist,
            [=](const Database::Tracks::Track& track) {
               for (const auto& column : Config::playlist_columns)
                 if (boost::algorithm::icontains(trackField(track, column.tag), line))
@@ -112,19 +112,19 @@ bool Playlist :: handleKey(int key) {
               return false;
           });
 
-         if (trackSearch.next())
-           cursorIndex(trackSearch.index());
+         if (_track_search.next())
+           cursor_index(_track_search.index());
        });
        break;
 
     case Actions::SEARCH_NEXT:
-       if (trackSearch.next())
-         cursorIndex(trackSearch.index());
+       if (_track_search.next())
+         cursor_index(_track_search.index());
        break;
 
     case Actions::SEARCH_PREV:
-       if (trackSearch.prev())
-         cursorIndex(trackSearch.index());
+       if (_track_search.prev())
+         cursor_index(_track_search.index());
        break;
 
     default:
@@ -150,7 +150,7 @@ int main() {
   assert(db.tracks.size() > 10);
 
   TrackRenderer renderer(Config::playlist_columns);
-  auto tracks = db.getTracks();
+  auto tracks = db.get_tracks();
 
   testListItemRenderer(tracks, renderer);
 

@@ -83,11 +83,11 @@ public:
   void addDownload(Download*);
   int work() noexcept;
 
-  void parallel(int)              noexcept;
-  int  parallel()           const noexcept { return _parallel;                }
-  std::vector<Download*>& queue() noexcept { return _queue;                   }
-  size_t runningDownloads() const noexcept { return size_t(_running_handles); }
-  size_t queuedDownloads()  const noexcept { return _queue.size();            }
+  void parallel(int)               noexcept;
+  int  parallel()            const noexcept { return _parallel;                }
+  std::vector<Download*>& queue()  noexcept { return _queue;                   }
+  size_t running_downloads() const noexcept { return size_t(_running_handles); }
+  size_t queued_downloads()  const noexcept { return _queue.size();            }
 
 private:
   CURLM* _curl_multi;

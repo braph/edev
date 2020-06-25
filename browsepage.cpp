@@ -17,8 +17,6 @@ using boost::algorithm::split;
 using boost::algorithm::is_any_of;
 using pack = StringPack::Generic;
 
-static const auto is_comma = boost::algorithm::is_any_of(",");
-
 #ifndef NDEBUG
 #include <iostream>
 inline std::ostream& operator<<(std::ostream& o, const Style& s) {
@@ -199,7 +197,7 @@ Album BrowsePageParser :: next_album() {
       continue;
 
     std::string result = base64::decode(base64_begin, size_t(base64_end-base64_begin));
-    split(tracks, result, is_comma);//(","));XXX
+    split(tracks, result, boost::algorithm::is_any_of(","));
     break;
   }
 

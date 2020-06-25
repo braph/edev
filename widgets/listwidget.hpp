@@ -35,25 +35,25 @@ public:
   TContainer* list()          const noexcept { return m_list;          }
   void list(TContainer *list)       noexcept { m_list = list;          }
 
-  int  activeIndex()          const noexcept { return m_active;        }
-  void activeIndex(int idx)         noexcept { m_active = idx; draw(); }
+  int  active_index()         const noexcept { return m_active;        }
+  void active_index(int idx)        noexcept { m_active = idx; draw(); }
 
-  int cursorIndex() const noexcept
+  int cursor_index() const noexcept
   { return empty() ? -1 : m_selected; }
 
-  void cursorIndex(int idx) {
+  void cursor_index(int idx) {
     m_selected = idx;
     m_cursor = size.height / 2;
     draw();
   }
 
-  /// Only if cursorIndex() != -1
+  /// Only if cursor_index() != -1
   value_type getCursorItem() const {
     return (*m_list)[size_type(m_selected)];
   }
 
-  /// Only if activeIndex() != -1
-  value_type getActiveItem() const {
+  /// Only if active_index() != -1
+  value_type active_item() const {
     return (*m_list)[size_type(m_active)];
   }
 
@@ -70,9 +70,9 @@ public:
 
   void _clamp() {
     m_cursor   = clamp(m_cursor,    0, max_cursor());
-    m_cursor   = clamp(m_cursor,    0, containerSize() - 1);
-    m_active   = clamp(m_active,   -1, containerSize() - 1);
-    m_selected = clamp(m_selected,  0, containerSize() - 1);
+    m_cursor   = clamp(m_cursor,    0, container_size() - 1);
+    m_active   = clamp(m_active,   -1, container_size() - 1);
+    m_selected = clamp(m_selected,  0, container_size() - 1);
   }
 
   void draw() override {
@@ -82,9 +82,9 @@ public:
     if (empty())
       return;
 
-    int idx  =  clamp(m_selected - m_cursor, 0, containerSize() - 1); //XXX
+    int idx  =  clamp(m_selected - m_cursor, 0, container_size() - 1); //XXX
     int line = 0;
-    for (; line < size.height && idx < containerSize(); ++line, ++idx) {
+    for (; line < size.height && idx < container_size(); ++line, ++idx) {
       render_item(idx, line, line == m_cursor);
     }
 
@@ -93,10 +93,10 @@ public:
 
   /// Scroll and change cursor position
   void scroll_cursor(int n) {
-    if (! m_list)
+    if (! empty())
       return;
 
-    n = clamp(m_selected + n, 0, containerSize() - 1) - m_selected;
+    n = clamp(m_selected + n, 0, container_size() - 1) - m_selected;
 
     render_item(m_selected, m_cursor, false);
 
@@ -146,7 +146,7 @@ CHANGE_CURSOR_POSITION:
   void bottom()        { m_cursor = m_selected = INT_MAX;  draw(); }
   void page_up()       { scroll_items(-size.height / 2);           }
   void page_down()     { scroll_items(size.height / 2);            }
-  void gotoSelected() {
+  void goto_selected() {
     m_cursor = size.height / 2;
     m_selected = m_active;
     draw();
@@ -156,7 +156,7 @@ CHANGE_CURSOR_POSITION:
   void center()    { force_cursorpos(size.height / 2); }
   */
 
-  bool handleMouse(MEVENT& m) override {
+  bool handle_mouse(MEVENT& m) override {
     if (wmouse_trafo(win, &m.y, &m.x, false)) {
       scroll_cursor(m.y - m_cursor);
       return true;
@@ -165,9 +165,9 @@ CHANGE_CURSOR_POSITION:
   }
 
   bool empty() const noexcept
-  { return containerSize() == 0; }
+  { return container_size() == 0; }
 
-  int containerSize() const noexcept
+  int container_size() const noexcept
   { return int(m_list ? m_list->size() : 0); }
 
 private:

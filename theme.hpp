@@ -64,9 +64,9 @@ public:
 
   static void set(ThemeID, ElementID, short, short, unsigned int) noexcept;
   static unsigned int get(ElementID)                              noexcept;
-  static void loadTheme(ThemeID)                                  noexcept;
-  static void loadThemeByColors(int)                              noexcept;
-  static ElementID elementByString(const std::string&)            noexcept;
+  static void load_theme(ThemeID)                                 noexcept;
+  static void load_theme_by_colors(int)                           noexcept;
+  static ElementID element_by_string(const std::string&)          noexcept;
 
 private:
   static Definition   themes[int(ThemeID::COUNT)][int(ElementID::COUNT)];
