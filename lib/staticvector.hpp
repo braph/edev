@@ -7,8 +7,7 @@
 
 /**
  * Stack allocated vector
- * XXX Broken, as it calls default constructor on non existent elements
- * XXX This is generally utterly broken.
+ * TODO: This vector calls the default constructor on non existent elements...
  */
 template<typename T, size_t N>
 class StaticVector {
@@ -74,7 +73,7 @@ public:
   }
 
   void reserve(size_t n) {
-    return; // TODO
+    assert(n <= size());
   }
 
   // Access operations ========================================================
