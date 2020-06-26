@@ -418,18 +418,26 @@ int main () {
   assert(equals(tracks, (Database::ColumnID) Database::ALBUM_TITLE, album_titles));
 
 
-#if 0 // TODO
   /* Test: WHERE ALBUM_TITLE =============================================== */
-  tracks.where((Database::ColumnID) Database::ALBUM_TITLE, Database::EQUAL, "Interbeing");
-  assert(tracks.size());
+  tracks.erase(
+    remove_if(tracks.begin(), tracks.end(),
+      Database::Where((Database::ColumnID) Database::ALBUM_TITLE, Database::Operator::EQUAL, "Interbeing")),
+      tracks.end());
+
+  assert(tracks.size() == 8);
   for (auto track : tracks)
     assert(streq(track.album().title(), "Interbeing"));
 
+
   /* Test: WHERE TRACK_TITLE =============================================== */
-  tracks.where((Database::ColumnID) Database::TRACK_TITLE, Database::EQUAL, "Satori");
+  tracks.erase(
+    remove_if(tracks.begin(), tracks.end(),
+      Database::Where((Database::ColumnID) Database::TRACK_TITLE, Database::Operator::EQUAL, "Satori")),
+      tracks.end());
+
   assert(tracks.size() == 1);
   assert(streq(tracks[0].title(), "Satori"));
-#endif
+
 
   /* Test: Failing to load a invalid database ============================== */
   except(db.load("/non-existent"));
