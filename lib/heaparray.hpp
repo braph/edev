@@ -1,29 +1,28 @@
-#ifndef LIB_ARRAY_HPP
-#define LIB_ARRAY_HPP
+#ifndef LIB_HEAPARRAY_HPP
+#define LIB_HEAPARRAY_HPP
 
 /**
- * Wrapper for a dynamically allocated array
- * XXX: WTF This name is utterly bad
+ * Fixed size array, allocated on the heap.
  */
 template<typename T>
-class Array {
+class HeapArray {
 public:
   using value_type = T;
 
-  inline Array(size_t size)
+  inline HeapArray(size_t size)
   : _data(new T[size]())
   , _size(size)
   {}
 
- ~Array()
+ ~HeapArray()
   { delete[] _data; }
 
   // Access operations ========================================================
 
   inline bool     empty()              const noexcept { return  _size == 0;     }
   inline size_t   size()               const noexcept { return  _size;          }
-  inline size_t   max_size()           const noexcept { return  _size;          } // ?
-  inline size_t   capacity()           const noexcept { return  _size;          } // ?
+  inline size_t   max_size()           const noexcept { return  _size;          }
+  inline size_t   capacity()           const noexcept { return  _size;          }
   inline T*       begin()                    noexcept { return &_data[0];       }
   inline T const* begin()              const noexcept { return &_data[0];       }
   inline T*       end()                      noexcept { return &_data[_size];   }

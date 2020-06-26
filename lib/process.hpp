@@ -7,8 +7,6 @@
 
 #include <functional>
 
-#include <cstdio>
-
 class Process {
 public:
   PipeStream stdin_pipe;
@@ -22,12 +20,12 @@ public:
       bool pipe_stderr=true) noexcept;
  ~Process();
   
-  pid_t get_id() const noexcept;
-  int get_exit_status() noexcept;
-  bool try_get_exit_status(int &exit_status) noexcept;
-  void close_stdin() noexcept;
-  void kill(bool force=false) noexcept;
-  bool running() noexcept; // XXX const?
+  pid_t  get_id()                         const noexcept;
+  int    get_exit_status()                      noexcept;
+  bool   try_get_exit_status(int &exit_status)  noexcept;
+  void   close_stdin()                          noexcept;
+  void   kill(bool force=false)                 noexcept;
+  bool   running()                              noexcept;
 
   template<typename T>
   Process& operator<<(T v) noexcept {

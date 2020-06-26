@@ -94,7 +94,7 @@ void StringChunk::Shrinker :: shrink() {
     unsigned char last_char;
   };
 
-  Array<IDAndLength> ids_with_length(_num_ids);
+  HeapArray<IDAndLength> ids_with_length(_num_ids);
   const char* chunk_data = _chunk._data.data();
 
   size_t i = 0;

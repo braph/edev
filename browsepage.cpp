@@ -13,8 +13,6 @@
 #include <string>
 #include <cctype>
 
-using boost::algorithm::split;
-using boost::algorithm::is_any_of;
 using pack = StringPack::Generic;
 
 #ifndef NDEBUG
@@ -197,7 +195,7 @@ Album BrowsePageParser :: next_album() {
       continue;
 
     std::string result = base64::decode(base64_begin, size_t(base64_end-base64_begin));
-    split(tracks, result, boost::algorithm::is_any_of(","));
+    boost::algorithm::split(tracks, result, boost::algorithm::is_any_of(","));
     break;
   }
 

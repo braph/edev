@@ -51,7 +51,7 @@ void ReadlineWidget :: layout(UI::Pos pos, UI::Size size) {
   setPos(pos);
 }
 
-void ReadlineWidget :: setPrompt(std::string prompt) noexcept {
+void ReadlineWidget :: set_prompt(std::string prompt) noexcept {
   _prompt = std::move(prompt);
 }
 

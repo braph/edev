@@ -29,7 +29,7 @@ MainWindow :: MainWindow()
     }
   }
 
-  currentWidget(&windows);
+  current_widget(&windows);
 
   for (auto w : Config::tabs_widgets) {
     switch (w) {
@@ -61,9 +61,9 @@ MainWindow :: MainWindow()
 
 void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction callback) {
   readlineWidget.visible = true;
-  readlineWidget.setPrompt(std::move(prompt));
+  readlineWidget.set_prompt(std::move(prompt));
   int oldWidget = current_index();
-  currentWidget(&readlineWidget);
+  current_widget(&readlineWidget);
   readlineWidget.onFinish = [=](std::string line, bool isEOF) {
     callback(line, isEOF);
     readlineWidget.visible = false;

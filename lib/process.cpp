@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 
 #include <cstdlib>
+#include <cstdio>
 #include <cassert>
 #include <stdexcept>
 
@@ -13,6 +14,10 @@ Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_st
   , _closed(true)
 {
   open(function, pipe_stdin, pipe_stdout, pipe_stderr);
+}
+
+Process :: ~Process() {
+  close_fds();
 }
 
 pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept {
@@ -123,10 +128,6 @@ void Process :: kill(bool force) noexcept {
     else
       ::kill(-_pid, SIGINT);
   }
-}
-
-Process :: ~Process() {
-  close_fds();
 }
 
 pid_t Process :: get_id() const noexcept {

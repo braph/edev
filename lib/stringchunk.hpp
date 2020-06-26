@@ -2,7 +2,7 @@
 #define LIB_STRINGCHUNK_HPP
 
 #include "cstring.hpp"
-#include "array.hpp"
+#include "heaparray.hpp"
 
 #include <string>
 
@@ -42,7 +42,7 @@ public:
     friend class StringChunk;
     Shrinker(StringChunk&);
     StringChunk& _chunk;
-    Array<int> _id_remap;
+    HeapArray<int> _id_remap;
     size_t _num_ids;
   };
 
