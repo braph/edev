@@ -1,7 +1,7 @@
 #ifndef UPDATER_HPP
 #define UPDATER_HPP
 
-#include "lib/downloads.hpp"
+#include <lib/downloads.hpp>
 
 #include <string>
 #include <cstdint>

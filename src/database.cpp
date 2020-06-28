@@ -2,7 +2,7 @@
 
 #include "ektoplayer.hpp"
 
-#include "lib/raii/file.hpp"
+#include <lib/raii/file.hpp>
 
 #include <type_traits>
 #include <climits>
@@ -313,7 +313,7 @@ Field Tracks::Track::operator[](ColumnID id) const { // XXX: noexcept
 
 // ============================================================================
 #ifdef TEST_DATABASE
-#include "lib/test.hpp"
+#include <lib/test.hpp>
 #include <algorithm>
 
 using namespace std;

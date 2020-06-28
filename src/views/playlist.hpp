@@ -5,8 +5,8 @@
 #include "../database.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp"
-#include "../lib/steppablesearch.hpp"
-#include "../lib/staticvector.hpp"
+#include <lib/steppablesearch.hpp>
+#include <lib/staticvector.hpp>
 
 struct PlaylistColumnFormat {
   enum class Justify : unsigned char { Left, Right };

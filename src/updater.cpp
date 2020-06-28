@@ -5,9 +5,9 @@
 #include "database.hpp"
 #include "markdown.hpp"
 
-#include "lib/stringpack.hpp"
-#include "lib/downloads.hpp"
-#include "lib/cstring.hpp"
+#include <lib/stringpack.hpp>
+#include <lib/downloads.hpp>
+#include <lib/cstring.hpp>
 
 #include <boost/algorithm/string/erase.hpp>
 
@@ -165,8 +165,8 @@ void Updater :: insert_browsepage(const std::string& source) {
 }
 
 #ifdef TEST_UPDATER
-#include "lib/test.hpp"
-#include "lib/filesystem.hpp"
+#include <lib/test.hpp>
+#include <lib/filesystem.hpp>
 #include <cstdio>
 #include <fstream>
 #include <streambuf>

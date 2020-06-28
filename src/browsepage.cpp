@@ -2,10 +2,10 @@
 
 #include "ektoplayer.hpp"
 
-#include "lib/base64.hpp"
-#include "lib/sscan.hpp"
-#include "lib/cstring.hpp"
-#include "lib/stringpack.hpp"
+#include <lib/base64.hpp>
+#include <lib/sscan.hpp>
+#include <lib/cstring.hpp>
+#include <lib/stringpack.hpp>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp> // is_any_of

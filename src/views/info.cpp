@@ -7,8 +7,8 @@
 #include "../player.hpp"
 #include "../url_handler.hpp"
 #include "../ui/colors.hpp"
-#include "../lib/filesystem.hpp"
-#include "../lib/bit_tools.hpp"
+#include <lib/filesystem.hpp>
+#include <lib/bit_tools.hpp>
 
 using namespace UI;
 using namespace Views;

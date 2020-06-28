@@ -1,6 +1,6 @@
 #include "../ektoplayer.hpp"
 
-#include "../lib/bit_tools.hpp"
+#include <lib/bit_tools.hpp>
 
 static const char* trackField(const Database::Tracks::Track &track, Database::ColumnID id) {
   static char buf[256];

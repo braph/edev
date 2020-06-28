@@ -1,7 +1,7 @@
 #include "theme.hpp"
 #include "ui/colors.hpp"
 
-#include "lib/hash.hpp"
+#include <lib/hash.hpp>
 
 enum {
   deflt   = -2,

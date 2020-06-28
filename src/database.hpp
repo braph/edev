@@ -1,11 +1,11 @@
 #ifndef DATABASE_HPP
 #define DATABASE_HPP
 
-#include "lib/cstring.hpp"
-#include "lib/genericiterator.hpp"
-#include "lib/packedvector.hpp"
-#include "lib/stringchunk.hpp"
-#include "lib/stringpack.hpp"
+#include <lib/cstring.hpp>
+#include <lib/genericiterator.hpp>
+#include <lib/packedvector.hpp>
+#include <lib/stringchunk.hpp>
+#include <lib/stringpack.hpp>
 
 #include <array>
 #include <vector>

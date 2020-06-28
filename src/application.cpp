@@ -10,7 +10,7 @@
 #include "theme.hpp"
 #include "views/mainwindow.hpp"
 
-#include "lib/cstring.hpp"
+#include <lib/cstring.hpp>
 
 #include <libxml/xmlversion.h>
 

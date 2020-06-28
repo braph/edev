@@ -1,8 +1,8 @@
 #ifndef BROWSEPAGE_HPP
 #define BROWSEPAGE_HPP
 
-#include "lib/xml.hpp"
-#include "lib/iterator/iterator_pair.hpp"
+#include <lib/xml.hpp>
+#include <lib/iterator/iterator_pair.hpp>
 
 #include <ctime>
 #include <string>

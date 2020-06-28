@@ -1,8 +1,8 @@
 #include "markdown.hpp"
 
-#include "lib/cstring.hpp"
-#include "lib/stringpack.hpp"
-#include "lib/xml/sax.hpp"
+#include <lib/cstring.hpp>
+#include <lib/stringpack.hpp>
+#include <lib/xml/sax.hpp>
 
 #include <libxml/parser.h>
 

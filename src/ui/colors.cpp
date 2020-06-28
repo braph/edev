@@ -96,7 +96,7 @@ void Colors :: reset() noexcept {
 }
 
 #ifdef TEST_COLORS
-#include "../lib/test.hpp"
+#include <lib/test.hpp>
 int main() {
   TEST_BEGIN();
 

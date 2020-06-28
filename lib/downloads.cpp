@@ -76,7 +76,7 @@ FileDownload :: FileDownload(const std::string &url, std::string file)
 {
   if (! _fh) {
 #ifdef __cpp_exceptions
-    throw std::runtime_error(strerror(errno))
+    throw std::runtime_error(strerror(errno));
 #endif
   }
   setopt(CURLOPT_WRITEDATA, _fh);

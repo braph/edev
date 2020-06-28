@@ -3,7 +3,7 @@
 #include "ektoplayer.hpp"
 #include "config.hpp"
 
-#include "lib/filesystem.hpp"
+#include <lib/filesystem.hpp>
 
 TrackLoader :: TrackLoader()
 {

@@ -1,6 +1,6 @@
 #include "ektoplayer.hpp"
 
-#include "lib/downloads.hpp"
+#include <lib/downloads.hpp>
 
 #include <curl/curl.h>
 
@@ -70,7 +70,7 @@ std::string& url_expand(std::string& url, const char* prefix, const char* suffix
 } // namespace Ektoplayer
 
 #ifdef TEST_EKTOPLAYER
-#include "lib/test.hpp"
+#include <lib/test.hpp>
 
 using namespace Ektoplayer;
 

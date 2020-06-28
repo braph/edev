@@ -3,8 +3,8 @@
 #include "../theme.hpp"
 #include "../config.hpp"
 #include "../ui/colors.hpp"
-#include "../lib/spanview.hpp"
-#include "../lib/arrayview.hpp"
+#include <lib/spanview.hpp>
+#include <lib/arrayview.hpp>
 
 static const short fading_0[]   = {-1};
 static const short fading_8[]   = {COLOR_BLUE};
@@ -71,7 +71,7 @@ bool ProgressBar :: handle_mouse(MEVENT& m) {
 }
 
 #ifdef TEST_PROGRESSBAR
-#include "../lib/test.hpp"
+#include <lib/test.hpp>
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();

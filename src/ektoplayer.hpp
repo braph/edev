@@ -1,7 +1,7 @@
 #ifndef EKTOPLAYER_HPP
 #define EKTOPLAYER_HPP
 
-#include "lib/filesystem.hpp"
+#include <lib/filesystem.hpp>
 
 #include <string>
 #include <cstdio>

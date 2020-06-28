@@ -8,7 +8,7 @@
 #include "../theme.hpp"
 #include "../actions.hpp"
 #include "../bindings.hpp"
-#include "../lib/algorithm.hpp" // clamp
+#include <lib/algorithm.hpp> // clamp
 
 #include <boost/algorithm/string/predicate.hpp> // icontains
 

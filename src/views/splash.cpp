@@ -2,8 +2,8 @@
 
 #include "../theme.hpp"
 #include "../ui/colors.hpp"
-#include "../lib/spanview.hpp"
-#include "../lib/arrayview.hpp"
+#include <lib/spanview.hpp>
+#include <lib/arrayview.hpp>
 
 #define LOGO_WIDTH  78
 #define LOGO_HEIGHT 10
@@ -109,7 +109,7 @@ void Splash :: draw() {
 }
 
 #ifdef TEST_SPLASH
-#include "../lib/test.hpp"
+#include <lib/test.hpp>
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();

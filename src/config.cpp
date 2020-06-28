@@ -3,12 +3,12 @@
 #include "ektoplayer.hpp"
 #include "ui/colors.hpp"
 #include "bindings.hpp"
-#include "lib/algorithm.hpp"
-#include "lib/filesystem.hpp"
-#include "lib/shellsplit.hpp"
-#include "lib/stringpack.hpp"
-#include "lib/raii/file.hpp"
-#include "lib/iterator/iterator_pair.hpp"
+#include <lib/algorithm.hpp>
+#include <lib/filesystem.hpp>
+#include <lib/shellsplit.hpp>
+#include <lib/stringpack.hpp>
+#include <lib/raii/file.hpp>
+#include <lib/iterator/iterator_pair.hpp>
 
 #include <cstdio>
 #include <cinttypes>
@@ -387,7 +387,7 @@ void Config :: read(const std::string &file) {
 }
 
 #ifdef TEST_CONFIG
-#include "lib/test.hpp"
+#include <lib/test.hpp>
 #include "ui/colors.hpp"
 int main() {
   TEST_BEGIN();

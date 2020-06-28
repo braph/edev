@@ -5,7 +5,7 @@
 #include <memory>
 #include <cstdint>
 
-#include "lib/process.hpp"
+#include <lib/process.hpp>
 
 class Mpg123Player {
 public:

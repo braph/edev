@@ -6,7 +6,7 @@
 #include "../player.hpp"
 #include "../ui.hpp"
 
-#include "../lib/staticvector.hpp"
+#include <lib/staticvector.hpp>
 
 #include <string>
 

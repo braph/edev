@@ -70,7 +70,7 @@ bool TabBar :: handle_mouse(MEVENT& m) {
 }
 
 #ifdef TEST_TABBAR
-#include "../lib/test.hpp"
+#include <lib/test.hpp>
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();

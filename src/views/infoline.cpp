@@ -137,7 +137,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
 }
 
 #ifdef TEST_INFOLINE
-#include "../lib/test.hpp"
+#include <lib/test.hpp>
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();
