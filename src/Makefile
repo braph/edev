@@ -17,7 +17,7 @@ CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -pg -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g
-CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC) 
+CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -DCURSES_INC=$(CURSES_INC)
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 CONFIG.deps   	= lib/shellsplit.o lib/filesystem.o lib/cstring.o lib/xml.o
@@ -58,7 +58,7 @@ TERMINAL = xterm -e # Used for running ncurses tests
 
 tests: \
 	test_shellsplit \
-	test_strinchunk \
+	test_stringchunk \
 	test_filesystem \
 	test_ektoplayer \
 	test_colors test_theme \
@@ -78,7 +78,7 @@ test_shellsplit:
 	$(VALGRIND) ./a.out
 
 test_stringchunk:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGchunk lib/stringchunk.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGCHUNK lib/stringchunk.cpp $^
 	$(VALGRIND) ./a.out
 
 test_filesystem:

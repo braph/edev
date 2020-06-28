@@ -27,6 +27,7 @@ public:
   /* Return the number of NUL terminated strings */
   int count() const noexcept;
 
+  void        clear()           noexcept { _data.assign(1, '\0');     }
   char const* get(int id) const noexcept { return _data.c_str() + id; }
   int         size()      const noexcept { return _data.size();       }
   int         capacity()  const noexcept { return _data.capacity();   }

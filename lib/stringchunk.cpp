@@ -4,9 +4,11 @@
 #include <climits>
 #include <algorithm>
 
+// StringChunk ================================================================
+
 int StringChunk :: add(CString s) {
-  // No check for empty string since this should be the rare case and
-  // find() will return pos `0` (the NUL byte at the beginning) in that case.
+  // No check for empty string since find() will return pos `0` (the NUL byte
+  // at the beginning) in that case.
 
   const size_t pos = _data.find(s, 0, s.length() + 1);
   if (pos != std::string::npos)
@@ -72,6 +74,8 @@ bool StringChunk :: is_shrinked() const noexcept {
 
   return true;
 }
+
+// StringChunk :: Shrinker ====================================================
 
 StringChunk::Shrinker :: Shrinker(StringChunk& chunk)
 : _chunk(chunk)
@@ -146,59 +150,7 @@ int StringChunk::Shrinker :: get_new_id(int id) {
   return _id_remap[size_t(id)];
 }
 
-#ifdef F____
-void StringChunk :: shrink_to_fit(IDRemap& old_id_new_id) {
-  StringChunk newchunk;
-  newchunk.reserve(_data.size());
-
-  struct IDAndLength { int id; int length; };
-  std::vector<IDAndLength> idAndLengthsByLastChar[256];
-
-  // Assuming most of the strings end with [A-Za-z0-9]
-  const size_t avg = old_id_new_id.size() / (26 + 26 + 10);
-  for (int c = 'a'; c <= 'z'; ++c) idAndLengthsByLastChar[c].reserve(avg);
-  for (int c = 'A'; c <= 'Z'; ++c) idAndLengthsByLastChar[c].reserve(avg);
-  for (int c = '0'; c <= '9'; ++c) idAndLengthsByLastChar[c].reserve(avg);
-
-  for (auto& pair : old_id_new_id) {
-    const char* s = this->get(pair.first);
-    const int len = std::strlen(s);
-    if (len) {
-      const int lastChar = reinterpret_cast<const unsigned char*>(s)[len-1];
-      idAndLengthsByLastChar[lastChar].push_back({pair.first, len});
-    }
-    else {
-      pair.second = 0;
-    }
-  }
-
-  // Sort by length
-  for (auto& idAndLengths : idAndLengthsByLastChar)
-    if (idAndLengths.size())
-      std::sort(idAndLengths.begin(), idAndLengths.end(),
-          [](const IDAndLength& a, const IDAndLength& b){ return a.length > b.length; });
-
-  // Add strings in the right order to the stringchunk and store the new ID
-  int chunkSearchPos = 0;
-  for (const auto& idAndLengths : idAndLengthsByLastChar)
-    if (idAndLengths.size()) {
-      for (const auto& idAndLength : idAndLengths) {
-        CString s(this->get(idAndLength.id), size_t(idAndLength.length));
-        int newId = newchunk.find(s, chunkSearchPos);
-        if (!newId)
-          newId = newchunk.add_unchecked(s);
-        old_id_new_id[idAndLength.id] = newId;
-      }
-
-      chunkSearchPos = newchunk.size();
-    }
-
-  _data = std::move(newchunk._data);
-  _data.shrink_to_fit();
-}
-#endif
-
-#ifdef TEST_STRINGchunk
+#ifdef TEST_STRINGCHUNK
 #include "test.hpp"
 
 #define TEST_DATA \
@@ -207,39 +159,56 @@ void StringChunk :: shrink_to_fit(IDRemap& old_id_new_id) {
 int main() {
   TEST_BEGIN();
 
-  StringChunk chunk;
-  assert(! chunk.find("non-existent"));
-  assert(streq("", chunk.get(0)));
-  assert(0 == chunk.add(""));
-  int id0 = chunk.add("0substr");
-  int id1 = chunk.add("substr");
-  int id2 = chunk.add("substr");
-  assert(streq("0substr", chunk.get(id0)));
-  assert(streq("substr",  chunk.get(id1)));
-  assert(streq("substr",  chunk.get(id2)));
-  assert(chunk.count() == 1);
-  
-  for (auto s : TEST_DATA)
-    assert(streq(s, chunk.get(chunk.add(s))));
+  { /* Test: behaviour of empty strings */
+    StringChunk chunk;
+    assert(0 == chunk.find("non-existent"));
+    assert(0 == chunk.add(""));
+    assert(streq("", chunk.get(0)));
+    assert(0 == chunk.count());
+  }
 
-  assert(chunk.count() == 7);
-  assert(! chunk.is_shrinked());
+  { /* Test: (sub-)string deduplication */
+    StringChunk chunk;
+    int id0 = chunk.add("0substr");
+    int id1 = chunk.add("substr");
+    int id2 = chunk.add("substr");
+    assert(streq("0substr", chunk.get(id0)));
+    assert(streq("substr",  chunk.get(id1)));
+    assert(streq("substr",  chunk.get(id2)));
+    assert(id1 == id2);
+    assert(chunk.count() == 1);
+  }
 
-  // XXX These tests have to be changed to the new shrink_to_fit algo
-  StringChunk optimized;
-  optimized.add("longstring");
-  optimized.add("short");
-  assert(optimized.is_shrinked());
-  optimized.add("longstring", true);
-  assert(! optimized.is_shrinked());
+  { 
+    StringChunk chunk;
+    for (auto s : TEST_DATA)
+      assert(streq(s, chunk.get(chunk.add(s))));
+    assert(chunk.count() == 6);
+  }
 
-#ifdef PERFORMANCE_TEST
-  StringChunk perf;
-  for (int i = 0; i < 99999; ++i) perf.add("performance", true);
-  for (int i = 0; i < 99999; ++i) perf.add("test", true);
-  for (int i = 0; i < 1000; ++i) {
-    perf.count();
-    perf.is_shrinked();
+  { 
+    StringChunk chunk;
+    int id0 = chunk.add("string");
+    int id1 = chunk.add("longstring");
+    assert(! chunk.is_shrinked());
+
+    auto shrinker = chunk.get_shrinker();
+    shrinker.add(id0);
+    shrinker.add(id1);
+    shrinker.shrink();
+
+    assert(chunk.is_shrinked());
+  }
+
+#ifdef TEST_STRINGCHUNK_PERFORMANCE
+  {
+    StringChunk chunk;
+    for (int i = 0; i < 99999; ++i) chunk.add("performance", true);
+    for (int i = 0; i < 99999; ++i) chunk.add("test", true);
+    for (int i = 0; i < 1000; ++i) {
+      chunk.count();
+      chunk.is_shrinked();
+    }
   }
 #endif
 
