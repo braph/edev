@@ -253,13 +253,13 @@ struct WidgetDrawable : public Widget {
   { return werase(win); }
 
   inline int resize(int height, int width) noexcept
-  { return wresize(win, height, width); } // TODO: set size
+  { return wresize(win, height, width); }
 
   inline int resize(UI::Size new_size) noexcept
-  { return wresize(win, new_size.height, new_size.width); } // TODO: set size
+  { return wresize(win, new_size.height, new_size.width); }
 
   inline int setPos(UI::Pos new_pos) noexcept
-  { return mvwin(win, new_pos.y, new_pos.x); } // TODO: set pos
+  { return mvwin(win, new_pos.y, new_pos.x); }
 
 };
 

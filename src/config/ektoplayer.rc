@@ -54,8 +54,12 @@ set infoline.format_top_256 "'<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"
 set infoline.format_bottom "artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"
 # Format of second line in infoline (256 colors)
 set infoline.format_bottom_256 "artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"
-# Enable/disable tabbar TODO: do we need this?
-set tabbar.display true
+# Enable/disable tabbar visibility
+set tabbar.visible true
+# Enable/disable infoline visibility
+set infoline.visible true
+# Enable/disable progressbar visibility
+set progressbar.visible true
 # Specify widget order of tabbar (left to right)
 set tabs.widgets "splash,playlist,browser,info,help"
 # Specify widgets to show (up to down)

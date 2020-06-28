@@ -1,9 +1,8 @@
-
-#include<vector>
 #include<iostream>
 #include<bitset>
 #include<algorithm>
-#include "staticvector.hpp" //XXX
+#include "staticvector.hpp"
+
 // 0100|0000 0010|0000 
 template<typename TUIntType, typename TIterator>
 TUIntType compress(TIterator _it, TIterator _end, int bitwidth) {

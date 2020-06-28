@@ -16,11 +16,14 @@ MainWindow :: MainWindow()
 , info()
 , help()
 {
+  tabBar.visible         = Config::tabbar_visible;
+  infoLine.visible       = Config::infoline_visible;
+  progressBar.visible    = Config::progressbar_visible;
   readlineWidget.visible = false;
 
   for (auto w : Config::main_widgets) {
     switch (w) {
-    case MainWidgets::NONE:                                       break;
+    case MainWidgets::NONE:                                        break;
     case MainWidgets::INFOLINE:     add_widget(&infoLine);         break;
     case MainWidgets::PROGRESSBAR:  add_widget(&progressBar);      break;
     case MainWidgets::TABBAR:       add_widget(&tabBar);           break;
@@ -44,7 +47,7 @@ MainWindow :: MainWindow()
       tabBar.add_tab("playlist");
       break;
     case TabWidgets::BROWSER:
-      windows.add_widget(&playlist); // TODO
+      windows.add_widget(&playlist); // TODO [later]
       tabBar.add_tab("browser");
       break;
     case TabWidgets::INFO:

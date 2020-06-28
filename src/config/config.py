@@ -226,10 +226,20 @@ options = [
         c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
         help: 'Format of second line in infoline (256 colors)',
         }),
-    ('tabbar.display', {
+    ('tabbar.visible', {
         type: 'bool', set: 'opt_parse_bool',
         default: 'true',
-        help: 'Enable/disable tabbar TODO: do we need this?',
+        help: 'Enable/disable tabbar visibility',
+        }),
+    ('infoline.visible', {
+        type: 'bool', set: 'opt_parse_bool',
+        default: 'true',
+        help: 'Enable/disable infoline visibility',
+        }),
+    ('progressbar.visible', {
+        type: 'bool', set: 'opt_parse_bool',
+        default: 'true',
+        help: 'Enable/disable progressbar visibility',
         }),
     ('tabs.widgets', {
         type: 'std::array<Views::TabWidgets, 5>', set: 'opt_parse_tabs_widgets',
