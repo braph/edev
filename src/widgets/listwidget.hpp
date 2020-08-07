@@ -93,7 +93,7 @@ public:
 
   /// Scroll and change cursor position
   void scroll_cursor(int n) {
-    if (! empty())
+    if (empty())
       return;
 
     n = clamp(m_selected + n, 0, container_size() - 1) - m_selected;

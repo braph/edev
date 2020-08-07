@@ -58,13 +58,13 @@ void Updater :: fetch_page(int page) noexcept {
   dl->buffer().reserve(BROWSEPAGE_HTML_SIZE);
 
   dl->onFinished = [this,page](Download& dl, CURLcode code) {
-    log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(code), dl.httpCode());
+    log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(code), dl.http_code());
 
     if (code != CURLE_OK)
       fetch_page(page);
-    else if (dl.httpCode() == 404)
+    else if (dl.http_code() == 404)
       _max_pages = std::min(_max_pages, page);
-    else if (dl.httpCode() == 200) {
+    else if (dl.http_code() == 200) {
       BrowsePageParser parser(static_cast<BufferDownload&>(dl).buffer());
       _max_pages = std::min(_max_pages, parser.num_pages());
       for (Album _; ! (_ = parser.next_album()).empty(); insert_album(_));

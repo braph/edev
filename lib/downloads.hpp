@@ -23,16 +23,16 @@ public:
 
   CURLcode perform();
   void cleanup() noexcept;
-  int httpCode() const noexcept;
-  const char* lastURL() const noexcept;
+  int http_code() const noexcept;
+  const char* last_url() const noexcept;
 
   template<typename T>
-  CURLcode setopt(CURLoption option, T value) noexcept {
+  inline CURLcode setopt(CURLoption option, T value) noexcept {
     return curl_easy_setopt(curl_easy, option, value);
   }
 
   template<typename T>
-  CURLcode getinfo(CURLINFO info, T& value) const noexcept {
+  inline CURLcode getinfo(CURLINFO info, T& value) const noexcept {
     return curl_easy_getinfo(curl_easy, info, &value);
   }
 

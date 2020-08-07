@@ -2,19 +2,20 @@
 #define LIB_HEAPARRAY_HPP
 
 /**
- * Fixed size array, allocated on the heap.
+ * Heap-allocated array with fixed size
  */
 template<typename T>
 class HeapArray {
 public:
   using value_type = T;
+  using size_type = size_t;
 
   inline HeapArray(size_t size)
   : _data(new T[size]())
   , _size(size)
   {}
 
- ~HeapArray()
+  inline ~HeapArray()
   { delete[] _data; }
 
   // Access operations ========================================================

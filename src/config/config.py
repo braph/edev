@@ -95,7 +95,7 @@ options = [
         help: 'File used for logging',
         lateinit: True
         }),
-    ('temp_dir', {
+    ('temp_dir', { # TODO: change description to new behaviour, see trackloader.cpp
         type: 'std::string', set: 'Filesystem::expand',
         default: '"/tmp/.ektoplazm"',
         help: 'Temporary dir for downloading mp3 files.\nThey will be moved to `cache_dir` after the download completed and was successful.\nDirectory will be created if it does not exist, parent directories will not be created.',

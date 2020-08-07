@@ -27,10 +27,10 @@ int Actions :: call(ActionID id) {
 
   // Player
   case PLAYER_FORWARD:
-    ctxt.player->seek_forward(10);
+    ctxt.player->seek(+10);
     break;
   case PLAYER_BACKWARD:
-    ctxt.player->seek_backward(10);
+    ctxt.player->seek(-10);
     break;
   case PLAYER_STOP:
     ctxt.player->stop();
@@ -42,12 +42,15 @@ int Actions :: call(ActionID id) {
   // Widgets visibility
   case TABBAR_TOGGLE:
     ctxt.mainwindow->tabBar.visible = !ctxt.mainwindow->tabBar.visible;
+    std::raise(SIGWINCH);
     break;
   case PLAYINGINFO_TOGGLE:
     ctxt.mainwindow->infoLine.visible = !ctxt.mainwindow->infoLine.visible;
+    std::raise(SIGWINCH);
     break;
   case PROGRESSBAR_TOGGLE:
     ctxt.mainwindow->progressBar.visible = !ctxt.mainwindow->progressBar.visible;
+    std::raise(SIGWINCH);
     break;
 
   // Playlist

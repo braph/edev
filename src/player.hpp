@@ -25,6 +25,7 @@ public:
   void pause()            noexcept;
   void toggle()           noexcept;
   void position(int)      noexcept;
+  void seek(int)          noexcept;
   void seek_forward(int)  noexcept;
   void seek_backward(int) noexcept;
   void volume(int)        noexcept;

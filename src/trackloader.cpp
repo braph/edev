@@ -34,7 +34,7 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
   Filesystem::path file_in_cache = Config::cache_dir;
   file_in_cache /= track_file;
 
-  // $temp_dir/~ekto-$track_file
+  // $temp_dir/~ekto~-$track_file
   Filesystem::path file_in_temp = Config::temp_dir;
   file_in_temp /= EKTOPLAZM_TEMP_FILE_PREFIX;
   file_in_temp += track_file;
@@ -63,8 +63,8 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
   FileDownload* download = new FileDownload(track_url, destination_file.string());
   download->onFinished = [=](Download& _dl, CURLcode e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
-    log_write("%s: %s [%d]\n", dl.lastURL(), curl_easy_strerror(e), dl.httpCode());
-    if (! (e == CURLE_OK && dl.httpCode() == 200)) {
+    log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(e), dl.http_code());
+    if (! (e == CURLE_OK && dl.http_code() == 200)) {
       Filesystem::error_code ec;
       Filesystem::remove(dl.filename(), ec);
     }

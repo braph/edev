@@ -32,13 +32,13 @@ CURLcode Download :: perform() {
   return e;
 }
 
-int Download :: httpCode() const noexcept {
+int Download :: http_code() const noexcept {
   long code = 0;
   getinfo(CURLINFO_RESPONSE_CODE, code);
   return code;
 }
 
-const char* Download :: lastURL() const noexcept {
+const char* Download :: last_url() const noexcept {
   char *url = NULL;
   if (CURLE_OK != getinfo(CURLINFO_EFFECTIVE_URL, url))
     return "<UNKNOWN URL>";
@@ -134,7 +134,7 @@ int Downloads :: work() noexcept {
     CURL *curl_easy = msg->easy_handle;
     Download *dl;
     curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, &dl);
-    const char *url = dl->lastURL();
+    const char *url = dl->last_url();
 
     if (msg->msg == CURLMSG_DONE) {
       if (dl->onFinished)

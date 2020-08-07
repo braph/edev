@@ -13,8 +13,6 @@
 #include <string>
 #include <cctype>
 
-using pack = StringPack::Generic;
-
 #ifndef NDEBUG
 #include <iostream>
 inline std::ostream& operator<<(std::ostream& o, const Style& s) {
@@ -127,16 +125,17 @@ Album BrowsePageParser :: next_album() {
   auto date = xpath.query_string(cache["string(.//span[@class = 'd']/text())"], post);
   if (date) {
     std::tm t = {};
-    char month[4] = {};
-    std::sscanf(date.c_str(), " %3c%*s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
-    t.tm_year -= 1900;
+    char month[96];
+    std::sscanf(date.c_str(), "%s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
     month[0] = std::toupper(month[0]);
     month[1] = std::toupper(month[1]);
     month[2] = std::toupper(month[2]);
+    month[4] = '\0';
     const char  months[] = "JAN" "FEB" "MAR" "APR" "MAY" "JUN" "JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
     const char* found_month = std::strstr(months, month);
     if (found_month)
       t.tm_mon = (months - found_month) / 3;
+    t.tm_year -= 1900;
     album.date = std::mktime(&t);
   }
 
@@ -213,6 +212,7 @@ Album BrowsePageParser :: next_album() {
   for (const auto& tracklist : xpath.query(cache[".//div[@class = 'tl']"], post)) {
     Track track;
     for (const auto& span : xpath.query(cache[".//span"], tracklist)) {
+      using pack = StringPack::Generic;
       switch (pack::pack_runtime(span["class"])) {
         case pack("n"):
           if (! track.url.empty()) {

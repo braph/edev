@@ -1,1 +1,5 @@
 - grep 'thread' for non threadable fu
+
+- Important: Overloads for std::string only for functions/methods, NOT class members:
+  void foo(std::string& s) -> foo(s.c_str())  GOOD
+  Foo(std::string& s)      -> Foo(s.c_str())  BAD

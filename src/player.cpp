@@ -162,6 +162,11 @@ void Mpg123Player :: position(int seconds) noexcept {
     *_process << temp_sprintf<20>("J %ds\n", seconds);
 }
 
+void Mpg123Player :: seek(int seconds) noexcept {
+  if (_process && _process->running())
+    *_process << temp_sprintf<20>("J %+ds\n", seconds);
+}
+
 void Mpg123Player :: seek_forward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J +%ds\n", seconds);

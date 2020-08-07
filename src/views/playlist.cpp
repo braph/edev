@@ -94,46 +94,46 @@ Playlist :: Playlist()
 }
 
 bool Playlist :: handle_key(int key) {
-  if (Bindings::playlist[key]) {
-    switch (Bindings::playlist[key]) {
-    case Actions::TOP:       top();        break;
-    case Actions::BOTTOM:    bottom();     break;
-    case Actions::UP:        up();         break;
-    case Actions::DOWN:      down();       break;
-    case Actions::PAGE_UP:   page_up();    break;
-    case Actions::PAGE_DOWN: page_down();  break;
-    case Actions::SEARCH:
-       ctxt.mainwindow->readline("Search: ", [&](std::string line, bool) {
-         _track_search.start_search(this->playlist,
-           [=](const Database::Tracks::Track& track) {
-              for (const auto& column : Config::playlist_columns)
-                if (boost::algorithm::icontains(trackField(track, column.tag), line))
-                  return true;
-              return false;
-          });
+  if (! Bindings::playlist[key])
+    return false;
 
-         if (_track_search.next())
-           cursor_index(_track_search.index());
-       });
-       break;
+  switch (Bindings::playlist[key]) {
+  case Actions::TOP:       top();        break;
+  case Actions::BOTTOM:    bottom();     break;
+  case Actions::UP:        up();         break;
+  case Actions::DOWN:      down();       break;
+  case Actions::PAGE_UP:   page_up();    break;
+  case Actions::PAGE_DOWN: page_down();  break;
+  case Actions::SEARCH:
+     ctxt.mainwindow->readline("Search: ", [&](std::string line, bool) {
+       _track_search.start_search(this->playlist,
+         [=](const Database::Tracks::Track& track) {
+            for (const auto& column : Config::playlist_columns)
+              if (boost::algorithm::icontains(trackField(track, column.tag), line))
+                return true;
+            return false;
+        });
 
-    case Actions::SEARCH_NEXT:
        if (_track_search.next())
          cursor_index(_track_search.index());
-       break;
+     });
+     break;
 
-    case Actions::SEARCH_PREV:
-       if (_track_search.prev())
-         cursor_index(_track_search.index());
-       break;
+  case Actions::SEARCH_NEXT:
+     if (_track_search.next())
+       cursor_index(_track_search.index());
+     break;
 
-    default:
-       Actions::call(Bindings::playlist[key]);
-    }
-    return true;
+  case Actions::SEARCH_PREV:
+     if (_track_search.prev())
+       cursor_index(_track_search.index());
+     break;
+
+  default:
+     Actions::call(Bindings::playlist[key]);
   }
 
-  return false;
+  return true;
 }
 
 #ifdef TEST_PLAYLIST
