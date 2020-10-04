@@ -58,12 +58,8 @@ VALGRIND = valgrind --tool=memcheck --errors-for-leak-kinds=definite --leak-chec
 TERMINAL = xterm -e # Used for running ncurses tests
 
 tests: \
-	test_shellsplit \
-	test_stringchunk \
-	test_filesystem \
 	test_ektoplayer \
 	test_colors test_theme \
-	test_xml \
 	test_updater test_database
 
 # ============================================================================
@@ -73,18 +69,6 @@ tests: \
 #test_common:
 #	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COMMON common.cpp $^
 #	$(VALGRIND) ./a.out
-
-test_shellsplit:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SHELLSPLIT lib/shellsplit.cpp $^
-	$(VALGRIND) ./a.out
-
-test_stringchunk:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_STRINGCHUNK lib/stringchunk.cpp $^
-	$(VALGRIND) ./a.out
-
-test_filesystem:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_FILESYSTEM lib/filesystem.cpp $^
-	$(VALGRIND) ./a.out
 
 test_ektoplayer: lib/filesystem.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_EKTOPLAYER ektoplayer.cpp $^
@@ -102,10 +86,6 @@ test_config: $(CONFIG.deps) ui/colors.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_CONFIG ektoplayer.cpp config.cpp $^
 	$(VALGRIND) ./a.out
 
-test_packedvector:
-	$(CXX) -DTEST_PACKEDVECTOR $(CXXFLAGS) lib/packedvector.cpp $^
-	$(VALGRIND) ./a.out
-
 test_player:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYER player.cpp $^
 	$(VALGRIND) ./a.out
@@ -114,16 +94,8 @@ test_player:
 #	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_GENERIC generic.cpp $^
 #	$(VALGRIND) ./a.out
 
-test_spanview:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPANVIEW lib/spanview.cpp $^
-	$(VALGRIND) ./a.out
-
 test_ui:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UI ui.cpp $^
-	$(VALGRIND) ./a.out
-
-test_xml:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_XML lib/xml.cpp $^
 	$(VALGRIND) ./a.out
 
 test_browsepage: $(BROWSEPAGE.deps)
