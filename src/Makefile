@@ -25,7 +25,7 @@ DATABASE.deps 	= ../lib/stringchunk.o ../lib/packedvector.o
 BROWSEPAGE.deps = ../lib/base64.o
 PLAYER.deps   	= ../lib/process.o
 THEME.deps    	= ui/colors.o
-UPDATER.deps  	= markdown.o
+UPDATER.deps  	= ../lib/downloads.o markdown.o
 VIEWS         	= $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 VIEWS         	+= widgets/listwidget.hpp widgets/readline.o
 
@@ -44,7 +44,7 @@ clean:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 noexcept_objs = actions.o bindings.o ektoplayer.o theme.o markdown.o player.o ui/colors.o \
-								$(addprefix lib/, downloads.o filesystem.o shellsplit.o stringchunk.o  process.o) \
+								$(addprefix ../lib/, downloads.o filesystem.o shellsplit.o stringchunk.o  process.o) \
 								$(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 $(noexcept_objs): %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fno-exceptions -c $< -o $@
@@ -102,7 +102,7 @@ test_browsepage: $(BROWSEPAGE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
 	$(VALGRIND) ./a.out
 
-test_updater: $(UPDATER.deps) database.o $(DATABASE.deps) $(BROWSEPAGE.deps) browsepage.o lib/downloads.o ektoplayer.o
+test_updater: $(UPDATER.deps) database.o $(DATABASE.deps) $(BROWSEPAGE.deps) browsepage.o ektoplayer.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UPDATER updater.cpp $^
 	perf stat ./a.out
 
