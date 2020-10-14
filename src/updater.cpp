@@ -170,8 +170,12 @@ void Updater :: insert_browsepage(const std::string& source) {
 #include <cstdio>
 #include <fstream>
 #include <streambuf>
-#define USE_FILESYSTEM 0
+#define USE_FILESYSTEM 1
 #define TESTDATA_DIR "/tmp/testdata" // Dir that contains HTML files
+/* mkdir /tmp/testdata
+ * cd /tmp/testdata
+ * for i in $(seq 1 416); do curl "https://ektoplazm.com/section/free-music/page/$i" > $i; done
+ */
 
 using namespace std;
 
