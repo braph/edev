@@ -115,6 +115,7 @@ Theme::ElementID Theme :: element_by_string(const std::string& name) noexcept {
 #define X(ENUM, STRING) case Hash::lose_lose(STRING): return ElementID::ENUM;
   switch (Hash::lose_lose(name)) { THEME_ELEMENT_IDS }
   return ElementID::COUNT;
+#undef X
 }
 
 void Theme :: set(ThemeID theme, ElementID element, short fg, short bg, unsigned int attributes) noexcept {

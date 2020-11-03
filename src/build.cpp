@@ -1,0 +1,38 @@
+/* Unity build */
+
+#include "../lib/shellsplit.cpp"
+#include "../lib/filesystem.cpp"
+#include "../lib/cstring.cpp"
+#include "../lib/xml.cpp"
+#include "../lib/stringchunk.cpp"
+#include "../lib/packedvector.cpp"
+#include "../lib/base64.cpp"
+#include "../lib/process.cpp"
+#include "../lib/downloads.cpp"
+
+#include "ui/colors.cpp"
+#include "ui/container.cpp"
+#include "widgets/readline.cpp"
+
+#include "ektoplayer.cpp"
+#include "player.cpp"
+#include "markdown.cpp"
+#include "database.cpp"
+#include "config.cpp"
+#include "theme.cpp"
+#include "trackloader.cpp"
+#include "browsepage.cpp"
+#include "updater.cpp"
+#include "bindings.cpp"
+#include "actions.cpp"
+
+#include "views/splash.cpp"
+#include "views/infoline.cpp"
+#include "views/progressbar.cpp"
+#include "views/tabbar.cpp"
+#include "views/mainwindow.cpp"
+#include "views/help.cpp"
+#include "views/info.cpp"
+#include "views/playlist.cpp"
+
+#include "application.cpp"

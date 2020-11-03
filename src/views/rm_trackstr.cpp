@@ -1,3 +1,6 @@
+#ifndef VIEWS_RM_TRACKSTR /* TODO */
+#define VIEWS_RM_TRACKSTR /* TODO */
+
 #include "../ektoplayer.hpp"
 #include "../database.hpp"
 
@@ -38,3 +41,5 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
       return REPORT_BUG;
   }
 }
+
+#endif

@@ -67,7 +67,7 @@ void Info :: layout(Pos pos, Size size) {
   pad_mincol = 0;
 }
 
-void Info :: track(Database::Tracks::Track track) {
+void Info :: track(Database::Tracks::Track track) noexcept {
   if (track != _track) {
     _track = track;
     draw();

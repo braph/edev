@@ -15,7 +15,6 @@
 
 using namespace Views;
 using ThemeID = Theme::ThemeID;
-using pack = StringPack::AlnumNoCase;
 
 // Parsing functions for primitives ===========================================
 
@@ -36,6 +35,7 @@ static float opt_parse_float(const std::string& s) {
 }
 
 static bool opt_parse_bool(const std::string& s) {
+  using pack = StringPack::AlnumNoCase;
   switch (pack::pack_runtime(s)) {
     case pack("true"):  return true;
     case pack("false"): return false;
@@ -54,6 +54,7 @@ static wchar_t opt_parse_char(const std::string& s) {
 // Parsing functions for `special` primitives =================================
 
 static int opt_parse_use_colors(const std::string& s) {
+  using pack = StringPack::AlnumNoCase;
   switch (pack::pack_runtime(s)) {
     case pack("auto"):  return -1;
     case pack("mono"):  return 0;
@@ -96,6 +97,7 @@ static decltype(Config::tabs_widgets) opt_parse_tabs_widgets(const std::string& 
     std::string w(cs, len);
     cs += len;
 
+    using pack = StringPack::AlnumNoCase;
     switch (pack::pack_runtime(w)) {
       case pack("splash"):    widgets[idx] = TabWidgets::SPLASH;   break;
       case pack("playlist"):  widgets[idx] = TabWidgets::PLAYLIST; break;
@@ -223,6 +225,7 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
+      using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(attr.name)) {
         case pack("fg"):    fmt.fg = opt_parse_color(attr.value);  break;
         case pack("bg"):    fmt.bg = opt_parse_color(attr.value);  break;
@@ -258,6 +261,7 @@ static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
 
     auto attr = formatParser.attributes();
     while (attr.next()) {
+      using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(attr.name)) {
         case pack("fg"): fmt.fg = opt_parse_color(attr.value); break;
         case pack("bg"): fmt.bg = opt_parse_color(attr.value); break;
@@ -364,6 +368,7 @@ void Config :: read(const std::string &file) {
       if (! args.size() || args[0][0] == '#')
         continue;
 
+      using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(args[0])) {
         case pack("set"):        Config::set(args);        break;
         case pack("color"):      Config::color(ThemeID::THEME_8,    args); break;

@@ -29,6 +29,10 @@ UPDATER.deps  	= ../lib/downloads.o markdown.o
 VIEWS         	= $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 VIEWS         	+= widgets/listwidget.hpp widgets/readline.o
 
+# Unity build
+build:
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) build.cpp
+
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
 	browsepage.o $(BROWSEPAGE.deps) updater.o $(UPDATER.deps) $(VIEWS) ui/container.o \
 	 player.o $(PLAYER.deps) actions.o bindings.o ../lib/downloads.o ektoplayer.o trackloader.o

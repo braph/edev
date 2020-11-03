@@ -13,11 +13,10 @@ struct State {
   std::string url;
 };
 
-using pack = StringPack::Generic;
-
 void startElement(void* self_, const xmlChar* name, const xmlChar** attrs) {
   State* self = static_cast<State*>(self_);
 
+  using pack = StringPack::Generic;
   switch (pack::pack_runtime(name)) {
   case pack("i"):
   case pack("em"):
@@ -40,6 +39,7 @@ void startElement(void* self_, const xmlChar* name, const xmlChar** attrs) {
 void endElement(void* self_, const xmlChar* name) {
   State* self = static_cast<State*>(self_);
 
+  using pack = StringPack::Generic;
   switch (pack::pack_runtime(name)) {
   case pack("i"):
   case pack("em"):
