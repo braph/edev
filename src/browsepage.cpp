@@ -127,11 +127,11 @@ Album BrowsePageParser :: next_album() {
     std::tm t = {};
     char month[96];
     std::sscanf(date.c_str(), "%s %d, %d", month, &t.tm_mday, &t.tm_year); // TODO: remove sscanf
-    month[0] = std::toupper(month[0]);
-    month[1] = std::toupper(month[1]);
-    month[2] = std::toupper(month[2]);
-    month[4] = '\0';
-    const char  months[] = "JAN" "FEB" "MAR" "APR" "MAY" "JUN" "JUL" "AUG" "SEP" "OCT" "NOV" "DEC";
+    month[0] |= 0x20; // tolower
+    month[1] |= 0x20; // tolower
+    month[2] |= 0x20; // tolower
+    month[3] = '\0';
+    const char  months[] = "jan" "feb" "mar" "apr" "may" "jun" "jul" "aug" "sep" "oct" "nov" "dec";
     const char* found_month = std::strstr(months, month);
     if (found_month)
       t.tm_mon = (months - found_month) / 3;
