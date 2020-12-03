@@ -5,8 +5,6 @@
 #undef  NCURSES_OK_ADDR // See ncurses.h ...
 #define NCURSES_OK_ADDR(...) (TRUE)
 
-#include <string>
-
 #ifdef __cpp_exceptions
 #include <stdexcept>
 #endif
@@ -113,6 +111,21 @@ public:
   virtual WINDOW* getWINDOW() const noexcept = 0;
 };
 
+inline int __waddnstr(WINDOW* win, const char* s, int n)                    { return waddnstr(win, s, n); }
+inline int __waddnstr(WINDOW* win, const wchar_t* s, int n)                 { return waddnwstr(win, s, n); }
+inline int __mvwaddnstr(WINDOW* win, int y, int x, const char* s, int n)    { return mvwaddnstr(win, y, x, s, n); }
+inline int __mvwaddnstr(WINDOW* win, int y, int x, const wchar_t* s, int n) { return mvwaddnwstr(win, y, x, s, n); }
+
+inline const char* __c_str(const char* s)       { return s; }
+inline const wchar_t* __c_str(const wchar_t* s) { return s; }
+template<class String>
+inline auto __c_str(const String& s) -> decltype(String{}.c_str()) { return s.c_str(); }
+
+template<class CharT, size_t N>
+inline int __constant_len(const CharT(&s)[N]) { return N; }
+template<class T>
+inline int __constant_len(T)                  { return -1; }
+
 /* Drawable: Windows and Pads, they share the same functionality */
 struct WidgetDrawable : public Widget {
   WINDOW *win;
@@ -134,20 +147,6 @@ struct WidgetDrawable : public Widget {
   inline WidgetDrawable& operator<<(wchar_t c) noexcept
   { waddnwstr(win, &c, 1); return *this; }
 
-  // const char* / const wchar_t*
-  inline WidgetDrawable& operator<<(const char* s) noexcept
-  { waddstr(win, s); return *this; }
-
-  inline WidgetDrawable& operator<<(const wchar_t* s) noexcept
-  { waddwstr(win, s); return *this; }
-
-  // std::string / std::wstring
-  inline WidgetDrawable& operator<<(const std::string& s) noexcept
-  { waddnstr(win, s.c_str(), s.size()); return *this; }
-
-  inline WidgetDrawable& operator<<(const std::wstring& s) noexcept
-  { waddnwstr(win, s.c_str(), s.size()); return *this; }
-
   // Integer types
   inline WidgetDrawable& operator<<(int i) noexcept
   { wprintw(win, "%d", i); return *this; }
@@ -158,23 +157,18 @@ struct WidgetDrawable : public Widget {
   inline WidgetDrawable& operator<<(float f) noexcept
   { wprintw(win, "%f", f); return *this; }
 
+  // String types...
+  template<class String>
+  inline WidgetDrawable& operator<<(const String& s) noexcept
+  { addStr(s); return *this; }
+
   // add-methods ==============================================================
   inline int addCh(chtype c) noexcept
   { return waddch(win, c); }
 
-  // const char* / const wchar_t*
-  inline int addStr(const char* s) noexcept
-  { return waddstr(win, s); }
-
-  inline int addStr(const wchar_t* s) noexcept
-  { return waddwstr(win, s); }
-
-  // std::string / std::wstring
-  inline int addStr(const std::string& s) noexcept
-  { return waddnstr(win, s.c_str(), s.size()); }
-
-  inline int addStr(const std::wstring& s) noexcept
-  { return waddnwstr(win, s.c_str(), s.size()); }
+  template<class String>
+  inline int addStr(const String& s) noexcept
+  { return __waddnstr(win, __c_str(s), __constant_len(s)); }
 
 #ifdef USE_C_VARIADIC_ARGS
 #if defined(__GNUC__) || defined(__clang__)
@@ -194,25 +188,12 @@ struct WidgetDrawable : public Widget {
 #endif
 
   // mv-methods ===============================================================
-  inline int moveCursor(int y, int x) noexcept
-  { return wmove(win, y, x); }
-
   inline int mvAddCh(int y, int x, chtype c) noexcept
   { return mvwaddch(win, y, x, c); }
 
-  // const char* / const wchar_t*
-  inline int mvAddStr(int y, int x, const char* s) noexcept
-  { return mvwaddstr(win, y, x, s); }
-
-  inline int mvAddStr(int y, int x, const wchar_t* s) noexcept
-  { return mvwaddwstr(win, y, x, s); }
-
-  // std::string / std::wstring
-  inline int mvAddStr(int y, int x, const std::string& s) noexcept
-  { return mvwaddnstr(win, y, x, s.c_str(), s.size()); }
-
-  inline int mvAddStr(int y, int x, const std::wstring& s) noexcept
-  { return mvwaddnwstr(win, y, x, s.c_str(), s.size()); }
+  template<class String>
+  inline int mvAddStr(int y, int x, const String& s) noexcept
+  { return __mvwaddnstr(win, y, x, __c_str(s), __constant_len(s)); }
 
 #ifdef USE_C_VARIADIC_ARGS
 #if defined(__GNUC__) || defined(__clang__)
@@ -239,6 +220,7 @@ struct WidgetDrawable : public Widget {
   { return wattrset(win, attrs); }
 
   // cursor-methods ===========================================================
+  inline int  moveCursor(int y, int x)          noexcept { return wmove(win, y, x); }
   inline int  getCursorX()                const noexcept { return getcurx(win); }
   inline int  getCursorY()                const noexcept { return getcury(win); }
   inline void getCursorYX(int& y, int& x) const noexcept { getyx(win, y, x);    }

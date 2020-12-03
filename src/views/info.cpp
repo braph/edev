@@ -74,29 +74,33 @@ void Info :: track(Database::Tracks::Track track) noexcept {
   }
 }
 
-inline void Info :: draw_heading(int y, const char* heading) noexcept {
+template<class Str>
+inline void Info :: draw_heading(int y, Str&& heading) noexcept {
   attrSet(Theme::get(ElementID::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
 
-void Info :: draw_tag(int y, const char* tag) noexcept {
+template<class Str>
+inline void Info :: draw_tag(int y, Str&& tag) noexcept {
   attrSet(Theme::get(ElementID::INFO_TAG));
   mvAddStr(y, START_TAG, tag);
   attrSet(Theme::get(ElementID::INFO_VALUE));
   moveCursor(y, START_TAG_VALUE);
 }
 
-void Info :: draw_info(int y, const char* info) noexcept {
+template<class Str>
+inline void Info :: draw_info(int y, Str&& info) noexcept {
   attrSet(Theme::get(ElementID::INFO_TAG));
-  mvAddStr(y, START_INFO, toWideString(info));
+  mvAddStr(y, START_INFO, info);
   attrSet(Theme::get(ElementID::INFO_VALUE));
   moveCursor(y, START_INFO_VALUE);
 }
 
-void Info :: draw_link(std::string url, std::string title) noexcept {
+template<class Str, class Str1>
+inline void Info :: draw_link(Str&& url, Str1&& title) noexcept {
   attrSet(Theme::get(ElementID::URL));
   UI::Pos start = cursorPos();
-  addStr(toWideString(title));
+  addStr(title);
   _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
 }
 
@@ -112,12 +116,12 @@ void Info :: draw() {
     // Track ==================================================================
     draw_heading(y++, "Current track");
     draw_tag(y++, "Title");
-    *this << toWideString(track.title());
+    *this << track.title();
     if (*track.remix())
-      *this << " (" << toWideString(track.remix()) << ')';
+      *this << " (" << track.remix() << ')';
 
     draw_tag(y++, "Artist");
-    *this << toWideString(track.artist());
+    *this << track.artist();
 
     draw_tag(y++, "Number");
     printW("%02d", track.number());
@@ -138,7 +142,7 @@ void Info :: draw() {
     draw_link(std::move(album_url), album.title());
 
     draw_tag(y++, "Artist");
-    *this << toWideString(album.artist());
+    *this << album.artist();
 
     draw_tag(y++, "Date");
     *this << time_format(album.date(), "%B %d, %Y");
@@ -229,8 +233,8 @@ void Info :: draw() {
   y++;
   draw_heading(y++, "URLs");
   for (size_t i = 0; i < _clickable_urls.size() - 2; ++i) {
-    draw_info(y++, _clickable_urls[i].data.title.c_str());
-    mvAddStr(y++, START_INFO + 2, toWideString(_clickable_urls[i].data.url));
+    draw_info(y++, _clickable_urls[i].data.title);
+    mvAddStr(y++, START_INFO + 2, _clickable_urls[i].data.url);
   }
 }
 
