@@ -11,7 +11,9 @@ static union {
 } buffer;
 
 char* toNarrowChar(wchar_t ch) {
-  std::wctomb(buffer.narrow, ch);
+  int n = std::wctomb(buffer.narrow, ch);
+  if (n > 0)
+    buffer.narrow[n] = '\0';
   return buffer.narrow;
 }
 
