@@ -312,7 +312,7 @@ void Config :: color(ThemeID themeId, const std::vector<std::string>& args) {
   auto it = make_iterator_pair(args.begin() + 1, args.end());
   const auto& element = it.next();
   Theme::ElementID elementId = Theme::element_by_string(element);
-  if (elementId == Theme::ElementID::COUNT)
+  if (elementId == Theme::ELEMENT_ID_COUNT)
     throw std::invalid_argument(element + ": Invalid theme element");
 
   short fg = opt_parse_color(it.next());

@@ -46,17 +46,17 @@ public:
     }
   };
 
-  enum class ThemeID {
+  enum ThemeID {
     THEME_MONO,
     THEME_8,
     THEME_256,
-    COUNT
+    THEME_COUNT
   };
 
 #define X(ENUM, STRING) ENUM,
-  enum class ElementID {
+  enum ElementID {
     THEME_ELEMENT_IDS
-    COUNT
+    ELEMENT_ID_COUNT
   };
 #undef X
 
@@ -69,8 +69,8 @@ public:
   static ElementID element_by_string(const std::string&)          noexcept;
 
 private:
-  static Definition   themes[int(ThemeID::COUNT)][int(ElementID::COUNT)];
-  static unsigned int loaded[int(ElementID::COUNT)];
+  static Definition   themes[int(THEME_COUNT)][int(ELEMENT_ID_COUNT)];
+  static unsigned int loaded[int(ELEMENT_ID_COUNT)];
 };
 
 #endif

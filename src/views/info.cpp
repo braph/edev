@@ -12,7 +12,6 @@
 
 using namespace UI;
 using namespace Views;
-using ElementID = Theme::ElementID;
 
 #define START_HEADING    1
 #define START_TAG        3
@@ -76,29 +75,29 @@ void Info :: track(Database::Tracks::Track track) noexcept {
 
 template<class Str>
 inline void Info :: draw_heading(int y, Str&& heading) noexcept {
-  attrSet(Theme::get(ElementID::INFO_HEAD));
+  attrSet(Theme::get(Theme::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
 
 template<class Str>
 inline void Info :: draw_tag(int y, Str&& tag) noexcept {
-  attrSet(Theme::get(ElementID::INFO_TAG));
+  attrSet(Theme::get(Theme::INFO_TAG));
   mvAddStr(y, START_TAG, tag);
-  attrSet(Theme::get(ElementID::INFO_VALUE));
+  attrSet(Theme::get(Theme::INFO_VALUE));
   moveCursor(y, START_TAG_VALUE);
 }
 
 template<class Str>
 inline void Info :: draw_info(int y, Str&& info) noexcept {
-  attrSet(Theme::get(ElementID::INFO_TAG));
+  attrSet(Theme::get(Theme::INFO_TAG));
   mvAddStr(y, START_INFO, info);
-  attrSet(Theme::get(ElementID::INFO_VALUE));
+  attrSet(Theme::get(Theme::INFO_VALUE));
   moveCursor(y, START_INFO_VALUE);
 }
 
 template<class Str, class Str1>
 inline void Info :: draw_link(Str&& url, Str1&& title) noexcept {
-  attrSet(Theme::get(ElementID::URL));
+  attrSet(Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
   addStr(title);
   _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
@@ -178,7 +177,7 @@ void Info :: draw() {
       else if (markupParser.type & MarkupParser::LINK_URL)
         linkURL.append(toNarrowChar(c));
       else {
-        unsigned int attr = Theme::get(ElementID::INFO_VALUE);
+        unsigned int attr = Theme::get(Theme::INFO_VALUE);
         if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
         if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
 

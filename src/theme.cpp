@@ -17,8 +17,8 @@ enum {
 };
 
 Theme::ThemeID    Theme :: current;
-unsigned int      Theme :: loaded[int(ElementID::COUNT)];
-Theme::Definition Theme :: themes[int(ThemeID::COUNT)][int(ElementID::COUNT)] = {
+unsigned int      Theme :: loaded[int(ELEMENT_ID_COUNT)];
+Theme::Definition Theme :: themes[int(THEME_COUNT)][int(ELEMENT_ID_COUNT)] = {
   { // ------------------------ Mono (no colors) ------------
     /* DEFAULT               */ {-1, -1                     },
     /* URL                   */ {deflt, deflt, A_UNDERLINE, },
@@ -112,9 +112,9 @@ Theme::Definition Theme :: themes[int(ThemeID::COUNT)][int(ElementID::COUNT)] = 
 };
 
 Theme::ElementID Theme :: element_by_string(const std::string& name) noexcept {
-#define X(ENUM, STRING) case Hash::lose_lose(STRING): return ElementID::ENUM;
+#define X(ENUM, STRING) case Hash::lose_lose(STRING): return Theme::ENUM;
   switch (Hash::lose_lose(name)) { THEME_ELEMENT_IDS }
-  return ElementID::COUNT;
+  return ELEMENT_ID_COUNT;
 #undef X
 }
 
@@ -130,9 +130,9 @@ void Theme :: load_theme(ThemeID theme) noexcept {
   UI::Colors::reset();
 
   current = theme;
-  Theme::Definition fallback = themes[int(theme)][int(ElementID::DEFAULT)];
+  Theme::Definition fallback = themes[int(theme)][int(DEFAULT)];
 
-  for (int i = 0; i < int(ElementID::COUNT); ++i) {
+  for (int i = 0; i < int(ELEMENT_ID_COUNT); ++i) {
     Theme::Definition td = themes[int(theme)][i];
     loaded[i] = UI::Colors::set(
       (td.fg == -2 ? fallback.fg : td.fg),
@@ -144,9 +144,9 @@ void Theme :: load_theme(ThemeID theme) noexcept {
 
 void Theme :: load_theme_by_colors(int colors) noexcept {
   load_theme(
-    colors >= 256 ? ThemeID::THEME_256 :
-    colors >= 8   ? ThemeID::THEME_8 :
-    ThemeID::THEME_MONO);
+    colors >= 256 ? THEME_256 :
+    colors >= 8   ? THEME_8 :
+    THEME_MONO);
 }
 
 #ifdef TEST_THEME

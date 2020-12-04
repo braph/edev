@@ -11,7 +11,6 @@
 
 using namespace UI;
 using namespace Views;
-using ElementID = Theme::ElementID;
 
 static const struct {
   const char* name;
@@ -38,14 +37,14 @@ void Help :: draw() {
   int y = 0;
 
   for (const auto& widget : widgets) {
-    attrSet(Theme::get(ElementID::HELP_WIDGET_NAME));
+    attrSet(Theme::get(Theme::HELP_WIDGET_NAME));
     mvAddStr(++y, 1, widget.name);
     moveCursor(++y, KEYS_START);
 
     for (int id = 1; id < Actions::ACTIONID_ENUM_LAST; ++id) {
       int nkeys = 0;
 
-      attrSet(Theme::get(ElementID::HELP_KEY_NAME));
+      attrSet(Theme::get(Theme::HELP_KEY_NAME));
       for (int i = 0; i < KEY_MAX; ++i) {
         if (widget.bindings[i] == id) {
           if (nkeys++)
@@ -55,7 +54,7 @@ void Help :: draw() {
       }
 
       if (nkeys) {
-        attrSet(Theme::get(ElementID::HELP_COMMAND_NAME));
+        attrSet(Theme::get(Theme::HELP_COMMAND_NAME));
         mvAddStr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
         moveCursor(++y, KEYS_START);
       }

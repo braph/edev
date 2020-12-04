@@ -12,7 +12,6 @@ static const short fading_256[] = {25,26,27,32,39,38,44,44,45,51,87,159,195};
 
 using namespace UI;
 using namespace Views;
-using ElementID = Theme::ElementID;
 
 /* The progressbar is drawed only *once* in layout().
  * It is positioned in the right place later by percent() */
@@ -52,7 +51,7 @@ void ProgressBar :: layout(Pos pos, Size size) {
     *this << Config::progressbar_progress_char;
   }
   
-  attrSet(Theme::get(ElementID::PROGRESSBAR_REST));
+  attrSet(Theme::get(Theme::PROGRESSBAR_REST));
   for (; i < width * 2; ++i)
     *this << Config::progressbar_rest_char;
 }

@@ -3,7 +3,6 @@
 #include "../theme.hpp"
 
 using namespace Views;
-using ElementID = Theme::ElementID;
 
 TabBar :: TabBar() noexcept
 : UI::Window({0,0}, {1,0})
@@ -43,9 +42,9 @@ void TabBar :: draw() {
   int i = 0;
   for (const auto& label : _tabs) {
     if (i++ == _current)
-      attrSet(Theme::get(ElementID::TABBAR_SELECTED));
+      attrSet(Theme::get(Theme::TABBAR_SELECTED));
     else
-      attrSet(Theme::get(ElementID::TABBAR_UNSELECTED));
+      attrSet(Theme::get(Theme::TABBAR_UNSELECTED));
 
     *this << ' ' << label;
   }

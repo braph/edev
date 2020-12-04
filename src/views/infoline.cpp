@@ -20,7 +20,6 @@ static const char state_to_string[4][STATE_LEN+1] = {
 
 using namespace UI;
 using namespace Views;
-using ElementID = Theme::ElementID;
 
 InfoLine :: InfoLine()
 : UI::Window({0,0}, {2,0})
@@ -41,7 +40,7 @@ InfoLine :: InfoLine()
     _fmt_top    = &Config::infoline_format_top;
     _fmt_bottom = &Config::infoline_format_bottom;
     break;
-  case Theme::ThemeID::COUNT:
+  case Theme::THEME_COUNT:
     break;
   }
   draw();
@@ -82,12 +81,12 @@ void InfoLine :: layout(Pos pos, Size size) {
 }
 
 void InfoLine :: draw_state() {
-  attrSet(Theme::get(ElementID::INFOLINE_STATE));
+  attrSet(Theme::get(Theme::INFOLINE_STATE));
   mvAddStr(0, size.width - STATE_LEN, state_to_string[_state]);
 }
 
 void InfoLine :: draw_position_and_length() {
-  attrSet(Theme::get(ElementID::INFOLINE_POSITION));
+  attrSet(Theme::get(Theme::INFOLINE_POSITION));
   mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", _track_position/60, _track_position%60, _track_length/60, _track_length%60);
 }
 

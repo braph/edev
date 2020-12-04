@@ -16,7 +16,6 @@
 
 using namespace UI;
 using namespace Views;
-using ElementID = Theme::ElementID;
 
 /* ============================================================================
  * TrackRenderer - display a track as a row with columns
@@ -53,7 +52,7 @@ void TrackRenderer :: operator()(
 
   for (const auto& column : m_columns) {
     if (selection)
-      wattrset(_win, Theme::get(ElementID::LIST_ITEM_SELECTION) | additional_attributes);
+      wattrset(_win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
     else
       wattrset(_win, Colors::set(column.fg, column.bg, additional_attributes));
 
