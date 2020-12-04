@@ -54,7 +54,7 @@ void TrackRenderer :: operator()(
     if (selection)
       wattrset(_win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
     else
-      wattrset(_win, Colors::set(column.fg, column.bg, additional_attributes));
+      wattrset(_win, Colors::set(column.fg, column.bg) | additional_attributes);
 
     size_t len;
     wchar_t* value = toWideString(trackField(item, column.tag), &len);

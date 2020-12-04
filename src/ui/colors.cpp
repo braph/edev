@@ -87,8 +87,8 @@ int Colors :: create_color_pair(short fg, short bg) noexcept {
   return ++last_id;
 }
 
-unsigned int Colors :: set(short fg, short bg, unsigned int attributes) noexcept {
-  return COLOR_PAIR(create_color_pair(fg, bg)) | attributes;
+unsigned int Colors :: set(short fg, short bg) noexcept {
+  return COLOR_PAIR(create_color_pair(fg, bg));
 }
 
 void Colors :: reset() noexcept {

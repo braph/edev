@@ -136,9 +136,8 @@ void Theme :: load_theme(ThemeID theme) noexcept {
     Theme::Definition td = themes[int(theme)][i];
     loaded[i] = UI::Colors::set(
       (td.fg == -2 ? fallback.fg : td.fg),
-      (td.bg == -2 ? fallback.bg : td.bg),
-      td.attributes
-    );
+      (td.bg == -2 ? fallback.bg : td.bg)
+    ) | td.attributes;
   }
 }
 

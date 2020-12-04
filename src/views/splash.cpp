@@ -44,7 +44,7 @@ static const short signatureFading_256[] = {99,105,111,117};
 
 using namespace UI;
 using namespace Views;
-#define setFG(COLOR) UI::Colors::set(COLOR, -1, 0)
+#define setFG(COLOR) UI::Colors::set(COLOR, -1)
 
 void Splash :: draw() {
   clear();

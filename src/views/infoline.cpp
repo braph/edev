@@ -127,7 +127,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
 
   moveCursor(y, size.width / 2 - int(sum / 2));
   for (const auto& fmt : format) {
-    attrSet(UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
+    attrSet(UI::Colors::set(fmt.fg, fmt.bg) | fmt.attributes);
     if (fmt.text.length())
       *this << fmt.text;
     else
