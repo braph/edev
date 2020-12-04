@@ -5,6 +5,8 @@
 #undef  NCURSES_OK_ADDR // See ncurses.h ...
 #define NCURSES_OK_ADDR(...) (TRUE)
 
+#include "curs.hpp"
+
 #ifdef __cpp_exceptions
 #include <stdexcept>
 #endif
@@ -102,29 +104,14 @@ public:
   : pos(0,0), size(0,0), visible(true)
   {}
 
-  virtual ~Widget()                 {};
-  virtual void draw()               = 0;
-  virtual void layout(Pos, Size)    = 0;
-  virtual void noutrefresh()        = 0;
+  virtual ~Widget()              {};
+  virtual void draw()            = 0;
+  virtual void layout(Pos, Size) = 0;
+  virtual void noutrefresh()     = 0;
   virtual bool handle_key(int)       { return false; }
   virtual bool handle_mouse(MEVENT&) { return false; }
   virtual WINDOW* getWINDOW() const noexcept = 0;
 };
-
-inline int __waddnstr(WINDOW* win, const char* s, int n)                    { return waddnstr(win, s, n); }
-inline int __waddnstr(WINDOW* win, const wchar_t* s, int n)                 { return waddnwstr(win, s, n); }
-inline int __mvwaddnstr(WINDOW* win, int y, int x, const char* s, int n)    { return mvwaddnstr(win, y, x, s, n); }
-inline int __mvwaddnstr(WINDOW* win, int y, int x, const wchar_t* s, int n) { return mvwaddnwstr(win, y, x, s, n); }
-
-inline const char* __c_str(const char* s)       { return s; }
-inline const wchar_t* __c_str(const wchar_t* s) { return s; }
-template<class String>
-inline auto __c_str(const String& s) -> decltype(String{}.c_str()) { return s.c_str(); }
-
-template<class CharT, size_t N>
-inline int __constant_len(const CharT(&s)[N]) { return N; }
-template<class T>
-inline int __constant_len(T)                  { return -1; }
 
 /* Drawable: Windows and Pads, they share the same functionality */
 struct WidgetDrawable : public Widget {
@@ -160,7 +147,7 @@ struct WidgetDrawable : public Widget {
   // String types...
   template<class String>
   inline WidgetDrawable& operator<<(const String& s) noexcept
-  { addStr(s); return *this; }
+  { addstr_CPP(win, s); return *this; }
 
   // add-methods ==============================================================
   inline int addCh(chtype c) noexcept
@@ -168,7 +155,7 @@ struct WidgetDrawable : public Widget {
 
   template<class String>
   inline int addStr(const String& s) noexcept
-  { return __waddnstr(win, __c_str(s), __constant_len(s)); }
+  { return addstr_CPP(win, s); }
 
 #ifdef USE_C_VARIADIC_ARGS
 #if defined(__GNUC__) || defined(__clang__)
@@ -193,7 +180,7 @@ struct WidgetDrawable : public Widget {
 
   template<class String>
   inline int mvAddStr(int y, int x, const String& s) noexcept
-  { return __mvwaddnstr(win, y, x, __c_str(s), __constant_len(s)); }
+  { return addstr_CPP(win, y, x, s); }
 
 #ifdef USE_C_VARIADIC_ARGS
 #if defined(__GNUC__) || defined(__clang__)
@@ -242,7 +229,6 @@ struct WidgetDrawable : public Widget {
 
   inline int setPos(UI::Pos new_pos) noexcept
   { return mvwin(win, new_pos.y, new_pos.x); }
-
 };
 
 class Window : public WidgetDrawable {
