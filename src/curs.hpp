@@ -1,9 +1,9 @@
 template<class TChar> inline const TChar* _cstr(const TChar* s) { return s; }
 template<class TStr>  inline auto _cstr(const TStr& s) -> decltype(TStr{}.c_str()) { return s.c_str(); }
 
-//template<class T, size_t N> inline int _slen(const T(&s)[N]) { return N;  }
-//template<class T>           inline int _slen(T)              { return -1; }
-template<class T> inline int _slen(T)                          { return INT_MAX; }
+// We are returning INT_MAX because that saves us a call to strlen() inside waddnstr()
+template<class T, size_t N> inline int _slen(const T(&s)[N]) { return N;       }
+template<class T>           inline int _slen(T)              { return INT_MAX; }
 
 #define NCURSES_NO_MV_CHECK
 
@@ -13,8 +13,8 @@ template<class T> inline int _slen(T)                          { return INT_MAX;
 #define NC_WMOVE(win, y, x, cmd) (wmove((win),(y),(x)) == ERR ? ERR : (cmd))
 #endif
 
-inline int waddnstr_generic(WINDOW* w, const char* s, int n)      { return waddnstr(w, s, n);  }
-inline int waddnstr_generic(WINDOW* w, const wchar_t* s, int n)   { return waddnwstr(w, s, n); }
+inline int waddnstr_generic(WINDOW* w, const char* s, int n)    { return waddnstr(w, s, n);  }
+inline int waddnstr_generic(WINDOW* w, const wchar_t* s, int n) { return waddnwstr(w, s, n); }
 
 // strings
 template<class Str> inline int addstr_CPP(WINDOW* w, const Str& s)

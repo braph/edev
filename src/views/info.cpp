@@ -73,14 +73,12 @@ void Info :: track(Database::Tracks::Track track) noexcept {
   }
 }
 
-template<class Str>
-inline void Info :: draw_heading(int y, Str&& heading) noexcept {
+inline void Info :: draw_heading(int y, const char* heading) noexcept {
   attrSet(Theme::get(Theme::INFO_HEAD));
   mvAddStr(y, START_HEADING, heading);
 }
 
-template<class Str>
-inline void Info :: draw_tag(int y, Str&& tag) noexcept {
+inline void Info :: draw_tag(int y, const char* tag) noexcept {
   attrSet(Theme::get(Theme::INFO_TAG));
   mvAddStr(y, START_TAG, tag);
   attrSet(Theme::get(Theme::INFO_VALUE));
