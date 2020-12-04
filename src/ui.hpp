@@ -144,6 +144,9 @@ struct WidgetDrawable : public Widget {
   inline WidgetDrawable& operator<<(float f) noexcept
   { wprintw(win, "%f", f); return *this; }
 
+  inline WidgetDrawable& operator<<(double d) noexcept
+  { wprintw(win, "%f", d); return *this; }
+
   // String types...
   template<class String>
   inline WidgetDrawable& operator<<(const String& s) noexcept

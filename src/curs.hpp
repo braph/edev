@@ -84,15 +84,6 @@ inline int addch(int y, int x, chtype ch)             { return waddch(stdscr, y,
 inline int addch(WINDOW* w, int y, int x, chtype ch)  { return waddch(w, y, x, ch); }
 
 class Win {
-  addstr();
 };
 
-int addstr(const char *str);
-int addnstr(const char *str, int n);
-int waddstr(WINDOW *win, const char *str);
-int waddnstr(WINDOW *win, const char *str, int n);
-int mvaddstr(int y, int x, const char *str);
-int mvaddnstr(int y, int x, const char *str, int n);
-int mvwaddstr(WINDOW *win, int y, int x, const char *str);
-int mvwaddnstr(WINDOW *win, int y, int x, const char *str, int n);
 #endif

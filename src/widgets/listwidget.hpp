@@ -82,7 +82,7 @@ public:
     if (empty())
       return;
 
-    int idx  =  clamp(m_selected - m_cursor, 0, container_size() - 1); //XXX
+    int idx  =  clamp(m_selected - m_cursor, 0, container_size() - 1); // TODO
     int line = 0;
     for (; line < size.height && idx < container_size(); ++line, ++idx) {
       render_item(idx, line, line == m_cursor);

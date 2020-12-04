@@ -37,7 +37,7 @@ struct InfoLineFormatString {
 using InfoLineFormat = StaticVector<InfoLineFormatString, 10>;
 
 class InfoLine : public UI::Window {
-  // XXX Slot: clicked -> player.toggle
+  // TODO Slot: clicked -> player.toggle
 public:
   InfoLine();
 

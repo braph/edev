@@ -1,7 +1,7 @@
 #include "playlist.hpp"
 
 #include "mainwindow.hpp"
-#include "rm_trackstr.cpp" //XXX
+#include "rm_trackstr.cpp" // TODO
 #include "../widgets/listwidget.hpp"
 #include "../config.hpp"
 #include "../ui/colors.hpp"
@@ -33,7 +33,7 @@ void TrackRenderer :: operator()(
   unsigned int additional_attributes = 0;
   if (active) additional_attributes |= A_BOLD;
   if (cursor) additional_attributes |= A_STANDOUT;
-  int selection = 0; // XXX: this is a parameter
+  int selection = 0; // TODO: this is a parameter
 
   int y = getcury(_win);
   int x = 0;

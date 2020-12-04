@@ -3,7 +3,7 @@
 #include "../config.hpp"
 #include "../theme.hpp"
 #include "../ui/colors.hpp"
-#include "rm_trackstr.cpp" // XXX
+#include "rm_trackstr.cpp" // TODO
 
 #include <cstring>
 

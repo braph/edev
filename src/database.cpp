@@ -298,7 +298,7 @@ Albums::Album Tracks::Track::album() const noexcept {
   return table->db.albums[size_t(table->album_id[id])];
 }
 
-Field Tracks::Track::operator[](ColumnID id) const { // XXX: noexcept
+Field Tracks::Track::operator[](ColumnID id) const { // TODO: noexcept
   switch (static_cast<TrackColumnID>(id)) {
   case TRACK_TITLE:     return Field(title());
   case TRACK_ARTIST:    return Field(artist());

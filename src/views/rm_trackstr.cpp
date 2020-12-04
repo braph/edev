@@ -1,5 +1,5 @@
-#ifndef VIEWS_RM_TRACKSTR /* TODO */
-#define VIEWS_RM_TRACKSTR /* TODO */
+#ifndef VIEWS_RM_TRACKSTR // TODO ...
+#define VIEWS_RM_TRACKSTR
 
 #include "../ektoplayer.hpp"
 #include "../database.hpp"
