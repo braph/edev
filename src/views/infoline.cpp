@@ -130,9 +130,9 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
   for (const auto& fmt : format) {
     attrSet(UI::Colors::set(fmt.fg, fmt.bg, fmt.attributes));
     if (fmt.text.length())
-      *this << toWideString(fmt.text);
+      *this << fmt.text;
     else
-      *this << toWideString(trackField(_track, fmt.tag));
+      *this << trackField(_track, fmt.tag);
   }
 }
 
