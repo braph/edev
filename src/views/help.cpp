@@ -38,7 +38,7 @@ void Help :: draw() {
 
   for (const auto& widget : widgets) {
     attrSet(Theme::get(Theme::HELP_WIDGET_NAME));
-    mvAddStr(++y, 1, widget.name);
+    addstr(++y, 1, widget.name);
     moveCursor(++y, KEYS_START);
 
     for (int id = 1; id < Actions::ACTIONID_ENUM_LAST; ++id) {
@@ -55,7 +55,7 @@ void Help :: draw() {
 
       if (nkeys) {
         attrSet(Theme::get(Theme::HELP_COMMAND_NAME));
-        mvAddStr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
+        addstr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
         moveCursor(++y, KEYS_START);
       }
     }

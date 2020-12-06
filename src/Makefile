@@ -13,7 +13,7 @@ WARNINGS += -Wpessimizing-move -Wredundant-move
 STD = c++11
 CURSES_INC = "<ncurses.h>"
 
-CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS)
+CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS) -Wfatal-errors
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -pg -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g

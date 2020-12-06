@@ -82,7 +82,7 @@ void InfoLine :: layout(Pos pos, Size size) {
 
 void InfoLine :: draw_state() {
   attrSet(Theme::get(Theme::INFOLINE_STATE));
-  mvAddStr(0, size.width - STATE_LEN, state_to_string[_state]);
+  addstr(0, size.width - STATE_LEN, state_to_string[_state]);
 }
 
 void InfoLine :: draw_position_and_length() {
@@ -93,7 +93,7 @@ void InfoLine :: draw_position_and_length() {
 void InfoLine :: draw_track_info() {
   if (! _track) {
     attrSet(0);
-    mvAddStr(1, size.width / 2 - int(STOPPED_HEADING_LEN / 2), STOPPED_HEADING);
+    addstr(1, size.width / 2 - int(STOPPED_HEADING_LEN / 2), STOPPED_HEADING);
   } else {
     print_formatted_strings(0, *_fmt_top);
     print_formatted_strings(1, *_fmt_bottom);

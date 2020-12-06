@@ -75,12 +75,12 @@ void Info :: track(Database::Tracks::Track track) noexcept {
 
 inline void Info :: draw_heading(int y, const char* heading) noexcept {
   attrSet(Theme::get(Theme::INFO_HEAD));
-  mvAddStr(y, START_HEADING, heading);
+  addstr(y, START_HEADING, heading);
 }
 
 inline void Info :: draw_tag(int y, const char* tag) noexcept {
   attrSet(Theme::get(Theme::INFO_TAG));
-  mvAddStr(y, START_TAG, tag);
+  addstr(y, START_TAG, tag);
   attrSet(Theme::get(Theme::INFO_VALUE));
   moveCursor(y, START_TAG_VALUE);
 }
@@ -88,7 +88,7 @@ inline void Info :: draw_tag(int y, const char* tag) noexcept {
 template<class Str>
 inline void Info :: draw_info(int y, Str&& info) noexcept {
   attrSet(Theme::get(Theme::INFO_TAG));
-  mvAddStr(y, START_INFO, info);
+  addstr(y, START_INFO, info);
   attrSet(Theme::get(Theme::INFO_VALUE));
   moveCursor(y, START_INFO_VALUE);
 }
@@ -97,7 +97,7 @@ template<class Str, class Str1>
 inline void Info :: draw_link(Str&& url, Str1&& title) noexcept {
   attrSet(Theme::get(Theme::URL));
   UI::Pos start = cursorPos();
-  addStr(title);
+  addstr(title);
   _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
 }
 
@@ -179,7 +179,7 @@ void Info :: draw() {
         if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
         if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
 
-        getCursorYX(y, x);
+        getyx(y, x);
         if      (x < START_TAG)                   moveCursor(y,   START_TAG);
         else if (x >= FORCE_LINE_BREAK)           moveCursor(y+1, START_TAG);
         else if (x >= TRY_LINE_BREAK && c == ' ') moveCursor(y+1, START_TAG-1);
@@ -197,7 +197,7 @@ void Info :: draw() {
       }
     }
 
-    y = getCursorY() + 2;
+    y = getcury() + 2;
   }
 
   // Player ===================================================================
@@ -231,7 +231,7 @@ void Info :: draw() {
   draw_heading(y++, "URLs");
   for (size_t i = 0; i < _clickable_urls.size() - 2; ++i) {
     draw_info(y++, _clickable_urls[i].data.title);
-    mvAddStr(y++, START_INFO + 2, _clickable_urls[i].data.url);
+    addstr(y++, START_INFO + 2, _clickable_urls[i].data.url);
   }
 }
 

@@ -58,9 +58,9 @@ void ReadlineWidget :: set_prompt(std::string prompt) noexcept {
 void ReadlineWidget :: draw() {
   clear();
   attrSet(0);
-  mvAddStr(0, 0, _prompt);
-  int x = getcurx(win);
-  addStr(rl_line_buffer);
+  addstr(0, 0, _prompt);
+  int x = getcurx();
+  addstr(rl_line_buffer);
   mvwchgat(win, 0, x + rl_point, 1, A_STANDOUT, 0, NULL);
 }
 
@@ -68,7 +68,7 @@ bool ReadlineWidget :: handle_key(int key) {
   widgetInstance = this;
   wtimeout(win, 0);
   rl_stuff_char(key);
-  while ((key = wgetch(win)) != ERR)
+  while ((key = getch()) != ERR)
     rl_stuff_char(key);
   rl_callback_read_char();
   return true;

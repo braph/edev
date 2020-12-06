@@ -3,7 +3,7 @@
 
 #include CURSES_INC
 #undef  NCURSES_OK_ADDR // See ncurses.h ...
-#define NCURSES_OK_ADDR(...) (TRUE)
+#define NCURSES_OK_ADDR(WIN) (TRUE)
 
 #include "curs.hpp"
 
@@ -114,8 +114,10 @@ public:
 };
 
 /* Drawable: Windows and Pads, they share the same functionality */
-struct WidgetDrawable : public Widget {
-  WINDOW *win;
+struct WidgetDrawable : public Widget, public CursesWindow {
+  //WINDOW *win;
+
+  WidgetDrawable() {}
 
   ~WidgetDrawable()
   { if (win) delwin(win); }
@@ -123,43 +125,7 @@ struct WidgetDrawable : public Widget {
   inline WINDOW *getWINDOW() const noexcept
   { return win; }
 
-  // ==========================================================================
-  // Stream << operators
-  // ==========================================================================
-
-  // char / wchar_t
-  inline WidgetDrawable& operator<<(char c) noexcept
-  { waddch(win, static_cast<chtype>(c)); return *this; }
-
-  inline WidgetDrawable& operator<<(wchar_t c) noexcept
-  { waddnwstr(win, &c, 1); return *this; }
-
-  // Integer types
-  inline WidgetDrawable& operator<<(int i) noexcept
-  { wprintw(win, "%d", i); return *this; }
-
-  inline WidgetDrawable& operator<<(size_t s) noexcept
-  { wprintw(win, "%zu", s); return *this; }
-
-  inline WidgetDrawable& operator<<(float f) noexcept
-  { wprintw(win, "%f", f); return *this; }
-
-  inline WidgetDrawable& operator<<(double d) noexcept
-  { wprintw(win, "%f", d); return *this; }
-
-  // String types...
-  template<class String>
-  inline WidgetDrawable& operator<<(const String& s) noexcept
-  { addstr_CPP(win, s); return *this; }
-
   // add-methods ==============================================================
-  inline int addCh(chtype c) noexcept
-  { return waddch(win, c); }
-
-  template<class String>
-  inline int addStr(const String& s) noexcept
-  { return addstr_CPP(win, s); }
-
 #ifdef USE_C_VARIADIC_ARGS
 #if defined(__GNUC__) || defined(__clang__)
   __attribute__((__format__(__printf__, 2, 3)))
@@ -178,13 +144,6 @@ struct WidgetDrawable : public Widget {
 #endif
 
   // mv-methods ===============================================================
-  inline int mvAddCh(int y, int x, chtype c) noexcept
-  { return mvwaddch(win, y, x, c); }
-
-  template<class String>
-  inline int mvAddStr(int y, int x, const String& s) noexcept
-  { return addstr_CPP(win, y, x, s); }
-
 #ifdef USE_C_VARIADIC_ARGS
 #if defined(__GNUC__) || defined(__clang__)
   __attribute__((__format__(__printf__, 4, 5)))
@@ -211,19 +170,10 @@ struct WidgetDrawable : public Widget {
 
   // cursor-methods ===========================================================
   inline int  moveCursor(int y, int x)          noexcept { return wmove(win, y, x); }
-  inline int  getCursorX()                const noexcept { return getcurx(win); }
-  inline int  getCursorY()                const noexcept { return getcury(win); }
-  inline void getCursorYX(int& y, int& x) const noexcept { getyx(win, y, x);    }
   inline Pos  cursorPos()                 const noexcept
-  { Pos p; getyx(win, p.y, p.x); return p; }
+  { Pos p; getyx(p.y, p.x); return p; }
 
   // misc methods =============================================================
-  inline int clear() noexcept
-  { return wclear(win); }
-
-  inline int erase() noexcept
-  { return werase(win); }
-
   inline int resize(int height, int width) noexcept
   { return wresize(win, height, width); }
 
@@ -292,7 +242,7 @@ public:
   }
 
   void top()        { pad_minrow = 0; noutrefresh(); }
-  void bottom()     { pad_minrow = getmaxy(win) - size.height; noutrefresh(); }
+  void bottom()     { pad_minrow = getmaxy() - size.height; noutrefresh(); }
   void page_up()    { up(size.height / 2);   }
   void page_down()  { down(size.height / 2); }
 
@@ -301,7 +251,7 @@ public:
     if (pad_minrow < 0)
       pad_minrow = 0;
     else {
-      int max_y = getmaxy(win);
+      int max_y = getmaxy();
       if (pad_minrow > max_y)
         pad_minrow = max_y;
     }
@@ -313,7 +263,7 @@ public:
     if (pad_minrow < 0)
       pad_minrow = 0;
     else {
-      int max_y = getmaxy(win) - size.height;
+      int max_y = getmaxy() - size.height;
       if (pad_minrow > max_y)
         pad_minrow = max_y;
     }
