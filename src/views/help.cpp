@@ -81,7 +81,7 @@ int main() {
   NCURSES_INIT();
 
   Bindings::init();
-  current_Theme = COLORS; // TODO
+  load_theme_by_colors(COLORS, colors);
 
   Widget *s = new Views::Help;
   s->layout({10,10}, {30,80});

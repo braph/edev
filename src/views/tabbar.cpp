@@ -79,10 +79,10 @@ int main() {
   for (const auto s : {"Tab1", "Tab2", "Tab3"})
     b.add_tab(s);
 
-  for (int colors : {0, 8, 256}) {
-    if (colors > COLORS)
+  for (int n : {0, 8, 256}) {
+    if (n > COLORS)
       break;
-    Theme::load_theme_by_colors(colors); // TODO
+    load_theme_by_colors(n, colors);
 
     for (int i = 0; i < 3; ++i) {
       b.current_index(i);
