@@ -1,14 +1,14 @@
 /* Unity build */
 
-#include "../lib/shellsplit.cpp"
-#include "../lib/filesystem.cpp"
+#include "../lib/base64.cpp"
 #include "../lib/cstring.cpp"
-#include "../lib/xml.cpp"
+#include "../lib/downloads.cpp"
+#include "../lib/filesystem.cpp"
+#include "../lib/shellsplit.cpp"
 #include "../lib/stringchunk.cpp"
 #include "../lib/packedvector.cpp"
-#include "../lib/base64.cpp"
 #include "../lib/process.cpp"
-#include "../lib/downloads.cpp"
+#include "../lib/xml.cpp"
 
 #include "ui/colors.cpp"
 #include "ui/container.cpp"
