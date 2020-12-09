@@ -14,7 +14,6 @@
 #include <cinttypes>
 
 using namespace Views;
-using ThemeID = Theme::ThemeID;
 
 // Parsing functions for primitives ===========================================
 
@@ -311,17 +310,15 @@ void Config :: color(ThemeID themeId, const std::vector<std::string>& args) {
 
   auto it = make_iterator_pair(args.begin() + 1, args.end());
   const auto& element = it.next();
-  Theme::ElementID elementId = Theme::element_by_string(element);
-  if (elementId == Theme::ELEMENT_ID_COUNT)
+  Theme::Definition* def = themes[themeId].get(element);
+  if (! def)
     throw std::invalid_argument(element + ": Invalid theme element");
 
-  short fg = opt_parse_color(it.next());
-  short bg = (it.has_next() ? opt_parse_color(it.next()) : -2);
-  unsigned int attrs = 0;
+  def->fg = opt_parse_color(it.next());
+  def->bg = (it.has_next() ? opt_parse_color(it.next()) : -2);
+  def->attributes = 0;
   while (it.has_next())
-    attrs |= opt_parse_attribute(it.next());
-
-  Theme::set(themeId, elementId, fg, bg, attrs);
+    def->attributes |= opt_parse_attribute(it.next());
 }
 
 void Config :: bind(const std::vector<std::string>& args) {

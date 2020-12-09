@@ -27,20 +27,20 @@ InfoLine :: InfoLine()
 , _track_position(0)
 , _state(Mpg123Player::STOPPED)
 {
-  switch (Theme::current) {
-  case Theme::ThemeID::THEME_256:
+  switch (current_theme) {
+  case THEME_256:
     _fmt_top    = &Config::infoline_format_top_256;
     _fmt_bottom = &Config::infoline_format_bottom_256;
     break;
-  case Theme::ThemeID::THEME_8:
+  case THEME_8:
     _fmt_top    = &Config::infoline_format_top;
     _fmt_bottom = &Config::infoline_format_bottom;
     break;
-  case Theme::ThemeID::THEME_MONO: // TODO: infoline_format_top_mono
+  case THEME_MONO: // TODO: infoline_format_top_mono
     _fmt_top    = &Config::infoline_format_top;
     _fmt_bottom = &Config::infoline_format_bottom;
     break;
-  case Theme::THEME_COUNT:
+  case THEME_COUNT:
     break;
   }
   draw();
@@ -81,12 +81,12 @@ void InfoLine :: layout(Pos pos, Size size) {
 }
 
 void InfoLine :: draw_state() {
-  attrSet(Theme::get(Theme::INFOLINE_STATE));
+  attrSet(colors.infoline_state);
   addstr(0, size.width - STATE_LEN, state_to_string[_state]);
 }
 
 void InfoLine :: draw_position_and_length() {
-  attrSet(Theme::get(Theme::INFOLINE_POSITION));
+  attrSet(colors.infoline_position);
   mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", _track_position/60, _track_position%60, _track_length/60, _track_length%60);
 }
 
@@ -142,7 +142,7 @@ int main() {
   NCURSES_INIT();
 
   Config::init();
-  Theme::loadTheme(COLORS);
+  Theme::loadTheme(COLORS); // TODO!
   Database db;
   db.load(TEST_DB);
   

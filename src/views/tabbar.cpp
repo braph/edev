@@ -42,9 +42,9 @@ void TabBar :: draw() {
   int i = 0;
   for (const auto& label : _tabs) {
     if (i++ == _current)
-      attrSet(Theme::get(Theme::TABBAR_SELECTED));
+      attrSet(colors.tabbar_selected);
     else
-      attrSet(Theme::get(Theme::TABBAR_UNSELECTED));
+      attrSet(colors.tabbar_unselected);
 
     *this << ' ' << label;
   }
@@ -82,7 +82,7 @@ int main() {
   for (int colors : {0, 8, 256}) {
     if (colors > COLORS)
       break;
-    Theme::load_theme_by_colors(colors);
+    Theme::load_theme_by_colors(colors); // TODO
 
     for (int i = 0; i < 3; ++i) {
       b.current_index(i);

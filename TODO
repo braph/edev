@@ -1,4 +1,6 @@
 TODO
+  - in Views: Replace switch(current_theme) by something like switch(current_colors)
+
   - Maybe we want to replace ActionID::SEARCH by ActionID::SEARCH_UP + ActionID::SEARCH_DOWN
 
   - browsepage.cpp / updater.cpp:

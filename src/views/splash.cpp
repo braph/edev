@@ -56,12 +56,12 @@ void Splash :: draw() {
   auto bubbleFading    = ArrayView<const short>(colorFading_0);
   auto signatureFading = ArrayView<const short>(colorFading_0);
 
-  if (Theme::current == Theme::ThemeID::THEME_8) {
+  if (current_theme == THEME_8) {
     logoFading         = logoFading_8;
     bubbleFading       = bubbleFading_8;
     signatureFading    = signatureFading_8;
   }
-  else if (Theme::current == Theme::ThemeID::THEME_256) {
+  else if (current_theme == THEME_256) {
     logoFading         = logoFading_256;
     bubbleFading       = bubbleFading_256;
     signatureFading    = signatureFading_256;
@@ -117,7 +117,7 @@ int main() {
   Widget *s = new Views::Splash;
   s->layout({10,10}, {20,80});
 
-  for (auto theme : {Theme::ThemeID::THEME_MONO, Theme::ThemeID::THEME_8, Theme::ThemeID::THEME_256}) {
+  for (auto theme : {Theme::ThemeID::THEME_MONO, Theme::ThemeID::THEME_8, Theme::ThemeID::THEME_256}) { // TODO
     Theme::current = theme;
     s->draw();
     s->noutrefresh();

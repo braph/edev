@@ -37,14 +37,14 @@ void Help :: draw() {
   int y = 0;
 
   for (const auto& widget : widgets) {
-    attrSet(Theme::get(Theme::HELP_WIDGET_NAME));
+    attrSet(colors.help_widget_name);
     addstr(++y, 1, widget.name);
     moveCursor(++y, KEYS_START);
 
     for (int id = 1; id < Actions::ACTIONID_ENUM_LAST; ++id) {
       int nkeys = 0;
 
-      attrSet(Theme::get(Theme::HELP_KEY_NAME));
+      attrSet(colors.help_key_name);
       for (int i = 0; i < KEY_MAX; ++i) {
         if (widget.bindings[i] == id) {
           if (nkeys++)
@@ -54,7 +54,7 @@ void Help :: draw() {
       }
 
       if (nkeys) {
-        attrSet(Theme::get(Theme::HELP_COMMAND_NAME));
+        attrSet(colors.help_command_name);
         addstr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
         moveCursor(++y, KEYS_START);
       }
@@ -81,7 +81,7 @@ int main() {
   NCURSES_INIT();
 
   Bindings::init();
-  Theme::current = COLORS;
+  current_Theme = COLORS; // TODO
 
   Widget *s = new Views::Help;
   s->layout({10,10}, {30,80});

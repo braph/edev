@@ -143,7 +143,7 @@ void Application :: init() {
       database.chunk_archive_url.reserve(EKTOPLAZM_ARCHIVE_URL_SIZE);
     }
 
-    Theme::load_theme_by_colors(Config::use_colors != -1 ? Config::use_colors : COLORS);
+    load_theme_by_colors(Config::use_colors != -1 ? Config::use_colors : COLORS, colors);
   }
   catch (const std::exception &ex) {
     throw std::runtime_error(std::string(e) + ": " + ex.what());

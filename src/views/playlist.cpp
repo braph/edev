@@ -52,7 +52,7 @@ void TrackRenderer :: operator()(
 
   for (const auto& column : m_columns) {
     if (selection)
-      wattrset(_win, Theme::get(Theme::LIST_ITEM_SELECTION) | additional_attributes);
+      wattrset(_win, colors.list_item_selection | additional_attributes);
     else
       wattrset(_win, Colors::set(column.fg, column.bg) | additional_attributes);
 
@@ -143,7 +143,7 @@ int main() {
   NCURSES_INIT();
 
   Config::init();
-  Theme::loadTheme(COLORS);
+  Theme::loadTheme(COLORS); // TODO!
   Database db;
   db.load(TEST_DB);
   assert(db.tracks.size() > 10);
