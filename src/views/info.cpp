@@ -127,7 +127,7 @@ void Info :: draw() {
     *this << track.bpm();
 
     draw_tag(y++, "Length");
-    printW("%02d:%02d", ctxt.player->length()/60, ctxt.player->length()%60);
+    printW("%02d:%02d", player.length()/60, player.length()%60);
 
     // Album ==================================================================
     y++;
@@ -206,13 +206,13 @@ void Info :: draw() {
   *this << VERSION;
 
   draw_info(y++, "Tracks in database");
-  *this << ctxt.database->tracks.size();
+  *this << database.tracks.size();
 
   draw_info(y++, "Albums in database");
-  *this << ctxt.database->albums.size();
+  *this << database.albums.size();
 
   draw_info(y++, "Tracks in playlist");
-  *this << ctxt.mainwindow->playlist.list()->size();
+  *this << mainwindow->playlist.list()->size();
 
   draw_info(y++, "Cache dir size");
   *this << Filesystem::dir_size(Config::cache_dir) / 1024 / 1024 << "MB";

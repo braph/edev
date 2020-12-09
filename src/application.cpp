@@ -20,7 +20,11 @@
 
 namespace fs = Filesystem;
 
-Context ctxt;
+Database::Database database;
+Updater updater(database);
+Mpg123Player player;
+TrackLoader trackloader;
+Views::MainWindow* mainwindow;
 
 static volatile int caught_signal;
 static void on_signal(int sig) { caught_signal = sig; }
@@ -33,25 +37,12 @@ public:
   void run();
 
 private:
-  Database::Database  database;
-  Updater             updater;
-  TrackLoader         trackloader;
-  Mpg123Player        player;
-
   void print_db_stats();
   void cleanup_files();
 };
 
 Application :: Application()
-: database()
-, updater(database)
-, trackloader()
-, player()
 {
-  ctxt.player      = &player;
-  ctxt.database    = &database;
-  ctxt.trackloader = &trackloader;
-  ctxt.updater     = &updater;
   init();
 }
 
@@ -162,7 +153,7 @@ void Application :: run() {
     updater.start(Config::small_update_pages);
 
   Views::MainWindow mainwindow;
-  ctxt.mainwindow = &mainwindow;
+  ::mainwindow = &mainwindow;
 
   // Connecting widgets events
   mainwindow.progressBar.percent_changed = [&](float percent) {

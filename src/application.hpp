@@ -7,14 +7,10 @@ class Mpg123Player;
 class TrackLoader;
 class Updater;
 
-struct Context {
-  Database::Database*  database;
-  Mpg123Player*        player;
-  TrackLoader*         trackloader;
-  Updater*             updater;
-  Views::MainWindow*   mainwindow;
-};
-
-extern Context ctxt;
+extern Database::Database   database;
+extern Mpg123Player         player;
+extern Updater              updater;
+extern TrackLoader          trackloader;
+extern Views::MainWindow*   mainwindow;
 
 #endif

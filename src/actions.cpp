@@ -22,89 +22,89 @@ int Actions :: call(ActionID id) {
     std::raise(SIGWINCH);
     break;
   case UPDATE:
-    ctxt.updater->start();
+    updater.start();
     break;
 
   // Player
   case PLAYER_FORWARD:
-    ctxt.player->seek(+10);
+    player.seek(+10);
     break;
   case PLAYER_BACKWARD:
-    ctxt.player->seek(-10);
+    player.seek(-10);
     break;
   case PLAYER_STOP:
-    ctxt.player->stop();
+    player.stop();
     break;
   case PLAYER_TOGGLE:
-    ctxt.player->toggle();
+    player.toggle();
     break;
 
   // Widgets visibility
   case TABBAR_TOGGLE:
-    ctxt.mainwindow->tabBar.visible = !ctxt.mainwindow->tabBar.visible;
+    mainwindow->tabBar.visible = !mainwindow->tabBar.visible;
     std::raise(SIGWINCH);
     break;
   case PLAYINGINFO_TOGGLE:
-    ctxt.mainwindow->infoLine.visible = !ctxt.mainwindow->infoLine.visible;
+    mainwindow->infoLine.visible = !mainwindow->infoLine.visible;
     std::raise(SIGWINCH);
     break;
   case PROGRESSBAR_TOGGLE:
-    ctxt.mainwindow->progressBar.visible = !ctxt.mainwindow->progressBar.visible;
+    mainwindow->progressBar.visible = !mainwindow->progressBar.visible;
     std::raise(SIGWINCH);
     break;
 
   // Playlist
   case PLAYLIST_GOTO_CURRENT:
-    ctxt.mainwindow->playlist.goto_selected();
+    mainwindow->playlist.goto_selected();
     break;
   case PLAYLIST_NEXT:
-    index = ctxt.mainwindow->playlist.active_index() + 1;
+    index = mainwindow->playlist.active_index() + 1;
     goto PLAYLIST_PLAY;
   case PLAYLIST_PREV:
-    index = ctxt.mainwindow->playlist.active_index() - 1;
+    index = mainwindow->playlist.active_index() - 1;
     goto PLAYLIST_PLAY;
   case PLAYLIST_PLAY:
-    index = ctxt.mainwindow->playlist.cursor_index();
+    index = mainwindow->playlist.cursor_index();
     goto PLAYLIST_PLAY;
 
 PLAYLIST_PLAY:
-    ctxt.mainwindow->playlist.active_index(index);
-    if (! ctxt.mainwindow->playlist.empty() && ctxt.mainwindow->playlist.active_index() >= 0) {
-      auto track = ctxt.mainwindow->playlist.active_item();
-      ctxt.player->play(ctxt.trackloader->get_file_for_track(track, false));
+    mainwindow->playlist.active_index(index);
+    if (! mainwindow->playlist.empty() && mainwindow->playlist.active_index() >= 0) {
+      auto track = mainwindow->playlist.active_item();
+      player.play(trackloader.get_file_for_track(track, false));
     }
     break;
 
   // Windows
   case TABS_NEXT:
-    index = ctxt.mainwindow->windows.current_index() + 1;
+    index = mainwindow->windows.current_index() + 1;
     goto SELECT_TAB;
   case TABS_PREV:
-    index = ctxt.mainwindow->windows.current_index() - 1;
+    index = mainwindow->windows.current_index() - 1;
     goto SELECT_TAB;
   case SPLASH_SHOW:
-    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->splash);
+    index = mainwindow->windows.index_of(&mainwindow->splash);
     goto SELECT_TAB;
   case PLAYLIST_SHOW:
-    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->playlist);
+    index = mainwindow->windows.index_of(&mainwindow->playlist);
     goto SELECT_TAB;
   case BROWSER_SHOW:
-    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->playlist); // TODO [later]
+    index = mainwindow->windows.index_of(&mainwindow->playlist); // TODO [later]
     goto SELECT_TAB;
   case INFO_SHOW:
-    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->info);
+    index = mainwindow->windows.index_of(&mainwindow->info);
     goto SELECT_TAB;
   case HELP_SHOW:
-    index = ctxt.mainwindow->windows.index_of(&ctxt.mainwindow->help);
+    index = mainwindow->windows.index_of(&mainwindow->help);
     goto SELECT_TAB;
 
 SELECT_TAB:
     if (index < 0)
-      index = ctxt.mainwindow->windows.count() - 1;
-    else if (index >= ctxt.mainwindow->windows.count())
+      index = mainwindow->windows.count() - 1;
+    else if (index >= mainwindow->windows.count())
       index = 0;
-    ctxt.mainwindow->windows.current_index(index);
-    ctxt.mainwindow->tabBar.current_index(index);
+    mainwindow->windows.current_index(index);
+    mainwindow->tabBar.current_index(index);
     break;
 
   // Silence warnings
