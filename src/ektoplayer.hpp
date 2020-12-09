@@ -21,16 +21,16 @@
 #define TEST_DB                     "/tmp/ektoplayer-test.db"
 
 // Count of online data (last updated: February 2020)
-#define EKTOPLAZM_STYLE_COUNT       29
-#define EKTOPLAZM_ALBUM_COUNT       2079
-#define EKTOPLAZM_TRACK_COUNT       14403
-#define EKTOPLAZM_META_SIZE         286645    // average lenth: 14
-#define EKTOPLAZM_DESC_SIZE         1468245   // average lenth: 706
-#define EKTOPLAZM_STYLE_URL_SIZE    245       // average lenth: 8
-#define EKTOPLAZM_ALBUM_URL_SIZE    49777     // average lenth: 24
-#define EKTOPLAZM_TRACK_URL_SIZE    391013    // average lenth: 27
-#define EKTOPLAZM_COVER_URL_SIZE    67666     // average lenth: 32
-#define EKTOPLAZM_ARCHIVE_URL_SIZE  77069     // average lenth: 37
+#define EKTOPLAZM_STYLE_COUNT       30
+#define EKTOPLAZM_ALBUM_COUNT       2090
+#define EKTOPLAZM_TRACK_COUNT       14410
+#define EKTOPLAZM_META_SIZE         286650    // average lenth: 14
+#define EKTOPLAZM_DESC_SIZE         1468250   // average lenth: 706
+#define EKTOPLAZM_STYLE_URL_SIZE    250       // average lenth: 8
+#define EKTOPLAZM_ALBUM_URL_SIZE    49780     // average lenth: 24
+#define EKTOPLAZM_TRACK_URL_SIZE    391020    // average lenth: 27
+#define EKTOPLAZM_COVER_URL_SIZE    67670     // average lenth: 32
+#define EKTOPLAZM_ARCHIVE_URL_SIZE  77070     // average lenth: 37
 
 namespace Ektoplayer {
 
