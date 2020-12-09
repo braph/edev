@@ -27,22 +27,19 @@ InfoLine :: InfoLine()
 , _track_position(0)
 , _state(Mpg123Player::STOPPED)
 {
-  switch (current_theme) {
-  case THEME_256:
+  // TODO: mono
+  _fmt_top    = &Config::infoline_format_top;
+  _fmt_bottom = &Config::infoline_format_bottom;
+
+  if (Config::use_colors >= 256) {
     _fmt_top    = &Config::infoline_format_top_256;
     _fmt_bottom = &Config::infoline_format_bottom_256;
-    break;
-  case THEME_8:
-    _fmt_top    = &Config::infoline_format_top;
-    _fmt_bottom = &Config::infoline_format_bottom;
-    break;
-  case THEME_MONO: // TODO: infoline_format_top_mono
-    _fmt_top    = &Config::infoline_format_top;
-    _fmt_bottom = &Config::infoline_format_bottom;
-    break;
-  case THEME_COUNT:
-    break;
   }
+  else if (Config::use_colors >= 8) {
+    _fmt_top    = &Config::infoline_format_top;
+    _fmt_bottom = &Config::infoline_format_bottom;
+  }
+
   draw();
 }
 
@@ -142,7 +139,7 @@ int main() {
   NCURSES_INIT();
 
   Config::init();
-  Theme::loadTheme(COLORS); // TODO!
+  load_theme_by_colors(COLORS, colors);
   Database db;
   db.load(TEST_DB);
   

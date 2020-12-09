@@ -37,10 +37,10 @@ void ProgressBar :: layout(Pos pos, Size size) {
 
   ArrayView<const short> fading(fading_0);
 
-  if (current_theme == THEME_8)
-    fading = fading_8;
-  else if (current_theme == THEME_256)
+  if (Config::use_colors >= 256)
     fading = fading_256;
+  else if (Config::use_colors >= 8)
+    fading = fading_8;
 
   size_t i;
   const size_t width = size_t(size.width);
@@ -77,10 +77,11 @@ int main() {
 
   Config::init();
 
-  for (int colors : {0, 8, 256}) {
-    if (colors > COLORS)
-      break;
-    Theme::loadThemeByColors(colors); // TODO
+  for (int n : {0, 8, 256}) {
+    if (n > COLORS)
+      continue;
+    Config::use_colors = n;
+    load_theme_by_colors(n, colors);
   
     ProgressBar b;
     b.layout({0,0}, {LINES,COLS});

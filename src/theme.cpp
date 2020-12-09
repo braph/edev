@@ -6,93 +6,99 @@
 #define COLOR_NONE    -1
 #define COLOR_DEFAULT -2
 
-ThemeID current_theme;
 LoadedColors colors;
-Theme themes[THEME_COUNT] = {
-  { // ------------------------ Mono (no colors) ------------
-    /* DEFAULT               */ {COLOR_NONE, COLOR_NONE},
-    /* URL                   */ {COLOR_DEFAULT, COLOR_DEFAULT, A_UNDERLINE},
-    /* INFO_HEAD             */ {},
-    /* INFO_TAG              */ {},
-    /* INFO_VALUE            */ {},
-    /* INFO_DESCRIPTION      */ {},
-    /* INFO_DOWNLOAD_FILE    */ {},
-    /* INFO_DOWNLOAD_PERCENT */ {},
-    /* INFO_DOWNLOAD_ERROR   */ {},
-    /* PROGRESSBAR_PROGRESS  */ {},
-    /* PROGRESSBAR_REST      */ {},
-    /* TABBAR_SELECTED       */ {COLOR_DEFAULT, COLOR_DEFAULT, A_BOLD},
-    /* TABBAR_UNSELECTED     */ {},
-    /* LIST_ITEM_EVEN        */ {},
-    /* LIST_ITEM_ODD         */ {},
-    /* LIST_ITEM_SELECTION   */ {},
-    /* INFOLINE_POSITION     */ {},
-    /* INFOLINE_STATE        */ {},
-    /* HELP_WIDGET_NAME      */ {COLOR_DEFAULT, COLOR_DEFAULT, A_BOLD},
-    /* HELP_KEY_NAME         */ {},
-    /* HELP_COMMAND_NAME     */ {},
-    /* HELP_COMMAND_DESC     */ {}
-  },
-  { // ------------------------ 8 Colors (default) ----------
-    /* DEFAULT               */ {COLOR_NONE, COLOR_NONE},
-    /* URL                   */ {COLOR_MAGENTA, COLOR_DEFAULT, A_UNDERLINE},
 
-    /* INFO_HEAD             */ {COLOR_BLUE, COLOR_DEFAULT, A_BOLD},
-    /* INFO_TAG              */ {COLOR_BLUE},
-    /* INFO_VALUE            */ {COLOR_MAGENTA},
-    /* INFO_DESCRIPTION      */ {COLOR_BLUE},
-    /* INFO_DOWNLOAD_FILE    */ {COLOR_BLUE},
-    /* INFO_DOWNLOAD_PERCENT */ {COLOR_MAGENTA},
-    /* INFO_DOWNLOAD_ERROR   */ {COLOR_RED},
+Theme THEME_MONO = {
+  /* default               */ {COLOR_NONE, COLOR_NONE},
+  /* url                   */ {COLOR_DEFAULT, COLOR_DEFAULT, A_UNDERLINE},
 
-    /* PROGRESSBAR_PROGRESS  */ {COLOR_BLUE},
-    /* PROGRESSBAR_REST      */ {COLOR_BLACK},
+  /* info_head             */ {},
+  /* info_tag              */ {},
+  /* info_value            */ {},
+  /* info_description      */ {},
+  /* info_download_file    */ {},
+  /* info_download_percent */ {},
+  /* info_download_error   */ {},
 
-    /* TABBAR_SELECTED       */ {COLOR_BLUE},
-    /* TABBAR_UNSELECTED     */ {COLOR_WHITE},
+  /* progressbar_progress  */ {},
+  /* progressbar_rest      */ {},
 
-    /* LIST_ITEM_EVEN        */ {COLOR_BLUE},
-    /* LIST_ITEM_ODD         */ {COLOR_BLUE},
-    /* LIST_ITEM_SELECTION   */ {COLOR_MAGENTA},
+  /* tabbar_selected       */ {COLOR_DEFAULT, COLOR_DEFAULT, A_BOLD},
+  /* tabbar_unselected     */ {},
 
-    /* INFOLINE_POSITION     */ {COLOR_MAGENTA},
-    /* INFOLINE_STATE        */ {COLOR_CYAN},
+  /* list_item_even        */ {},
+  /* list_item_odd         */ {},
+  /* list_item_selection   */ {},
 
-    /* HELP_WIDGET_NAME      */ {COLOR_BLUE, COLOR_DEFAULT, A_BOLD},
-    /* HELP_KEY_NAME         */ {COLOR_BLUE},
-    /* HELP_COMMAND_NAME     */ {COLOR_MAGENTA},
-    /* HELP_COMMAND_DESC     */ {COLOR_YELLOW}
-  },
-  { // ------------------------ 256 Colors ------------------
-    /* DEFAULT               */ {COLOR_WHITE, COLOR_NONE}, // 233
-    /* URL                   */ {97, COLOR_DEFAULT, A_UNDERLINE},
+  /* infoline_position     */ {},
+  /* infoline_state        */ {},
 
-    /* INFO_HEAD             */ {32, COLOR_DEFAULT, A_BOLD},
-    /* INFO_TAG              */ {74},
-    /* INFO_VALUE            */ {67},
-    /* INFO_DESCRIPTION      */ {67},
-    /* INFO_DOWNLOAD_FILE    */ {75},
-    /* INFO_DOWNLOAD_PERCENT */ {68},
-    /* INFO_DOWNLOAD_ERROR   */ {COLOR_RED},
+  /* help_widget_name      */ {COLOR_DEFAULT, COLOR_DEFAULT, A_BOLD},
+  /* help_key_name         */ {},
+  /* help_command_name     */ {},
+  /* help_command_desc     */ {}
+ };
 
-    /* PROGRESSBAR_PROGRESS  */ {23},
-    /* PROGRESSBAR_REST      */ {COLOR_BLACK},
+Theme THEME_8 = {
+  /* default               */ {COLOR_NONE, COLOR_NONE},
+  /* url                   */ {COLOR_MAGENTA, COLOR_DEFAULT, A_UNDERLINE},
 
-    /* TABBAR_SELECTED       */ {75},
-    /* TABBAR_UNSELECTED     */ {250},
+  /* info_head             */ {COLOR_BLUE, COLOR_DEFAULT, A_BOLD},
+  /* info_tag              */ {COLOR_BLUE},
+  /* info_value            */ {COLOR_MAGENTA},
+  /* info_description      */ {COLOR_BLUE},
+  /* info_download_file    */ {COLOR_BLUE},
+  /* info_download_percent */ {COLOR_MAGENTA},
+  /* info_download_error   */ {COLOR_RED},
 
-    /* LIST_ITEM_EVEN        */ {26},
-    /* LIST_ITEM_ODD         */ {25},
-    /* LIST_ITEM_SELECTION   */ {97},
+  /* progressbar_progress  */ {COLOR_BLUE},
+  /* progressbar_rest      */ {COLOR_BLACK},
 
-    /* INFOLINE_POSITION     */ {97},
-    /* INFOLINE_STATE        */ {37},
+  /* tabbar_selected       */ {COLOR_BLUE},
+  /* tabbar_unselected     */ {COLOR_WHITE},
 
-    /* HELP_WIDGET_NAME      */ {33, COLOR_DEFAULT, A_BOLD},
-    /* HELP_KEY_NAME         */ {75},
-    /* HELP_COMMAND_NAME     */ {68},
-    /* HELP_COMMAND_DESC     */ {29}
-  }
+  /* list_item_even        */ {COLOR_BLUE},
+  /* list_item_odd         */ {COLOR_BLUE},
+  /* list_item_selection   */ {COLOR_MAGENTA},
+
+  /* infoline_position     */ {COLOR_MAGENTA},
+  /* infoline_state        */ {COLOR_CYAN},
+
+  /* help_widget_name      */ {COLOR_BLUE, COLOR_DEFAULT, A_BOLD},
+  /* help_key_name         */ {COLOR_BLUE},
+  /* help_command_name     */ {COLOR_MAGENTA},
+  /* help_command_desc     */ {COLOR_YELLOW}
+};
+
+Theme THEME_256 = {
+  /* default               */ {COLOR_WHITE, COLOR_NONE}, // 233
+  /* url                   */ {97, COLOR_DEFAULT, A_UNDERLINE},
+
+  /* info_head             */ {32, COLOR_DEFAULT, A_BOLD},
+  /* info_tag              */ {74},
+  /* info_value            */ {67},
+  /* info_description      */ {67},
+  /* info_download_file    */ {75},
+  /* info_download_percent */ {68},
+  /* info_download_error   */ {COLOR_RED},
+
+  /* progressbar_progress  */ {23},
+  /* progressbar_rest      */ {COLOR_BLACK},
+
+  /* tabbar_selected       */ {75},
+  /* tabbar_unselected     */ {250},
+
+  /* list_item_even        */ {26},
+  /* list_item_odd         */ {25},
+  /* list_item_selection   */ {97},
+
+  /* infoline_position     */ {97},
+  /* infoline_state        */ {37},
+
+  /* help_widget_name      */ {33, COLOR_DEFAULT, A_BOLD},
+  /* help_key_name         */ {75},
+  /* help_command_name     */ {68},
+  /* help_command_desc     */ {29}
 };
 
 Theme::Definition* Theme :: get(const std::string& name) noexcept {
@@ -102,7 +108,7 @@ Theme::Definition* Theme :: get(const std::string& name) noexcept {
   return NULL;
 }
 
-static unsigned int load_(Theme::Definition& def, Theme::Definition& default_) {
+static unsigned int theme_set_color(Theme::Definition& def, Theme::Definition& default_) {
   return UI::Colors::set(
       (def.fg == -2 ? default_.fg : def.fg),
       (def.bg == -2 ? default_.bg : def.bg))
@@ -112,17 +118,13 @@ static unsigned int load_(Theme::Definition& def, Theme::Definition& default_) {
 void Theme :: load_theme(LoadedColors& colors) noexcept {
   UI::Colors::reset();
 
-#define X(IDENTIFIER, _) colors.IDENTIFIER = load_(IDENTIFIER, default_);
+#define X(IDENTIFIER, _) colors.IDENTIFIER = theme_set_color(IDENTIFIER, default_);
   THEME_ELEMENT_IDS
 #undef X
 }
 
 void load_theme_by_colors(int num_colors, LoadedColors& colors) noexcept {
-  current_theme = (
-    num_colors >= 256 ? THEME_256 :
-    num_colors >= 8   ? THEME_8 :
-    THEME_MONO
-  );
-
-  themes[current_theme].load_theme(colors);
+  if (num_colors >= 256)    THEME_256.load_theme(colors);
+  else if (num_colors >= 8) THEME_8.load_theme(colors);
+  else                      THEME_MONO.load_theme(colors);
 }

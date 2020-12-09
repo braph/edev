@@ -1,6 +1,4 @@
 TODO
-  - in Views: Replace switch(current_theme) by something like switch(current_colors)
-
   - Maybe we want to replace ActionID::SEARCH by ActionID::SEARCH_UP + ActionID::SEARCH_DOWN
 
   - browsepage.cpp / updater.cpp:
@@ -28,9 +26,6 @@ TODO
     - Add code for playing a file from a downloaded album
 
   - Write a complete sample config file (or a generator for it)
-
-  - browsepage.cpp:
-    sscanf() has a parsing error on date (everything is 1997)
 
   - playlist:
     ^S for saving?

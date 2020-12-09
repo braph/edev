@@ -305,12 +305,12 @@ void Config :: set(const std::vector<std::string>& args) {
   }
 }
 
-void Config :: color(ThemeID themeId, const std::vector<std::string>& args) {
+void Config :: color(Theme& theme, const std::vector<std::string>& args) {
   checkArgCount(args, 3, INT_MAX);
 
   auto it = make_iterator_pair(args.begin() + 1, args.end());
   const auto& element = it.next();
-  Theme::Definition* def = themes[themeId].get(element);
+  Theme::Definition* def = theme.get(element);
   if (! def)
     throw std::invalid_argument(element + ": Invalid theme element");
 
@@ -368,9 +368,9 @@ void Config :: read(const std::string &file) {
       using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(args[0])) {
         case pack("set"):        Config::set(args);        break;
-        case pack("color"):      Config::color(ThemeID::THEME_8,    args); break;
-        case pack("color_256"):  Config::color(ThemeID::THEME_256,  args); break;
-        case pack("color_mono"): Config::color(ThemeID::THEME_MONO, args); break;
+        case pack("color"):      Config::color(THEME_8,    args); break;
+        case pack("color_256"):  Config::color(THEME_256,  args); break;
+        case pack("color_mono"): Config::color(THEME_MONO, args); break;
         case pack("bind"):       Config::bind(args);       break;
         case pack("unbind"):     Config::unbind(args);     break;
         case pack("unbind_all"): Config::unbind_all(args); break;

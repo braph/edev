@@ -1,6 +1,7 @@
 #include "splash.hpp"
 
 #include "../theme.hpp"
+#include "../config.hpp"
 #include "../ui/colors.hpp"
 #include <lib/spanview.hpp>
 #include <lib/arrayview.hpp>
@@ -56,15 +57,15 @@ void Splash :: draw() {
   auto bubbleFading    = ArrayView<const short>(colorFading_0);
   auto signatureFading = ArrayView<const short>(colorFading_0);
 
-  if (current_theme == THEME_8) {
-    logoFading         = logoFading_8;
-    bubbleFading       = bubbleFading_8;
-    signatureFading    = signatureFading_8;
-  }
-  else if (current_theme == THEME_256) {
+  if (Config::use_colors >= 256) {
     logoFading         = logoFading_256;
     bubbleFading       = bubbleFading_256;
     signatureFading    = signatureFading_256;
+  }
+  else if (Config::use_colors >= 8) {
+    logoFading         = logoFading_8;
+    bubbleFading       = bubbleFading_8;
+    signatureFading    = signatureFading_8;
   }
 
   SpanView<ArrayView<const short>> fader;
@@ -117,8 +118,10 @@ int main() {
   Widget *s = new Views::Splash;
   s->layout({10,10}, {20,80});
 
-  for (auto theme : {Theme::ThemeID::THEME_MONO, Theme::ThemeID::THEME_8, Theme::ThemeID::THEME_256}) { // TODO
-    Theme::current = theme;
+  for (int n : {256, 8, 0}) {
+    if (n > COLORS)
+      continue;
+    Config::use_colors = n;
     s->draw();
     s->noutrefresh();
     doupdate();

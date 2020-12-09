@@ -3,13 +3,6 @@
 
 #include <string>
 
-enum ThemeID {
-  THEME_8,
-  THEME_256,
-  THEME_MONO,
-  THEME_COUNT
-};
-
 #define THEME_ELEMENT_IDS                            \
   X(default_,               "default")               \
   X(url,                    "url")                   \
@@ -66,8 +59,9 @@ struct Theme {
 };
 
 void load_theme_by_colors(int, LoadedColors&) noexcept;
-extern ThemeID current_theme;
-extern Theme themes[THEME_COUNT];
+extern Theme THEME_8;
+extern Theme THEME_256;
+extern Theme THEME_MONO;
 extern LoadedColors colors;
 
 #endif
