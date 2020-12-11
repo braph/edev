@@ -1,145 +1,173 @@
 #!/usr/bin/python3
-
-# TODO: ifdef then undef (NCURSES_NOMACROS)
-
-import sys
+import sys, string
 from braceexpand import braceexpand
 
-suffix = '_CPP'
+'''
+(Almost) every function in ncurses is implemented as a function and defined as a macro:
+  - extern NCURSES_EXPORT(int)  addstr (const char *);	   /* generated */
+  - #define addstr(str)         waddnstr(stdscr,(str),-1)
+
+We cannot provide overloads for char[] by defining `template<size_t N> addstr(char[N])` since the compiler
+would pick the addstr(const char*) version.
+
+- Automated generation of function overloads wouldn't make sense, since we want to take advatage of the
+  array size: addstr(array) will translate to addnstr(array, N)
+
+However, we can provide template<class T> addstr(T s) { addstr(s.c_str()); }
+'''
+
+# TODO: generate functions also for ... eerm w.. you now? not just ...
+# TODO: ifdef then undef... (NCURSES_NOMACROS)
+# TODO: inch, ungetch...
+# TODO: printw: to string everything
+# TODO: getattrs?
+# TODO: wbkgdset, wbg ...
+# TODO: default arguments!
+
+prefix = 'NC_'
 undef_ncurses_ok_addr = False
+void = "void"
+WINDOW = "WINDOW*"
+funcs = []
+define = {}
 
-def fstr(template):
-    return eval(f"f'''{template}'''")
+def type_to_str(typ):
+    return {int:'int', bool:'bool'}.get(typ, typ)
 
-def to_list(v):
-    if not isinstance(v, list):
-        return list(filter(lambda x:x, [e.strip() for e in v.split(',')]))
-    return v
+def mk_func_signature(template_args, ret, name, args, const=False, noexcept=False):
+    return "%sinline %s (%s)(%s)%s%s" % (
+        'template<%s> ' % template_args if template_args else '',
+        type_to_str(ret), name, args, 
+        ' const' if const else '',
+        ' noexcept' if noexcept else '')
 
-def mk_call(function, arguments):
-    return f'{function}({", ".join(arguments)})'
+class Func():
+    WMOVE        = 'wmove(%s, y, x) == ERR ? ERR : '
+    WMOVE_NO_CHK = 'wmove(%s, y, x), '
 
-def mk_args(arguments):
-    return ', '.join(arguments)
+    def __init__(self, ret, name, args, wrapped_func, wrapped_args, const=False, mv=False, template=None):
+        self.ret = ret
+        self.name = name
+        self.args = args
+        self.wrapped_func = wrapped_func
+        self.wrapped_args = wrapped_args
+        self.const = const
+        self.mv = mv
+        self.template = template
 
-def mk_function(template_args, function, arguments, body):
-    if template_args:
-        template_args = "template<%s> " % mk_args(template_args)
-    else:
-        template_args = ''
+    def make_function(self, prefix, win_arg='win', wrapped_win_arg='win', mv=False):
+        args = ('int y, int x, ' + self.args).strip(', ') if mv else self.args
+        if win_arg:
+            args = ('const WINDOW* ' if self.const else 'WINDOW* ') + win_arg + ', ' + args
+            args = args.strip(', ')
 
-    return \
-        f'{template_args}inline {function}({", ".join(arguments)}) {{ {body} }}'
+        return "%s { %s%s%s; }" % (
+            mk_func_signature(self.template, self.ret, prefix+self.name, args),
+            "return " if self.ret != void else "",
+            Func.WMOVE % wrapped_win_arg if mv else '',
+            self.wrapped_call(wrapped_win_arg))
+        
+    def make_method(self, prefix, wrapped_win_arg='win', mv=False):
+        args = ('int y, int x, ' + self.args).strip(', ') if mv else self.args
 
-def redef_(from_, to_):
-    return f'''
-#undef  {from_}
-#define {from_} {to_}'''
+        return "%s { %s%s%s; }" % (
+            mk_func_signature(self.template, self.ret, prefix+self.name, args, const=self.const, noexcept=True),
+            "return " if self.ret != void else "",
+            Func.WMOVE % wrapped_win_arg if mv else '',
+            self.wrapped_call(wrapped_win_arg))
 
-def move(call, call_args):
-    call_args = to_list(call_args)
-    if True:
-        return 'wmove(%s, y, x) == ERR ? ERR : %s(%s)' % (call_args[0], call, mk_args(call_args))
-    else:
-        return 'wmove(%s, y, x), %s(%s)' % (call_args[0], call, mk_args(call_args))
+    def wrapped_call(self, wrapped_win_arg):
+        return '%s(%s%s%s)' % (
+            self.wrapped_func,
+            wrapped_win_arg,
+            ', ' if self.wrapped_args else '',
+            self.wrapped_args)
 
-def mk_stdscr_call(tpl, func, args, call, call_args):
-    return mk_function(tpl, func, args, "return %s(%s);" % (call, mk_args(['stdscr']+call_args)))
+def a(*args, **kw):  funcs.append(Func(*args, **kw))
+def mv(*args, **kw): funcs.append(Func(*args, **kw, mv=True))
 
-def mk_window_call(tpl, func, args, call, call_args):
-    return mk_function(tpl, func, ['WINDOW* w']+args, "return %s(%s);" % (call, mk_args(['w']+call_args)))
+a(int,    "wgetdelay",  "", "wgetdelay",  "", const=True)
+a(WINDOW, "wgetparent", "", "wgetparent", "", const=True)
+a(int,    "wgetscrreg", "int* top, int* bottom", "wgetscrreg", "top, bottom", const=True)
 
-def mk_mv_stdscr_call(tpl, func, args, call, call_args):
-    return mk_function(tpl, func, ['int y', 'int x']+args, 'return '+move(call, ['stdscr']+call_args)+';')
+a(int, "erase",    "", "werase",    "")
+a(int, "clear",    "", "wclear",    "")
+a(int, "clrtobot", "", "wclrtobot", "") # TODO: also add mv?
+a(int, "clrtoeol", "", "wclrtoeol", "") # TODO: also add mv?
 
-def mk_mv_window_call(tpl, func, args, call, call_args):
-    return mk_function(tpl, func, ['WINDOW* w', 'int y', 'int x']+args, 'return '+move(call, ['w']+call_args)+';')
 
-def w(func, args, call, call_args):
-    args = to_list(args)
-    call_args = to_list(call_args)
-    print('%s\n%s' % (
-        mk_stdscr_call([], func, args, call, call_args),
-        mk_window_call([], func, args, call, call_args)))
-#    return \
-#        f'{func}({args})                          {{ return {call}(stdscr, {call_args}); }}\n' \
-#        f'{func}(WINDOW* w, {args})               {{ return {call}(w, {call_args}); }}\n'
+#a(int, "attron",   "int attrs",    "wattron",    "attrs")
+#a(int, "attroff",  "int attrs",    "wattroff",   "attrs")
+#a(int, "attrset",  "int attrs",    "wattrset",   "attrs")
+#a(int, "attr_get",  "attr_t* attrs, NCURSES_PAIRS_T* pair, void* opts", "wattr_get", "attrs, pair, opt")
+#a(int, "attr_on",      wattr_on (WINDOW *, attr_t, void *);		/* implemented */
+#a(int, "attr_off",     wattr_off (WINDOW *, attr_t, void *);	/* implemented */
+#a(int, "attr_set",     wattr_set (WINDOW *, attr_t, NCURSES_PAIRS_T, void *);	/* generated */
 
-def mvw(tpl, func, args, call, call_args):
-    tpl = to_list(tpl)
-    args = to_list(args)
-    call_args = to_list(call_args)
 
-    print('%s\n%s\n%s\n%s' % (
-        mk_stdscr_call(tpl, func, args, call, call_args),
-        mk_window_call(tpl, func, args, call, call_args),
-        mk_mv_stdscr_call(tpl, func, args, call, call_args),
-        mk_mv_window_call(tpl, func, args, call, call_args)))
+# getcurx, getcury, getbegx, getbegy, ...
+for f in braceexpand("get{cur,beg,max,par}{x,y}"):
+    a(int, f, "", f, "", const=True)
 
-def redef(from_, to_):
-    for f in braceexpand(from_):
-        print(redef_(f, to_))
+# getyx, getbegyx ...
+for f in braceexpand("get{,beg,max,par}yx"):
+    a(void, f, "int& y, int& x", f, "y, x", const=True)
 
-def f(tpl, func, args, call, call_args):
-    if tpl:
-        tpl = "template<%s> " % tpl
+# TODO: ifdef NCURSES_EXT_FUNCS
+for f in braceexpand("is_{cleared,idcok,idlok,immedok,keypad,leaveok,nodelay,notimeout,pad,scrollok,subwin,syncok}"):
+    a(bool, f, "", f, "", const=True)
 
-    print( f'{tpl}inline {func}({args}) {{ return {call}({call_args}); }}' )
+# OUTPUT functions
+mv(int, "addch",  "Chr ch",              "waddch_generic",    "ch",                 template='class Chr')
+mv(int, "delch",  "",                    "wdelch",            "")
+mv(int, "addstr", "const Str& s",        "waddnstr_generic",  "cstr(s), len(s)",    template='class Str')
+mv(int, "addstr", "const Str& s, int n", "waddnstr_generic",  "cstr(s), n",         template='class Str')
+mv(int, "insstr", "const Str& s",        "winsnstr_generic",  "cstr(s), len(s)",    template='class Str')
+mv(int, "insstr", "const Str& s, int n", "winsnstr_generic",  "cstr(s), n",         template='class Str')
+# INPUT functions
+mv(int, "getch",  "",                    "wgetch",            "")
+mv(int, "getch",  "wint_t* ch",          "wget_wch",          "ch")
+mv(int, "getstr", "Str& s",              "wgetnstr_generic",  "cstr(s), in_len(s)", template='class Str')
+mv(int, "getstr", "Str& s, int n",       "wgetnstr_generic",  "cstr(s), n",         template='class Str')
+mv(int, "instr",  "Str& s",              "winnstr_generic",   "cstr(s), in_len(s)", template='class Str')
+mv(int, "instr",  "Str& s, int n",       "winnstr_generic",   "cstr(s), n",         template='class Str')
+
+CURSES_FUNCTIONS = ''
+CURSES_WINDOW_METHODS = ''
+
+for f in funcs:
+    CURSES_FUNCTIONS += '\n'+f.make_function(prefix)
+    CURSES_FUNCTIONS += '\n'+f.make_function(prefix, None, 'stdscr')
+    if f.mv:
+        CURSES_FUNCTIONS += '\n'+f.make_function(prefix, mv=True)
+        CURSES_FUNCTIONS += '\n'+f.make_function(prefix, None, 'stdscr', mv=True)
+
+    CURSES_WINDOW_METHODS += '\n'+f.make_method(prefix, 'win')
+    if f.mv:
+        CURSES_WINDOW_METHODS += '\n'+f.make_method(prefix, 'win', mv=True)
+
+for f in funcs:
+    define[f.name] = prefix+f.name
+
+# TODO: wget_wch in braceexpand (I forgot what i meant with this...)
+for f in braceexpand('{mv,}{w,}addch'):             define[f] = prefix+'addch'
+for f in braceexpand('{mv,}{w,}getch'):             define[f] = prefix+'getch'
+for f in braceexpand('{mv,}{w,}add{n,}{w,}str'):    define[f] = prefix+'addstr'
+for f in braceexpand('{mv,}{w,}ins{n,_nw,_w}str'):  define[f] = prefix+'insstr'
+for f in braceexpand('{mv,}{w,}get{n,_nw,_w}str'):  define[f] = prefix+'getstr'
+for f in braceexpand('{mv,}{w,}in{ch,}str'):        define[f] = prefix+'instr'
+
+REDEFS = ''
+for from_, to_ in define.items():
+    REDEFS += f'''\n#undef  {from_}\n#define {from_} {to_}'''
+
+REDEFS += '''
+#undef clear
+#undef erase
+#undef move
+'''
 
 with open('curs.tpl.cpp', 'r') as fh:
-    python = None
-    for line in fh:
-        if line == 'PYTHON:\n':
-            python = "\n"
-        elif line == 'NO_PYTHON:\n':
-            exec(python)
-            python = None
-        elif python:
-            python += line
-        else:
-            print(line, end='')
+    print('// This file was generated by:', sys.argv)
+    print(string.Template(fh.read()).substitute(**globals()))
 
-    if python:
-        exec(python)
-
-    #print(fstr(fh.read()))
-    sys.exit(0)
-    raise
-
-# TODO: _slen on getstr/insstr?
-mvw('template<class Chr> inline int addch_CPP',  'Chr ch',              'waddch_generic',   'ch')
-mvw('                    inline int getch_CPP',  '',                    'wgetch',           '')
-mvw('                    inline int getch_CPP',  'wint_t* ch',          'wget_wch',         'ch')
-mvw('template<class Str> inline int addstr_CPP', 'const Str& s',        'waddnstr_generic', '_cstr(s), _slen(s)')
-mvw('template<class Str> inline int addstr_CPP', 'const Str& s, int n', 'waddnstr_generic', '_cstr(s), n')
-mvw('template<class Str> inline int insstr_CPP', 'const Str& s',        'winsnstr_generic',  '_cstr(s), _slen(s)')
-mvw('template<class Str> inline int insstr_CPP', 'const Str& s, int n', 'winsnstr_generic',  '_cstr(s), n')
-mvw('template<class Str> inline int getstr_CPP', 'Str& s',              'wgetnstr_generic',  '_cstr(s), _slen(s)')
-mvw('template<class Str> inline int getstr_CPP', 'Str& s, int n',       'wgetnstr_generic',  '_cstr(s), n')
-raise
-
-# TODO: wget_wch in braceexpand
-# TODO: ungetch...
-for f in braceexpand('{mv,}{w,}addch'):             redef(f, 'addch_CPP')
-for f in braceexpand('{mv,}{w,}getch'):             redef(f, 'getch_CPP')
-for f in braceexpand('{mv,}{w,}add{n,}{w,}str'):    redef(f, 'addstr_CPP')
-for f in braceexpand('{mv,}{w,}ins{n,_nw,_w}str'):  redef(f, 'insstr_CPP')
-for f in braceexpand('{mv,}{w,}get{n,_nw,_w}str'):  redef(f, 'getstr_CPP')
-
-#is_cleared, is_idlok, is_idcok, is_immedok, is_keypad, is_leaveok, is_nodelay, is_notimeout, is_pad, is_scrollok, is_subwin,
-#is_syncok, wgetdelay, wgetparent, wgetscrreg 
-
-#gen('template<>')
-
-#    return \
-#        create_function(tpl, func, args, "return %s;" % mk_call(call, ['stdscr']+call_args)) \
-#        create_function(tpl, func, ['WINDOW* w']+args, % mk_call()) \
-#        create_function(tpl, func, ['int y', 'int x']+args, mk_call(
-
-#        f'{tpl}inline {func}(int y, int x, {args})            {{ return {move(f"{call}(stdscr, {call_args})")}; }}\n'   \
-#        f'{tpl}inline {func}(WINDOW* w, int y, int x, {args}) {{ return {move(f"{call}(w, {call_args})")}; }}'          \
-
-#        f'{tpl}inline {func}({args})                          {{ return {call}(stdscr, {call_args}); }}\n'              \
-#        f'{tpl}inline {func}(WINDOW* w, {args})               {{ return {call}(w, {call_args}); }}\n'                   \
-#        f'{tpl}inline {func}(int y, int x, {args})            {{ return {move(call, "stdscr, " + call_args)}; }}\n'   \
-#        f'{tpl}inline {func}(WINDOW* w, int y, int x, {args}) {{ return {move(call, "w, " + call_args)}; }}'          \

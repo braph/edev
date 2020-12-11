@@ -83,16 +83,19 @@ std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 
 } // namespace Ektoplayer
 
-
-#if defined(__GNUC__) || defined(__clang__)
-  __attribute__((__format__(__printf__, 1, 2)))
-#endif
+#if !defined(NDEBUG) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((__format__(__printf__, 1, 2)))
 static inline void log_write(const char* format, ...) noexcept {
   va_list ap;
   va_start(ap, format);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
-
+#else
+template<typename... Args>
+void log_write(const char* format, Args... args) noexcept {
+  fprintf(stderr, format, args...);
+}
+#endif
 
 #endif
