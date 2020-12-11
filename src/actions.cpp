@@ -105,6 +105,7 @@ SELECT_TAB:
       index = 0;
     mainwindow->windows.current_index(index);
     mainwindow->tabBar.current_index(index);
+    std::raise(SIGWINCH); // TODO: We shouldn't need to refresh the screen
     break;
 
   // Silence warnings

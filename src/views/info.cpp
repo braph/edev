@@ -74,28 +74,28 @@ void Info :: track(Database::Tracks::Track track) noexcept {
 }
 
 inline void Info :: draw_heading(int y, const char* heading) noexcept {
-  attrSet(colors.info_head);
+  attrset(colors.info_head);
   addstr(y, START_HEADING, heading);
 }
 
 inline void Info :: draw_tag(int y, const char* tag) noexcept {
-  attrSet(colors.info_tag);
+  attrset(colors.info_tag);
   addstr(y, START_TAG, tag);
-  attrSet(colors.info_value);
+  attrset(colors.info_value);
   moveCursor(y, START_TAG_VALUE);
 }
 
 template<class Str>
 inline void Info :: draw_info(int y, Str&& info) noexcept {
-  attrSet(colors.info_tag);
+  attrset(colors.info_tag);
   addstr(y, START_INFO, info);
-  attrSet(colors.info_value);
+  attrset(colors.info_value);
   moveCursor(y, START_INFO_VALUE);
 }
 
 template<class Str, class Str1>
 inline void Info :: draw_link(Str&& url, Str1&& title) noexcept {
-  attrSet(colors.url);
+  attrset(colors.url);
   UI::Pos start = cursorPos();
   addstr(title);
   _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
@@ -175,7 +175,7 @@ void Info :: draw() {
       else if (markupParser.type & MarkupParser::LINK_URL)
         linkURL.append(toNarrowChar(c));
       else {
-        unsigned int attr = colors.info_value;
+        attr_t attr = colors.info_value;
         if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
         if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
 
@@ -192,7 +192,7 @@ void Info :: draw() {
           draw_link(std::move(linkURL), std::move(linkText));
         }
 
-        attrSet(attr);
+        attrset(attr);
         *this << c;
       }
     }

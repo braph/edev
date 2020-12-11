@@ -78,18 +78,18 @@ void InfoLine :: layout(Pos pos, Size size) {
 }
 
 void InfoLine :: draw_state() {
-  attrSet(colors.infoline_state);
+  attrset(colors.infoline_state);
   addstr(0, size.width - STATE_LEN, state_to_string[_state]);
 }
 
 void InfoLine :: draw_position_and_length() {
-  attrSet(colors.infoline_position);
+  attrset(colors.infoline_position);
   mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", _track_position/60, _track_position%60, _track_length/60, _track_length%60);
 }
 
 void InfoLine :: draw_track_info() {
   if (! _track) {
-    attrSet(0);
+    attrset(0);
     addstr(1, size.width / 2 - int(STOPPED_HEADING_LEN / 2), STOPPED_HEADING);
   } else {
     print_formatted_strings(0, *_fmt_top);
@@ -124,7 +124,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
 
   moveCursor(y, size.width / 2 - int(sum / 2));
   for (const auto& fmt : format) {
-    attrSet(UI::Colors::set(fmt.fg, fmt.bg) | fmt.attributes);
+    attrset(UI::Colors::set(fmt.fg, fmt.bg) | fmt.attributes);
     if (fmt.text.length())
       *this << fmt.text;
     else

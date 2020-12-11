@@ -34,7 +34,7 @@
   X(help_command_desc,      "help.command_desc")     \
 
 struct LoadedColors {
-#define X(IDENTIFIER, _) unsigned int IDENTIFIER;
+#define X(IDENTIFIER, _) attr_t IDENTIFIER;
   THEME_ELEMENT_IDS
 #undef X
 };
@@ -43,9 +43,9 @@ struct Theme {
   struct Definition {
     short fg;
     short bg;
-    unsigned int attributes;
+    attr_t attributes;
 
-    Definition(short fg_ = -2, short bg_ = -2, unsigned int attrs_ = 0) noexcept
+    Definition(short fg_ = -2, short bg_ = -2, attr_t attrs_ = 0) noexcept
       : fg(fg_), bg(bg_), attributes(attrs_)
     {}
   };

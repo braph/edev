@@ -47,11 +47,11 @@ void ProgressBar :: layout(Pos pos, Size size) {
   auto fader = SpanView<ArrayView<const short>>(fading);
 
   for (i = 0; i < width; ++i) {
-    attrSet(UI::Colors::set(fader.get(width, i), -1));
+    attrset(UI::Colors::set(fader.get(width, i), -1));
     *this << Config::progressbar_progress_char;
   }
   
-  attrSet(colors.progressbar_rest);
+  attrset(colors.progressbar_rest);
   for (; i < width * 2; ++i)
     *this << Config::progressbar_rest_char;
 }

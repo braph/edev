@@ -108,7 +108,7 @@ Theme::Definition* Theme :: get(const std::string& name) noexcept {
   return NULL;
 }
 
-static unsigned int theme_set_color(Theme::Definition& def, Theme::Definition& default_) {
+static attr_t theme_set_color(Theme::Definition& def, Theme::Definition& default_) {
   return UI::Colors::set(
       (def.fg == -2 ? default_.fg : def.fg),
       (def.bg == -2 ? default_.bg : def.bg))

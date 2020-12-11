@@ -164,10 +164,6 @@ struct WidgetDrawable : public Widget, public CursesWindow {
   { return mvwprintw(win, y, x, fmt, args...); }
 #endif
 
-  // attr-methods =============================================================
-  inline int attrSet(unsigned int attrs) noexcept
-  { return wattrset(win, attrs); }
-
   // cursor-methods ===========================================================
   inline int  moveCursor(int y, int x)          noexcept { return wmove(win, y, x); }
   inline Pos  cursorPos()                 const noexcept

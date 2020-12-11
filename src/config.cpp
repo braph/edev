@@ -70,8 +70,8 @@ static short opt_parse_color(const std::string& s) {
   throw std::invalid_argument(s + ": Invalid color");
 }
 
-static unsigned int opt_parse_attribute(const std::string& s) {
-  unsigned int attr = UI::Attribute::parse(s);
+static attr_t opt_parse_attribute(const std::string& s) {
+  attr_t attr = UI::Attribute::parse(s);
   if (attr != UI::Attribute::Invalid)
     return attr;
   throw std::invalid_argument(s + ": Invalid attribute");

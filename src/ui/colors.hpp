@@ -11,7 +11,7 @@ namespace UI {
 
 class Color {
 public:
-  enum : short { Invalid = SHRT_MIN };
+  enum { Invalid = SHRT_MIN };
 
   static short       parse(const std::string&)  noexcept;
   static std::string to_string(short)           noexcept;
@@ -22,12 +22,12 @@ private:
 
 class Attribute {
 public:
-  enum : unsigned { Invalid = UINT_MAX };
+  enum { Invalid = 0xDEAD };
 
-  static unsigned     parse(const std::string&) noexcept;
-  static std::string  to_string(unsigned)       noexcept;
+  static attr_t       parse(const std::string&) noexcept;
+  static std::string  to_string(attr_t)         noexcept;
 private:
-  struct mapping { const char* name; unsigned value; };
+  struct mapping { const char* name; attr_t value; };
   static mapping attributes[];
 };
 

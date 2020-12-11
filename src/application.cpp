@@ -63,7 +63,7 @@ Application :: ~Application() {
 }
 
 void Application :: init() {
-  const char* e = REPORT_BUG;
+  const char* e;
 
   try {
     // Set terminal title

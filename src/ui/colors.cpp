@@ -52,7 +52,7 @@ Attribute::mapping Attribute :: attributes[] = {
   {"underline", A_UNDERLINE}
 };
 
-unsigned int Attribute :: parse(const std::string& attribute) noexcept {
+attr_t Attribute :: parse(const std::string& attribute) noexcept {
   for (const auto& e : attributes)
     if (attribute == e.name)
       return e.value;
@@ -60,7 +60,7 @@ unsigned int Attribute :: parse(const std::string& attribute) noexcept {
   return Invalid;
 }
 
-std::string Attribute :: to_string(unsigned int attribute) noexcept {
+std::string Attribute :: to_string(attr_t attribute) noexcept {
   for (const auto& e : attributes)
     if (attribute == e.value)
       return e.name;

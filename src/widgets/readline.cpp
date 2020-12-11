@@ -57,7 +57,7 @@ void ReadlineWidget :: set_prompt(std::string prompt) noexcept {
 
 void ReadlineWidget :: draw() {
   clear();
-  attrSet(0);
+  attrset(0);
   addstr(0, 0, _prompt);
   int x = getcurx();
   addstr(rl_line_buffer);

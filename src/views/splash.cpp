@@ -82,7 +82,7 @@ void Splash :: draw() {
 
   fader = logoFading;
   for (int i = 0; i < LOGO_HEIGHT; ++i) {
-    attrSet(setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
+    attrset(setFG(fader.get(LOGO_HEIGHT, unsigned(i))));
     addstr(top_pad + i, left_pad, LOGO[i]);
   }
 
@@ -91,7 +91,7 @@ void Splash :: draw() {
     const int x = BUBBLES[i][0];
     const int y = BUBBLES[i][1];
     addch(top_pad + y - 1, left_pad + x + 1, '_' | setFG(fader.get(LOGO_HEIGHT, size_t(y - 1))));
-    attrSet(setFG(fader.get(LOGO_HEIGHT, size_t(y))));
+    attrset(setFG(fader.get(LOGO_HEIGHT, size_t(y))));
     addstr(top_pad + y, left_pad + x, "(_)");
   }
 

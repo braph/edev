@@ -42,9 +42,9 @@ void TabBar :: draw() {
   int i = 0;
   for (const auto& label : _tabs) {
     if (i++ == _current)
-      attrSet(colors.tabbar_selected);
+      attrset(colors.tabbar_selected);
     else
-      attrSet(colors.tabbar_unselected);
+      attrset(colors.tabbar_unselected);
 
     *this << ' ' << label;
   }
