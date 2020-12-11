@@ -22,8 +22,6 @@ template<class T, size_t N> inline int len(const T(&s)[N]) { return N;       }
 template<class T>           inline int len(const T&)       { return INT_MAX; }
 
 // OUTPUT functions
-inline int waddch_generic(WINDOW* w, const chtype ch)           { return waddch(w, ch);       }
-inline int waddch_generic(WINDOW* w, const cchar_t* ch)         { return wadd_wch(w, ch);     }
 inline int waddnstr_generic(WINDOW* w, const char* s, int n)    { return waddnstr(w, s, n);   }
 inline int waddnstr_generic(WINDOW* w, const wchar_t* s, int n) { return waddnwstr(w, s, n);  }
 inline int winsnstr_generic(WINDOW* w, const char* s, int n)    { return winsnstr(w, s, n);   }
@@ -36,12 +34,6 @@ inline int winnstr_generic(WINDOW* w, chtype* s, int n)         { return winchns
 
 namespace Public {
 
-inline int (NC_wgetdelay)(const WINDOW* win) { return wgetdelay(win); }
-inline int (NC_wgetdelay)() { return wgetdelay(stdscr); }
-inline WINDOW* (NC_wgetparent)(const WINDOW* win) { return wgetparent(win); }
-inline WINDOW* (NC_wgetparent)() { return wgetparent(stdscr); }
-inline int (NC_wgetscrreg)(const WINDOW* win, int* top, int* bottom) { return wgetscrreg(win, top, bottom); }
-inline int (NC_wgetscrreg)(int* top, int* bottom) { return wgetscrreg(stdscr, top, bottom); }
 inline int (NC_erase)(WINDOW* win) { return werase(win); }
 inline int (NC_erase)() { return werase(stdscr); }
 inline int (NC_clear)(WINDOW* win) { return wclear(win); }
@@ -72,30 +64,6 @@ inline int (NC_chgat)(WINDOW* win, int n, attr_t attr, short pair, const void *o
 inline int (NC_chgat)(int n, attr_t attr, short pair, const void *opts = NULL) { return wchgat(stdscr, n, attr, pair, opts); }
 inline int (NC_color_set)(WINDOW* win, short pair, void* opts = NULL) { return wcolor_set(win, pair, opts); }
 inline int (NC_color_set)(short pair, void* opts = NULL) { return wcolor_set(stdscr, pair, opts); }
-inline int (NC_getcurx)(const WINDOW* win) { return getcurx(win); }
-inline int (NC_getcurx)() { return getcurx(stdscr); }
-inline int (NC_getcury)(const WINDOW* win) { return getcury(win); }
-inline int (NC_getcury)() { return getcury(stdscr); }
-inline int (NC_getbegx)(const WINDOW* win) { return getbegx(win); }
-inline int (NC_getbegx)() { return getbegx(stdscr); }
-inline int (NC_getbegy)(const WINDOW* win) { return getbegy(win); }
-inline int (NC_getbegy)() { return getbegy(stdscr); }
-inline int (NC_getmaxx)(const WINDOW* win) { return getmaxx(win); }
-inline int (NC_getmaxx)() { return getmaxx(stdscr); }
-inline int (NC_getmaxy)(const WINDOW* win) { return getmaxy(win); }
-inline int (NC_getmaxy)() { return getmaxy(stdscr); }
-inline int (NC_getparx)(const WINDOW* win) { return getparx(win); }
-inline int (NC_getparx)() { return getparx(stdscr); }
-inline int (NC_getpary)(const WINDOW* win) { return getpary(win); }
-inline int (NC_getpary)() { return getpary(stdscr); }
-inline void (NC_getyx)(const WINDOW* win, int& y, int& x) { getyx(win, y, x); }
-inline void (NC_getyx)(int& y, int& x) { getyx(stdscr, y, x); }
-inline void (NC_getbegyx)(const WINDOW* win, int& y, int& x) { getbegyx(win, y, x); }
-inline void (NC_getbegyx)(int& y, int& x) { getbegyx(stdscr, y, x); }
-inline void (NC_getmaxyx)(const WINDOW* win, int& y, int& x) { getmaxyx(win, y, x); }
-inline void (NC_getmaxyx)(int& y, int& x) { getmaxyx(stdscr, y, x); }
-inline void (NC_getparyx)(const WINDOW* win, int& y, int& x) { getparyx(win, y, x); }
-inline void (NC_getparyx)(int& y, int& x) { getparyx(stdscr, y, x); }
 inline bool (NC_is_cleared)(const WINDOW* win) { return is_cleared(win); }
 inline bool (NC_is_cleared)() { return is_cleared(stdscr); }
 inline bool (NC_is_idcok)(const WINDOW* win) { return is_idcok(win); }
@@ -120,14 +88,46 @@ inline bool (NC_is_subwin)(const WINDOW* win) { return is_subwin(win); }
 inline bool (NC_is_subwin)() { return is_subwin(stdscr); }
 inline bool (NC_is_syncok)(const WINDOW* win) { return is_syncok(win); }
 inline bool (NC_is_syncok)() { return is_syncok(stdscr); }
-template<class Chr> inline int (NC_addch)(WINDOW* win, Chr ch) { return waddch_generic(win, ch); }
-template<class Chr> inline int (NC_addch)(Chr ch) { return waddch_generic(stdscr, ch); }
-template<class Chr> inline int (NC_addch)(WINDOW* win, int y, int x, Chr ch) { return wmove(win, y, x), waddch_generic(win, ch); }
-template<class Chr> inline int (NC_addch)(int y, int x, Chr ch) { return wmove(stdscr, y, x), waddch_generic(stdscr, ch); }
-inline int (NC_delch)(WINDOW* win) { return wdelch(win); }
-inline int (NC_delch)() { return wdelch(stdscr); }
-inline int (NC_delch)(WINDOW* win, int y, int x) { return wmove(win, y, x), wdelch(win); }
-inline int (NC_delch)(int y, int x) { return wmove(stdscr, y, x), wdelch(stdscr); }
+inline int (NC_wgetdelay)(const WINDOW* win) { return wgetdelay(win); }
+inline int (NC_wgetdelay)() { return wgetdelay(stdscr); }
+inline WINDOW* (NC_wgetparent)(const WINDOW* win) { return wgetparent(win); }
+inline WINDOW* (NC_wgetparent)() { return wgetparent(stdscr); }
+inline int (NC_wgetscrreg)(const WINDOW* win, int* top, int* bottom) { return wgetscrreg(win, top, bottom); }
+inline int (NC_wgetscrreg)(int* top, int* bottom) { return wgetscrreg(stdscr, top, bottom); }
+inline int (NC_getattrs)(const WINDOW* win) { return getattrs(win); }
+inline int (NC_getattrs)() { return getattrs(stdscr); }
+inline int (NC_getcurx)(const WINDOW* win) { return getcurx(win); }
+inline int (NC_getcurx)() { return getcurx(stdscr); }
+inline int (NC_getcury)(const WINDOW* win) { return getcury(win); }
+inline int (NC_getcury)() { return getcury(stdscr); }
+inline int (NC_getbegx)(const WINDOW* win) { return getbegx(win); }
+inline int (NC_getbegx)() { return getbegx(stdscr); }
+inline int (NC_getbegy)(const WINDOW* win) { return getbegy(win); }
+inline int (NC_getbegy)() { return getbegy(stdscr); }
+inline int (NC_getmaxx)(const WINDOW* win) { return getmaxx(win); }
+inline int (NC_getmaxx)() { return getmaxx(stdscr); }
+inline int (NC_getmaxy)(const WINDOW* win) { return getmaxy(win); }
+inline int (NC_getmaxy)() { return getmaxy(stdscr); }
+inline int (NC_getparx)(const WINDOW* win) { return getparx(win); }
+inline int (NC_getparx)() { return getparx(stdscr); }
+inline int (NC_getpary)(const WINDOW* win) { return getpary(win); }
+inline int (NC_getpary)() { return getpary(stdscr); }
+inline void (NC_getyx)(const WINDOW* win, int& y, int& x) { getyx(win, y, x); }
+inline void (NC_getyx)(int& y, int& x) { getyx(stdscr, y, x); }
+inline void (NC_getbegyx)(const WINDOW* win, int& y, int& x) { getbegyx(win, y, x); }
+inline void (NC_getbegyx)(int& y, int& x) { getbegyx(stdscr, y, x); }
+inline void (NC_getmaxyx)(const WINDOW* win, int& y, int& x) { getmaxyx(win, y, x); }
+inline void (NC_getmaxyx)(int& y, int& x) { getmaxyx(stdscr, y, x); }
+inline void (NC_getparyx)(const WINDOW* win, int& y, int& x) { getparyx(win, y, x); }
+inline void (NC_getparyx)(int& y, int& x) { getparyx(stdscr, y, x); }
+inline int (NC_addch)(WINDOW* win, chtype ch) { return waddch(win, ch); }
+inline int (NC_addch)(chtype ch) { return waddch(stdscr, ch); }
+inline int (NC_addch)(WINDOW* win, int y, int x, chtype ch) { return wmove(win, y, x), waddch(win, ch); }
+inline int (NC_addch)(int y, int x, chtype ch) { return wmove(stdscr, y, x), waddch(stdscr, ch); }
+inline int (NC_addch)(WINDOW* win, const cchar_t* ch) { return wadd_wch(win, ch); }
+inline int (NC_addch)(const cchar_t* ch) { return wadd_wch(stdscr, ch); }
+inline int (NC_addch)(WINDOW* win, int y, int x, const cchar_t* ch) { return wmove(win, y, x), wadd_wch(win, ch); }
+inline int (NC_addch)(int y, int x, const cchar_t* ch) { return wmove(stdscr, y, x), wadd_wch(stdscr, ch); }
 template<class Str> inline int (NC_addstr)(WINDOW* win, const Str& s) { return waddnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_addstr)(const Str& s) { return waddnstr_generic(stdscr, cstr(s), len(s)); }
 template<class Str> inline int (NC_addstr)(WINDOW* win, int y, int x, const Str& s) { return wmove(win, y, x), waddnstr_generic(win, cstr(s), len(s)); }
@@ -136,6 +136,14 @@ template<class Str> inline int (NC_addstr)(WINDOW* win, const Str& s, int n) { r
 template<class Str> inline int (NC_addstr)(const Str& s, int n) { return waddnstr_generic(stdscr, cstr(s), n); }
 template<class Str> inline int (NC_addstr)(WINDOW* win, int y, int x, const Str& s, int n) { return wmove(win, y, x), waddnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_addstr)(int y, int x, const Str& s, int n) { return wmove(stdscr, y, x), waddnstr_generic(stdscr, cstr(s), n); }
+inline int (NC_insch)(WINDOW* win, chtype ch) { return winsch(win, ch); }
+inline int (NC_insch)(chtype ch) { return winsch(stdscr, ch); }
+inline int (NC_insch)(WINDOW* win, int y, int x, chtype ch) { return wmove(win, y, x), winsch(win, ch); }
+inline int (NC_insch)(int y, int x, chtype ch) { return wmove(stdscr, y, x), winsch(stdscr, ch); }
+inline int (NC_insch)(WINDOW* win, const cchar_t* ch) { return wins_wch(win, ch); }
+inline int (NC_insch)(const cchar_t* ch) { return wins_wch(stdscr, ch); }
+inline int (NC_insch)(WINDOW* win, int y, int x, const cchar_t* ch) { return wmove(win, y, x), wins_wch(win, ch); }
+inline int (NC_insch)(int y, int x, const cchar_t* ch) { return wmove(stdscr, y, x), wins_wch(stdscr, ch); }
 template<class Str> inline int (NC_insstr)(WINDOW* win, const Str& s) { return winsnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_insstr)(const Str& s) { return winsnstr_generic(stdscr, cstr(s), len(s)); }
 template<class Str> inline int (NC_insstr)(WINDOW* win, int y, int x, const Str& s) { return wmove(win, y, x), winsnstr_generic(win, cstr(s), len(s)); }
@@ -144,6 +152,10 @@ template<class Str> inline int (NC_insstr)(WINDOW* win, const Str& s, int n) { r
 template<class Str> inline int (NC_insstr)(const Str& s, int n) { return winsnstr_generic(stdscr, cstr(s), n); }
 template<class Str> inline int (NC_insstr)(WINDOW* win, int y, int x, const Str& s, int n) { return wmove(win, y, x), winsnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_insstr)(int y, int x, const Str& s, int n) { return wmove(stdscr, y, x), winsnstr_generic(stdscr, cstr(s), n); }
+inline int (NC_delch)(WINDOW* win) { return wdelch(win); }
+inline int (NC_delch)() { return wdelch(stdscr); }
+inline int (NC_delch)(WINDOW* win, int y, int x) { return wmove(win, y, x), wdelch(win); }
+inline int (NC_delch)(int y, int x) { return wmove(stdscr, y, x), wdelch(stdscr); }
 inline int (NC_getch)(WINDOW* win) { return wgetch(win); }
 inline int (NC_getch)() { return wgetch(stdscr); }
 inline int (NC_getch)(WINDOW* win, int y, int x) { return wmove(win, y, x), wgetch(win); }
@@ -168,6 +180,14 @@ template<class Str> inline int (NC_instr)(WINDOW* win, Str& s, int n) { return w
 template<class Str> inline int (NC_instr)(Str& s, int n) { return winnstr_generic(stdscr, cstr(s), n); }
 template<class Str> inline int (NC_instr)(WINDOW* win, int y, int x, Str& s, int n) { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) { return wmove(stdscr, y, x), winnstr_generic(stdscr, cstr(s), n); }
+inline int (NC_inch)(WINDOW* win, cchar_t* ch) { return win_wch(win, ch); }
+inline int (NC_inch)(cchar_t* ch) { return win_wch(stdscr, ch); }
+inline int (NC_inch)(WINDOW* win, int y, int x, cchar_t* ch) { return wmove(win, y, x), win_wch(win, ch); }
+inline int (NC_inch)(int y, int x, cchar_t* ch) { return wmove(stdscr, y, x), win_wch(stdscr, ch); }
+inline chtype (NC_inch)(WINDOW* win) { return winch(win); }
+inline chtype (NC_inch)() { return winch(stdscr); }
+inline chtype (NC_inch)(WINDOW* win, int y, int x) { return wmove(win, y, x), winch(win); }
+inline chtype (NC_inch)(int y, int x) { return wmove(stdscr, y, x), winch(stdscr); }
 
 struct CursesWindow {
   WINDOW* win;
@@ -177,20 +197,14 @@ struct CursesWindow {
 
   template<class S>
   inline K& operator<<(const S& s) noexcept { NC_addstr(s); return *this; }
-  inline K& operator<<(char c)     noexcept { NC_addch(static_cast<chtype>(c)); return *this; }
-  inline K& operator<<(wchar_t c)  noexcept { waddnwstr(win, &c, 1); return *this; }
+  inline K& operator<<(char c)     noexcept { waddch(win, static_cast<chtype>(c)); return *this; }
+  inline K& operator<<(wchar_t c)  noexcept { waddnwstr(win, &c, 1);  return *this; }
   inline K& operator<<(int i)      noexcept { wprintw(win, "%d", i);  return *this; }
   inline K& operator<<(size_t s)   noexcept { wprintw(win, "%zu", s); return *this; }
   inline K& operator<<(float f)    noexcept { wprintw(win, "%f", f);  return *this; }
   inline K& operator<<(double d)   noexcept { wprintw(win, "%f", d);  return *this; }
 
   
-inline int (wgetdelay)() const noexcept { return wgetdelay(win); }
-inline int (NC_wgetdelay)() const noexcept { return wgetdelay(win); }
-inline WINDOW* (wgetparent)() const noexcept { return wgetparent(win); }
-inline WINDOW* (NC_wgetparent)() const noexcept { return wgetparent(win); }
-inline int (wgetscrreg)(int* top, int* bottom) const noexcept { return wgetscrreg(win, top, bottom); }
-inline int (NC_wgetscrreg)(int* top, int* bottom) const noexcept { return wgetscrreg(win, top, bottom); }
 inline int (erase)() noexcept { return werase(win); }
 inline int (NC_erase)() noexcept { return werase(win); }
 inline int (clear)() noexcept { return wclear(win); }
@@ -221,30 +235,6 @@ inline int (chgat)(int n, attr_t attr, short pair, const void *opts = NULL) noex
 inline int (NC_chgat)(int n, attr_t attr, short pair, const void *opts = NULL) noexcept { return wchgat(win, n, attr, pair, opts); }
 inline int (color_set)(short pair, void* opts = NULL) noexcept { return wcolor_set(win, pair, opts); }
 inline int (NC_color_set)(short pair, void* opts = NULL) noexcept { return wcolor_set(win, pair, opts); }
-inline int (getcurx)() const noexcept { return getcurx(win); }
-inline int (NC_getcurx)() const noexcept { return getcurx(win); }
-inline int (getcury)() const noexcept { return getcury(win); }
-inline int (NC_getcury)() const noexcept { return getcury(win); }
-inline int (getbegx)() const noexcept { return getbegx(win); }
-inline int (NC_getbegx)() const noexcept { return getbegx(win); }
-inline int (getbegy)() const noexcept { return getbegy(win); }
-inline int (NC_getbegy)() const noexcept { return getbegy(win); }
-inline int (getmaxx)() const noexcept { return getmaxx(win); }
-inline int (NC_getmaxx)() const noexcept { return getmaxx(win); }
-inline int (getmaxy)() const noexcept { return getmaxy(win); }
-inline int (NC_getmaxy)() const noexcept { return getmaxy(win); }
-inline int (getparx)() const noexcept { return getparx(win); }
-inline int (NC_getparx)() const noexcept { return getparx(win); }
-inline int (getpary)() const noexcept { return getpary(win); }
-inline int (NC_getpary)() const noexcept { return getpary(win); }
-inline void (getyx)(int& y, int& x) const noexcept { getyx(win, y, x); }
-inline void (NC_getyx)(int& y, int& x) const noexcept { getyx(win, y, x); }
-inline void (getbegyx)(int& y, int& x) const noexcept { getbegyx(win, y, x); }
-inline void (NC_getbegyx)(int& y, int& x) const noexcept { getbegyx(win, y, x); }
-inline void (getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
-inline void (NC_getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
-inline void (getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
-inline void (NC_getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
 inline bool (is_cleared)() const noexcept { return is_cleared(win); }
 inline bool (NC_is_cleared)() const noexcept { return is_cleared(win); }
 inline bool (is_idcok)() const noexcept { return is_idcok(win); }
@@ -269,14 +259,46 @@ inline bool (is_subwin)() const noexcept { return is_subwin(win); }
 inline bool (NC_is_subwin)() const noexcept { return is_subwin(win); }
 inline bool (is_syncok)() const noexcept { return is_syncok(win); }
 inline bool (NC_is_syncok)() const noexcept { return is_syncok(win); }
-template<class Chr> inline int (addch)(Chr ch) noexcept { return waddch_generic(win, ch); }
-template<class Chr> inline int (NC_addch)(Chr ch) noexcept { return waddch_generic(win, ch); }
-template<class Chr> inline int (addch)(int y, int x, Chr ch) noexcept { return wmove(win, y, x), waddch_generic(win, ch); }
-template<class Chr> inline int (NC_addch)(int y, int x, Chr ch) noexcept { return wmove(win, y, x), waddch_generic(win, ch); }
-inline int (delch)() noexcept { return wdelch(win); }
-inline int (NC_delch)() noexcept { return wdelch(win); }
-inline int (delch)(int y, int x) noexcept { return wmove(win, y, x), wdelch(win); }
-inline int (NC_delch)(int y, int x) noexcept { return wmove(win, y, x), wdelch(win); }
+inline int (wgetdelay)() const noexcept { return wgetdelay(win); }
+inline int (NC_wgetdelay)() const noexcept { return wgetdelay(win); }
+inline WINDOW* (wgetparent)() const noexcept { return wgetparent(win); }
+inline WINDOW* (NC_wgetparent)() const noexcept { return wgetparent(win); }
+inline int (wgetscrreg)(int* top, int* bottom) const noexcept { return wgetscrreg(win, top, bottom); }
+inline int (NC_wgetscrreg)(int* top, int* bottom) const noexcept { return wgetscrreg(win, top, bottom); }
+inline int (getattrs)() const noexcept { return getattrs(win); }
+inline int (NC_getattrs)() const noexcept { return getattrs(win); }
+inline int (getcurx)() const noexcept { return getcurx(win); }
+inline int (NC_getcurx)() const noexcept { return getcurx(win); }
+inline int (getcury)() const noexcept { return getcury(win); }
+inline int (NC_getcury)() const noexcept { return getcury(win); }
+inline int (getbegx)() const noexcept { return getbegx(win); }
+inline int (NC_getbegx)() const noexcept { return getbegx(win); }
+inline int (getbegy)() const noexcept { return getbegy(win); }
+inline int (NC_getbegy)() const noexcept { return getbegy(win); }
+inline int (getmaxx)() const noexcept { return getmaxx(win); }
+inline int (NC_getmaxx)() const noexcept { return getmaxx(win); }
+inline int (getmaxy)() const noexcept { return getmaxy(win); }
+inline int (NC_getmaxy)() const noexcept { return getmaxy(win); }
+inline int (getparx)() const noexcept { return getparx(win); }
+inline int (NC_getparx)() const noexcept { return getparx(win); }
+inline int (getpary)() const noexcept { return getpary(win); }
+inline int (NC_getpary)() const noexcept { return getpary(win); }
+inline void (getyx)(int& y, int& x) const noexcept { getyx(win, y, x); }
+inline void (NC_getyx)(int& y, int& x) const noexcept { getyx(win, y, x); }
+inline void (getbegyx)(int& y, int& x) const noexcept { getbegyx(win, y, x); }
+inline void (NC_getbegyx)(int& y, int& x) const noexcept { getbegyx(win, y, x); }
+inline void (getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
+inline void (NC_getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
+inline void (getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
+inline void (NC_getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
+inline int (addch)(chtype ch) noexcept { return waddch(win, ch); }
+inline int (NC_addch)(chtype ch) noexcept { return waddch(win, ch); }
+inline int (addch)(int y, int x, chtype ch) noexcept { return wmove(win, y, x), waddch(win, ch); }
+inline int (NC_addch)(int y, int x, chtype ch) noexcept { return wmove(win, y, x), waddch(win, ch); }
+inline int (addch)(const cchar_t* ch) noexcept { return wadd_wch(win, ch); }
+inline int (NC_addch)(const cchar_t* ch) noexcept { return wadd_wch(win, ch); }
+inline int (addch)(int y, int x, const cchar_t* ch) noexcept { return wmove(win, y, x), wadd_wch(win, ch); }
+inline int (NC_addch)(int y, int x, const cchar_t* ch) noexcept { return wmove(win, y, x), wadd_wch(win, ch); }
 template<class Str> inline int (addstr)(const Str& s) noexcept { return waddnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_addstr)(const Str& s) noexcept { return waddnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (addstr)(int y, int x, const Str& s) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), len(s)); }
@@ -285,6 +307,14 @@ template<class Str> inline int (addstr)(const Str& s, int n) noexcept { return w
 template<class Str> inline int (NC_addstr)(const Str& s, int n) noexcept { return waddnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (addstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_addstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), n); }
+inline int (insch)(chtype ch) noexcept { return winsch(win, ch); }
+inline int (NC_insch)(chtype ch) noexcept { return winsch(win, ch); }
+inline int (insch)(int y, int x, chtype ch) noexcept { return wmove(win, y, x), winsch(win, ch); }
+inline int (NC_insch)(int y, int x, chtype ch) noexcept { return wmove(win, y, x), winsch(win, ch); }
+inline int (insch)(const cchar_t* ch) noexcept { return wins_wch(win, ch); }
+inline int (NC_insch)(const cchar_t* ch) noexcept { return wins_wch(win, ch); }
+inline int (insch)(int y, int x, const cchar_t* ch) noexcept { return wmove(win, y, x), wins_wch(win, ch); }
+inline int (NC_insch)(int y, int x, const cchar_t* ch) noexcept { return wmove(win, y, x), wins_wch(win, ch); }
 template<class Str> inline int (insstr)(const Str& s) noexcept { return winsnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_insstr)(const Str& s) noexcept { return winsnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (insstr)(int y, int x, const Str& s) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), len(s)); }
@@ -293,6 +323,10 @@ template<class Str> inline int (insstr)(const Str& s, int n) noexcept { return w
 template<class Str> inline int (NC_insstr)(const Str& s, int n) noexcept { return winsnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (insstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_insstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), n); }
+inline int (delch)() noexcept { return wdelch(win); }
+inline int (NC_delch)() noexcept { return wdelch(win); }
+inline int (delch)(int y, int x) noexcept { return wmove(win, y, x), wdelch(win); }
+inline int (NC_delch)(int y, int x) noexcept { return wmove(win, y, x), wdelch(win); }
 inline int (getch)() noexcept { return wgetch(win); }
 inline int (NC_getch)() noexcept { return wgetch(win); }
 inline int (getch)(int y, int x) noexcept { return wmove(win, y, x), wgetch(win); }
@@ -317,8 +351,15 @@ template<class Str> inline int (instr)(Str& s, int n) noexcept { return winnstr_
 template<class Str> inline int (NC_instr)(Str& s, int n) noexcept { return winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (instr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }
-
-}; // class CursesWindow
+inline int (inch)(cchar_t* ch) noexcept { return win_wch(win, ch); }
+inline int (NC_inch)(cchar_t* ch) noexcept { return win_wch(win, ch); }
+inline int (inch)(int y, int x, cchar_t* ch) noexcept { return wmove(win, y, x), win_wch(win, ch); }
+inline int (NC_inch)(int y, int x, cchar_t* ch) noexcept { return wmove(win, y, x), win_wch(win, ch); }
+inline chtype (inch)() noexcept { return winch(win); }
+inline chtype (NC_inch)() noexcept { return winch(win); }
+inline chtype (inch)(int y, int x) noexcept { return wmove(win, y, x), winch(win); }
+inline chtype (NC_inch)(int y, int x) noexcept { return wmove(win, y, x), winch(win); }
+};
 } // namespace Public
 } // namespace NCursesCPP_Implementation
 
@@ -327,12 +368,6 @@ template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept 
 #undef erase
 #undef move
 
-#undef  wgetdelay
-#define wgetdelay NC_wgetdelay
-#undef  wgetparent
-#define wgetparent NC_wgetparent
-#undef  wgetscrreg
-#define wgetscrreg NC_wgetscrreg
 #undef  clrtobot
 #define clrtobot NC_clrtobot
 #undef  clrtoeol
@@ -359,30 +394,6 @@ template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept 
 #define chgat NC_chgat
 #undef  color_set
 #define color_set NC_color_set
-#undef  getcurx
-#define getcurx NC_getcurx
-#undef  getcury
-#define getcury NC_getcury
-#undef  getbegx
-#define getbegx NC_getbegx
-#undef  getbegy
-#define getbegy NC_getbegy
-#undef  getmaxx
-#define getmaxx NC_getmaxx
-#undef  getmaxy
-#define getmaxy NC_getmaxy
-#undef  getparx
-#define getparx NC_getparx
-#undef  getpary
-#define getpary NC_getpary
-#undef  getyx
-#define getyx NC_getyx
-#undef  getbegyx
-#define getbegyx NC_getbegyx
-#undef  getmaxyx
-#define getmaxyx NC_getmaxyx
-#undef  getparyx
-#define getparyx NC_getparyx
 #undef  is_cleared
 #define is_cleared NC_is_cleared
 #undef  is_idcok
@@ -407,32 +418,62 @@ template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept 
 #define is_subwin NC_is_subwin
 #undef  is_syncok
 #define is_syncok NC_is_syncok
+#undef  wgetdelay
+#define wgetdelay NC_wgetdelay
+#undef  wgetparent
+#define wgetparent NC_wgetparent
+#undef  wgetscrreg
+#define wgetscrreg NC_wgetscrreg
+#undef  getattrs
+#define getattrs NC_getattrs
+#undef  getcurx
+#define getcurx NC_getcurx
+#undef  getcury
+#define getcury NC_getcury
+#undef  getbegx
+#define getbegx NC_getbegx
+#undef  getbegy
+#define getbegy NC_getbegy
+#undef  getmaxx
+#define getmaxx NC_getmaxx
+#undef  getmaxy
+#define getmaxy NC_getmaxy
+#undef  getparx
+#define getparx NC_getparx
+#undef  getpary
+#define getpary NC_getpary
+#undef  getyx
+#define getyx NC_getyx
+#undef  getbegyx
+#define getbegyx NC_getbegyx
+#undef  getmaxyx
+#define getmaxyx NC_getmaxyx
+#undef  getparyx
+#define getparyx NC_getparyx
 #undef  addch
 #define addch NC_addch
-#undef  delch
-#define delch NC_delch
 #undef  addstr
 #define addstr NC_addstr
+#undef  insch
+#define insch NC_insch
 #undef  insstr
 #define insstr NC_insstr
+#undef  delch
+#define delch NC_delch
 #undef  getch
 #define getch NC_getch
 #undef  getstr
 #define getstr NC_getstr
 #undef  instr
 #define instr NC_instr
+#undef  inch
+#define inch NC_inch
 #undef  mvwaddch
 #define mvwaddch NC_addch
 #undef  mvaddch
 #define mvaddch NC_addch
 #undef  waddch
 #define waddch NC_addch
-#undef  mvwgetch
-#define mvwgetch NC_getch
-#undef  mvgetch
-#define mvgetch NC_getch
-#undef  wgetch
-#define wgetch NC_getch
 #undef  mvwaddnwstr
 #define mvwaddnwstr NC_addstr
 #undef  mvwaddnstr
@@ -463,30 +504,20 @@ template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept 
 #define addnstr NC_addstr
 #undef  addwstr
 #define addwstr NC_addstr
-#undef  mvwinsnstr
-#define mvwinsnstr NC_insstr
-#undef  mvwins_nwstr
-#define mvwins_nwstr NC_insstr
-#undef  mvwins_wstr
-#define mvwins_wstr NC_insstr
-#undef  mvinsnstr
-#define mvinsnstr NC_insstr
-#undef  mvins_nwstr
-#define mvins_nwstr NC_insstr
-#undef  mvins_wstr
-#define mvins_wstr NC_insstr
-#undef  winsnstr
-#define winsnstr NC_insstr
-#undef  wins_nwstr
-#define wins_nwstr NC_insstr
-#undef  wins_wstr
-#define wins_wstr NC_insstr
-#undef  insnstr
-#define insnstr NC_insstr
-#undef  ins_nwstr
-#define ins_nwstr NC_insstr
-#undef  ins_wstr
-#define ins_wstr NC_insstr
+#undef  mvwgetch
+#define mvwgetch NC_getch
+#undef  mvwget_wch
+#define mvwget_wch NC_getch
+#undef  mvgetch
+#define mvgetch NC_getch
+#undef  mvget_wch
+#define mvget_wch NC_getch
+#undef  wgetch
+#define wgetch NC_getch
+#undef  wget_wch
+#define wget_wch NC_getch
+#undef  get_wch
+#define get_wch NC_getch
 #undef  mvwgetnstr
 #define mvwgetnstr NC_getstr
 #undef  mvwget_nwstr
@@ -511,6 +542,58 @@ template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept 
 #define get_nwstr NC_getstr
 #undef  get_wstr
 #define get_wstr NC_getstr
+#undef  mvwinsch
+#define mvwinsch NC_insch
+#undef  mvwins_wch
+#define mvwins_wch NC_insch
+#undef  mvinsch
+#define mvinsch NC_insch
+#undef  mvins_wch
+#define mvins_wch NC_insch
+#undef  winsch
+#define winsch NC_insch
+#undef  wins_wch
+#define wins_wch NC_insch
+#undef  ins_wch
+#define ins_wch NC_insch
+#undef  mvwinsnstr
+#define mvwinsnstr NC_insstr
+#undef  mvwins_nwstr
+#define mvwins_nwstr NC_insstr
+#undef  mvwins_wstr
+#define mvwins_wstr NC_insstr
+#undef  mvinsnstr
+#define mvinsnstr NC_insstr
+#undef  mvins_nwstr
+#define mvins_nwstr NC_insstr
+#undef  mvins_wstr
+#define mvins_wstr NC_insstr
+#undef  winsnstr
+#define winsnstr NC_insstr
+#undef  wins_nwstr
+#define wins_nwstr NC_insstr
+#undef  wins_wstr
+#define wins_wstr NC_insstr
+#undef  insnstr
+#define insnstr NC_insstr
+#undef  ins_nwstr
+#define ins_nwstr NC_insstr
+#undef  ins_wstr
+#define ins_wstr NC_insstr
+#undef  mvwinch
+#define mvwinch NC_inch
+#undef  mvwin_wch
+#define mvwin_wch NC_inch
+#undef  mvinch
+#define mvinch NC_inch
+#undef  mvin_wch
+#define mvin_wch NC_inch
+#undef  winch
+#define winch NC_inch
+#undef  win_wch
+#define win_wch NC_inch
+#undef  in_wch
+#define in_wch NC_inch
 #undef  mvwinchstr
 #define mvwinchstr NC_instr
 #undef  mvwinstr

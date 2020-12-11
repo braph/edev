@@ -16,11 +16,9 @@ would pick the addstr(const char*) version.
 However, we can provide template<class T> addstr(T s) { addstr(s.c_str()); }
 '''
 
-# TODO: generate functions also for ... eerm w.. you now? not just ...
+# TODO: generate w* functions, too!
 # TODO: ifdef then undef... (NCURSES_NOMACROS)
-# TODO: inch, ungetch...
 # TODO: printw: to string everything
-# TODO: getattrs?
 # TODO: wbkgdset, wbg ...
 # TODO: default arguments!
 
@@ -87,10 +85,6 @@ class Func():
 def a(*args, **kw):  funcs.append(Func(*args, **kw))
 def mv(*args, **kw): funcs.append(Func(*args, **kw, mv=True))
 
-a(int,    "wgetdelay",  "", "wgetdelay",  "", const=True)
-a(WINDOW, "wgetparent", "", "wgetparent", "", const=True)
-a(int,    "wgetscrreg", "int* top, int* bottom", "wgetscrreg", "top, bottom", const=True)
-
 # curs_clear(3X):
 a(int, "erase",    "", "werase",    "")
 a(int, "clear",    "", "wclear",    "")
@@ -110,26 +104,35 @@ a(int, "attr_get", "attr_t* attrs, NCURSES_PAIRS_T* pair = NULL, void* opts = NU
 a(int, "chgat",    "int n, attr_t attr, short pair, const void *opts = NULL",        "wchgat",     "n, attr, pair, opts")
 a(int, "color_set", "short pair, void* opts = NULL",                                 "wcolor_set", "pair, opts")
 
-
-# getcurx, getcury, getbegx, getbegy, ...
-for f in braceexpand("get{cur,beg,max,par}{x,y}"):
-    a(int, f, "", f, "", const=True)
-
-# getyx, getbegyx ...
-for f in braceexpand("get{,beg,max,par}yx"):
-    a(void, f, "int& y, int& x", f, "y, x", const=True)
-
+# curs_opaque(3X):
 # TODO: ifdef NCURSES_EXT_FUNCS
 for f in braceexpand("is_{cleared,idcok,idlok,immedok,keypad,leaveok,nodelay,notimeout,pad,scrollok,subwin,syncok}"):
     a(bool, f, "", f, "", const=True)
 
+a(int,    "wgetdelay",  "", "wgetdelay",  "", const=True)
+a(WINDOW, "wgetparent", "", "wgetparent", "", const=True)
+a(int,    "wgetscrreg", "int* top, int* bottom", "wgetscrreg", "top, bottom", const=True)
+
+# curs_legacy(3X):
+a(int, "getattrs", "", "getattrs", "", const=True)
+
+for f in braceexpand("get{cur,beg,max,par}{x,y}"):
+    a(int, f, "", f, "", const=True)
+
+# curs_getyx(3X):
+for f in braceexpand("get{,beg,max,par}yx"):
+    a(void, f, "int& y, int& x", f, "y, x", const=True)
+
 # OUTPUT functions
-mv(int, "addch",  "Chr ch",              "waddch_generic",    "ch",                 template='class Chr')
-mv(int, "delch",  "",                    "wdelch",            "")
+mv(int, "addch",  "chtype ch",           "waddch",            "ch")
+mv(int, "addch",  "const cchar_t* ch",   "wadd_wch",          "ch")
 mv(int, "addstr", "const Str& s",        "waddnstr_generic",  "cstr(s), len(s)",    template='class Str')
 mv(int, "addstr", "const Str& s, int n", "waddnstr_generic",  "cstr(s), n",         template='class Str')
+mv(int, "insch",  "chtype ch",           "winsch",            "ch")
+mv(int, "insch",  "const cchar_t* ch",   "wins_wch",          "ch")
 mv(int, "insstr", "const Str& s",        "winsnstr_generic",  "cstr(s), len(s)",    template='class Str')
 mv(int, "insstr", "const Str& s, int n", "winsnstr_generic",  "cstr(s), n",         template='class Str')
+mv(int, "delch",  "",                    "wdelch",            "")
 # INPUT functions
 mv(int, "getch",  "",                    "wgetch",            "")
 mv(int, "getch",  "wint_t* ch",          "wget_wch",          "ch")
@@ -137,6 +140,11 @@ mv(int, "getstr", "Str& s",              "wgetnstr_generic",  "cstr(s), in_len(s
 mv(int, "getstr", "Str& s, int n",       "wgetnstr_generic",  "cstr(s), n",         template='class Str')
 mv(int, "instr",  "Str& s",              "winnstr_generic",   "cstr(s), in_len(s)", template='class Str')
 mv(int, "instr",  "Str& s, int n",       "winnstr_generic",   "cstr(s), n",         template='class Str')
+mv(int, "inch",   "cchar_t* ch",         "win_wch",           "ch")
+mv("chtype", "inch", "",                 "winch",             "")
+
+# Functions that are not bound to a window:
+# ungetch(int), has_key(int)
 
 CURSES_FUNCTIONS = ''
 CURSES_WINDOW_METHODS = ''
@@ -157,12 +165,13 @@ for f in funcs:
 for f in funcs:
     define[f.name] = prefix+f.name
 
-# TODO: wget_wch in braceexpand (I forgot what i meant with this...)
 for f in braceexpand('{mv,}{w,}addch'):             define[f] = prefix+'addch'
-for f in braceexpand('{mv,}{w,}getch'):             define[f] = prefix+'getch'
 for f in braceexpand('{mv,}{w,}add{n,}{w,}str'):    define[f] = prefix+'addstr'
-for f in braceexpand('{mv,}{w,}ins{n,_nw,_w}str'):  define[f] = prefix+'insstr'
+for f in braceexpand('{mv,}{w,}get{,_w}ch'):        define[f] = prefix+'getch'
 for f in braceexpand('{mv,}{w,}get{n,_nw,_w}str'):  define[f] = prefix+'getstr'
+for f in braceexpand('{mv,}{w,}ins{,_w}ch'):        define[f] = prefix+'insch'
+for f in braceexpand('{mv,}{w,}ins{n,_nw,_w}str'):  define[f] = prefix+'insstr'
+for f in braceexpand('{mv,}{w,}in{,_w}ch'):         define[f] = prefix+'inch'
 for f in braceexpand('{mv,}{w,}in{ch,}str'):        define[f] = prefix+'instr'
 
 define.pop('clear',None)

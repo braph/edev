@@ -21,8 +21,6 @@ template<class T, size_t N> inline int len(const T(&s)[N]) { return N;       }
 template<class T>           inline int len(const T&)       { return INT_MAX; }
 
 // OUTPUT functions
-inline int waddch_generic(WINDOW* w, const chtype ch)           { return waddch(w, ch);       }
-inline int waddch_generic(WINDOW* w, const cchar_t* ch)         { return wadd_wch(w, ch);     }
 inline int waddnstr_generic(WINDOW* w, const char* s, int n)    { return waddnstr(w, s, n);   }
 inline int waddnstr_generic(WINDOW* w, const wchar_t* s, int n) { return waddnwstr(w, s, n);  }
 inline int winsnstr_generic(WINDOW* w, const char* s, int n)    { return winsnstr(w, s, n);   }
@@ -44,16 +42,15 @@ struct CursesWindow {
 
   template<class S>
   inline K& operator<<(const S& s) noexcept { ${prefix}addstr(s); return *this; }
-  inline K& operator<<(char c)     noexcept { ${prefix}addch(static_cast<chtype>(c)); return *this; }
-  inline K& operator<<(wchar_t c)  noexcept { waddnwstr(win, &c, 1); return *this; }
+  inline K& operator<<(char c)     noexcept { waddch(win, static_cast<chtype>(c)); return *this; }
+  inline K& operator<<(wchar_t c)  noexcept { waddnwstr(win, &c, 1);  return *this; }
   inline K& operator<<(int i)      noexcept { wprintw(win, "%d", i);  return *this; }
   inline K& operator<<(size_t s)   noexcept { wprintw(win, "%zu", s); return *this; }
   inline K& operator<<(float f)    noexcept { wprintw(win, "%f", f);  return *this; }
   inline K& operator<<(double d)   noexcept { wprintw(win, "%f", d);  return *this; }
 
   $CURSES_WINDOW_METHODS
-
-}; // class CursesWindow
+};
 } // namespace Public
 } // namespace NCursesCPP_Implementation
 

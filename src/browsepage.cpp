@@ -94,8 +94,7 @@ int BrowsePageParser :: num_pages() {
   // <span class='pages'>Page 1 of 31</span>
   auto result = xpath.query_string(cache["string(//span[@class = 'pages']/text())"]);
   if (result) {
-    const char* s = result.c_str();
-    s = std::strrchr(s, ' ');
+    const char* s = std::strrchr(result.c_str(), ' ');
     if (s)
       return std::atoi(s);
   }

@@ -236,7 +236,11 @@ public:
   void set(size_t i, CString s) {
     auto string_id = (*this)[i];
     if (!string_id || std::strcmp(chunk.get(string_id), s))
+#if 0
       (*this)[i] = chunk.add(s);
+#else /* this is faster */
+      (*this)[i] = chunk.add_unchecked(s);
+#endif
   }
 };
 
