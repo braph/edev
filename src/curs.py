@@ -43,8 +43,8 @@ def mk_func_signature(template_args, ret, name, args, const=False, noexcept=Fals
 
 class Func():
     # TODO: make this configuratble
-    WMOVE = 'wmove(%s, y, x), '
     WMOVE = 'wmove(%s, y, x) == ERR ? ERR : '
+    WMOVE = 'wmove(%s, y, x), '
 
     def __init__(self, ret, name, args, wrapped_func, wrapped_args, const=False, mv=False, template=None):
         self.ret = ret
@@ -148,8 +148,10 @@ for f in funcs:
         CURSES_FUNCTIONS += '\n'+f.make_function(prefix, mv=True)
         CURSES_FUNCTIONS += '\n'+f.make_function(prefix, None, 'stdscr', mv=True)
 
+    CURSES_WINDOW_METHODS += '\n'+f.make_method('', 'win')
     CURSES_WINDOW_METHODS += '\n'+f.make_method(prefix, 'win')
     if f.mv:
+        CURSES_WINDOW_METHODS += '\n'+f.make_method('', 'win', mv=True)
         CURSES_WINDOW_METHODS += '\n'+f.make_method(prefix, 'win', mv=True)
 
 for f in funcs:

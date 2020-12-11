@@ -185,71 +185,137 @@ struct CursesWindow {
   inline K& operator<<(double d)   noexcept { wprintw(win, "%f", d);  return *this; }
 
   
+inline int (wgetdelay)() const noexcept { return wgetdelay(win); }
 inline int (NC_wgetdelay)() const noexcept { return wgetdelay(win); }
+inline WINDOW* (wgetparent)() const noexcept { return wgetparent(win); }
 inline WINDOW* (NC_wgetparent)() const noexcept { return wgetparent(win); }
+inline int (wgetscrreg)(int* top, int* bottom) const noexcept { return wgetscrreg(win, top, bottom); }
 inline int (NC_wgetscrreg)(int* top, int* bottom) const noexcept { return wgetscrreg(win, top, bottom); }
+inline int (erase)() noexcept { return werase(win); }
 inline int (NC_erase)() noexcept { return werase(win); }
+inline int (clear)() noexcept { return wclear(win); }
 inline int (NC_clear)() noexcept { return wclear(win); }
+inline int (clrtobot)() noexcept { return wclrtobot(win); }
 inline int (NC_clrtobot)() noexcept { return wclrtobot(win); }
+inline int (clrtoeol)() noexcept { return wclrtoeol(win); }
 inline int (NC_clrtoeol)() noexcept { return wclrtoeol(win); }
+inline int (standend)() noexcept { return wstandend(win); }
 inline int (NC_standend)() noexcept { return wstandend(win); }
+inline int (standout)() noexcept { return wstandout(win); }
 inline int (NC_standout)() noexcept { return wstandout(win); }
+template<class Attr> inline int (attron)(Attr attrs) noexcept { return wattron(win, static_cast<int>(attrs)); }
 template<class Attr> inline int (NC_attron)(Attr attrs) noexcept { return wattron(win, static_cast<int>(attrs)); }
+template<class Attr> inline int (attroff)(Attr attrs) noexcept { return wattroff(win, static_cast<int>(attrs)); }
 template<class Attr> inline int (NC_attroff)(Attr attrs) noexcept { return wattroff(win, static_cast<int>(attrs)); }
+template<class Attr> inline int (attrset)(Attr attrs) noexcept { return wattrset(win, static_cast<int>(attrs)); }
 template<class Attr> inline int (NC_attrset)(Attr attrs) noexcept { return wattrset(win, static_cast<int>(attrs)); }
+inline int (attr_on)(attr_t attrs, void* opts = NULL) noexcept { return wattr_on(win, attrs, opts); }
 inline int (NC_attr_on)(attr_t attrs, void* opts = NULL) noexcept { return wattr_on(win, attrs, opts); }
+inline int (attr_off)(attr_t attrs, void* opts = NULL) noexcept { return wattr_off(win, attrs, opts); }
 inline int (NC_attr_off)(attr_t attrs, void* opts = NULL) noexcept { return wattr_off(win, attrs, opts); }
+inline int (attr_set)(attr_t attrs, NCURSES_PAIRS_T pair, void* opts = NULL) noexcept { return wattr_set(win, attrs, pair, opts); }
 inline int (NC_attr_set)(attr_t attrs, NCURSES_PAIRS_T pair, void* opts = NULL) noexcept { return wattr_set(win, attrs, pair, opts); }
+inline int (attr_get)(attr_t* attrs, NCURSES_PAIRS_T* pair = NULL, void* opts = NULL) const noexcept { return wattr_get(win, attrs, pair, opts); }
 inline int (NC_attr_get)(attr_t* attrs, NCURSES_PAIRS_T* pair = NULL, void* opts = NULL) const noexcept { return wattr_get(win, attrs, pair, opts); }
+inline int (chgat)(int n, attr_t attr, short pair, const void *opts = NULL) noexcept { return wchgat(win, n, attr, pair, opts); }
 inline int (NC_chgat)(int n, attr_t attr, short pair, const void *opts = NULL) noexcept { return wchgat(win, n, attr, pair, opts); }
+inline int (color_set)(short pair, void* opts = NULL) noexcept { return wcolor_set(win, pair, opts); }
 inline int (NC_color_set)(short pair, void* opts = NULL) noexcept { return wcolor_set(win, pair, opts); }
+inline int (getcurx)() const noexcept { return getcurx(win); }
 inline int (NC_getcurx)() const noexcept { return getcurx(win); }
+inline int (getcury)() const noexcept { return getcury(win); }
 inline int (NC_getcury)() const noexcept { return getcury(win); }
+inline int (getbegx)() const noexcept { return getbegx(win); }
 inline int (NC_getbegx)() const noexcept { return getbegx(win); }
+inline int (getbegy)() const noexcept { return getbegy(win); }
 inline int (NC_getbegy)() const noexcept { return getbegy(win); }
+inline int (getmaxx)() const noexcept { return getmaxx(win); }
 inline int (NC_getmaxx)() const noexcept { return getmaxx(win); }
+inline int (getmaxy)() const noexcept { return getmaxy(win); }
 inline int (NC_getmaxy)() const noexcept { return getmaxy(win); }
+inline int (getparx)() const noexcept { return getparx(win); }
 inline int (NC_getparx)() const noexcept { return getparx(win); }
+inline int (getpary)() const noexcept { return getpary(win); }
 inline int (NC_getpary)() const noexcept { return getpary(win); }
+inline void (getyx)(int& y, int& x) const noexcept { getyx(win, y, x); }
 inline void (NC_getyx)(int& y, int& x) const noexcept { getyx(win, y, x); }
+inline void (getbegyx)(int& y, int& x) const noexcept { getbegyx(win, y, x); }
 inline void (NC_getbegyx)(int& y, int& x) const noexcept { getbegyx(win, y, x); }
+inline void (getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
 inline void (NC_getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
+inline void (getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
 inline void (NC_getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
+inline bool (is_cleared)() const noexcept { return is_cleared(win); }
 inline bool (NC_is_cleared)() const noexcept { return is_cleared(win); }
+inline bool (is_idcok)() const noexcept { return is_idcok(win); }
 inline bool (NC_is_idcok)() const noexcept { return is_idcok(win); }
+inline bool (is_idlok)() const noexcept { return is_idlok(win); }
 inline bool (NC_is_idlok)() const noexcept { return is_idlok(win); }
+inline bool (is_immedok)() const noexcept { return is_immedok(win); }
 inline bool (NC_is_immedok)() const noexcept { return is_immedok(win); }
+inline bool (is_keypad)() const noexcept { return is_keypad(win); }
 inline bool (NC_is_keypad)() const noexcept { return is_keypad(win); }
+inline bool (is_leaveok)() const noexcept { return is_leaveok(win); }
 inline bool (NC_is_leaveok)() const noexcept { return is_leaveok(win); }
+inline bool (is_nodelay)() const noexcept { return is_nodelay(win); }
 inline bool (NC_is_nodelay)() const noexcept { return is_nodelay(win); }
+inline bool (is_notimeout)() const noexcept { return is_notimeout(win); }
 inline bool (NC_is_notimeout)() const noexcept { return is_notimeout(win); }
+inline bool (is_pad)() const noexcept { return is_pad(win); }
 inline bool (NC_is_pad)() const noexcept { return is_pad(win); }
+inline bool (is_scrollok)() const noexcept { return is_scrollok(win); }
 inline bool (NC_is_scrollok)() const noexcept { return is_scrollok(win); }
+inline bool (is_subwin)() const noexcept { return is_subwin(win); }
 inline bool (NC_is_subwin)() const noexcept { return is_subwin(win); }
+inline bool (is_syncok)() const noexcept { return is_syncok(win); }
 inline bool (NC_is_syncok)() const noexcept { return is_syncok(win); }
+template<class Chr> inline int (addch)(Chr ch) noexcept { return waddch_generic(win, ch); }
 template<class Chr> inline int (NC_addch)(Chr ch) noexcept { return waddch_generic(win, ch); }
+template<class Chr> inline int (addch)(int y, int x, Chr ch) noexcept { return wmove(win, y, x), waddch_generic(win, ch); }
 template<class Chr> inline int (NC_addch)(int y, int x, Chr ch) noexcept { return wmove(win, y, x), waddch_generic(win, ch); }
+inline int (delch)() noexcept { return wdelch(win); }
 inline int (NC_delch)() noexcept { return wdelch(win); }
+inline int (delch)(int y, int x) noexcept { return wmove(win, y, x), wdelch(win); }
 inline int (NC_delch)(int y, int x) noexcept { return wmove(win, y, x), wdelch(win); }
+template<class Str> inline int (addstr)(const Str& s) noexcept { return waddnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_addstr)(const Str& s) noexcept { return waddnstr_generic(win, cstr(s), len(s)); }
+template<class Str> inline int (addstr)(int y, int x, const Str& s) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_addstr)(int y, int x, const Str& s) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), len(s)); }
+template<class Str> inline int (addstr)(const Str& s, int n) noexcept { return waddnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_addstr)(const Str& s, int n) noexcept { return waddnstr_generic(win, cstr(s), n); }
+template<class Str> inline int (addstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_addstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), waddnstr_generic(win, cstr(s), n); }
+template<class Str> inline int (insstr)(const Str& s) noexcept { return winsnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_insstr)(const Str& s) noexcept { return winsnstr_generic(win, cstr(s), len(s)); }
+template<class Str> inline int (insstr)(int y, int x, const Str& s) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), len(s)); }
 template<class Str> inline int (NC_insstr)(int y, int x, const Str& s) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), len(s)); }
+template<class Str> inline int (insstr)(const Str& s, int n) noexcept { return winsnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_insstr)(const Str& s, int n) noexcept { return winsnstr_generic(win, cstr(s), n); }
+template<class Str> inline int (insstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_insstr)(int y, int x, const Str& s, int n) noexcept { return wmove(win, y, x), winsnstr_generic(win, cstr(s), n); }
+inline int (getch)() noexcept { return wgetch(win); }
 inline int (NC_getch)() noexcept { return wgetch(win); }
+inline int (getch)(int y, int x) noexcept { return wmove(win, y, x), wgetch(win); }
 inline int (NC_getch)(int y, int x) noexcept { return wmove(win, y, x), wgetch(win); }
+inline int (getch)(wint_t* ch) noexcept { return wget_wch(win, ch); }
 inline int (NC_getch)(wint_t* ch) noexcept { return wget_wch(win, ch); }
+inline int (getch)(int y, int x, wint_t* ch) noexcept { return wmove(win, y, x), wget_wch(win, ch); }
 inline int (NC_getch)(int y, int x, wint_t* ch) noexcept { return wmove(win, y, x), wget_wch(win, ch); }
+template<class Str> inline int (getstr)(Str& s) noexcept { return wgetnstr_generic(win, cstr(s), in_len(s)); }
 template<class Str> inline int (NC_getstr)(Str& s) noexcept { return wgetnstr_generic(win, cstr(s), in_len(s)); }
+template<class Str> inline int (getstr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), in_len(s)); }
 template<class Str> inline int (NC_getstr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), in_len(s)); }
+template<class Str> inline int (getstr)(Str& s, int n) noexcept { return wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(Str& s, int n) noexcept { return wgetnstr_generic(win, cstr(s), n); }
+template<class Str> inline int (getstr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), n); }
+template<class Str> inline int (instr)(Str& s) noexcept { return winnstr_generic(win, cstr(s), in_len(s)); }
 template<class Str> inline int (NC_instr)(Str& s) noexcept { return winnstr_generic(win, cstr(s), in_len(s)); }
+template<class Str> inline int (instr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), in_len(s)); }
 template<class Str> inline int (NC_instr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), in_len(s)); }
+template<class Str> inline int (instr)(Str& s, int n) noexcept { return winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_instr)(Str& s, int n) noexcept { return winnstr_generic(win, cstr(s), n); }
+template<class Str> inline int (instr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_instr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }
 
 }; // class CursesWindow
