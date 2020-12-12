@@ -83,14 +83,14 @@ void Mpg123Player :: work() noexcept {
 
 void Mpg123Player :: read_stderr() noexcept {
   char buffer[128];
-  ssize_t n = _process->stderr_pipe.read(buffer, sizeof(buffer));
+  ssize_t n = _process->stderr_pipe.read(buffer);
   if (n > 0)
     ++_failed;
 }
 
 void Mpg123Player :: read_stdout() noexcept {
   char buffer[512];
-  ssize_t len = _process->stdout_pipe.read(buffer, sizeof(buffer));
+  ssize_t len = _process->stdout_pipe.read(buffer);
 
   for (ssize_t i = 0; i < len; ++i)
     if (buffer[i] != '\n')

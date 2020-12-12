@@ -130,7 +130,3 @@ void Process :: kill(bool force) noexcept {
   }
 }
 
-pid_t Process :: get_id() const noexcept {
-  return _pid;
-}
-

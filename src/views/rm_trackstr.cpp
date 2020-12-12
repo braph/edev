@@ -18,9 +18,9 @@ static const char* trackField(const Database::Tracks::Track &track, Database::Co
       if (Database::AlbumColumnID(id) == Database::ALBUM_STYLES) {
         buf[0] = '\0';
         const char* comma = "";
-        for (size_t id : extract_set_bits(unsigned(f.value.i))) {
+        for (auto id : extract_set_bits(f.value.i)) {
           std::strcat(buf, comma);
-          std::strcat(buf, track.table->db.styles[id].name());
+          std::strcat(buf, track.table->db.styles[size_t(id)].name());
           comma = "|";
         }
       }

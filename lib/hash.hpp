@@ -36,9 +36,9 @@ constexpr uint64_t sdbm(const char* s) noexcept {
     );
 }
 
-inline uint64_t lose_lose(const std::string& s) noexcept { return lose_lose(s.c_str()); }
-inline uint64_t djb2     (const std::string& s) noexcept { return djb2(s.c_str());      }
-inline uint64_t sdbm     (const std::string& s) noexcept { return sdbm(s.c_str());      }
+template<class T> uint64_t lose_lose(const T& s) noexcept { return lose_lose(s.c_str()); }
+template<class T> uint64_t djb2     (const T& s) noexcept { return djb2(s.c_str());      }
+template<class T> uint64_t sdbm     (const T& s) noexcept { return sdbm(s.c_str());      }
 
 } // namespace Hash
 

@@ -40,6 +40,11 @@ struct PipeStream {
     return ::read(_fd, buf, nbyte);
   }
 
+  template<size_t N>
+  inline ssize_t read(char (&buf)[N]) noexcept {
+    return ::read(_fd, buf, N);
+  }
+
   inline ssize_t read(char* buf, size_t nbyte) noexcept {
     return ::read(_fd, buf, nbyte);
   }
@@ -76,7 +81,7 @@ struct PipeStream {
 
   // Operator << ==============================================================
   template<typename T>
-  inline PipeStream& operator<<(T v) noexcept {
+  inline PipeStream& operator<<(const T& v) noexcept {
     write(v);
     return *this;
   }

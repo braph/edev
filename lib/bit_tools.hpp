@@ -11,9 +11,9 @@
 #define BITSOF(T) (CHAR_BIT * sizeof(T))
 
 template<typename TInt>
-StaticVector<signed char, sizeof(TInt) * 8> extract_set_bits(TInt value) {
-  StaticVector<signed char, sizeof(TInt) * 8> result {};
-  for (int i = 0; i < sizeof(TInt) * 8; ++i)
+StaticVector<char, sizeof(TInt) * CHAR_BIT> extract_set_bits(TInt value) {
+  StaticVector<char, sizeof(TInt) * CHAR_BIT> result;
+  for (int i = 0; i < int(sizeof(TInt) * CHAR_BIT); ++i)
     if (value & (1 << i))
       result.push_back(i + 1);
   return result;

@@ -7,7 +7,7 @@
 
 /**
  * Stack allocated vector
- * TODO: This vector calls the default constructor on non existent elements...
+ * TODO: For now this vector is only usable for POD types...
  */
 template<typename T, size_t N>
 class StaticVector {

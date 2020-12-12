@@ -20,7 +20,7 @@ public:
       bool pipe_stderr=true) noexcept;
  ~Process();
   
-  pid_t  get_id()                         const noexcept;
+  pid_t  get_id()                         const noexcept { return _pid; }
   int    get_exit_status()                      noexcept;
   bool   try_get_exit_status(int &exit_status)  noexcept;
   void   close_stdin()                          noexcept;
@@ -28,7 +28,7 @@ public:
   bool   running()                              noexcept;
 
   template<typename T>
-  Process& operator<<(T v) noexcept {
+  Process& operator<<(const T& v) noexcept {
     stdin_pipe << v;
     return *this;
   }
