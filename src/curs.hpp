@@ -122,6 +122,22 @@ inline void (NC_getmaxyx)(const WINDOW* win, int& y, int& x) { getmaxyx(win, y, 
 inline void (NC_getmaxyx)(int& y, int& x) { getmaxyx(stdscr, y, x); }
 inline void (NC_getparyx)(const WINDOW* win, int& y, int& x) { getparyx(win, y, x); }
 inline void (NC_getparyx)(int& y, int& x) { getparyx(stdscr, y, x); }
+template<typename... T> inline int (NC_printw)(WINDOW* win, const char* fmt, T... args) { return wprintw(win, fmt, args...); }
+template<typename... T> inline int (NC_printw)(const char* fmt, T... args) { return wprintw(stdscr, fmt, args...); }
+template<typename... T> inline int (NC_printw)(WINDOW* win, int y, int x, const char* fmt, T... args) { return wmove(win, y, x), wprintw(win, fmt, args...); }
+template<typename... T> inline int (NC_printw)(int y, int x, const char* fmt, T... args) { return wmove(stdscr, y, x), wprintw(stdscr, fmt, args...); }
+inline int (NC_printw)(WINDOW* win, const char* fmt, va_list args) { return vw_printw(win, fmt, args); }
+inline int (NC_printw)(const char* fmt, va_list args) { return vw_printw(stdscr, fmt, args); }
+inline int (NC_printw)(WINDOW* win, int y, int x, const char* fmt, va_list args) { return wmove(win, y, x), vw_printw(win, fmt, args); }
+inline int (NC_printw)(int y, int x, const char* fmt, va_list args) { return wmove(stdscr, y, x), vw_printw(stdscr, fmt, args); }
+template<typename... T> inline int (NC_scanw)(WINDOW* win, const char* fmt, T... args) { return wscanw(win, fmt, args...); }
+template<typename... T> inline int (NC_scanw)(const char* fmt, T... args) { return wscanw(stdscr, fmt, args...); }
+template<typename... T> inline int (NC_scanw)(WINDOW* win, int y, int x, const char* fmt, T... args) { return wmove(win, y, x), wscanw(win, fmt, args...); }
+template<typename... T> inline int (NC_scanw)(int y, int x, const char* fmt, T... args) { return wmove(stdscr, y, x), wscanw(stdscr, fmt, args...); }
+inline int (NC_scanw)(WINDOW* win, const char* fmt, va_list args) { return vw_printw(win, fmt, args); }
+inline int (NC_scanw)(const char* fmt, va_list args) { return vw_printw(stdscr, fmt, args); }
+inline int (NC_scanw)(WINDOW* win, int y, int x, const char* fmt, va_list args) { return wmove(win, y, x), vw_printw(win, fmt, args); }
+inline int (NC_scanw)(int y, int x, const char* fmt, va_list args) { return wmove(stdscr, y, x), vw_printw(stdscr, fmt, args); }
 inline int (NC_addch)(WINDOW* win, chtype ch) { return waddch(win, ch); }
 inline int (NC_addch)(chtype ch) { return waddch(stdscr, ch); }
 inline int (NC_addch)(WINDOW* win, int y, int x, chtype ch) { return wmove(win, y, x), waddch(win, ch); }
@@ -190,6 +206,29 @@ inline chtype (NC_inch)(WINDOW* win) { return winch(win); }
 inline chtype (NC_inch)() { return winch(stdscr); }
 inline chtype (NC_inch)(WINDOW* win, int y, int x) { return wmove(win, y, x), winch(win); }
 inline chtype (NC_inch)(int y, int x) { return wmove(stdscr, y, x), winch(stdscr); }
+
+#if defined(USE_C_VARIADIC_ARGS) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((__format__(__printf__, 2, 3)))
+int __wprintw(const char* fmt, ...) noexcept {
+  va_list ap;
+  va_start(ap, fmt);
+  int ret = vw_printw(win, fmt, ap);
+  va_end(ap);
+  return ret;
+}
+
+__attribute__((__format__(__printf__, 4, 5)))
+int __mvwprintw(int y, int x, const char* fmt, ...) noexcept {
+  int ret = ERR;
+  if (OK == wmove(win, y, x)) {
+    va_list ap;
+    va_start(ap, fmt);
+    ret = vw_printw(win, fmt, ap);
+    va_end(ap);
+  }
+  return ret;
+}
+#endif
 
 struct CursesWindow {
   WINDOW* win;
@@ -295,6 +334,22 @@ inline void (getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
 inline void (NC_getmaxyx)(int& y, int& x) const noexcept { getmaxyx(win, y, x); }
 inline void (getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
 inline void (NC_getparyx)(int& y, int& x) const noexcept { getparyx(win, y, x); }
+template<typename... T> inline int (printw)(const char* fmt, T... args) noexcept { return wprintw(win, fmt, args...); }
+template<typename... T> inline int (NC_printw)(const char* fmt, T... args) noexcept { return wprintw(win, fmt, args...); }
+template<typename... T> inline int (printw)(int y, int x, const char* fmt, T... args) noexcept { return wmove(win, y, x), wprintw(win, fmt, args...); }
+template<typename... T> inline int (NC_printw)(int y, int x, const char* fmt, T... args) noexcept { return wmove(win, y, x), wprintw(win, fmt, args...); }
+inline int (printw)(const char* fmt, va_list args) noexcept { return vw_printw(win, fmt, args); }
+inline int (NC_printw)(const char* fmt, va_list args) noexcept { return vw_printw(win, fmt, args); }
+inline int (printw)(int y, int x, const char* fmt, va_list args) noexcept { return wmove(win, y, x), vw_printw(win, fmt, args); }
+inline int (NC_printw)(int y, int x, const char* fmt, va_list args) noexcept { return wmove(win, y, x), vw_printw(win, fmt, args); }
+template<typename... T> inline int (scanw)(const char* fmt, T... args) noexcept { return wscanw(win, fmt, args...); }
+template<typename... T> inline int (NC_scanw)(const char* fmt, T... args) noexcept { return wscanw(win, fmt, args...); }
+template<typename... T> inline int (scanw)(int y, int x, const char* fmt, T... args) noexcept { return wmove(win, y, x), wscanw(win, fmt, args...); }
+template<typename... T> inline int (NC_scanw)(int y, int x, const char* fmt, T... args) noexcept { return wmove(win, y, x), wscanw(win, fmt, args...); }
+inline int (scanw)(const char* fmt, va_list args) noexcept { return vw_printw(win, fmt, args); }
+inline int (NC_scanw)(const char* fmt, va_list args) noexcept { return vw_printw(win, fmt, args); }
+inline int (scanw)(int y, int x, const char* fmt, va_list args) noexcept { return wmove(win, y, x), vw_printw(win, fmt, args); }
+inline int (NC_scanw)(int y, int x, const char* fmt, va_list args) noexcept { return wmove(win, y, x), vw_printw(win, fmt, args); }
 inline int (addch)(chtype ch) noexcept { return waddch(win, ch); }
 inline int (NC_addch)(chtype ch) noexcept { return waddch(win, ch); }
 inline int (addch)(int y, int x, chtype ch) noexcept { return wmove(win, y, x), waddch(win, ch); }
@@ -454,6 +509,10 @@ inline chtype (NC_inch)(int y, int x) noexcept { return wmove(win, y, x), winch(
 #define getmaxyx NC_getmaxyx
 #undef  getparyx
 #define getparyx NC_getparyx
+#undef  printw
+#define printw NC_printw
+#undef  scanw
+#define scanw NC_scanw
 #undef  addch
 #define addch NC_addch
 #undef  addstr

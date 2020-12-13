@@ -34,6 +34,29 @@ inline int winnstr_generic(WINDOW* w, chtype* s, int n)         { return winchns
 namespace Public {
 $CURSES_FUNCTIONS
 
+#if defined(USE_C_VARIADIC_ARGS) && (defined(__GNUC__) || defined(__clang__))
+__attribute__((__format__(__printf__, 2, 3)))
+int __wprintw(const char* fmt, ...) noexcept {
+  va_list ap;
+  va_start(ap, fmt);
+  int ret = vw_printw(win, fmt, ap);
+  va_end(ap);
+  return ret;
+}
+
+__attribute__((__format__(__printf__, 4, 5)))
+int __mvwprintw(int y, int x, const char* fmt, ...) noexcept {
+  int ret = ERR;
+  if (OK == wmove(win, y, x)) {
+    va_list ap;
+    va_start(ap, fmt);
+    ret = vw_printw(win, fmt, ap);
+    va_end(ap);
+  }
+  return ret;
+}
+#endif
+
 struct CursesWindow {
   WINDOW* win;
   CursesWindow()           : win(NULL) {}

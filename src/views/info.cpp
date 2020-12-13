@@ -125,13 +125,13 @@ void Info :: draw() {
     *this << track.artist();
 
     draw_tag(y++, "Number");
-    printW("%02d", track.number());
+    printw("%02d", track.number());
 
     draw_tag(y++, "BPM");
     *this << track.bpm();
 
     draw_tag(y++, "Length");
-    printW("%02d:%02d", player.length()/60, player.length()%60);
+    printw("%02d:%02d", player.length()/60, player.length()%60);
 
     // Album ==================================================================
     y++;
@@ -160,7 +160,7 @@ void Info :: draw() {
     *this << album.download_count();
 
     draw_tag(y++, "Rating");
-    printW("%2.2f%% (%d Votes)", album.rating(), album.votes());
+    printw("%2.2f%% (%d Votes)", album.rating(), album.votes());
 
     draw_tag(y++, "Cover");
     std::string cover_url = album.cover_url();

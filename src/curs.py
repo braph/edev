@@ -126,6 +126,12 @@ for f in braceexpand("get{cur,beg,max,par}{x,y}"):
 for f in braceexpand("get{,beg,max,par}yx"):
     a(void, f, "int& y, int& x", f, "y, x", const=True)
 
+# curs_printw(3X) / curs_scanw(3X):
+mv(int, "printw", "const char* fmt, T... args",     "wprintw",   "fmt, args...",    template="typename... T")
+mv(int, "printw", "const char* fmt, va_list args",  "vw_printw", "fmt, args")
+mv(int, "scanw",  "const char* fmt, T... args",     "wscanw",    "fmt, args...",    template="typename... T")
+mv(int, "scanw",  "const char* fmt, va_list args",  "vw_printw", "fmt, args")
+
 # OUTPUT functions
 mv(int, "addch",  "chtype ch",           "waddch",            "ch")
 mv(int, "addch",  "const cchar_t* ch",   "wadd_wch",          "ch")

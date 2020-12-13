@@ -84,7 +84,7 @@ void InfoLine :: draw_state() {
 
 void InfoLine :: draw_position_and_length() {
   attrset(colors.infoline_position);
-  mvPrintW(0, 0, "[%02d:%02d/%02d:%02d]", _track_position/60, _track_position%60, _track_length/60, _track_length%60);
+  printw(0, 0, "[%02d:%02d/%02d:%02d]", _track_position/60, _track_position%60, _track_length/60, _track_length%60);
 }
 
 void InfoLine :: draw_track_info() {

@@ -118,65 +118,17 @@ struct WidgetDrawable : public Widget, public CursesWindow {
   //WINDOW *win;
 
   WidgetDrawable() {}
+ ~WidgetDrawable() { if (win) delwin(win); }
 
-  ~WidgetDrawable()
-  { if (win) delwin(win); }
-
-  inline WINDOW *getWINDOW() const noexcept
-  { return win; }
-
-  // add-methods ==============================================================
-#ifdef USE_C_VARIADIC_ARGS
-#if defined(__GNUC__) || defined(__clang__)
-  __attribute__((__format__(__printf__, 2, 3)))
-#endif
-  int printW(const char* fmt, ...) noexcept {
-    va_list ap;
-    va_start(ap, fmt);
-    int ret = vw_printw(win, fmt, ap);
-    va_end(ap);
-    return ret;
-  }
-#else
-  template<typename... Args>
-  int printW(const char* fmt, Args... args) noexcept
-  { return wprintw(win, fmt, args...); }
-#endif
-
-  // mv-methods ===============================================================
-#ifdef USE_C_VARIADIC_ARGS
-#if defined(__GNUC__) || defined(__clang__)
-  __attribute__((__format__(__printf__, 4, 5)))
-#endif
-  int mvPrintW(int y, int x, const char* fmt, ...) noexcept {
-    int ret = ERR;
-    if (OK == wmove(win, y, x)) {
-      va_list ap;
-      va_start(ap, fmt);
-      ret = vw_printw(win, fmt, ap);
-      va_end(ap);
-    }
-    return ret;
-  }
-#else
-  template<typename... Args>
-  int mvPrintW(int y, int x, const char* fmt, Args... args) noexcept
-  { return mvwprintw(win, y, x, fmt, args...); }
-#endif
+  inline WINDOW *getWINDOW() const noexcept { return win; }
 
   // cursor-methods ===========================================================
-  inline Pos  cursorPos()                 const noexcept
-  { Pos p; getyx(p.y, p.x); return p; }
+  inline Pos  cursorPos() const noexcept { Pos p; getyx(p.y, p.x); return p; }
 
   // misc methods =============================================================
-  inline int resize(int height, int width) noexcept
-  { return wresize(win, height, width); }
-
-  inline int resize(UI::Size new_size) noexcept
-  { return wresize(win, new_size.height, new_size.width); }
-
-  inline int setPos(UI::Pos new_pos) noexcept
-  { return mvwin(win, new_pos.y, new_pos.x); }
+  inline int resize(int height, int width) noexcept { return wresize(win, height, width); }
+  inline int resize(UI::Size new_size)     noexcept { return wresize(win, new_size.height, new_size.width); }
+  inline int setPos(UI::Pos new_pos)       noexcept { return mvwin(win, new_pos.y, new_pos.x); }
 };
 
 class Window : public WidgetDrawable {
