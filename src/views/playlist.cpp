@@ -56,8 +56,8 @@ void TrackRenderer :: operator()(
     else
       wattrset(_win, Colors::set(column.fg, column.bg) | additional_attributes);
 
-    size_t len;
-    wchar_t* value = toWideString(trackField(item, column.tag), &len);
+    const char* value = trackField(item, column.tag);
+    size_t len = std::mbstowcs(NULL, value, 0);
     int colwidth;
 
     if (column.relative)
@@ -69,12 +69,12 @@ void TrackRenderer :: operator()(
     mvwhline(_win, y, x, ' ', colwidth + 1);
 
     if (column.justify == PlaylistColumnFormat::Justify::Left)
-      mvwaddnwstr(_win, y, x, value, colwidth);
+      mvwaddnstr(_win, y, x, value, colwidth);
     else if (column.justify == PlaylistColumnFormat::Justify::Right) {
       if (int(len) < colwidth)
-        mvwaddwstr(_win, y, x + colwidth - int(len), value); // TODO
+        mvwaddstr(_win, y, x + colwidth - int(len), value); // TODO
       else
-        mvwaddnwstr(_win, y, x, value, colwidth);
+        mvwaddnstr(_win, y, x, value, colwidth);
     }
 
     x += colwidth + 1;

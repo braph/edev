@@ -22,9 +22,11 @@ using namespace Views;
 #define FORCE_LINE_BREAK 85 // Forces line breaks even in words
 
 struct MarkupParser {
-  const char* it;
   enum Type { BOLD = 1, ITALIC = 2, LINK_TEXT = 4, LINK_URL = 8 };
+
+  const char* it;
   int type;
+  char multibyte[MB_LEN_MAX + 1];
 
   MarkupParser(const char* s) : it(s), type(0) {
     mbtowc(NULL, NULL, 0); // Reset internal state
@@ -33,9 +35,11 @@ struct MarkupParser {
   wchar_t next_char() {
     wchar_t c;
     for (;;) {
-      int n = std::mbtowc(&c, it, MB_CUR_MAX);
+      int n = std::mbtowc(&c, it, MB_LEN_MAX);
       if (n == 0)   { return 0;       } // EOF
       if (n == -1)  { it++; continue; } // Skip invalid char
+      std::memcpy(multibyte, it, size_t(n));
+      multibyte[n] = '\0';
       it += n;
 
       bool haveDouble = (c == *it); // `Having ((double`
@@ -171,9 +175,9 @@ void Info :: draw() {
     wchar_t c;
     while ((c = markupParser.next_char())) {
       if (markupParser.type & MarkupParser::LINK_TEXT)
-        linkText.append(toNarrowChar(c));
+        linkText.append(markupParser.multibyte);
       else if (markupParser.type & MarkupParser::LINK_URL)
-        linkURL.append(toNarrowChar(c));
+        linkURL.append(markupParser.multibyte);
       else {
         attr_t attr = colors.info_value;
         if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
