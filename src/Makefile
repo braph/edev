@@ -13,14 +13,14 @@ WARNINGS += -Wpessimizing-move -Wredundant-move
 STD = c++11
 CURSES_INC = "<ncurses.h>"
 
-CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS) -Wfatal-errors
+CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS) #-Wfatal-errors
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -pg -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -I.. -DCURSES_INC=$(CURSES_INC)
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
-CONFIG.deps   	= ../lib/shellsplit.o ../lib/filesystem.o ../lib/cstring.o ../lib/xml.o
+CONFIG.deps   	= ../lib/shellsplit.o ../lib/filesystem.o ../lib/xml.o
 DATABASE.deps 	= ../lib/stringchunk.o ../lib/packedvector.o
 BROWSEPAGE.deps = ../lib/base64.o
 PLAYER.deps   	= ../lib/process.o

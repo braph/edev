@@ -146,7 +146,8 @@ void Info :: draw() {
     *this << album.artist();
 
     draw_tag(y++, "Date");
-    *this << time_format(album.date(), "%B %d, %Y");
+    char buf[32];
+    *this << time_format(buf, "%B %d, %Y", album.date());
 
     draw_tag(y++, "Styles");
     const char* comma = "";

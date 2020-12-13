@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <cstdarg>
 
+// TODO: this is a mess
+
 static inline const char* ensure_string(const char* s) { return (s ? s : ""); }
 
 // ============================================================================
@@ -188,15 +190,11 @@ static inline std::string& trim(std::string& s, const char* chars = " \n\t\f\v")
   return s;
 }
 
-#if 0
-void split(std::vector<std::string>& r, const std::string& s, const char c) {
-  r.clear();
+template<size_t N>
+char* time_format(char (&buf)[N], const char* fmt, std::time_t t) {
+  std::tm* tm = localtime(&t);
+  std::strftime(buf, N, fmt, tm);
+  return buf;
 }
-#endif
-
-char*    toNarrowChar(wchar_t);
-wchar_t* toWideString(CString, size_t* len = NULL);
-char*    toNarrowString(CWString, size_t* len = NULL);
-char*    time_format(std::time_t, CString);
 
 #endif
