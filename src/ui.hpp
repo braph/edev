@@ -165,7 +165,6 @@ struct WidgetDrawable : public Widget, public CursesWindow {
 #endif
 
   // cursor-methods ===========================================================
-  inline int  moveCursor(int y, int x)          noexcept { return wmove(win, y, x); }
   inline Pos  cursorPos()                 const noexcept
   { Pos p; getyx(p.y, p.x); return p; }
 

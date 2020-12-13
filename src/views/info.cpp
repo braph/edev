@@ -86,7 +86,7 @@ inline void Info :: draw_tag(int y, const char* tag) noexcept {
   attrset(colors.info_tag);
   addstr(y, START_TAG, tag);
   attrset(colors.info_value);
-  moveCursor(y, START_TAG_VALUE);
+  move(y, START_TAG_VALUE);
 }
 
 template<class Str>
@@ -94,7 +94,7 @@ inline void Info :: draw_info(int y, Str&& info) noexcept {
   attrset(colors.info_tag);
   addstr(y, START_INFO, info);
   attrset(colors.info_value);
-  moveCursor(y, START_INFO_VALUE);
+  move(y, START_INFO_VALUE);
 }
 
 template<class Str, class Str1>
@@ -169,7 +169,7 @@ void Info :: draw() {
     // Description ============================================================
     y++;
     draw_heading(y++, "Description");
-    moveCursor(y, START_TAG);
+    move(y, START_TAG);
     MarkupParser markupParser(album.description());
     std::string linkURL, linkText;
     wchar_t c;
@@ -184,9 +184,9 @@ void Info :: draw() {
         if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
 
         getyx(y, x);
-        if      (x < START_TAG)                   moveCursor(y,   START_TAG);
-        else if (x >= FORCE_LINE_BREAK)           moveCursor(y+1, START_TAG);
-        else if (x >= TRY_LINE_BREAK && c == ' ') moveCursor(y+1, START_TAG-1);
+        if      (x < START_TAG)                   move(y,   START_TAG);
+        else if (x >= FORCE_LINE_BREAK)           move(y+1, START_TAG);
+        else if (x >= TRY_LINE_BREAK && c == ' ') move(y+1, START_TAG-1);
 
         if (!linkText.empty() && !linkURL.empty()) {
           if (linkURL == "@") // Protected email, see updater.cpp

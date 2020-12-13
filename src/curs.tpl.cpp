@@ -41,8 +41,8 @@ struct CursesWindow {
   using K = CursesWindow;
 
   template<class S>
-  inline K& operator<<(const S& s) noexcept { ${prefix}addstr(s); return *this; }
-  inline K& operator<<(char c)     noexcept { waddch(win, static_cast<chtype>(c)); return *this; }
+  inline K& operator<<(const S& s) noexcept { ${prefix}addstr(s);     return *this; }
+  inline K& operator<<(char c)     noexcept { waddnstr(win, &c, 1);   return *this; } // XXX don't use waddch, because, eh...
   inline K& operator<<(wchar_t c)  noexcept { waddnwstr(win, &c, 1);  return *this; }
   inline K& operator<<(int i)      noexcept { wprintw(win, "%d", i);  return *this; }
   inline K& operator<<(size_t s)   noexcept { wprintw(win, "%zu", s); return *this; }

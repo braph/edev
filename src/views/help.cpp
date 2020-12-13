@@ -39,7 +39,7 @@ void Help :: draw() {
   for (const auto& widget : widgets) {
     attrset(colors.help_widget_name);
     addstr(++y, 1, widget.name);
-    moveCursor(++y, KEYS_START);
+    move(++y, KEYS_START);
 
     for (int id = 1; id < Actions::ACTIONID_ENUM_LAST; ++id) {
       int nkeys = 0;
@@ -56,7 +56,7 @@ void Help :: draw() {
       if (nkeys) {
         attrset(colors.help_command_name);
         addstr(y, COMMANDS_START, Actions::to_string(Actions::ActionID(id)));
-        moveCursor(++y, KEYS_START);
+        move(++y, KEYS_START);
       }
     }
   }

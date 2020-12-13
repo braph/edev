@@ -85,6 +85,9 @@ class Func():
 def a(*args, **kw):  funcs.append(Func(*args, **kw))
 def mv(*args, **kw): funcs.append(Func(*args, **kw, mv=True))
 
+# curs_move(3X):
+a(int, "move",     "int y, int x",  "wmove", "y, x")
+
 # curs_clear(3X):
 a(int, "erase",    "", "werase",    "")
 a(int, "clear",    "", "wclear",    "")

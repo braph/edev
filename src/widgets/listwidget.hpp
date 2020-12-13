@@ -181,7 +181,7 @@ private:
   inline void render_item(int item_idx, int line, bool cursor) {
     if (! itemRenderer)
       return;
-    moveCursor(line, 0);
+    move(line, 0);
     itemRenderer(win, size.width, (*m_list)[size_t(item_idx)], item_idx, cursor, item_idx == m_active);
   }
 

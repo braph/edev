@@ -103,7 +103,7 @@ void Splash :: draw() {
 
   fader = signatureFading;
   for (int i = 0; i < SIGNATURE_HEIGHT; ++i) {
-    moveCursor(top_pad + i, left_pad);
+    move(top_pad + i, left_pad);
     for (unsigned j = 0; j < SIGNATURE_WIDTH; ++j)
       addch(SIGNATURE[i][j] | setFG(fader.get2(SIGNATURE_WIDTH, j)));
   }

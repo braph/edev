@@ -33,7 +33,7 @@ void ProgressBar :: layout(Pos pos, Size size) {
     mvwin(win, pos.y, pos.x);
   }
 
-  moveCursor(0, 0);
+  move(0, 0);
 
   ArrayView<const short> fading(fading_0);
 

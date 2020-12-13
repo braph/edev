@@ -37,7 +37,7 @@ void TabBar :: layout(UI::Pos pos, UI::Size size) {
 
 void TabBar :: draw() {
   erase();
-  moveCursor(0, 0);
+  move(0, 0);
 
   int i = 0;
   for (const auto& label : _tabs) {

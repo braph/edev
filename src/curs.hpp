@@ -34,6 +34,8 @@ inline int winnstr_generic(WINDOW* w, chtype* s, int n)         { return winchns
 
 namespace Public {
 
+inline int (NC_move)(WINDOW* win, int y, int x) { return wmove(win, y, x); }
+inline int (NC_move)(int y, int x) { return wmove(stdscr, y, x); }
 inline int (NC_erase)(WINDOW* win) { return werase(win); }
 inline int (NC_erase)() { return werase(stdscr); }
 inline int (NC_clear)(WINDOW* win) { return wclear(win); }
@@ -196,8 +198,8 @@ struct CursesWindow {
   using K = CursesWindow;
 
   template<class S>
-  inline K& operator<<(const S& s) noexcept { NC_addstr(s); return *this; }
-  inline K& operator<<(char c)     noexcept { waddch(win, static_cast<chtype>(c)); return *this; }
+  inline K& operator<<(const S& s) noexcept { NC_addstr(s);     return *this; }
+  inline K& operator<<(char c)     noexcept { waddnstr(win, &c, 1);   return *this; } // XXX don't use waddch, because, eh...
   inline K& operator<<(wchar_t c)  noexcept { waddnwstr(win, &c, 1);  return *this; }
   inline K& operator<<(int i)      noexcept { wprintw(win, "%d", i);  return *this; }
   inline K& operator<<(size_t s)   noexcept { wprintw(win, "%zu", s); return *this; }
@@ -205,6 +207,8 @@ struct CursesWindow {
   inline K& operator<<(double d)   noexcept { wprintw(win, "%f", d);  return *this; }
 
   
+inline int (move)(int y, int x) noexcept { return wmove(win, y, x); }
+inline int (NC_move)(int y, int x) noexcept { return wmove(win, y, x); }
 inline int (erase)() noexcept { return werase(win); }
 inline int (NC_erase)() noexcept { return werase(win); }
 inline int (clear)() noexcept { return wclear(win); }
