@@ -150,7 +150,7 @@ struct AttributeParser {
     std::string* current = &name;
     s = skipWhitespace(s);
     for (; *s; ++s) {
-      if (*s == ',' || isspace(*s)) { break;                  }
+      if (*s == ',' || *s == ' ' || *s == '\t' || *s == '\n') { break; }
       else if (*s == '=')           { current = &value;       }
       else                          { current->push_back(*s); }
     }

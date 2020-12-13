@@ -6,9 +6,7 @@
 #include <lib/sscan.hpp>
 #include <lib/cstring.hpp>
 #include <lib/stringpack.hpp>
-
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp> // is_any_of
+#include <lib/string.hpp>
 
 #include <string>
 #include <cctype>
@@ -75,7 +73,8 @@ struct XPathExpressionCache {
       else if (e.len == len && !std::strcmp(e.str, expr))
         return e.compExpr;
 
-    abort();
+    assert(!"Not reached");
+    return NULL;
   }
 };
 
@@ -193,7 +192,7 @@ Album BrowsePageParser :: next_album() {
       continue;
 
     std::string result = base64::decode(base64_begin, size_t(base64_end-base64_begin));
-    boost::algorithm::split(tracks, result, boost::algorithm::is_any_of(","));
+    split(tracks, result, [](char c){return c == ',';});
     break;
   }
 

@@ -8,16 +8,14 @@
 #include <lib/stringpack.hpp>
 #include <lib/downloads.hpp>
 #include <lib/cstring.hpp>
-
-#include <boost/algorithm/string/erase.hpp>
+#include <lib/string.hpp>
 
 #include <cstring>
 
 #define BROWSEPAGE_HTML_SIZE (60 * 1024) // bytes
 
 static std::string& clean_str(std::string& s) {
-  size_t pos = 0;
-  while (std::string::npos != (pos = s.find("  ", pos)))
+  for (size_t pos; std::string::npos != (pos = s.find("  "));)
     s.erase(pos, 1);
   return s;
 }
@@ -37,9 +35,9 @@ static std::string make_markdown(const std::string& description) {
   }
 
   // Removing `www.` *may* corrupt some URLs, but saves 20KB!
-  boost::algorithm::erase_all(s, "https://");
-  boost::algorithm::erase_all(s, "http://");
-  boost::algorithm::erase_all(s, "www.");
+  erase_all(s, "https://");
+  erase_all(s, "http://");
+  erase_all(s, "www.");
 
   return s;
 }

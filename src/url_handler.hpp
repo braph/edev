@@ -12,7 +12,7 @@ static inline void open_image(const std::string& url) {
   if (::fork() != 0)
     return;
 
-  ::execl("/bin/sh", "sh", "-c",
+  ::execlp("/bin/sh", "sh", "-c",
     "URL=$1; shift;"
     "for CMD; do :|$CMD \"$URL\" && break;"
     "done >/dev/null 2>/dev/null",

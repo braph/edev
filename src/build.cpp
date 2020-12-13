@@ -1,5 +1,4 @@
 /* Unity build */
-
 #include "../lib/base64.cpp"
 #include "../lib/cstring.cpp"
 #include "../lib/downloads.cpp"

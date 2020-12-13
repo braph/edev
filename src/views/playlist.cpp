@@ -3,14 +3,14 @@
 #include "mainwindow.hpp"
 #include "rm_trackstr.cpp" // TODO
 #include "../widgets/listwidget.hpp"
-#include "../config.hpp"
 #include "../ui/colors.hpp"
+#include "../config.hpp"
 #include "../theme.hpp"
 #include "../actions.hpp"
 #include "../bindings.hpp"
-#include <lib/algorithm.hpp> // clamp
 
-#include <boost/algorithm/string/predicate.hpp> // icontains
+#include <lib/algorithm.hpp> // clamp
+#include <lib/string.hpp>
 
 #include <cstring>
 
@@ -108,7 +108,7 @@ bool Playlist :: handle_key(int key) {
        _track_search.start_search(this->playlist,
          [=](const Database::Tracks::Track& track) {
             for (const auto& column : Config::playlist_columns)
-              if (boost::algorithm::icontains(trackField(track, column.tag), line))
+              if (icontains(trackField(track, column.tag), line))
                 return true;
             return false;
         });
