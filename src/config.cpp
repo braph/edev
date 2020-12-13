@@ -43,11 +43,10 @@ static bool opt_parse_bool(const std::string& s) {
 }
 
 static wchar_t opt_parse_char(const std::string& s) {
-  size_t len;
-  wchar_t* ws = toWideString(s, &len);
-  if (len != 1)
+  wchar_t wide[2];
+  if (1 != std::mbstowcs(wide, s.c_str(), 2))
     throw std::invalid_argument(s + ": Expected a single character");
-  return *ws;
+  return wide[0];
 }
 
 // Parsing functions for `special` primitives =================================
