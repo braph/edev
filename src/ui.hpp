@@ -5,7 +5,7 @@
 #undef  NCURSES_OK_ADDR // See ncurses.h ...
 #define NCURSES_OK_ADDR(WIN) (TRUE)
 
-#include "curs.hpp"
+#include <lib/curses/curs.hpp>
 
 #ifdef __cpp_exceptions
 #include <stdexcept>
