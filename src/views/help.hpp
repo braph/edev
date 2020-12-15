@@ -1,7 +1,7 @@
 #ifndef VIEWS_HELP_HPP
 #define VIEWS_HELP_HPP
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 
 namespace Views {
 

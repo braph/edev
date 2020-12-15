@@ -1,7 +1,7 @@
 #ifndef UI_CONTAINER_HPP
 #define UI_CONTAINER_HPP
 
-#include "../ui.hpp"
+#include "core.hpp"
 
 #include <vector>
 

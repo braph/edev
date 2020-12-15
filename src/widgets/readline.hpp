@@ -1,7 +1,7 @@
 #ifndef WIDGETS_READLINE_HPP
 #define WIDGETS_READLINE_HPP
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 
 #include <readline/readline.h>
 

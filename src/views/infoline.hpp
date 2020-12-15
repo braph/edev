@@ -4,7 +4,7 @@
 #include "../application.hpp"
 #include "../database.hpp"
 #include "../player.hpp"
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 
 #include <lib/staticvector.hpp>
 

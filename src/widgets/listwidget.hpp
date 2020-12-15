@@ -1,7 +1,7 @@
 #ifndef WIDGETS_LISTWIDGET_HPP
 #define WIDGETS_LISTWIDGET_HPP
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 #include <lib/algorithm.hpp> // clamp
 
 #include <sstream>

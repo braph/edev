@@ -1,7 +1,7 @@
 #ifndef UI_MOUSEEVENTS_HPP
 #define UI_MOUSEEVENTS_HPP
 
-#include "../ui.hpp"
+#include "core.hpp"
 
 #include <vector>
 #include <algorithm>

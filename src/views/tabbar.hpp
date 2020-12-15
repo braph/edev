@@ -1,7 +1,7 @@
 #ifndef VIEWS_TABBAR_HPP
 #define VIEWS_TABBAR_HPP
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 
 #include <string>
 #include <vector>

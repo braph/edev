@@ -3,7 +3,7 @@
 
 #include "../application.hpp"
 #include "../database.hpp"
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 #include "../ui/mouseevents.hpp"
 
 #include <string>

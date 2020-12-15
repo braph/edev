@@ -1,7 +1,7 @@
 #ifndef VIEWS_SPLASH_HPP
 #define VIEWS_SPLASH_HPP
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 
 namespace Views {
   

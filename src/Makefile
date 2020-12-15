@@ -98,10 +98,6 @@ test_player:
 #	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_GENERIC generic.cpp $^
 #	$(VALGRIND) ./a.out
 
-test_ui:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_UI ui.cpp $^
-	$(VALGRIND) ./a.out
-
 test_browsepage: $(BROWSEPAGE.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_BROWSEPAGE browsepage.cpp $^
 	$(VALGRIND) ./a.out

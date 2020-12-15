@@ -1,7 +1,7 @@
 #ifndef VIEWS_PROGRESSBAR_HPP
 #define VIEWS_PROGRESSBAR_HPP
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 
 #include <functional>
 

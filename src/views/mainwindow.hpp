@@ -11,7 +11,7 @@
 #include "playlist.hpp"
 #include "tabbar.hpp"
 
-#include "../ui.hpp"
+#include "../ui/core.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/readline.hpp"
 #include "../application.hpp"
