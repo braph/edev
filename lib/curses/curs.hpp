@@ -11,11 +11,11 @@ namespace NCursesCPP_Implementation {
 template<class T> inline T*   cstr(T* s)                          { return s;         }
 template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
 
-// String length function for INPUT functions (*inchstr, *getstr).
-template<class T, size_t N> inline int in_len(T(&s)[N]) { return N;            }
-template<class T>           inline int in_len(T& s)     { return s.capacity(); }
+// For INPUT functions (*inchstr, *getstr).
+template<class T, size_t N> inline int capacity(T(&s)[N]) { return N;            }
+template<class T>           inline int capacity(T& s)     { return s.capacity(); }
 
-// String length function for OUTPUT functions (*addstr, *insstr).
+// For OUTPUT functions (*addstr, *insstr).
 // Returning INT_MAX instead of T.size() is a little bit faster, but assumes
 // that T.c_str() will be NUL-terminated.
 template<class T, size_t N> inline int len(const T(&s)[N]) { return N;       }
@@ -182,18 +182,18 @@ inline int (NC_getch)(WINDOW* win, wint_t* ch) { return wget_wch(win, ch); }
 inline int (NC_getch)(wint_t* ch) { return wget_wch(stdscr, ch); }
 inline int (NC_getch)(WINDOW* win, int y, int x, wint_t* ch) { return wmove(win, y, x), wget_wch(win, ch); }
 inline int (NC_getch)(int y, int x, wint_t* ch) { return wmove(stdscr, y, x), wget_wch(stdscr, ch); }
-template<class Str> inline int (NC_getstr)(WINDOW* win, Str& s) { return wgetnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_getstr)(Str& s) { return wgetnstr_generic(stdscr, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_getstr)(WINDOW* win, int y, int x, Str& s) { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_getstr)(int y, int x, Str& s) { return wmove(stdscr, y, x), wgetnstr_generic(stdscr, cstr(s), in_len(s)); }
+template<class Str> inline int (NC_getstr)(WINDOW* win, Str& s) { return wgetnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_getstr)(Str& s) { return wgetnstr_generic(stdscr, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_getstr)(WINDOW* win, int y, int x, Str& s) { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_getstr)(int y, int x, Str& s) { return wmove(stdscr, y, x), wgetnstr_generic(stdscr, cstr(s), capacity(s)); }
 template<class Str> inline int (NC_getstr)(WINDOW* win, Str& s, int n) { return wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(Str& s, int n) { return wgetnstr_generic(stdscr, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(WINDOW* win, int y, int x, Str& s, int n) { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(int y, int x, Str& s, int n) { return wmove(stdscr, y, x), wgetnstr_generic(stdscr, cstr(s), n); }
-template<class Str> inline int (NC_instr)(WINDOW* win, Str& s) { return winnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_instr)(Str& s) { return winnstr_generic(stdscr, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_instr)(WINDOW* win, int y, int x, Str& s) { return wmove(win, y, x), winnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_instr)(int y, int x, Str& s) { return wmove(stdscr, y, x), winnstr_generic(stdscr, cstr(s), in_len(s)); }
+template<class Str> inline int (NC_instr)(WINDOW* win, Str& s) { return winnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_instr)(Str& s) { return winnstr_generic(stdscr, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_instr)(WINDOW* win, int y, int x, Str& s) { return wmove(win, y, x), winnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_instr)(int y, int x, Str& s) { return wmove(stdscr, y, x), winnstr_generic(stdscr, cstr(s), capacity(s)); }
 template<class Str> inline int (NC_instr)(WINDOW* win, Str& s, int n) { return winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_instr)(Str& s, int n) { return winnstr_generic(stdscr, cstr(s), n); }
 template<class Str> inline int (NC_instr)(WINDOW* win, int y, int x, Str& s, int n) { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }
@@ -394,18 +394,18 @@ inline int (getch)(wint_t* ch) noexcept { return wget_wch(win, ch); }
 inline int (NC_getch)(wint_t* ch) noexcept { return wget_wch(win, ch); }
 inline int (getch)(int y, int x, wint_t* ch) noexcept { return wmove(win, y, x), wget_wch(win, ch); }
 inline int (NC_getch)(int y, int x, wint_t* ch) noexcept { return wmove(win, y, x), wget_wch(win, ch); }
-template<class Str> inline int (getstr)(Str& s) noexcept { return wgetnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_getstr)(Str& s) noexcept { return wgetnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (getstr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_getstr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), in_len(s)); }
+template<class Str> inline int (getstr)(Str& s) noexcept { return wgetnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_getstr)(Str& s) noexcept { return wgetnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (getstr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_getstr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), capacity(s)); }
 template<class Str> inline int (getstr)(Str& s, int n) noexcept { return wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(Str& s, int n) noexcept { return wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (getstr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_getstr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), wgetnstr_generic(win, cstr(s), n); }
-template<class Str> inline int (instr)(Str& s) noexcept { return winnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_instr)(Str& s) noexcept { return winnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (instr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), in_len(s)); }
-template<class Str> inline int (NC_instr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), in_len(s)); }
+template<class Str> inline int (instr)(Str& s) noexcept { return winnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_instr)(Str& s) noexcept { return winnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (instr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), capacity(s)); }
+template<class Str> inline int (NC_instr)(int y, int x, Str& s) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), capacity(s)); }
 template<class Str> inline int (instr)(Str& s, int n) noexcept { return winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (NC_instr)(Str& s, int n) noexcept { return winnstr_generic(win, cstr(s), n); }
 template<class Str> inline int (instr)(int y, int x, Str& s, int n) noexcept { return wmove(win, y, x), winnstr_generic(win, cstr(s), n); }

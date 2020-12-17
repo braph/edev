@@ -10,11 +10,11 @@ namespace NCursesCPP_Implementation {
 template<class T> inline T*   cstr(T* s)                          { return s;         }
 template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
 
-// String length function for INPUT functions (*inchstr, *getstr).
-template<class T, size_t N> inline int in_len(T(&s)[N]) { return N;            }
-template<class T>           inline int in_len(T& s)     { return s.capacity(); }
+// For INPUT functions (*inchstr, *getstr).
+template<class T, size_t N> inline int capacity(T(&s)[N]) { return N;            }
+template<class T>           inline int capacity(T& s)     { return s.capacity(); }
 
-// String length function for OUTPUT functions (*addstr, *insstr).
+// For OUTPUT functions (*addstr, *insstr).
 // Returning INT_MAX instead of T.size() is a little bit faster, but assumes
 // that T.c_str() will be NUL-terminated.
 template<class T, size_t N> inline int len(const T(&s)[N]) { return N;       }

@@ -21,6 +21,8 @@ However, we can provide template<class T> addstr(T s) { addstr(s.c_str()); }
 # TODO: printw: to string everything
 # TODO: wbkgdset, wbg ...
 # TODO: default arguments!
+# TODO: >> operator?
+# TODO: instr(string&s) { char buf[64]; while (instr(buf,64)) s+=buf; }
 
 prefix = 'NC_'
 undef_ncurses_ok_addr = False
@@ -127,28 +129,28 @@ for f in braceexpand("get{,beg,max,par}yx"):
     a(void, f, "int& y, int& x", f, "y, x", const=True)
 
 # curs_printw(3X) / curs_scanw(3X):
-mv(int, "printw", "const char* fmt, T... args",     "wprintw",   "fmt, args...",    template="typename... T")
+mv(int, "printw", "const char* fmt, T... args",     "wprintw",   "fmt, args...",      template="typename... T")
 mv(int, "printw", "const char* fmt, va_list args",  "vw_printw", "fmt, args")
-mv(int, "scanw",  "const char* fmt, T... args",     "wscanw",    "fmt, args...",    template="typename... T")
+mv(int, "scanw",  "const char* fmt, T... args",     "wscanw",    "fmt, args...",      template="typename... T")
 mv(int, "scanw",  "const char* fmt, va_list args",  "vw_printw", "fmt, args")
 
 # OUTPUT functions
 mv(int, "addch",  "chtype ch",           "waddch",            "ch")
 mv(int, "addch",  "const cchar_t* ch",   "wadd_wch",          "ch")
-mv(int, "addstr", "const Str& s",        "waddnstr_generic",  "cstr(s), len(s)",    template='class Str')
-mv(int, "addstr", "const Str& s, int n", "waddnstr_generic",  "cstr(s), n",         template='class Str')
+mv(int, "addstr", "const Str& s",        "waddnstr_generic",  "cstr(s), len(s)",      template='class Str')
+mv(int, "addstr", "const Str& s, int n", "waddnstr_generic",  "cstr(s), n",           template='class Str')
 mv(int, "insch",  "chtype ch",           "winsch",            "ch")
 mv(int, "insch",  "const cchar_t* ch",   "wins_wch",          "ch")
-mv(int, "insstr", "const Str& s",        "winsnstr_generic",  "cstr(s), len(s)",    template='class Str')
-mv(int, "insstr", "const Str& s, int n", "winsnstr_generic",  "cstr(s), n",         template='class Str')
+mv(int, "insstr", "const Str& s",        "winsnstr_generic",  "cstr(s), len(s)",      template='class Str')
+mv(int, "insstr", "const Str& s, int n", "winsnstr_generic",  "cstr(s), n",           template='class Str')
 mv(int, "delch",  "",                    "wdelch",            "")
 # INPUT functions
 mv(int, "getch",  "",                    "wgetch",            "")
 mv(int, "getch",  "wint_t* ch",          "wget_wch",          "ch")
-mv(int, "getstr", "Str& s",              "wgetnstr_generic",  "cstr(s), in_len(s)", template='class Str')
-mv(int, "getstr", "Str& s, int n",       "wgetnstr_generic",  "cstr(s), n",         template='class Str')
-mv(int, "instr",  "Str& s",              "winnstr_generic",   "cstr(s), in_len(s)", template='class Str')
-mv(int, "instr",  "Str& s, int n",       "winnstr_generic",   "cstr(s), n",         template='class Str')
+mv(int, "getstr", "Str& s",              "wgetnstr_generic",  "cstr(s), capacity(s)", template='class Str')
+mv(int, "getstr", "Str& s, int n",       "wgetnstr_generic",  "cstr(s), n",           template='class Str')
+mv(int, "instr",  "Str& s",              "winnstr_generic",   "cstr(s), capacity(s)", template='class Str')
+mv(int, "instr",  "Str& s, int n",       "winnstr_generic",   "cstr(s), n",           template='class Str')
 mv(int, "inch",   "cchar_t* ch",         "win_wch",           "ch")
 mv("chtype", "inch", "",                 "winch",             "")
 
