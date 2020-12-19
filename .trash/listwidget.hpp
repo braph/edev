@@ -7,9 +7,8 @@
 #include <sstream>
 #include <climits>
 #include <functional>
-#include <algorithm>
 
-// TODO: center->center_cursor, scroll_{items,cursor}(optim.), cursor_index(keep curs)
+// TODO: Clamp active index to -1, MAX
 
 /* ============================================================================
  * ListWidget - Template for displaying containers as a ncurses list
@@ -17,11 +16,6 @@
 
 template<typename TContainer>
 class ListWidget : public UI::Window {
-  int m_cursor;
-  int m_top_list_idx;
-  int m_active;
-  TContainer* m_list;
-
 public:
   using value_type = typename TContainer::value_type;
   using size_type  = typename TContainer::size_type;
@@ -30,7 +24,7 @@ public:
 
   ListWidget()
   : m_cursor(0)
-  , m_top_list_idx(0)
+  , m_selected(0)
   , m_active(-1)
   , m_list(NULL)
   {
@@ -38,54 +32,30 @@ public:
     scrollok(win, TRUE);
   }
 
-  // === navigation ===========================================================
-  inline void up(int n = 1)    { scroll_cursor(-n);                           }
-  inline void down(int n = 1)  { scroll_cursor(n);                            }
-  inline void page_up()        { scroll_items(-size.height / 2);              }
-  inline void page_down()      { scroll_items(+size.height / 2);              }
-  inline void top()            { m_cursor = m_top_list_idx = 0;       draw(); }
-  inline void bottom()         { m_cursor = m_top_list_idx = INT_MAX; draw(); }
-  inline void center()         { m_cursor = size.height / 2;          draw(); }
-  inline void goto_selected()  {
-    cursor_index(m_active);
-    center();
-  }
+  TContainer* list()          const noexcept { return m_list;          }
+  void list(TContainer *list)       noexcept { m_list = list;          }
 
-  // === accessors ============================================================
-  TContainer* list()          const noexcept { return m_list; }
-  void list(TContainer *list)       noexcept { m_list = list; }
+  int  active_index()         const noexcept { return m_active;        }
+  void active_index(int idx)        noexcept { m_active = idx; draw(); }
 
-  inline bool empty() const noexcept
-  { return container_size() == 0; }
+  int cursor_index() const noexcept
+  { return empty() ? -1 : m_selected; }
 
-  inline int container_size() const noexcept
-  { return int(m_list ? m_list->size() : 0); }
-
-  // === cursor_* =============================================================
-  inline int cursor_index() const noexcept
-  { return empty() ? -1 : m_top_list_idx + m_cursor; }
-
-  inline void cursor_index(int idx) {
-    m_top_list_idx = idx;
-    m_cursor = 0;
+  void cursor_index(int idx) {
+    m_selected = idx;
+    m_cursor = size.height / 2;
     draw();
   }
 
   /// Only if cursor_index() != -1
-  value_type cursor_item() const {
-    return (*m_list)[size_type(cursor_index())];
+  value_type getCursorItem() const {
+    return (*m_list)[size_type(m_selected)];
   }
-
-  // === active_* =============================================================
-  int  active_index()         const noexcept { return m_active;        }
-  void active_index(int idx)        noexcept { m_active = idx; draw(); }
 
   /// Only if active_index() != -1
   value_type active_item() const {
     return (*m_list)[size_type(m_active)];
   }
-
-  // === widget stuff =========================================================
 
   void layout(UI::Pos pos, UI::Size size) override {
     if (size != this->size) {
@@ -98,6 +68,13 @@ public:
     }
   }
 
+  void _clamp() {
+    clamp(&m_cursor,    0, max_cursor());
+    clamp(&m_cursor,    0, container_size() - 1);
+    clamp(&m_active,   -1, container_size() - 1);
+    clamp(&m_selected,  0, container_size() - 1);
+  }
+
   void draw() override {
     erase();
     _clamp();
@@ -105,32 +82,79 @@ public:
     if (empty())
       return;
 
+    int idx  =  clamp(m_selected - m_cursor, 0, container_size() - 1); // TODO
     int line = 0;
-    int max_line = max_cursor();
-    int list_idx = m_top_list_idx;
-    int end_list_idx = container_size();
-    for (; line <= max_line && list_idx < end_list_idx; ++list_idx, ++line)
-      render_item(list_idx, line, line == m_cursor);
+    for (; line < size.height && idx < container_size(); ++line, ++idx) {
+      render_item(idx, line, line == m_cursor);
+    }
 
     redrawwin(win);
   }
 
+  /// Scroll and change cursor position
   void scroll_cursor(int n) {
-    m_cursor += n;
-    if (m_cursor < 0) {
-      m_top_list_idx += n;
+    if (empty())
+      return;
+
+    n = clamp(m_selected + n, 0, container_size() - 1) - m_selected;
+
+    render_item(m_selected, m_cursor, false);
+
+    // New cursor resides in the current window
+    if (m_cursor + n >= 0 && m_cursor + n < size.height)
+      goto CHANGE_CURSOR_POSITION;
+
+    if (n > 0) { // Scrolling down
+      m_selected += max_cursor() - m_cursor;
+      n -= max_cursor() - m_cursor;
+      wscrl(win, n);
+      while (n-- > 1)
+        render_item(++m_selected, max_cursor(), false);
+      render_item(++m_selected, max_cursor(), true);
+      return;
     }
-    else if (m_cursor > max_cursor()) {
-      m_top_list_idx += (m_cursor - max_cursor());
+    else { // Scrolling up
+      m_selected -= m_cursor;
+      n += m_cursor;
+      wscrl(win, n);
+      while (n++ < -1)
+        render_item(--m_selected, 0, false);
+      render_item(--m_selected, 0, true);
+      return;
     }
 
+REDRAW:
+    m_cursor   += n;
+    m_selected += n;
     draw();
+    return;
+CHANGE_CURSOR_POSITION:
+    m_cursor   += n;
+    m_selected += n;
+    render_item(m_selected, m_cursor, true);
   }
 
   void scroll_items(int n) {
-    m_top_list_idx += n;
+    m_selected += n;
     draw();
   }
+
+  // === Navigation === //
+  void up(int n = 1)   { scroll_cursor(-n);                        }
+  void down(int n = 1) { scroll_cursor(n);                         }
+  void top()           { m_cursor = m_selected = 0;        draw(); }
+  void bottom()        { m_cursor = m_selected = INT_MAX;  draw(); }
+  void page_up()       { scroll_items(-size.height / 2);           }
+  void page_down()     { scroll_items(size.height / 2);            }
+  void goto_selected() {
+    m_cursor = size.height / 2;
+    m_selected = m_active;
+    draw();
+  }
+
+  /*
+  void center()    { force_cursorpos(size.height / 2); }
+  */
 
   bool handle_mouse(MEVENT& m) override {
     if (wmouse_trafo(win, &m.y, &m.x, false)) {
@@ -140,12 +164,17 @@ public:
     return false;
   }
 
+  bool empty() const noexcept
+  { return container_size() == 0; }
+
+  int container_size() const noexcept
+  { return int(m_list ? m_list->size() : 0); }
+
 private:
-  void _clamp() {
-    clamp(&m_top_list_idx,  0, container_size() - 1 - max_cursor());
-    clamp(&m_cursor,        0, std::min(container_size() - m_top_list_idx - 1, max_cursor()));
-    clamp(&m_active,       -1, container_size() - 1);
-  }
+  int m_cursor;
+  int m_selected;
+  int m_active;
+  TContainer* m_list;
 
   inline int max_cursor() { return size.height - 1; }
 
@@ -157,7 +186,7 @@ private:
   }
 
   inline void unselect_item() {
-    render_item(m_top_list_idx + m_cursor, m_cursor, false);
+    render_item(m_selected, m_cursor, false);
   }
 };
 

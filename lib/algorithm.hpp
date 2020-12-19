@@ -18,4 +18,9 @@ static inline T clamp(T value, T lower, T upper) {
   return value;
 }
 
+template<typename T>
+static inline void clamp(T* value, T lower, T upper) {
+  *value = clamp(*value, lower, upper);
+}
+
 #endif
