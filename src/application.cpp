@@ -194,7 +194,7 @@ MAINLOOP:
       && player.percent() >= Config::prefetch
       && player.is_playing()
       && player.length() >= 30
-      && mainwindow.playlist.container_size() >= 2)
+      && mainwindow.playlist.list_size() >= 2)
   {
     auto list = mainwindow.playlist.list();
     auto next_track = (*list)[size_t(mainwindow.playlist.active_index() + 1) % list->size()];

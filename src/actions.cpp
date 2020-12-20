@@ -55,7 +55,7 @@ int Actions :: call(ActionID id) {
 
   // Playlist
   case PLAYLIST_GOTO_CURRENT:
-    mainwindow->playlist.goto_selected();
+    mainwindow->playlist.goto_active();
     break;
   case PLAYLIST_NEXT:
     index = mainwindow->playlist.active_index() + 1;
