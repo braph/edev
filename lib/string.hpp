@@ -5,9 +5,6 @@
 #include <vector>
 #include <cstring>
 
-#include <boost/algorithm/string/predicate.hpp> // icontains TODO
-using boost::algorithm::icontains; // TODO
-
 template<class T> inline T*   cstr(T* s)                          { return s;         }
 template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
 
@@ -28,12 +25,6 @@ void split(std::vector<std::string>& result, const String& str, const Predicate&
   }
   if (rs.size())
     result.push_back(std::move(rs));
-}
-
-#if 0
-template<class T1, class T2>
-bool icontains(const T1& haystack, const T2& needle) {
-  return icontains(cstr(haystack), cstr(needle));
 }
 
 static bool icontains(const char* haystack, const char* needle) {
@@ -58,6 +49,10 @@ NEXT:
 
   return false;
 }
-#endif
+
+template<class T1, class T2>
+bool icontains(const T1& haystack, const T2& needle) {
+  return icontains(cstr(haystack), cstr(needle));
+}
 
 #endif // LIB_STRING_HPP
