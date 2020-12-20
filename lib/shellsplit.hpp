@@ -13,9 +13,9 @@ enum Warning {
   UNMATCHED_BACKSLASH     // string\ 
 };
 
-void split(const std::string&, std::vector<std::string>&, Warning &);
+void split(const char*, std::vector<std::string>&, Warning &);
 
-inline void split(const std::string& s, std::vector<std::string>& v) {
+inline void split(const char* s, std::vector<std::string>& v) {
   Warning w;
   split(s, v, w);
 }

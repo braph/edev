@@ -8,50 +8,50 @@
 #include <lib/shellsplit.hpp>
 #include <lib/stringpack.hpp>
 #include <lib/raii/file.hpp>
-#include <lib/iterator/iterator_pair.hpp>
 
 #include <cstdio>
 #include <cinttypes>
+#include <algorithm>
 
 using namespace Views;
 
 // Parsing functions for primitives ===========================================
 
-static int opt_parse_int(const std::string& s) {
+static int parse_int(const char* s) {
   char *end;
-  int i = std::strtoimax(s.c_str(), &end, 10);
-  if (s.empty() || *end)
-    throw std::invalid_argument(s + ": Not an integer");
+  int i = std::strtoimax(s, &end, 10);
+  if (!*s || *end)
+    throw ConfigError(s, "Not an integer");
   return i;
 }
 
-static float opt_parse_float(const std::string& s) {
+static float parse_float(const char* s) {
   char *end;
-  float f = std::strtof(s.c_str(), &end);
-  if (s.empty() || *end)
-    throw std::invalid_argument(s + ": Not a float");
+  float f = std::strtof(s, &end);
+  if (!*s || *end)
+    throw ConfigError(s, "Not a float");
   return f;
 }
 
-static bool opt_parse_bool(const std::string& s) {
+static bool parse_bool(const char* s) {
   using pack = StringPack::AlnumNoCase;
   switch (pack::pack_runtime(s)) {
     case pack("true"):  return true;
     case pack("false"): return false;
   }
-  throw std::invalid_argument(s + ": Expected `true` or `false`");
+  throw ConfigError(s, "Expected `true` or `false`");
 }
 
-static wchar_t opt_parse_char(const std::string& s) {
+static wchar_t parse_char(const char* s) {
   wchar_t wide[2];
-  if (1 != std::mbstowcs(wide, s.c_str(), 2))
-    throw std::invalid_argument(s + ": Expected a single character");
+  if (1 != std::mbstowcs(wide, s, 2))
+    throw ConfigError(s, "Expected a single character");
   return wide[0];
 }
 
 // Parsing functions for `special` primitives =================================
 
-static int opt_parse_use_colors(const std::string& s) {
+static int parse_use_colors(const char* s) {
   using pack = StringPack::AlnumNoCase;
   switch (pack::pack_runtime(s)) {
     case pack("auto"):  return -1;
@@ -59,36 +59,36 @@ static int opt_parse_use_colors(const std::string& s) {
     case pack("8"):     return 8;
     case pack("256"):   return 256;
   }
-  throw std::invalid_argument(s + ": Expected auto|mono|8|256");
+  throw ConfigError(s, "Expected auto|mono|8|256");
 }
 
-static short opt_parse_color(const std::string& s) {
+static short parse_color(const char* s) {
   short color = UI::Color::parse(s);
   if (color != UI::Color::Invalid)
     return color;
-  throw std::invalid_argument(s + ": Invalid color");
+  throw ConfigError(s, "Invalid color");
 }
 
-static attr_t opt_parse_attribute(const std::string& s) {
+static attr_t parse_attribute(const char* s) {
   attr_t attr = UI::Attribute::parse(s);
   if (attr != UI::Attribute::Invalid)
     return attr;
-  throw std::invalid_argument(s + ": Invalid attribute");
+  throw ConfigError(s, "Invalid attribute");
 }
 
-static Database::ColumnID opt_parse_column(const std::string& s) {
+static Database::ColumnID parse_column(const char* s) {
   Database::ColumnID column = Database::columnIDFromStr(s);
   if (column != Database::COLUMN_NONE)
     return column;
-  throw std::invalid_argument(s + ": No such column");
+  throw ConfigError(s, "No such column");
 }
       
 // Parsing functions for complex objects ======================================
 
-static decltype(Config::tabs_widgets) opt_parse_tabs_widgets(const std::string& s) {
+static decltype(Config::tabs_widgets) parse_tabs_widgets(const char* s) {
   decltype(Config::tabs_widgets) widgets = {};
   size_t idx = 0;
-  const char *cs = s.c_str();
+  const char *cs = s;
 
   while (cs += std::strspn(cs, ", \t"), *cs) {
     size_t len = std::strcspn(cs, ", \t");
@@ -102,17 +102,17 @@ static decltype(Config::tabs_widgets) opt_parse_tabs_widgets(const std::string& 
       case pack("browser"):   widgets[idx] = TabWidgets::BROWSER;  break;
       case pack("info"):      widgets[idx] = TabWidgets::INFO;     break;
       case pack("help"):      widgets[idx] = TabWidgets::HELP;     break;
-      default:                throw std::invalid_argument(w + ": Invalid widget");
+      default:                throw ConfigError(w, "Invalid widget");
     }
     ++idx; // XXX We don't care about bounds checking
   }
   return widgets;
 }
 
-static decltype(Config::main_widgets) opt_parse_main_widgets(const std::string &s) {
+static decltype(Config::main_widgets) parse_main_widgets(const char* s) {
   decltype(Config::main_widgets) widgets = {};
   size_t idx = 0;
-  const char *cs = s.c_str();
+  const char *cs = s;
 
   while (cs += std::strspn(cs, ", \t"), *cs) {
     size_t len = std::strcspn(cs, ", \t");
@@ -126,7 +126,7 @@ static decltype(Config::main_widgets) opt_parse_main_widgets(const std::string &
       case pack("readline"):    widgets[idx] = MainWidgets::READLINE;    break;
       case pack("windows"):     widgets[idx] = MainWidgets::WINDOWS;     break;
       case pack("progressbar"): widgets[idx] = MainWidgets::PROGRESSBAR; break;
-      default:                  throw std::invalid_argument(w + ": Invalid widget");
+      default:                  throw ConfigError(w, "Invalid widget");
     }
     ++idx; // XXX We don't care about bounds checking
   }
@@ -141,7 +141,7 @@ static inline const char* skipWhitespace(const char *s) {
 struct AttributeParser {
   const char* s;
   std::string name, value;
-  AttributeParser(const std::string& s) : s(s.c_str()) {}
+  AttributeParser(const char* s) : s(s) {}
 
   bool next() {
     name.clear();
@@ -163,7 +163,7 @@ struct FormatParser {
   Database::ColumnID column;
   std::string text;
   std::string _attributes;
-  FormatParser(const std::string& str) : s(str.c_str()) {}
+  FormatParser(const char* str) : s(str) {}
 
   bool next() {
     column = Database::COLUMN_NONE;
@@ -188,7 +188,7 @@ struct FormatParser {
       if (text.empty())
         return false;
 
-      column = opt_parse_column(text);
+      column = parse_column(text.c_str());
 
       text.clear();
     }
@@ -206,18 +206,18 @@ struct FormatParser {
   }
 
   AttributeParser attributes() {
-    return AttributeParser(_attributes);
+    return AttributeParser(_attributes.c_str());
   }
 };
 
-static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
+static PlaylistColumns parse_playlist_columns(const char* s) {
   PlaylistColumns result;
   FormatParser formatParser(s);
   while (formatParser.next()) {
     PlaylistColumnFormat fmt;
 
     if (formatParser.column == Database::COLUMN_NONE)
-      throw std::invalid_argument("Missing column name");
+      throw ConfigError("Missing column name");
 
     fmt.tag = formatParser.column;
 
@@ -225,8 +225,8 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
     while (attr.next()) {
       using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(attr.name)) {
-        case pack("fg"):    fmt.fg = opt_parse_color(attr.value);  break;
-        case pack("bg"):    fmt.bg = opt_parse_color(attr.value);  break;
+        case pack("fg"):    fmt.fg = parse_color(attr.value.c_str());  break;
+        case pack("bg"):    fmt.bg = parse_color(attr.value.c_str());  break;
         case pack("right"): fmt.justify = PlaylistColumnFormat::Justify::Right;  break;
         case pack("left"):  fmt.justify = PlaylistColumnFormat::Justify::Left;   break;
         case pack("size"):
@@ -236,7 +236,7 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
     }
 
     if (! fmt.size)
-      throw std::invalid_argument(formatParser.text + ": Missing column size");
+      throw ConfigError(formatParser.text, "Missing column size");
 
     result.push_back(std::move(fmt));
   }
@@ -245,7 +245,7 @@ static PlaylistColumns opt_parse_playlist_columns(const std::string &s) {
 }
 
 //"<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
-static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
+static InfoLineFormat parse_infoline_format(const char* s) {
   InfoLineFormat result;
 
   FormatParser formatParser(s);
@@ -261,9 +261,9 @@ static InfoLineFormat opt_parse_infoline_format(const std::string& s) {
     while (attr.next()) {
       using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(attr.name)) {
-        case pack("fg"): fmt.fg = opt_parse_color(attr.value); break;
-        case pack("bg"): fmt.bg = opt_parse_color(attr.value); break;
-        default:         fmt.attributes |= opt_parse_attribute(attr.name);
+        case pack("fg"): fmt.fg = parse_color(attr.value.c_str()); break;
+        case pack("bg"): fmt.bg = parse_color(attr.value.c_str()); break;
+        default:         fmt.attributes |= parse_attribute(attr.name.c_str());
       }
     }
 
@@ -283,104 +283,99 @@ void Config :: init() {
 #include "config/options.initialize.cpp"
 }
 
-static inline void checkArgCount(const std::vector<std::string>& args, size_t min, size_t max) {
+static inline void checkArgCount(const string_array& args, size_t min, size_t max) {
   if (args.size() < min)
-    throw std::invalid_argument("Missing arguments");
+    throw ConfigError("Missing arguments");
   if (args.size() > max)
-    throw std::invalid_argument("Too many arguments");
+    throw ConfigError("Too many arguments");
 }
 
-void Config :: set(const std::vector<std::string>& args) {
-  checkArgCount(args, 3, 3);
-  const std::string& option = args[1];
-  const std::string& value  = args[2];
+void Config :: set(const string_array& args) {
+  checkArgCount(args, 2, 2);
+  const char* option = args[0];
+  const char* value  = args[1];
 
   try {
     if (0) {}
 #include "config/options.set.cpp"
-    else throw std::invalid_argument("unknown option");
+    else throw ConfigError("unknown option");
   } catch (const std::exception &e) {
-    throw std::invalid_argument(option + ": " + e.what());
+    throw ConfigError(option, e.what());
   }
 }
 
-void Config :: color(Theme& theme, const std::vector<std::string>& args) {
-  checkArgCount(args, 3, INT_MAX);
+void Config :: color(Theme& theme, const string_array& args) {
+  checkArgCount(args, 1, INT_MAX);
 
-  auto it = make_iterator_pair(args.begin() + 1, args.end());
-  const auto& element = it.next();
-  Theme::Definition* def = theme.get(element);
+  Theme::Definition* def = theme.get(args[0]);
   if (! def)
-    throw std::invalid_argument(element + ": Invalid theme element");
+    throw ConfigError(args[0], "Invalid theme element");
 
-  def->fg = opt_parse_color(it.next());
-  def->bg = (it.has_next() ? opt_parse_color(it.next()) : -2);
-  def->attributes = 0;
-  while (it.has_next())
-    def->attributes |= opt_parse_attribute(it.next());
+  def->fg = parse_color(args[1]);
+  if (args.size() > 2) {
+    def->bg = parse_color(args[2]);
+    def->attributes = 0;
+    for (auto i = args.size(); --i >= 3;)
+      def->attributes |= parse_attribute(args[i]);
+  }
 }
 
-void Config :: bind(const std::vector<std::string>& args) {
-  checkArgCount(args, 2, 2);
+void Config :: bind(const string_array& args) {
+  checkArgCount(args, 3, 3);
 }
 
-void Config :: unbind(const std::vector<std::string>& args) {
-  checkArgCount(args, 2, 2);
+void Config :: unbind(const string_array& args) {
+  checkArgCount(args, 1, 1);
 }
 
-void Config :: unbind_all(const std::vector<std::string>& args) {
+void Config :: unbind_all(const string_array& args) {
   checkArgCount(args, 1, 1);
   std::memset(Bindings::pad,      0, sizeof(Bindings::pad));
   std::memset(Bindings::global,   0, sizeof(Bindings::global));
   std::memset(Bindings::playlist, 0, sizeof(Bindings::playlist));
 }
 
-static bool getnextline(FILE* fh, std::string& line) {
-  line.clear();
-  int c = std::fgetc(fh);
-  if (c == EOF)  return false;
-  if (c == '\n') return true;
-  do {
-    line.push_back(c);
-    c = std::fgetc(fh);
-  }
-  while (c != EOF && c != '\n');
-  return true;
-}
-
-void Config :: read(const std::string &file) {
-  RAII::FILE fh( std::fopen(file.c_str(), "r") );
+void Config :: read(const char* file) {
+  RAII::FILE fh( std::fopen(file, "r") );
   if (! fh)
     throw std::runtime_error(std::strerror(errno));
 
-  std::string line;
-  std::vector<std::string> args;
+  char line[8192];
+  std::vector<std::string> splitted;
+  const char* c_args[64]; // XXX
   unsigned int no = 0;
 
   try {
-    while (getnextline(fh, line)) {
+    while (std::fgets(line, sizeof(line), fh)) {
+      line[std::max(size_t(1), std::strlen(line)) - 1] = '\0';
+      
       ++no;
-      ShellSplit::split(line, args);
-      if (! args.size() || args[0][0] == '#')
+      ShellSplit::split(line, splitted);
+      if (! splitted.size() || splitted[0][0] == '#')
         continue;
 
+      for (size_t n = 0; n < splitted.size(); ++n)
+        c_args[n] = splitted[n].c_str();
+
+      ArrayView<const char*> args(c_args + 1, splitted.size() - 1);
+
       using pack = StringPack::AlnumNoCase;
-      switch (pack::pack_runtime(args[0])) {
-        case pack("set"):        Config::set(args);        break;
-        case pack("color"):      Config::color(THEME_8,    args); break;
-        case pack("color_256"):  Config::color(THEME_256,  args); break;
-        case pack("color_mono"): Config::color(THEME_MONO, args); break;
-        case pack("bind"):       Config::bind(args);       break;
-        case pack("unbind"):     Config::unbind(args);     break;
-        case pack("unbind_all"): Config::unbind_all(args); break;
-        default: throw std::invalid_argument("unknown command");
+      switch (pack::pack_runtime(c_args[0])) {
+        case pack("set"):          set(args);               break;
+        case pack("color"):        color(THEME_8,    args); break;
+        case pack("color_256"):    color(THEME_256,  args); break;
+        case pack("color_mono"):   color(THEME_MONO, args); break;
+        case pack("bind"):         bind(args);              break;
+        case pack("unbind"):       unbind(args);            break;
+        case pack("unbind_all"):   unbind_all(args);        break;
+        default: throw ConfigError("unknown command");
       }
     }
   }
   catch (const std::exception &e) {
     char _[1024];
-    std::snprintf(_, sizeof(_), "%s:%u: %s: %s", file.c_str(), no, args[0].c_str(), e.what());
-    throw std::invalid_argument(_);
+    std::snprintf(_, sizeof(_), "%s:%u: %s: %s", file, no, c_args[0], e.what());
+    throw ConfigError(_);
   }
 
   if (std::ferror(fh))
@@ -396,36 +391,36 @@ int main() {
   Config::init();
 
   // === Primitives ===
-  assert(opt_parse_int("1") == 1);
-  except(opt_parse_int(""));
-  except(opt_parse_int("-"));
-  except(opt_parse_int("1a"));
-  except(opt_parse_int("a1"));
+  assert(parse_int("1") == 1);
+  except(parse_int(""));
+  except(parse_int("-"));
+  except(parse_int("1a"));
+  except(parse_int("a1"));
 
-  assert(opt_parse_bool("true") == true);
-  assert(opt_parse_bool("false") == false);
-  except(opt_parse_bool(""));
-  except(opt_parse_bool("-"));
+  assert(parse_bool("true") == true);
+  assert(parse_bool("false") == false);
+  except(parse_bool(""));
+  except(parse_bool("-"));
 
-  assert(opt_parse_char("c") == 'c');
-  except(opt_parse_char(""));
-  except(opt_parse_char("12"));
+  assert(parse_char("c") == 'c');
+  except(parse_char(""));
+  except(parse_char("12"));
 
   // === Objects ===
-  { auto c = opt_parse_tabs_widgets("  help , INFO ");
+  { auto c = parse_tabs_widgets("  help , INFO ");
     assert(c[0] == TabWidgets::HELP);
     assert(c[1] == TabWidgets::INFO);
     assert(c[2] == TabWidgets::NONE);
   }
 
-  { auto c = opt_parse_main_widgets("  infoline , PROGRESSBAR ");
+  { auto c = parse_main_widgets("  infoline , PROGRESSBAR ");
     assert(c[0] == MainWidgets::INFOLINE);
     assert(c[1] == MainWidgets::PROGRESSBAR);
     assert(c[2] == MainWidgets::NONE);
   }
 
   PlaylistColumns c;
-  c = opt_parse_playlist_columns("number{fg=blue bg=magenta size=3} artist{size=10%}");
+  c = parse_playlist_columns("number{fg=blue bg=magenta size=3} artist{size=10%}");
   assert(c.size()       == 2);
   assert(c[0].size      == 3);
   assert(c[0].relative  == false);
@@ -436,7 +431,7 @@ int main() {
   assert(c[1].fg        == -1);
   assert(c[1].bg        == -1);
   InfoLineFormat fmt;
-  fmt = opt_parse_infoline_format("'>>'{fg=blue bg=magenta bold}");
+  fmt = parse_infoline_format("'>>'{fg=blue bg=magenta bold}");
   assert(fmt.size()         == 1);
   assert(fmt[0].text        == ">>");
   assert(fmt[0].fg          == COLOR_BLUE);

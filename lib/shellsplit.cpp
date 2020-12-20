@@ -30,27 +30,26 @@ readDoubleQuoted(const char*& s, std::string& word, Warning& w)
   w = UNMATCHED_DOUBLE_QUOTE;
 }
 
-void split(const std::string& s, std::vector<std::string>& result, Warning& w)
+void split(const char* s, std::vector<std::string>& result, Warning& w)
 {
   result.clear();
   std::string word;
-  const char* it = s.c_str();
   bool havingWord = false;
   bool escaped = false;
 
-  while (*it) {
+  while (*s) {
     if (escaped) {
       escaped = false;
-      word.push_back(*it);
+      word.push_back(*s);
     } else {
-      switch (*it) {
+      switch (*s) {
         case '\'':
           havingWord = true;
-          readSingleQuoted(it, word, w);
+          readSingleQuoted(s, word, w);
           break;
         case '"':
           havingWord = true;
-          readDoubleQuoted(it, word, w);
+          readDoubleQuoted(s, word, w);
           break;
         case ' ':
         case '\t':
@@ -61,6 +60,7 @@ void split(const std::string& s, std::vector<std::string>& result, Warning& w)
           if (havingWord) {
             havingWord = false;
             result.push_back(std::move(word));
+            word.clear();
           }
           break;
 
@@ -70,11 +70,11 @@ void split(const std::string& s, std::vector<std::string>& result, Warning& w)
 
         default:
           havingWord = true;
-          word.push_back(*it);
+          word.push_back(*s);
       }
     }
 
-    ++it;
+    ++s;
   }
 
   if (havingWord)

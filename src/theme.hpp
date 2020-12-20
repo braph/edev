@@ -1,6 +1,8 @@
 #ifndef THEME_HPP
 #define THEME_HPP
 
+#include CURSES_INC
+
 #include <string>
 
 #define THEME_ELEMENT_IDS                            \

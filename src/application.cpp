@@ -90,7 +90,7 @@ void Application :: init() {
 
     e = "Error while reading configuration file";
     if (fs::exists(Ektoplayer::config_file()))
-      Config::read(Ektoplayer::config_file().string());
+      Config::read(Ektoplayer::config_file().c_str());
 
     e = "Could not create config directory";
     fs::create_directories(Ektoplayer::config_dir());

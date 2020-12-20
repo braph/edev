@@ -118,37 +118,37 @@ options = [
         help: 'Where to store downloaded MP3 archives',
         }),
     ('auto_extract_to_archive_dir', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'Enable/disable automatic extraction of downloaded MP3\narchives from `download_dir` to `archive_dir`',
         }),
     ('delete_after_extraction', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'In combination `with auto_extract_to_archive_dir`:\nDelete zip archive after successful extraction',
         }),
     ('playlist_load_newest', {
-        type: 'int', set: 'opt_parse_int',
+        type: 'int', set: 'parse_int',
         default: '1000',
         help: 'How many tracks from database should be added to the playlist on application start.',
         }),
     ('use_cache', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: "Enable/disable local mp3 cache.\nIf this option is disabled, the downloaded mp3 files won't be moved from `cache_dir`.\nInstead they will reside in `temp_dir` and will be deleted on application exit.",
         }),
     ('prefetch', {
-        type: 'float', set: 'opt_parse_float',
+        type: 'float', set: 'parse_float',
         default: '0.50',
         help: 'Specify after how many percent the next track shall be prefetched. Set it to 0 to disable it.',
         }),
     ('small_update_pages', {
-        type: 'int', set: 'opt_parse_int',
+        type: 'int', set: 'parse_int',
         default: '3',
         help: 'How many pages should be fetched after start',
         }),
     ('use_colors', {
-        type: 'int', set: 'opt_parse_use_colors',
+        type: 'int', set: 'parse_use_colors',
         default: '"auto"',
         c_default: '-1',
         help: 'Choose color capabilities. auto|mono|8|256',
@@ -159,96 +159,96 @@ options = [
 #       help: 'Set output audio system. See option `-o` in mpg123(1)',
 #       }),
     ('playlist.columns', {
-        type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
+        type: 'PlaylistColumns', set: 'parse_playlist_columns',
         default: PLAYLIST_COLUMNS,
         c_default: PLAYLIST_COLUMNS_CVALUE,
         help: 'Columns of playlist',
         }),
     ('playlist.columns_256', {
-        type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
+        type: 'PlaylistColumns', set: 'parse_playlist_columns',
         default: PLAYLIST_COLUMNS_256,
         c_default: PLAYLIST_COLUMNS_256_CVALUE,
         help: 'Columns of playlist (256 colors)',
         }),
     ('browser.columns', {
-        type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
+        type: 'PlaylistColumns', set: 'parse_playlist_columns',
         default: PLAYLIST_COLUMNS,
         help: 'Columns of browser',
         lateinit: True
         }),
     ('browser.columns_256', {
-        type: 'PlaylistColumns', set: 'opt_parse_playlist_columns',
+        type: 'PlaylistColumns', set: 'parse_playlist_columns',
         default: PLAYLIST_COLUMNS_256,
         help: 'Columns of browser (256 colors)',
         lateinit: True
         }),
     ('progressbar.display', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'Enable/disable progressbar',
         }),
     ('progressbar.progress_char', {
-        type: 'wchar_t', set: 'opt_parse_char',
+        type: 'wchar_t', set: 'parse_char',
         default: "'~'",
         help: 'Character used for displaying playing progress',
         }),
     ('progressbar.rest_char', {
-        type: 'wchar_t', set: 'opt_parse_char',
+        type: 'wchar_t', set: 'parse_char',
         default: "'~'",
         help: 'Character used for the rest of the line',
         }),
     ('infoline.display', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'Enable/display infoline',
         }),
     ('infoline.format_top', {
-        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
         default: INFOLINE_FORMAT_TOP,
         c_default: INFOLINE_FORMAT_TOP_CVALUE,
         help: 'Format of first line in infoline',
         }),
     ('infoline.format_top_256', {
-        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
         default: INFOLINE_FORMAT_TOP_256,
         c_default: INFOLINE_FORMAT_TOP_256_CVALUE,
         help: 'Format of first line in infoline (256 colors)',
         }),
     ('infoline.format_bottom', {
-        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
         default: INFOLINE_FORMAT_BOTTOM,
         c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
         help: 'Format of second line in infoline',
         }),
     ('infoline.format_bottom_256', {
-        type: 'InfoLineFormat', set: 'opt_parse_infoline_format',
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
         default: INFOLINE_FORMAT_BOTTOM_256,
         c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
         help: 'Format of second line in infoline (256 colors)',
         }),
     ('tabbar.visible', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'Enable/disable tabbar visibility',
         }),
     ('infoline.visible', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'Enable/disable infoline visibility',
         }),
     ('progressbar.visible', {
-        type: 'bool', set: 'opt_parse_bool',
+        type: 'bool', set: 'parse_bool',
         default: 'true',
         help: 'Enable/disable progressbar visibility',
         }),
     ('tabs.widgets', {
-        type: 'std::array<Views::TabWidgets, 5>', set: 'opt_parse_tabs_widgets',
+        type: 'std::array<Views::TabWidgets, 5>', set: 'parse_tabs_widgets',
         default: '"splash,playlist,browser,info,help"',
         c_default: '{Views::TabWidgets::SPLASH,Views::TabWidgets::PLAYLIST,Views::TabWidgets::BROWSER,Views::TabWidgets::INFO,Views::TabWidgets::HELP}',
         help: 'Specify widget order of tabbar (left to right)',
         }),
     ('main.widgets', {
-        type: 'std::array<Views::MainWidgets, 5>', set: 'opt_parse_main_widgets',
+        type: 'std::array<Views::MainWidgets, 5>', set: 'parse_main_widgets',
         default: '"infoline,tabbar,readline,windows,progressbar"',
         c_default: '{Views::MainWidgets::INFOLINE,Views::MainWidgets::TABBAR,Views::MainWidgets::READLINE,Views::MainWidgets::WINDOWS,Views::MainWidgets::PROGRESSBAR}',
         help: 'Specify widgets to show (up to down)',
@@ -283,7 +283,7 @@ with open('options.set.cpp', 'w') as fh:
     options.sort(key=lambda o: o[NAME])
     options.sort(key=lambda o: len(o[NAME]))
     for name, o in options:
-        print('else if (option == \"%s\") %s = %s(value);' % (
+        print('else if (! std::strcmp(option, \"%s\")) %s = %s(value);' % (
             name, name.replace('.', '_'), o[set]
             ), file=fh)
 
