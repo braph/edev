@@ -32,7 +32,7 @@ std::string expand(std::string path) noexcept {
 }
 
 size_t dir_size(const path& path) noexcept {
-  boost::system::error_code e;
+  error_code e;
   size_t s = 0;
 
   if (is_regular_file(path)) {
