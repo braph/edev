@@ -258,7 +258,7 @@ bool Info :: handle_mouse(MEVENT& m) {
     m.x += pad_mincol;
     auto event = _clickable_urls.find(m);
     if (event != _clickable_urls.end())
-      open_url(event->data.url);
+      open_url(event->data.url.c_str());
     return true;
   }
   return false;

@@ -9,6 +9,7 @@
 #include <lib/stringpack.hpp>
 #include <lib/raii/file.hpp>
 
+#include <vector>
 #include <cstdio>
 #include <cinttypes>
 #include <algorithm>
@@ -283,15 +284,13 @@ void Config :: init() {
 #include "config/options.initialize.cpp"
 }
 
-static inline void checkArgCount(const string_array& args, size_t min, size_t max) {
-  if (args.size() < min)
-    throw ConfigError("Missing arguments");
-  if (args.size() > max)
-    throw ConfigError("Too many arguments");
+static inline void check_arg_count(const string_array& args, size_t min, size_t max) {
+  if (args.size() < min) throw ConfigError("Missing arguments");
+  if (args.size() > max) throw ConfigError("Too many arguments");
 }
 
 void Config :: set(const string_array& args) {
-  checkArgCount(args, 2, 2);
+  check_arg_count(args, 2, 2);
   const char* option = args[0];
   const char* value  = args[1];
 
@@ -305,7 +304,7 @@ void Config :: set(const string_array& args) {
 }
 
 void Config :: color(Theme& theme, const string_array& args) {
-  checkArgCount(args, 1, INT_MAX);
+  check_arg_count(args, 1, INT_MAX);
 
   Theme::Definition* def = theme.get(args[0]);
   if (! def)
@@ -321,15 +320,15 @@ void Config :: color(Theme& theme, const string_array& args) {
 }
 
 void Config :: bind(const string_array& args) {
-  checkArgCount(args, 3, 3);
+  check_arg_count(args, 3, 3);
 }
 
 void Config :: unbind(const string_array& args) {
-  checkArgCount(args, 1, 1);
+  check_arg_count(args, 1, 1);
 }
 
 void Config :: unbind_all(const string_array& args) {
-  checkArgCount(args, 1, 1);
+  check_arg_count(args, 1, 1);
   std::memset(Bindings::pad,      0, sizeof(Bindings::pad));
   std::memset(Bindings::global,   0, sizeof(Bindings::global));
   std::memset(Bindings::playlist, 0, sizeof(Bindings::playlist));

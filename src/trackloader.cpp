@@ -46,17 +46,17 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
   }
 
   if (Filesystem::exists(file_in_temp)) {
-    log_write("Track %s -> TEMP: %s\n", track.title(), file_in_temp.c_str());
+    log_write("Track %s -> TEMP: %s\n", track.title(), file_in_temp);
     return file_in_temp.string();
   }
 
   if (Filesystem::exists(file_in_cache)) {
-    log_write("Track %s -> CACHE: %s\n", track.title(), file_in_cache.c_str());
+    log_write("Track %s -> CACHE: %s\n", track.title(), file_in_cache);
     return file_in_cache.string();
   }
 
   Ektoplayer::url_expand(track_url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
-  log_write("Track %s -> DOWNLOAD: %s\n", track.title(), track_url.c_str());
+  log_write("Track %s -> DOWNLOAD: %s\n", track.title(), track_url);
 
   Filesystem::path& destination_file = (Config::use_cache ? file_in_cache : file_in_temp);
 

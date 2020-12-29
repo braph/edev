@@ -1,49 +1,107 @@
+#ifndef ALLOCA_
+#define ALLOCA_
+
 #include <string>
 #include <cstdio>
 #include <iostream>
 #include <vector>
 #include <cassert>
 #include <functional>
+#include <cstring>
 
-template<size_t TBytes, size_t Num>
+struct StandardAllocator {
+  inline void*  allocate(size_t n)            noexcept { return malloc(n);     }
+  inline void   deallocate(void* p)           noexcept { free(p);              }
+  inline void*  reallocate(void* p, size_t n) noexcept { return realloc(p, n); }
+  inline size_t size(void*)                   noexcept { return SIZE_MAX;      }
+  inline void   reset()                       noexcept { }
+};
+
+//template<size_t lhs> bool gt(size_t rhs)                { return lhs > rhs; }
+//template<size_t lhs> bool le(size_t rhs)                { return lhs < rhs; }
+
+template<size_t rhs>             struct le      { inline bool operator()(size_t lhs) { return lhs <= rhs; } };
+template<size_t min, size_t max> struct between { inline bool operator()(size_t n)   { return min <= n && n <= max; } };
+
+template<size_t TMinBytes, size_t TNum, class Predicate, class TNext>
 struct Pool {
-  enum : size_t { Bytes = TBytes };
-  using slot = int64_t[(TBytes+sizeof(int64_t)-1)/sizeof(int64_t)];
+  using slot = int64_t[(TMinBytes+sizeof(int64_t)-1)/sizeof(int64_t)];
+  enum : size_t { slot_size = sizeof(slot) };
 
-  unsigned _i;
-  short _free[Num];
-  slot data[Num];
+  TNext next;
+  int _i;
+  short _free[TNum];
+  slot data[TNum];
 
-  Pool() : _i(Num) { int slot = -1; while (_i--) _free[_i] = ++slot; }
+  //Pool() : _i(TNum) { int slot = -1; while (_i--) _free[_i] = ++slot; } << old, better?
+  Pool() : _i(TNum) { reset(); }
 
-  inline slot* end()   { return &data[Num]; }
-  inline slot* begin() { return &data[0]; }
+  inline void reset() { for (_i = 0; _i < TNum; ++_i) _free[_i] = _i; } 
 
-  void* allocate() {
-    if (_i < Num)
-      return data[_free[_i++]];
-    return NULL;
+  inline slot* end()      { return &data[TNum]; }
+  inline slot* begin()    { return &data[0]; }
+
+  void* allocate(size_t n) {
+    //if (n <= slot_size)
+    if (Predicate()(n))
+      if (_i > 0)
+        return data[_free[--_i]];
+    return next.allocate(n);
   }
 
   inline bool owns(void* ptr) {
     slot* p = reinterpret_cast<slot*>(ptr);
-    return (&data[0] <= p && p < &data[Num]);
+    return (&data[0] <= p && p < &data[TNum]);
+  }
+
+  inline size_t size(void* ptr) {
+    if (owns(ptr))
+      return slot_size;
+    return next.size(ptr);
   }
 
   inline void deallocate(void* ptr) {
+    if (owns(ptr))
+      do_deallocate(ptr);
+    else
+      next.deallocate(ptr);
+  }
+
+  void* reallocate(void* ptr, size_t n) {
+    if (owns(ptr)) {
+      if (n <= slot_size)
+        return ptr;
+
+      void* new_ptr = next.allocate(n);
+      std::memcpy(new_ptr, ptr, slot_size);
+      do_deallocate(ptr);
+      return new_ptr;
+    }
+
+    return next.reallocate(ptr, n);
+  }
+
+private:
+  inline void do_deallocate(void* ptr) {
     slot* p = reinterpret_cast<slot*>(ptr);
-    _free[--_i] = p - &data[0];
+    _free[_i++] = p - &data[0];
   }
 };
 
 #include<map>
 
+#if 0
 struct Tracer {
   std::string name;
   std::map<int, int> log;
   std::map<int, int> log_peak;
 
   Tracer(std::string name_) : name(std::move(name_)) {}
+
+  void allocate(void*, size_t n) {
+    log[fitInPow2(n)]++;
+    log_peak[fitInPow2(n)] = std::max(log_peak[fitInPow2(n)], log[fitInPow2(n)]);
+  }
 
   void print() {
     log_write("%s: intern allocated .............\n", name.c_str());
@@ -78,6 +136,7 @@ struct Tracer {
     log[fitInPow2(n)]--;
   }
 };
+#endif
 
 //#define ENABLE_LOG
 
@@ -86,11 +145,6 @@ Tracer mallocTrace("malloc");
 #define IF_LOG_ENABLED(...) __VA_ARGS__
 #else
 #define IF_LOG_ENABLED(...) 0
-#endif
-
-#if 0
-  X(32,    4096) \
-
 #endif
 
 #define _POOLS \
@@ -114,114 +168,58 @@ Tracer mallocTrace("malloc");
   X(4096,  4024)  \
   X(32768, 16)
 
-struct Allocator {
-#define X(SIZE, NUM) Pool<SIZE, NUM> p##SIZE;
-  POOLS
-#undef X
+template<class TAllocator>
+struct AllocationTracer {
+  TAllocator real;
+
+  std::map<int, int> log;
+
+  ~AllocationTracer() {
+    print();
+  }
+
+  void print() {
+    log_write("intern allocated .............\n");
+     for (const auto& i : log)
+       if (i.second > 5000)
+         log_write("%08d: %d\n", i.first, i.second);
+  }
+
+  void deallocate(void* p) { real.deallocate(p); }
 
   void* allocate(size_t n) {
-    void* ptr;
-#define X(SIZE,_) if (n <= SIZE) { if ((ptr = p##SIZE.allocate())) return ptr; }
-    POOLS
-#undef X
-#ifdef ENABLE_LOG
-    mallocTrace.allocate(NULL, n);
-#endif
-    return malloc(n);
-  }
-
-  void deallocate(void* ptr) {
-#define X(SIZE,_) if (p##SIZE.owns(ptr)) { p##SIZE.deallocate(ptr); return; }
-    POOLS
-#undef X
-    free(ptr);
-  }
-
-  void* reallocate(void* ptr, size_t n) {
-    size_t slot_size;
-    if (0){}
-#define X(SIZE,_) else if (p##SIZE.owns(ptr)) { slot_size = SIZE; }
-    POOLS
-#undef X
-    else {
-#ifdef ENABLE_LOG
-      mallocTrace.allocate(NULL, n);
-#endif
-      return realloc(ptr, n);
-    }
-
-    if (n <= slot_size) {
-      return ptr;
-    }
-
-    void* new_ptr = allocate(n);
-    std::memcpy(new_ptr, ptr, std::min(slot_size, n));
-    deallocate(ptr);
-    return new_ptr;
-  }
-};
-
-struct AllocationProxy {
-  std::map<void*, size_t> allocations;
-
-  std::function<void*(size_t)> real_allocate;
-  std::function<void*(void*, size_t)> real_reallocate;
-  std::function<void(void*)> real_deallocate;
-
-  std::function<void(void*, size_t)> on_allocated;
-  std::function<void(void*, size_t)> on_deallocated;
-
-  AllocationProxy(
-    std::function<void*(size_t)> real_allocate_,
-    std::function<void*(void*, size_t)> real_reallocate_,
-    std::function<void(void*)> real_deallocate_,
-
-    std::function<void(void*, size_t)> on_allocated_,
-    std::function<void(void*, size_t)> on_deallocated_
-  )
-  : real_allocate(real_allocate_)
-  , real_reallocate(real_reallocate_)
-  , real_deallocate(real_deallocate_)
-
-  , on_allocated(on_allocated_)
-  , on_deallocated(on_deallocated_)
-  {}
-
-  void deallocate(void* p) {
-    real_deallocate(p);
-    on_deallocated(p, allocations[p]);
-    allocations.erase(p);
-  }
-
-  void* allocate(size_t n) {
-    void* p = real_allocate(n);
-    on_allocated(p, n);
-    allocations[p] = n;
-    return p;
+    //n = fitInPow2(n);
+    log[n]++;
+    return real.allocate(n);
   }
 
   void* reallocate(void* p, size_t n) {
-    on_deallocated(p, allocations[p]);
-    allocations.erase(p);
-    p = real_reallocate(p, n);
-    on_allocated(p, n);
-    allocations[p] = n;
-    return p;
+    //n = fitInPow2(n);
+    log[n]++;
+    return real.reallocate(p, n);
+  }
+
+  static inline int fitInPow2(size_t n) {
+    for (int i = 4; i < 32; ++i)
+      if (n <= (1<<i))
+        return 1<<i;
   }
 };
 
-static Allocator allocator;
-
-#ifdef ENABLE_LOG
-static Tracer tracer("General allocs");
-static AllocationProxy proxy(
-    [](size_t n)          { return allocator.allocate(n); },
-    [](void* p, size_t n) { return allocator.reallocate(p, n); },
-    [](void* p)           { allocator.deallocate(p); },
-    [](void* p, size_t n) { tracer.allocate(p, n); },
-    [](void* p, size_t n) { tracer.deallocate(p, n); }
-);
-#define allocator proxy
+#if 0
+static
+//AllocationTracer<
+  Pool<128,   8096, le<128>,
+  Pool<256,   2048, le<256>,
+  Pool<512,   128,  le<512>,
+  Pool<2048,  128,  le<2048>,
+  Pool<4096,  128,  le<4096>,
+  Pool<32768, 16,   between<8192, 32768>,
+  StandardAllocator>>>>>> allocator;
+#else
+static
+//AllocationTracer<
+  Pool<128,   8096, le<128>, StandardAllocator> allocator;
 #endif
 
 static void* myMalloc(size_t n)           { return allocator.allocate(n); }
@@ -234,52 +232,4 @@ static char* myStrdup(const char*s) {
   return reinterpret_cast<char*>(p);
 }
 
-#undef allocator
-
-#if 0
-int main() {
-  Pool<3, 16> p;
-
-  vector<void*> ptrs;
-
-  for (int i = 0; i < 3; ++i) {
-    void* ptr = p.allocate();
-    ptrs.push_back(ptr);
-    std::sprintf((char*) ptr, "%s", "halloduda");
-  }
-
-  assert(!p.allocate());
-
-  for (auto ptr : ptrs)
-    p.deallocate(ptr);
-
-  for (int i = 0; i < 3; ++i) {
-    void* ptr = p.allocate();
-    ptrs.push_back(ptr);
-    std::sprintf((char*) ptr, "%s", "halloduda");
-  }
-}
-
-using namespace std;
-static char alloc_pool[1024*1024*50];
-static char* alloc_next;
 #endif
-
-
-#if 0
-class XMLAllocator {
-  XMLAllocator() {
-    xmlMemSetup();
-  }
-
-  ~XMLAllocator() {
-
-  }
-
-  void free(void*) { }
-  void*malloc(size_t n) {}
-  void*realloc(void*,size_t n) {}
-  char*strdup(const char*) {}
-};
-#endif
-

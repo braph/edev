@@ -8,7 +8,6 @@
 #include <lib/arrayview.hpp>
 
 #include <string>
-#include <vector>
 
 struct ConfigError : public std::invalid_argument {
   using std::invalid_argument::invalid_argument;

@@ -5,10 +5,9 @@
 
 #include <unistd.h>
 
-#include <string>
 #include <cstdlib>
 
-static inline void open_image(const std::string& url) {
+static inline void open_image(const char* url) {
   if (::fork() != 0)
     return;
 
@@ -21,7 +20,7 @@ static inline void open_image(const std::string& url) {
     "open_image",
 
     // $URL
-    url.c_str(),
+    url,
 
     // $CMD's
     "feh",
@@ -34,9 +33,9 @@ static inline void open_image(const std::string& url) {
   std::exit(0);
 }
 
-static inline void open_url(const std::string& url) {
+static inline void open_url(const char* url) {
   using pack = StringPack::AlphaNoCase;
-  const char* dot = std::strrchr(url.c_str(), '.');
+  const char* dot = std::strrchr(url, '.');
   switch (pack::pack_runtime(dot ? dot : "")) {
   case pack(".png"):
   case pack(".jpg"):
@@ -45,7 +44,7 @@ static inline void open_url(const std::string& url) {
     break;
   default:
     if (::fork() == 0) {
-      ::execlp("xdg-open", "xdg-open", url.c_str(), NULL);
+      ::execlp("xdg-open", "xdg-open", url, NULL);
       std::exit(0);
     }
   }

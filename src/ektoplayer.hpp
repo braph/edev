@@ -83,6 +83,19 @@ std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 
 } // namespace Ektoplayer
 
+
+#if 1
+#include "../third_party/pprintpp/include/pprintpp/pprintpp.hpp"
+
+template<class strprov, typename ... Ts> 
+void logwrite_bla(const Ts& ... args) {
+  using paramtypes = decltype(pprintpp::tie_types(to_s(args)...));
+  using af = pprintpp::autoformat_t<strprov, paramtypes>;
+  fprintf(stderr, af::str(), to_s(args)...);
+}
+
+#define log_write(...) AUTOFORMAT(logwrite_bla, __VA_ARGS__);
+#else
 #if !defined(NDEBUG) && (defined(__GNUC__) || defined(__clang__))
 __attribute__((__format__(__printf__, 1, 2)))
 static inline void log_write(const char* format, ...) noexcept {
@@ -96,6 +109,7 @@ template<typename... Args>
 void log_write(const char* format, Args... args) noexcept {
   fprintf(stderr, format, args...);
 }
+#endif
 #endif
 
 #endif
