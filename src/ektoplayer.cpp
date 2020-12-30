@@ -1,15 +1,14 @@
 #include "ektoplayer.hpp"
 
-#include <lib/downloads.hpp>
-
-#include <curl/curl.h>
+#include <lib/string.hpp>
 
 #include <cstring>
 
-namespace {
+static inline std::string& url_unescape(std::string& url) { return replace_all(url, "%20", ' '); }
+static inline std::string& url_escape(std::string& url)   { return replace_all(url, ' ', "%20"); }
 
-// https://foo.com/bar/ -> bar
-std::string& url_basename(std::string &url) {
+/// https://foo.com/bar/ -> bar
+static std::string& url_basename(std::string &url) {
   if (url.size()) {
     if (url.back() == '/')
       url.pop_back();
@@ -22,35 +21,11 @@ std::string& url_basename(std::string &url) {
   return url;
 }
 
-// TODO: templated on size
-bool strip_extension(std::string &s, const char* ext) {
-  size_t ext_len = std::strlen(ext);
-  if (std::string::npos != s.find(ext, s.size() - ext_len)) {
-    s.erase(s.size() - ext_len);
-    return true;
-  }
-  return false;
-}
-
-std::string& unescape(std::string& url) {
-  for (size_t pos = 0; (pos = url.find("%20", pos)) != std::string::npos;)
-    url.replace(pos, 3, 1, ' ');
-  return url;
-}
-
-std::string& escape(std::string& url) {
-  for (size_t pos = 0; (pos = url.find(' ', pos)) != std::string::npos;)
-    url.replace(pos, 1, "%20");
-  return url;
-}
-
-} // namespace (anonymous)
-
 namespace Ektoplayer {
 
 std::string& url_shrink(std::string& url, const char* prefix, const char* suffix) {
   (void) prefix; // UNUSED for now
-  unescape(url);
+  url_unescape(url);
   url_basename(url);
   if (suffix)
     strip_extension(url, suffix);
@@ -58,8 +33,8 @@ std::string& url_shrink(std::string& url, const char* prefix, const char* suffix
 }
 
 std::string& url_expand(std::string& url, const char* prefix, const char* suffix) {
-  escape(url);
-  url = std::string(prefix) + url;
+  url_escape(url);
+  url.insert(0, prefix);
   if (suffix) {
     if (std::string::npos == url.find('.', url.size() - std::strlen(suffix)))
       url.append(suffix);
@@ -81,13 +56,12 @@ int main() {
   std::cout << "config_file(): " << Ektoplayer::config_file() << std::endl;
 
   // Basic tests
-  for (const char* _ : {
+  for (std::string url : {
       "https://ektoplazm.com/style/psy-dub/",
       "https://ektoplazm.com/style/psy-dub",
       "psy-dub/",
       "psy-dub"}) {
 
-    std::string url = _;
     url_shrink(url, EKTOPLAZM_STYLE_BASE_URL, NULL);
     assert(url == "psy-dub");
     url_expand(url, EKTOPLAZM_STYLE_BASE_URL, NULL);

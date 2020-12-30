@@ -6,6 +6,7 @@ WARNINGS += -Wold-style-cast -Wcast-align -Wcast-qual -Wnoexcept -Wno-unused
 WARNINGS += -Wsign-promo -Wsign-compare -Wsign-conversion
 WARNINGS += -Wmissing-include-dirs
 WARNINGS += -Wpessimizing-move -Wredundant-move
+WARNINGS += -Wno-variadic-macros
 #WARNINGS += -Werror # -Wfatal-errors
 #WARNINGS += -Wdisabled-optimization -Wformat=2 -Wshadow -Wswitch-default -Wstrict-overflow=5 
 #-D_GLIBCXX_ASSERTIONS
@@ -13,7 +14,7 @@ WARNINGS += -Wpessimizing-move -Wredundant-move
 STD = c++11
 CURSES_INC = "<ncurses.h>"
 
-CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS) #-Wfatal-errors
+CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS) -Wfatal-errors
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -pg -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O2 -DNDEBUG $(WARNINGS) # -s -g
@@ -74,7 +75,7 @@ tests: \
 #	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_COMMON common.cpp $^
 #	$(VALGRIND) ./a.out
 
-test_ektoplayer: lib/filesystem.o
+test_ektoplayer: ../lib/filesystem.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_EKTOPLAYER ektoplayer.cpp $^
 	$(VALGRIND) ./a.out
 

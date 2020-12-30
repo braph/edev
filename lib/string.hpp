@@ -13,6 +13,38 @@ static void erase_all(std::string& s, const char* search) {
     s.erase(pos, std::strlen(search));
 }
 
+static inline std::string& replace_all(std::string& s, const char* needle, size_t needle_len, char replacement) {
+  for (size_t pos = 0; (pos = s.find(needle, pos, needle_len)) != std::string::npos; pos += 1)
+    s.replace(pos, needle_len, 1, replacement);
+  return s;
+}
+
+static inline std::string& replace_all(std::string& s, char search, const char* replacement, size_t replacement_len) {
+  for (size_t pos = 0; (pos = s.find(search, pos)) != std::string::npos; pos += replacement_len)
+    s.replace(pos, 1, replacement, replacement_len);
+  return s;
+}
+
+static inline std::string& replace_all(std::string& s, char search, const char* replacement) {
+  return replace_all(s, search, replacement, std::strlen(replacement));
+}
+
+static inline std::string& replace_all(std::string& s, const char* needle, char replacement) {
+  return replace_all(s, needle, std::strlen(needle), replacement);
+}
+
+static inline bool strip_extension(std::string &s, const char* ext, size_t ext_len) {
+  if (std::string::npos != s.find(ext, s.size() - ext_len)) {
+    s.erase(s.size() - ext_len);
+    return true;
+  }
+  return false;
+}
+
+static inline bool strip_extension(std::string &s, const char* ext) {
+  return strip_extension(s, ext, std::strlen(ext));
+}
+
 template<class String, class Predicate>
 void split(std::vector<std::string>& result, const String& str, const Predicate& pred) {
   std::string rs;

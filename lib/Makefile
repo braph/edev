@@ -14,7 +14,7 @@ STD = c++11
 
 CXXFLAGS := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
 #CXXFLAGS := -std=$(STD) -fno-rtti -O3 -s -DNDEBUG $(WARNINGS)
-CPPFLAGS := $(shell xml2-config --cflags)
+CPPFLAGS := $(shell xml2-config --cflags) -I..
 LDLIBS   := -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 clean:
@@ -38,6 +38,10 @@ test_shellsplit:
 
 test_stringchunk:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/stringchunk.cpp $^
+	$(VALGRIND) ./a.out
+
+test_string:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/string.cpp $^
 	$(VALGRIND) ./a.out
 
 test_filesystem:

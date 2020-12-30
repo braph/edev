@@ -125,12 +125,22 @@ public:
   }
 
   void scroll_cursor(int n) {
+    if (empty())
+      return;
+
+    render_unselected();
     m_cursor += n;
+
     if (m_cursor < 0) {
       m_top_list_idx += n;
     }
     else if (m_cursor > max_cursor()) {
       m_top_list_idx += (m_cursor - max_cursor());
+    }
+    else {
+      clamp_vars();
+      render_selected();
+      return;
     }
 
     draw();
@@ -190,9 +200,8 @@ private:
     itemRenderer(win, size.width, (*m_list)[size_t(item_idx)], item_idx, cursor, item_idx == m_active);
   }
 
-  //inline void unselect_item() {
-  //  render_item(m_top_list_idx + m_cursor, m_cursor, false);
-  //}
+  inline void render_unselected() { render_item(m_top_list_idx + m_cursor, m_cursor, false); }
+  inline void render_selected()   { render_item(m_top_list_idx + m_cursor, m_cursor, true);  }
 };
 
 // === Testing ================================================================
