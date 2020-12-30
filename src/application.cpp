@@ -11,12 +11,12 @@
 #include "views/mainwindow.hpp"
 
 #include <lib/string.hpp>
+#include <lib/filesystem.hpp>
 
 #include <libxml/xmlversion.h>
 
 #include <clocale>
 #include <csignal>
-#include <type_traits>
 
 Database::Database database;
 Updater updater(database);

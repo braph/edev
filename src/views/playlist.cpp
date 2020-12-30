@@ -93,6 +93,8 @@ Playlist :: Playlist()
 }
 
 bool Playlist :: handle_key(int key) {
+  bool search_reverse = false;
+
   if (! Bindings::playlist[key])
     return false;
 
@@ -103,15 +105,17 @@ bool Playlist :: handle_key(int key) {
   case Actions::DOWN:      down();       break;
   case Actions::PAGE_UP:   page_up();    break;
   case Actions::PAGE_DOWN: page_down();  break;
-  case Actions::SEARCH:
-     mainwindow->readline("Search: ", [&](std::string line, bool) {
+  case Actions::SEARCH_UP:
+     search_reverse = true; // fall-through
+  case Actions::SEARCH_DOWN:
+     mainwindow->readline("Search: ", [&, search_reverse](std::string line, bool) {
        _track_search.start_search(this->playlist,
          [=](const Database::Tracks::Track& track) {
             for (const auto& column : Config::playlist_columns)
               if (icontains(trackField(track, column.tag), line))
                 return true;
             return false;
-        });
+        }, search_reverse);
 
        if (_track_search.next())
          cursor_index(_track_search.index());

@@ -115,7 +115,8 @@ SELECT_TAB:
   case PAGE_DOWN:
   case TOP:
   case BOTTOM:
-  case SEARCH:
+  case SEARCH_UP:
+  case SEARCH_DOWN:
   case SEARCH_PREV:
   case SEARCH_NEXT:
   case ACTIONID_ENUM_LAST: break;

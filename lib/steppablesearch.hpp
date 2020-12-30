@@ -6,10 +6,10 @@
 
 template<typename TContainer>
 class SteppableSearch {
+public:
   using value_type = typename TContainer::value_type;
   using size_type  = typename TContainer::size_type;
 
-public:
   SteppableSearch() noexcept
     : _list(NULL)
     , _index(0)
@@ -67,6 +67,27 @@ private:
     else
       return index;
   }
+};
+
+template<typename TContainer>
+struct SteppableSearchBidirectional : public SteppableSearch<TContainer> {
+  using base = SteppableSearch<TContainer>;
+
+  SteppableSearchBidirectional() noexcept
+    : _reverse(0)
+  {}
+
+  bool next() noexcept { return _reverse ? base::prev() : base::next(); }
+  bool prev() noexcept { return _reverse ? base::next() : base::prev(); }
+
+  template<class TPredicate>
+  void start_search(const TContainer& list, TPredicate predicate, bool reverse = false) {
+    _reverse = reverse;
+    base::start_search(list, predicate);
+  }
+
+private:
+  bool _reverse;
 };
 
 #endif

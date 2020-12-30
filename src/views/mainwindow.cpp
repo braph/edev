@@ -1,7 +1,6 @@
 #include "mainwindow.hpp"
 #include "../bindings.hpp"
 #include "../config.hpp"
-#define case break;case
 
 using namespace UI;
 using namespace Views;
@@ -22,6 +21,7 @@ MainWindow :: MainWindow()
   progressBar.visible    = Config::progressbar_visible;
   readlineWidget.visible = false;
 
+#define case break;case
   for (auto w : Config::main_widgets) {
     switch (w) {
     case MainWidgets::NONE:
@@ -47,7 +47,6 @@ MainWindow :: MainWindow()
     case TabWidgets::BROWSER:
       windows.add_widget(&playlist); // TODO [later]
       tabBar.add_tab("browser");
-      break;
     case TabWidgets::INFO:
       windows.add_widget(&info);
       tabBar.add_tab("info");
@@ -56,6 +55,7 @@ MainWindow :: MainWindow()
       tabBar.add_tab("help");
     }
   }
+#undef case
 }
 
 void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction callback) {

@@ -41,7 +41,8 @@ void init() {
   _['j']                  = _[KEY_DOWN]   = Actions::DOWN;
   _[C('u')]               = _[KEY_PPAGE]  = Actions::PAGE_UP;
   _[C('d')]               = _[KEY_NPAGE]  = Actions::PAGE_DOWN;
-  _['/']                                  = Actions::SEARCH;
+  _['/']                                  = Actions::SEARCH_DOWN;
+  _['?']                                  = Actions::SEARCH_UP;
   _['n']                                  = Actions::SEARCH_NEXT;
   _['N']                                  = Actions::SEARCH_PREV;
   _['o']                                  = Actions::PLAYLIST_GOTO_CURRENT;
@@ -66,9 +67,6 @@ void init() {
 @bindings[:playlist]
   # selection
   :'playlist.toggle_selection' => ['^v'                          ],
-  # search
-  :'playlist.search_up'      => [??                              ], TODO
-  :'playlist.search_down'    => [?/                              ], TODO
   # playlist
   :'playlist.download_album' => [?$                              ],
   :'playlist.reload'         => [?r                              ],

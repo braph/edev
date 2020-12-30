@@ -56,7 +56,7 @@ public:
 
 private:
   TrackRenderer _track_renderer;
-  SteppableSearch<std::vector<Database::Tracks::Track>> _track_search;
+  SteppableSearchBidirectional<std::vector<Database::Tracks::Track>> _track_search;
 };
 
 } // namespace Views
