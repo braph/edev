@@ -23,7 +23,6 @@
  */
 #pragma once
 
-#include<string>
 #include "stl_symbols.hpp"
 #include "charlist.hpp"
 
@@ -169,13 +168,8 @@ using autoformat_t =
 template <typename ... Ts>
 make_t<Ts...> tie_types(Ts...);
 
-}
+template<typename T> const T& to_s(const T& t) { return t; }
 
-const char* to_s(const std::string& s) { return s.c_str(); }
-
-template<typename T>
-const T& to_s(const T& t) {
-  return t;
 }
 
 #define AUTOFORMAT(function, s, ...) do { \
@@ -185,9 +179,9 @@ const T& to_s(const T& t) {
 
 template<class strprov, typename ... Ts> 
 void printf_bla(const Ts& ... args) {
-  using paramtypes = decltype(pprintpp::tie_types(to_s(args)...));
+  using paramtypes = decltype(pprintpp::tie_types(pprintpp::to_s(args)...));
   using af = pprintpp::autoformat_t<strprov, paramtypes>;
-  printf(af::str(), to_s(args)...);
+  printf(af::str(), pprintpp::to_s(args)...);
 }
 
 #define pprintf(s, ...) AUTOFORMAT(printf_bla, s,  ## __VA_ARGS__);

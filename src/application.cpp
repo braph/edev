@@ -18,8 +18,6 @@
 #include <csignal>
 #include <type_traits>
 
-namespace fs = Filesystem;
-
 Database::Database database;
 Updater updater(database);
 Mpg123Player player;
@@ -55,14 +53,15 @@ Application :: ~Application() {
     database.save(Config::database_file);
     database.shrink_to_fit();
     database.save(Config::database_file);
-  } catch (std::exception& e) {
-    std::printf("Error saving database to file: %s\n", e.what());
+  } catch (const std::exception& e) {
+    pprintf("Error saving database to file: %s\n", e);
   }
 
   log_write("Terminated gracefully.\n");
 }
 
 void Application :: init() {
+  namespace fs = Filesystem;
   const char* e;
 
   try {
@@ -280,12 +279,11 @@ int main() {
 #endif
 
   try {
-    Application app;
-    app.run();
+    Application().run();
   }
   catch (const std::exception &e) {
     ::endwin();
-    std::printf("%s\n", e.what());
+    pprintf("%s\n", e);
     return 1;
   }
 

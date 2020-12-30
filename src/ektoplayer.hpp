@@ -1,7 +1,10 @@
 #ifndef EKTOPLAYER_HPP
 #define EKTOPLAYER_HPP
 
+#include "../third_party/pprintpp/include/pprintpp/pprintpp.hpp"
+
 #include <lib/filesystem.hpp>
+#include <lib/type_traits.hpp>
 
 #include <string>
 #include <cstdio>
@@ -83,33 +86,19 @@ std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 
 } // namespace Ektoplayer
 
+template <typename T, typename std::enable_if<has_c_str<T, const char*(T::*)()>::value, T>::type* = nullptr>
+const char* pprintpp::to_s(const T& s) { return s.c_str(); }
 
-#if 1
-#include "../third_party/pprintpp/include/pprintpp/pprintpp.hpp"
+template <typename T, typename std::enable_if<has_what<T, const char*(T::*)()>::value, T>::type* = nullptr>
+const char* pprintpp::to_s(const T& e) { return e.what();  }
 
 template<class strprov, typename ... Ts> 
 void logwrite_bla(const Ts& ... args) {
-  using paramtypes = decltype(pprintpp::tie_types(to_s(args)...));
+  using paramtypes = decltype(pprintpp::tie_types(pprintpp::to_s(args)...));
   using af = pprintpp::autoformat_t<strprov, paramtypes>;
-  fprintf(stderr, af::str(), to_s(args)...);
+  fprintf(stderr, af::str(), pprintpp::to_s(args)...);
 }
 
 #define log_write(...) AUTOFORMAT(logwrite_bla, __VA_ARGS__);
-#else
-#if !defined(NDEBUG) && (defined(__GNUC__) || defined(__clang__))
-__attribute__((__format__(__printf__, 1, 2)))
-static inline void log_write(const char* format, ...) noexcept {
-  va_list ap;
-  va_start(ap, format);
-  vfprintf(stderr, format, ap);
-  va_end(ap);
-}
-#else
-template<typename... Args>
-void log_write(const char* format, Args... args) noexcept {
-  fprintf(stderr, format, args...);
-}
-#endif
-#endif
 
 #endif
