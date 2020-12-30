@@ -156,11 +156,6 @@ private:
 
 // ============================================================================
 
-template<size_t N>
-inline bool strprefix(const char* s, const char (&prefix)[N]) {
-  return !std::strncmp(s, prefix, N-1);
-}
-
 static bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
   return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
 }

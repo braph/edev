@@ -10,7 +10,7 @@
 #include "theme.hpp"
 #include "views/mainwindow.hpp"
 
-#include <lib/cstring.hpp>
+#include <lib/string.hpp>
 
 #include <libxml/xmlversion.h>
 
@@ -253,7 +253,7 @@ HANDLE_KEY:
 void Application :: cleanup_files() {
   Filesystem::error_code e;
   for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
-    if (strprefix(f.path().filename().c_str(), EKTOPLAZM_TEMP_FILE_PREFIX))
+    if (starts_with(f.path().filename(), EKTOPLAZM_TEMP_FILE_PREFIX))
       Filesystem::remove(f, e);
 }
 

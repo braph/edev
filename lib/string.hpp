@@ -5,8 +5,21 @@
 #include <vector>
 #include <cstring>
 
+// TODO: this is a *complete* mess...
+
 template<class T> inline T*   cstr(T* s)                          { return s;         }
 template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
+
+#if 0
+template<class T, size_t N> inline size_t s_len(      T(&s)[N])   { return std::strlen(s); }
+template<class T, size_t N> inline size_t s_len(const T(&s)[N])   { return N - 1;          }
+template<class T>           inline size_t s_len(const T& s)       { return s.size();       }
+#endif
+
+template<class TString, class TPrefix>
+inline bool starts_with(const TString& s, const TPrefix& prefix) {
+  return !std::strncmp(cstr(s), cstr(prefix), std::strlen(cstr(prefix)));
+}
 
 static void erase_all(std::string& s, const char* search) {
   for (size_t pos; (pos = s.find(search)) != std::string::npos;)
