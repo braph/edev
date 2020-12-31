@@ -98,10 +98,6 @@ void Application :: init() {
     if (! fs::is_directory(Config::cache_dir))
       fs::create_directory(Config::cache_dir);
 
-    e = "Could not create temp_dir";
-    if (! fs::is_directory(Config::temp_dir))
-      fs::create_directory(Config::temp_dir);
-
     e = "Could not create download_dir";
     if (! fs::is_directory(Config::download_dir))
       fs::create_directory(Config::download_dir);
@@ -249,10 +245,12 @@ HANDLE_KEY:
 }
 
 void Application :: cleanup_files() {
+#if 0
   Filesystem::error_code e;
   for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
     if (starts_with(f.path().filename(), EKTOPLAZM_TEMP_FILE_PREFIX))
       Filesystem::remove(f, e);
+#endif
 }
 
 void Application :: print_db_stats() {

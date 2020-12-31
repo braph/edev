@@ -12,7 +12,6 @@ float                       Config :: prefetch = 0.50;
 wchar_t                     Config :: progressbar_rest_char = '~';
 wchar_t                     Config :: progressbar_progress_char = '~';
 std::string                 Config :: log_file /* will be initialized later */;
-std::string                 Config :: temp_dir = "/tmp/.ektoplazm";
 std::string                 Config :: cache_dir /* will be initialized later */;
 std::string                 Config :: archive_dir /* will be initialized later */;
 std::string                 Config :: download_dir = "/tmp";

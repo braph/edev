@@ -12,7 +12,6 @@ extern float prefetch;
 extern wchar_t progressbar_rest_char;
 extern wchar_t progressbar_progress_char;
 extern std::string log_file;
-extern std::string temp_dir;
 extern std::string cache_dir;
 extern std::string archive_dir;
 extern std::string download_dir;

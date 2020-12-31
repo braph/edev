@@ -95,11 +95,11 @@ options = [
         help: 'File used for logging',
         lateinit: True
         }),
-    ('temp_dir', {
-        type: 'std::string', set: 'Filesystem::expand',
-        default: '"/tmp/.ektoplazm"',
-        help: 'Temporary dir for downloading files. See `cache_dir`, `archive_dir` and `download_dir`.\nDirectory will be created if it does not exist, parent directories will not be created.',
-        }),
+#    ('temp_dir', {
+#        type: 'std::string', set: 'Filesystem::expand',
+#        default: '"/tmp/.ektoplazm"',
+#        help: 'Temporary dir for downloading files. See `cache_dir`, `archive_dir` and `download_dir`.\nDirectory will be created if it does not exist, parent directories will not be created.',
+#        }),
     ('cache_dir', {
         type: 'std::string', set: 'Filesystem::expand',
         default: '"~/.cache/ektoplayer"',
