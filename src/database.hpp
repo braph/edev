@@ -260,7 +260,7 @@ struct Styles : public Table {
     using Record::Record;
 
     // GETTER
-    Field operator[](ColumnID) const;
+    Field operator[](ColumnID) const noexcept;
     ccstr url()  const noexcept { return table->url.get(id);  }
     ccstr name() const noexcept { return table->name.get(id); }
     // SETTER
@@ -317,7 +317,7 @@ struct Albums : public Table {
     static inline time_t date_expand(int t) { return ((t + 10000) * 60 * 60 * 24); }
 
     // GETTER
-    Field  operator[](ColumnID) const;
+    Field  operator[](ColumnID) const noexcept;
     ccstr  url()               const noexcept { return table->url.get(id);             }
     ccstr  title()             const noexcept { return table->title.get(id);           }
     ccstr  artist()            const noexcept { return table->artist.get(id);          }
@@ -380,7 +380,7 @@ struct Tracks : public Table {
     using Record::Record;
 
     // GETTER
-    Field operator[](ColumnID) const;
+    Field operator[](ColumnID) const noexcept;
     ccstr url()      const noexcept { return table->url.get(id);        }
     ccstr title()    const noexcept { return table->title.get(id);      }
     ccstr artist()   const noexcept { return table->artist.get(id);     }

@@ -95,9 +95,8 @@ void Application :: init() {
     fs::create_directories(Ektoplayer::config_dir());
 
     e = "Could not create cache directory";
-    if (Config::use_cache)
-      if (! fs::is_directory(Config::cache_dir))
-        fs::create_directory(Config::cache_dir);
+    if (! fs::is_directory(Config::cache_dir))
+      fs::create_directory(Config::cache_dir);
 
     e = "Could not create temp_dir";
     if (! fs::is_directory(Config::temp_dir))

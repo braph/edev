@@ -1,7 +1,6 @@
 extern int use_colors;
 extern int small_update_pages;
 extern int playlist_load_newest;
-extern bool use_cache;
 extern bool tabbar_visible;
 extern bool infoline_display;
 extern bool infoline_visible;

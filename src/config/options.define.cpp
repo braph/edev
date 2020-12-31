@@ -1,7 +1,6 @@
 int                         Config :: use_colors = -1;
 int                         Config :: small_update_pages = 3;
 int                         Config :: playlist_load_newest = 1000;
-bool                        Config :: use_cache = true;
 bool                        Config :: tabbar_visible = true;
 bool                        Config :: infoline_display = true;
 bool                        Config :: infoline_visible = true;

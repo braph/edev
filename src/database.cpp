@@ -246,7 +246,7 @@ Styles::Style Styles::find(CString url, bool create) {
   return find_by_url(*this, db.chunk_style_url, url, create);
 }
 
-Field Styles::Style::operator[](ColumnID id) const {
+Field Styles::Style::operator[](ColumnID id) const noexcept {
   switch (static_cast<StyleColumnID>(id)) {
   case STYLE_URL:   return Field(url());
   case STYLE_NAME:  return Field(name());
@@ -262,7 +262,7 @@ Albums::Album Albums::find(CString url, bool create) {
   return find_by_url(*this, db.chunk_album_url, url, create);
 }
 
-Field Albums::Album::operator[](ColumnID id) const {
+Field Albums::Album::operator[](ColumnID id) const noexcept {
   switch (static_cast<AlbumColumnID>(id)) {
   case ALBUM_URL:             return Field(url());
   case ALBUM_COVER_URL:       return Field(cover_url());
@@ -298,7 +298,7 @@ Albums::Album Tracks::Track::album() const noexcept {
   return table->db.albums[size_t(table->album_id[id])];
 }
 
-Field Tracks::Track::operator[](ColumnID id) const { // TODO: noexcept
+Field Tracks::Track::operator[](ColumnID id) const noexcept {
   switch (static_cast<TrackColumnID>(id)) {
   case TRACK_TITLE:     return Field(title());
   case TRACK_ARTIST:    return Field(artist());

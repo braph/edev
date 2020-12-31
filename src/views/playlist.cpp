@@ -140,15 +140,15 @@ bool Playlist :: handle_key(int key) {
 }
 
 #ifdef TEST_PLAYLIST
-#include "../test.hpp"
+#include <lib/test.hpp>
 
 int main() {
   TEST_BEGIN();
   NCURSES_INIT();
 
   Config::init();
-  Theme::loadTheme(COLORS); // TODO!
-  Database db;
+  load_theme_by_colors(COLORS, colors);
+  Database::Database db;
   db.load(TEST_DB);
   assert(db.tracks.size() > 10);
 

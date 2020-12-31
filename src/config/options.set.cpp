@@ -2,7 +2,6 @@ else if (! std::strcmp(option, "log_file")) log_file = Filesystem::expand(value)
 else if (! std::strcmp(option, "prefetch")) prefetch = parse_float(value);
 else if (! std::strcmp(option, "temp_dir")) temp_dir = Filesystem::expand(value);
 else if (! std::strcmp(option, "cache_dir")) cache_dir = Filesystem::expand(value);
-else if (! std::strcmp(option, "use_cache")) use_cache = parse_bool(value);
 else if (! std::strcmp(option, "use_colors")) use_colors = parse_use_colors(value);
 else if (! std::strcmp(option, "archive_dir")) archive_dir = Filesystem::expand(value);
 else if (! std::strcmp(option, "download_dir")) download_dir = Filesystem::expand(value);

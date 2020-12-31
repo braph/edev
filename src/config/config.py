@@ -95,17 +95,22 @@ options = [
         help: 'File used for logging',
         lateinit: True
         }),
-    ('temp_dir', { # TODO: change description to new behaviour, see trackloader.cpp
+    ('temp_dir', {
         type: 'std::string', set: 'Filesystem::expand',
         default: '"/tmp/.ektoplazm"',
-        help: 'Temporary dir for downloading mp3 files.\nThey will be moved to `cache_dir` after the download completed and was successful.\nDirectory will be created if it does not exist, parent directories will not be created.',
+        help: 'Temporary dir for downloading files. See `cache_dir`, `archive_dir` and `download_dir`.\nDirectory will be created if it does not exist, parent directories will not be created.',
         }),
     ('cache_dir', {
         type: 'std::string', set: 'Filesystem::expand',
         default: '"~/.cache/ektoplayer"',
-        help: 'Directory for storing cached mp3 files',
+        help: 'Directory for storing mp3 files. If empty, the downloaded mp3 files won\'t be moved to `cache_dir`. Instead they will be kept `temp_dir` and will be deleted on application start and exit.\nDirectory will be created if it does not exist, parent directories will not be created.',
         lateinit: True
         }),
+#    ('use_cache', {
+#        type: 'bool', set: 'parse_bool',
+#        default: 'true',
+#        help: "Enable/disable local mp3 cache.\nIf this option is disabled, the downloaded mp3 files won't be moved from `cache_dir`.\nInstead they will reside in `temp_dir` and will be deleted on application exit.",
+#        }),
     ('archive_dir', {
         type: 'std::string', set: 'Filesystem::expand',
         default: '"~/.config/ektoplayer/archives"',
@@ -131,11 +136,6 @@ options = [
         type: 'int', set: 'parse_int',
         default: '1000',
         help: 'How many tracks from database should be added to the playlist on application start.',
-        }),
-    ('use_cache', {
-        type: 'bool', set: 'parse_bool',
-        default: 'true',
-        help: "Enable/disable local mp3 cache.\nIf this option is disabled, the downloaded mp3 files won't be moved from `cache_dir`.\nInstead they will reside in `temp_dir` and will be deleted on application exit.",
         }),
     ('prefetch', {
         type: 'float', set: 'parse_float',

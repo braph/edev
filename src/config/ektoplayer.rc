@@ -2,11 +2,11 @@
 set database_file "~/.config/ektoplayer/meta.db"
 # File used for logging
 set log_file "~/.config/ektoplayer/ektoplayer.log"
-# Temporary dir for downloading mp3 files.
-# They will be moved to `cache_dir` after the download completed and was successful.
+# Temporary dir for downloading files. See `cache_dir`, `archive_dir` and `download_dir`.
 # Directory will be created if it does not exist, parent directories will not be created.
 set temp_dir "/tmp/.ektoplazm"
-# Directory for storing cached mp3 files
+# Directory for storing mp3 files. If empty, the downloaded mp3 files won't be moved to `cache_dir`. Instead they will be kept `temp_dir` and will be deleted on application start and exit.
+# Directory will be created if it does not exist, parent directories will not be created.
 set cache_dir "~/.cache/ektoplayer"
 # Where to search for downloaded MP3 archives
 set archive_dir "~/.config/ektoplayer/archives"
@@ -20,10 +20,6 @@ set auto_extract_to_archive_dir true
 set delete_after_extraction true
 # How many tracks from database should be added to the playlist on application start.
 set playlist_load_newest 1000
-# Enable/disable local mp3 cache.
-# If this option is disabled, the downloaded mp3 files won't be moved from `cache_dir`.
-# Instead they will reside in `temp_dir` and will be deleted on application exit.
-set use_cache true
 # Specify after how many percent the next track shall be prefetched. Set it to 0 to disable it.
 set prefetch 0.50
 # How many pages should be fetched after start
