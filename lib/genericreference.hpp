@@ -1,6 +1,8 @@
 #ifndef LIB_GENERICREFERENCE_HPP
 #define LIB_GENERICREFERENCE_HPP
 
+// TODO: Deduplicate classes using template<bool TIsConstReference>
+
 /**
  * Generic reference for classes that provide:
  * - get(size_t index)
@@ -9,7 +11,7 @@
 template<typename TContainer>
 class GenericReference {
 public:
-  using reference = GenericReference;
+  using reference  = GenericReference;
   using value_type = typename TContainer::value_type;
 
   inline GenericReference(TContainer* container, size_t index) noexcept
@@ -34,6 +36,26 @@ public:
 private:
   TContainer* _container;
   size_t      _index;
+};
+
+template<typename TContainer>
+class GenericConstReference {
+public:
+  using reference  = GenericConstReference;
+  using value_type = typename TContainer::value_type;
+
+  inline GenericConstReference(const TContainer* container, size_t index) noexcept
+    : _container(container)
+    , _index(index)
+  {}
+
+  inline operator value_type() const noexcept {
+    return _container->get(_index);
+  }
+
+private:
+  const TContainer* _container;
+  size_t            _index;
 };
 
 #endif

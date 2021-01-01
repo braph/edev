@@ -10,6 +10,8 @@
 #include <memory>
 #include <iterator>
 
+// TODO: const_reference, const_iterator etc.
+
 #ifdef DEBUG_VECTOR
 #include <cstdio>
 static int call_level = 0;
@@ -133,12 +135,14 @@ private:
 public:
   DynamicPackedVector() : _vec(1) { }
 
-  using data_type    = uint32_t;
-  using reference    = GenericReference<DynamicPackedVector>;
-  using iterator     = GenericIterator<DynamicPackedVector>;
-  using value_type   = int;
+  using data_type       = uint32_t;
+  using reference       = GenericReference<DynamicPackedVector>;
+  using const_reference = GenericConstReference<DynamicPackedVector>;
+  using iterator        = GenericIterator<DynamicPackedVector>;
+  using value_type      = int;
 
-  reference operator[](size_t idx) noexcept { return reference(this, idx);   }
+  reference       operator[](size_t idx) noexcept       { return reference(this, idx);   }
+  const_reference operator[](size_t idx) const noexcept { return const_reference(this, idx);   }
   iterator  begin()                noexcept { return iterator(this, 0);      }
   iterator  end()                  noexcept { return iterator(this, size()); }
 

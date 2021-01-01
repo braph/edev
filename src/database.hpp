@@ -229,7 +229,7 @@ public:
     : chunk(chunk)
   {}
 
-  const char* get(size_t i) noexcept { // TODO: this should be const!
+  const char* get(size_t i) const noexcept {
     return chunk.get((*this)[i]);
   }
 
