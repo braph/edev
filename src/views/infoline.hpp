@@ -9,6 +9,7 @@
 #include <lib/staticvector.hpp>
 
 #include <string>
+#include <functional>
 
 namespace Views {
 
@@ -37,16 +38,18 @@ struct InfoLineFormatString {
 using InfoLineFormat = StaticVector<InfoLineFormatString, 10>;
 
 class InfoLine : public UI::Window {
-  // TODO Slot: clicked -> player.toggle
 public:
   InfoLine();
 
   void draw()                             override;
   void layout(UI::Pos, UI::Size)          override;
+  bool handle_mouse(MEVENT&)              override;
 
   void state(Mpg123Player::State)         noexcept;
   void track(Database::Tracks::Track)     noexcept;
   void set_position_and_length(int, int)  noexcept;
+
+  std::function<void()> on_click;
 
 private:
   Database::Tracks::Track _track;

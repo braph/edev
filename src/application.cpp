@@ -160,6 +160,10 @@ void Application :: run() {
     mainwindow.windows.current_index(index);
   };
 
+  mainwindow.infoLine.on_click = [&]() {
+    player.toggle();
+  };
+
   int key;
   WINDOW *win;
   MEVENT mouse;

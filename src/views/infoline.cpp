@@ -77,6 +77,15 @@ void InfoLine :: layout(Pos pos, Size size) {
   }
 }
 
+bool InfoLine :: handle_mouse(MEVENT& m) {
+  if (m.y == pos.y && m.x >= size.width - STATE_LEN) {
+    if (on_click)
+      on_click();
+    return true;
+  }
+  return false;
+}
+
 void InfoLine :: draw_state() {
   attrset(colors.infoline_state);
   addstr(0, size.width - STATE_LEN, state_to_string[_state]);
