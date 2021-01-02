@@ -250,7 +250,7 @@ int main() {
     assert(streq(db.tracks[tracks_size-1].url(),         db2.tracks[tracks_size-1].url()));
     assert(streq(db.albums[albums_size-1].description(), db2.albums[albums_size-1].description()));
   }
-  
+
   // Tests of BrowsePage ======================================================
   // - are all styles valid?
   for (auto style : db.get_styles()) {

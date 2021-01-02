@@ -19,7 +19,7 @@ public:
       bool pipe_stdout=true,
       bool pipe_stderr=true) noexcept;
  ~Process();
-  
+
   pid_t  get_id()                         const noexcept { return _pid; }
   int    get_exit_status()                      noexcept;
   bool   try_get_exit_status(int &exit_status)  noexcept;

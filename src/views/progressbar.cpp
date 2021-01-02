@@ -50,7 +50,7 @@ void ProgressBar :: layout(Pos pos, Size size) {
     attrset(UI::Colors::set(fader.get(width, i), -1));
     *this << Config::progressbar_progress_char;
   }
-  
+
   attrset(colors.progressbar_rest);
   for (; i < width * 2; ++i)
     *this << Config::progressbar_rest_char;
@@ -82,7 +82,7 @@ int main() {
       continue;
     Config::use_colors = n;
     load_theme_by_colors(n, colors);
-  
+
     ProgressBar b;
     b.layout({0,0}, {LINES,COLS});
     for (;;)

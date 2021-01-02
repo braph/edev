@@ -4,7 +4,7 @@
 #include "../ui/core.hpp"
 
 namespace Views {
-  
+
 class Splash : public UI::Window {
 public:
   void draw() override;

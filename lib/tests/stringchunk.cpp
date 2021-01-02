@@ -27,14 +27,14 @@ int main() {
     assert(chunk.count() == 1);
   }
 
-  { 
+  {
     StringChunk chunk;
     for (auto s : TEST_DATA)
       assert(streq(s, chunk.get(chunk.add(s))));
     assert(chunk.count() == 6);
   }
 
-  { 
+  {
     StringChunk chunk;
     int id0 = chunk.add("string");
     int id1 = chunk.add("longstring");

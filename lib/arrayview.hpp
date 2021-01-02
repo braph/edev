@@ -15,7 +15,7 @@ public:
     : _data(NULL)
     , _size(0)
   {}
-  
+
   ArrayView(T* array, size_t N)
     : _data(array)
     , _size(N)

@@ -24,7 +24,7 @@ pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe
   assert(function && "No function passed");
 
   int stdin_p[2], stdout_p[2], stderr_p[2];
-  
+
   if (pipe_stdin && pipe(stdin_p) != 0)
     return -1;
   if (pipe_stdout && pipe(stdout_p) != 0) {
@@ -36,9 +36,9 @@ pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe
     if (pipe_stdout) {close(stdout_p[0]); close(stdout_p[1]);}
     return -1;
   }
-  
+
   pid_t pid = fork();
-  
+
   if (pid < 0) {
     if (pipe_stdin)  {close(stdin_p[0]);  close(stdin_p[1]);}
     if (pipe_stdout) {close(stdout_p[0]); close(stdout_p[1]);}
@@ -52,27 +52,27 @@ pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe
     if (pipe_stdin)  {close(stdin_p[0]);  close(stdin_p[1]);}
     if (pipe_stdout) {close(stdout_p[0]); close(stdout_p[1]);}
     if (pipe_stderr) {close(stderr_p[0]); close(stderr_p[1]);}
-  
+
     // Based on http://stackoverflow.com/a/899533/3808293
     int fd_max = static_cast<int>(sysconf(_SC_OPEN_MAX)); // truncation is safe
     for (int fd = 3; fd < fd_max; fd++)
       close(fd);
-  
+
     setpgid(0, 0);
-    
+
     function();
-    
+
     _exit(EXIT_FAILURE);
   }
-  
+
   if (pipe_stdin)  close(stdin_p[0]);
   if (pipe_stdout) close(stdout_p[1]);
   if (pipe_stderr) close(stderr_p[1]);
-  
+
   if (pipe_stdin)  stdin_pipe.open(stdin_p[1]);
   if (pipe_stdout) stdout_pipe.open(stdout_p[0]);
   if (pipe_stderr) stderr_pipe.open(stderr_p[0]);
-  
+
   _closed = false;
   this->_pid = pid;
   return pid;

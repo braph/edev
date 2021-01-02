@@ -149,7 +149,7 @@ int main() {
   load_theme_by_colors(COLORS, colors);
   Database db;
   db.load(TEST_DB);
-  
+
   InfoLine p(db);
   p.layout({0,0}, {LINES, COLS});
   for (size_t i = 0; i < 100; ++i) {

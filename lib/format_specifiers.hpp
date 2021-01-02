@@ -25,7 +25,7 @@ template<>  struct specifier<double>        { static constexpr const char* value
 template<>  struct specifier<void*>         { static constexpr const char* value = "%p";    };
 
 } // namespace print
-  
+
 } // namespace format_specifiers
 
 #endif

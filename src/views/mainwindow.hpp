@@ -35,7 +35,7 @@ enum class TabWidgets : unsigned char {
   INFO,
   HELP
 };
-  
+
 class MainWindow : public UI::VerticalContainer {
 public:
   MainWindow();

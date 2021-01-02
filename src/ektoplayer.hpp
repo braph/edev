@@ -93,7 +93,7 @@ template<> const char* to_s<const Filesystem::path&>  (const Filesystem::path& s
 template<> const char* to_s<const std::exception&>    (const std::exception& e)     { return e.what();  }
 }
 
-template<class strprov, typename ... Ts> 
+template<class strprov, typename ... Ts>
 void logwrite_bla(const Ts& ... args) {
   using paramtypes = decltype(pprintpp::tie_types(pprintpp::to_s(args)...));
   using af = pprintpp::autoformat_t<strprov, paramtypes>;

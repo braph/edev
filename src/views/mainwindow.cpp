@@ -91,7 +91,7 @@ void MainWindow :: layout(Pos pos, Size size) {
   if (readlineWidget.visible) size.height -= readlineWidget.size.height;
 
   windows.layout(pos, size);
-  
+
   VerticalContainer::layout(this->pos, this->size);
 }
 

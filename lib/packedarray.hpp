@@ -32,7 +32,7 @@ struct ArrayReference {
   operator TStorage()
   //{ return extract_bits<TStorage>(*_storage, TBits * _i, TBits); }
   { return _value; }
-  
+
   ArrayReference& operator=(const ArrayReference& rhs)
   { return *this = rhs._value; }
 

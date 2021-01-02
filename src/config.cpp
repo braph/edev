@@ -83,7 +83,7 @@ static Database::ColumnID parse_column(const char* s) {
     return column;
   throw ConfigError(s, "No such column");
 }
-      
+
 // Parsing functions for complex objects ======================================
 
 static decltype(Config::tabs_widgets) parse_tabs_widgets(const char* s) {
@@ -347,7 +347,7 @@ void Config :: read(const char* file) {
   try {
     while (std::fgets(line, sizeof(line), fh)) {
       line[std::max(size_t(1), std::strlen(line)) - 1] = '\0';
-      
+
       ++no;
       ShellSplit::split(line, splitted);
       if (! splitted.size() || splitted[0][0] == '#')

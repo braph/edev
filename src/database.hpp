@@ -491,7 +491,7 @@ public:
 
   inline std::vector<Styles::Style> get_styles()
   { return std::vector<Styles::Style>(styles.begin(), styles.end()); }
-  
+
   inline std::vector<Albums::Album> get_albums()
   { return std::vector<Albums::Album>(albums.begin(), albums.end()); }
 

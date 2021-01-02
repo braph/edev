@@ -92,7 +92,7 @@ public:
   data_type* data()                 noexcept { return _data;      }
   size_t     capacity()       const noexcept { return _capacity;  }
   void       shrink_to_fit()                 { /* TODO */         }
- 
+
   void    push_back(value_type);
   void    reserve(size_t);
   void    resize(size_t n, value_type value = 0);

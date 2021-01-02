@@ -69,7 +69,7 @@ void Application :: init() {
     std::printf("\033]0;ektoplayer\007" // *xterm
                 "\033kektoplayer\033\\" // screen/tmux
                 "\r\n");
-   
+
     // Use the locale from the environment
     std::setlocale(LC_ALL, "");
 
