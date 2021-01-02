@@ -12,9 +12,9 @@ float                       Config :: prefetch = 0.50;
 wchar_t                     Config :: progressbar_rest_char = '~';
 wchar_t                     Config :: progressbar_progress_char = '~';
 std::string                 Config :: log_file /* will be initialized later */;
+std::string                 Config :: album_dir /* will be initialized later */;
 std::string                 Config :: cache_dir /* will be initialized later */;
 std::string                 Config :: archive_dir /* will be initialized later */;
-std::string                 Config :: download_dir = "/tmp";
 std::string                 Config :: database_file /* will be initialized later */;
 InfoLineFormat              Config :: infoline_format_top_8 = {
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< ", COLOR_BLACK},

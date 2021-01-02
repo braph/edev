@@ -7,6 +7,23 @@
 
 #include <cstdlib>
 
+static inline void unpack_archive(const char* archive, const char* destination_dir) {
+  if (::fork() != 0)
+    return;
+
+  char archive_abs_path[PATH_MAX];
+  realpath(archive, archive_abs_path);
+
+  Filesystem::create_directory(destination_dir);
+  if (chdir(destination_dir) < 0)
+    return;
+
+  dup2(STDERR_FILENO, STDOUT_FILENO);
+  ::execlp("/bin/7z", "7z", "x", archive_abs_path, NULL);
+  ::execlp("/bin/unzip", "unzip", archive_abs_path, NULL);
+  ::exit(0);
+}
+
 static inline void open_image(const char* url) {
   if (::fork() != 0)
     return;

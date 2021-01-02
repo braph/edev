@@ -5,10 +5,10 @@ set log_file "~/.config/ektoplayer/ektoplayer.log"
 # Directory for storing mp3 files. If empty, the downloaded mp3 files won't be moved to `cache_dir`. Instead they will be kept `temp_dir` and will be deleted on application start and exit.
 # Directory will be created if it does not exist, parent directories will not be created.
 set cache_dir "~/.cache/ektoplayer"
-# Where to search for downloaded MP3 archives
+# Where to unpack downloaded album archives to
+set album_dir "~/.config/ektoplayer/albums"
+# Where to download album archives (zip/rar)
 set archive_dir "~/.config/ektoplayer/archives"
-# Where to store downloaded MP3 archives
-set download_dir "/tmp"
 # Enable/disable automatic extraction of downloaded MP3
 # archives from `download_dir` to `archive_dir`
 set auto_extract_to_archive_dir true

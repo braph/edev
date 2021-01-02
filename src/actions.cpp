@@ -57,6 +57,10 @@ int Actions :: call(ActionID id) {
   case PLAYLIST_GOTO_CURRENT:
     mainwindow->playlist.goto_active();
     break;
+  case PLAYLIST_DOWNLOAD:
+    if (! mainwindow->playlist.empty() && mainwindow->playlist.cursor_index() >= 0)
+      trackloader.download_album(mainwindow->playlist.cursor_item());
+    break;
   case PLAYLIST_NEXT:
     index = mainwindow->playlist.active_index() + 1;
     goto PLAYLIST_PLAY;

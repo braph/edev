@@ -134,16 +134,17 @@ options = [
 #        default: 'true',
 #        help: "Enable/disable local mp3 cache.\nIf this option is disabled, the downloaded mp3 files won't be moved from `cache_dir`.\nInstead they will reside in `temp_dir` and will be deleted on application exit.",
 #        }),
+    ('album_dir', {
+        type: 'std::string', set: 'Filesystem::expand',
+        default: '"~/.config/ektoplayer/albums"',
+        help: 'Where to unpack downloaded album archives to',
+        lateinit: True
+        }),
     ('archive_dir', {
         type: 'std::string', set: 'Filesystem::expand',
         default: '"~/.config/ektoplayer/archives"',
-        help: 'Where to search for downloaded MP3 archives',
+        help: 'Where to download album archives (zip/rar)',
         lateinit: True
-        }),
-    ('download_dir', {
-        type: 'std::string', set: 'Filesystem::expand',
-        default: '"/tmp"',
-        help: 'Where to store downloaded MP3 archives',
         }),
     ('auto_extract_to_archive_dir', {
         type: 'bool', set: 'parse_bool',

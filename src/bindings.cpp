@@ -35,6 +35,7 @@ void init() {
 
 #define _ playlist
   _['\n']    = _['\r']    = _[KEY_ENTER]  = Actions::PLAYLIST_PLAY;
+  _['$']                                  = Actions::PLAYLIST_DOWNLOAD;
   _['g']                  = _[KEY_HOME]   = Actions::TOP;
   _['G']                  = _[KEY_END]    = Actions::BOTTOM;
   _['k']                  = _[KEY_UP]     = Actions::UP;
@@ -62,24 +63,12 @@ void init() {
 
 } // namespace Bindings
 
-/* nav: help, info, browser, playlist
-
+/*
 @bindings[:playlist]
-  # selection
   :'playlist.toggle_selection' => ['^v'                          ],
-  # playlist
-  :'playlist.download_album' => [?$                              ],
   :'playlist.reload'         => [?r                              ],
 
 @bindings[:browser]
-  # selection
-  :'browser.toggle_selection' => ['^v'                           ],
-  # search
-  :'browser.search_next'     => [?n                              ],
-  :'browser.search_prev'     => [?N                              ],
-  :'browser.search_up'       => [??                              ],
-  :'browser.search_down'     => [?/                              ],
-  # browser
   :'browser.add_to_playlist' => [' ', ?a                         ],
   :'browser.enter'           => [         ICurses::KEY_ENTER     ],
   :'browser.back'            => [?B,      ICurses::KEY_BACKSPACE ]

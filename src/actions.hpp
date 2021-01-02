@@ -35,6 +35,7 @@ public:
   X(HELP_SHOW,              "help.show")              \
   X(INFO_SHOW,              "info.show")              \
   X(PLAYLIST_PLAY,          "playlist.play")          \
+  X(PLAYLIST_DOWNLOAD,      "playlist.download")      \
   X(PLAYLIST_NEXT,          "playlist.next")          \
   X(PLAYLIST_PREV,          "playlist.prev")          \
   X(PLAYLIST_CLEAR,         "playlist.clear")         \

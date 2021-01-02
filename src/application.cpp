@@ -98,9 +98,9 @@ void Application :: init() {
     if (! fs::is_directory(Config::cache_dir))
       fs::create_directory(Config::cache_dir);
 
-    e = "Could not create download_dir";
-    if (! fs::is_directory(Config::download_dir))
-      fs::create_directory(Config::download_dir);
+    e = "Could not create album_dir";
+    if (! fs::is_directory(Config::album_dir))
+      fs::create_directory(Config::album_dir);
 
     e = "Could not create archive_dir";
     if (! fs::is_directory(Config::archive_dir))
@@ -249,7 +249,7 @@ HANDLE_KEY:
 }
 
 void Application :: cleanup_files() {
-#if 0
+#if 0 /* TODO */
   Filesystem::error_code e;
   for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
     if (starts_with(f.path().filename(), EKTOPLAZM_TEMP_FILE_PREFIX))

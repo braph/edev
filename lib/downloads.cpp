@@ -13,7 +13,6 @@ Download :: Download(const std::string &url) {
     setopt(CURLOPT_URL, url.c_str());
     setopt(CURLOPT_PRIVATE, this);
     setopt(CURLOPT_FOLLOWLOCATION, 1);
-    setopt(CURLOPT_TIMEOUT, 60);
     return;
   }
 #ifdef __cpp_exceptions

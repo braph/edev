@@ -1,4 +1,5 @@
 log_file = Filesystem::expand("~/.config/ektoplayer/ektoplayer.log");
+album_dir = Filesystem::expand("~/.config/ektoplayer/albums");
 cache_dir = Filesystem::expand("~/.cache/ektoplayer");
 archive_dir = Filesystem::expand("~/.config/ektoplayer/archives");
 database_file = Filesystem::expand("~/.config/ektoplayer/meta.db");
