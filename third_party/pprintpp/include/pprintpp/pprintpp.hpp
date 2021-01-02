@@ -168,8 +168,21 @@ using autoformat_t =
 template <typename ... Ts>
 make_t<Ts...> tie_types(Ts...);
 
-template<typename T> const T& to_s(const T& t) { return t; }
-
+inline bool                 to_s(bool                t) { return t; }
+inline char                 to_s(char                t) { return t; }
+inline short                to_s(short               t) { return t; }
+inline int                  to_s(int                 t) { return t; }
+inline long int             to_s(long int            t) { return t; }
+inline long long int        to_s(long long int       t) { return t; }
+inline unsigned char        to_s(unsigned char       t) { return t; }
+inline unsigned short       to_s(unsigned short      t) { return t; }
+inline unsigned             to_s(unsigned            t) { return t; }
+inline unsigned long        to_s(unsigned long       t) { return t; }
+inline unsigned long long   to_s(unsigned long long  t) { return t; }
+inline float                to_s(float               t) { return t; }
+inline double               to_s(double              t) { return t; }
+inline const char*          to_s(const char*         t) { return t; }
+template<typename T> const char* to_s(T&&) { static_assert(always_false<T>::value, "Type not printf-able"); return ""; }
 }
 
 #define AUTOFORMAT(function, s, ...) do { \

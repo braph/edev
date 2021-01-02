@@ -3,7 +3,6 @@
 #include "../config.hpp"
 #include "../theme.hpp"
 #include "../ui/colors.hpp"
-#include "rm_trackstr.cpp" // TODO
 
 #include <cstring>
 
@@ -27,17 +26,16 @@ InfoLine :: InfoLine()
 , _track_position(0)
 , _state(Mpg123Player::STOPPED)
 {
-  // TODO: mono
-  _fmt_top    = &Config::infoline_format_top;
-  _fmt_bottom = &Config::infoline_format_bottom;
+  _fmt_top    = &Config::infoline_format_top_mono;
+  _fmt_bottom = &Config::infoline_format_bottom_mono;
 
   if (Config::use_colors >= 256) {
     _fmt_top    = &Config::infoline_format_top_256;
     _fmt_bottom = &Config::infoline_format_bottom_256;
   }
   else if (Config::use_colors >= 8) {
-    _fmt_top    = &Config::infoline_format_top;
-    _fmt_bottom = &Config::infoline_format_bottom;
+    _fmt_top    = &Config::infoline_format_top_8;
+    _fmt_bottom = &Config::infoline_format_bottom_8;
   }
 
   draw();
@@ -122,7 +120,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
     if (fmt.text.length())
       s = fmt.text.c_str();
     else
-      s = trackField(_track, fmt.tag);
+      s = Database::track_column_to_string(_track, fmt.tag);
 
     size_t len = std::mbstowcs(NULL, s, 0);
     if (len == size_t(-1))
@@ -137,7 +135,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
     if (fmt.text.length())
       *this << fmt.text;
     else
-      *this << trackField(_track, fmt.tag);
+      *this << Database::track_column_to_string(_track, fmt.tag);
   }
 }
 

@@ -1,7 +1,6 @@
 #include "browser.hpp"
 
 #include "../widgets/listwidget.hpp"
-#include "rm_trackstr.cpp"
 #include "../config.hpp"
 #include "../colors.hpp"
 #include "../theme.hpp"

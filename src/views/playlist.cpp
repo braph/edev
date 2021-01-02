@@ -1,7 +1,6 @@
 #include "playlist.hpp"
 
 #include "mainwindow.hpp"
-#include "rm_trackstr.cpp" // TODO
 #include "../widgets/listwidget.hpp"
 #include "../ui/colors.hpp"
 #include "../config.hpp"
@@ -56,7 +55,7 @@ void TrackRenderer :: operator()(
     else
       wattrset(_win, Colors::set(column.fg, column.bg) | additional_attributes);
 
-    const char* value = trackField(item, column.tag);
+    const char* value = Database::track_column_to_string(item, column.tag);
     size_t len = std::mbstowcs(NULL, value, 0);
     int colwidth;
 
@@ -112,7 +111,7 @@ bool Playlist :: handle_key(int key) {
        _track_search.start_search(this->playlist,
          [=](const Database::Tracks::Track& track) {
             for (const auto& column : Config::playlist_columns)
-              if (icontains(trackField(track, column.tag), line))
+              if (icontains(Database::track_column_to_string(track, column.tag), line))
                 return true;
             return false;
         }, search_reverse);

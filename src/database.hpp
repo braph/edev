@@ -6,6 +6,7 @@
 #include <lib/packedvector.hpp>
 #include <lib/stringchunk.hpp>
 #include <lib/stringpack.hpp>
+#include <lib/bit_tools.hpp>
 
 #include <array>
 #include <vector>
@@ -500,6 +501,8 @@ public:
 private:
   void shrink_chunk_to_fit(StringChunk&, std::initializer_list<Column*>);
 };
+
+const char* track_column_to_string(const Tracks::Track&, ColumnID);
 
 } // namespace Database
 

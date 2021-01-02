@@ -139,10 +139,8 @@ Album BrowsePageParser :: next_album() {
 
   // Download count
   auto dc = xpath.query_string(cache["string(.//span[@class = 'dc']//strong/text())"], post);
-  if (dc) {
-    // TODO: fix this.
+  if (dc)
     album.download_count = std::atoi(erase_all(dc.c_str(), ','));
-  }
 
   // Rating, Voting count
   // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong>

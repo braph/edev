@@ -15,7 +15,7 @@
     static bool const value = sizeof(chk<T>(0)) == sizeof(yes);              \
   }
 
-HAS_MEM_FUNC(c_str, has_c_str);
-HAS_MEM_FUNC(what, has_what);
+//HAS_MEM_FUNC(c_str, has_c_str);
+//HAS_MEM_FUNC(what, has_what);
 
 #endif

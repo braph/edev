@@ -39,12 +39,16 @@ set progressbar.progress_char '~'
 set progressbar.rest_char '~'
 # Enable/display infoline
 set infoline.display true
-# Format of first line in infoline
-set infoline.format_top "'<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"
+# Format of first line in infoline (mono colors)
+set infoline.format_top_mono "'<< ' title{bold} ' >>'"
+# Format of second line in infoline (mono colors)
+set infoline.format_bottom_mono "artist{bold} ' - ' album{bold} ' (' year{} ')'"
+# Format of first line in infoline (8 colors)
+set infoline.format_top_8 "'<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"
+# Format of second line in infoline (8 colors)
+set infoline.format_bottom_8 "artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"
 # Format of first line in infoline (256 colors)
 set infoline.format_top_256 "'<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"
-# Format of second line in infoline
-set infoline.format_bottom "artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"
 # Format of second line in infoline (256 colors)
 set infoline.format_bottom_256 "artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"
 # Enable/disable tabbar visibility

@@ -16,18 +16,40 @@ lateinit  = object()
 
 colfmt = lambda s: s.replace("column(", "static_cast<Database::ColumnID>(Database::")
 
-INFOLINE_FORMAT_TOP = '''"\
+
+INFOLINE_FORMAT_TOP_MONO = '''"\
+'<< ' title{bold} ' >>'"'''
+
+INFOLINE_FORMAT_TOP_MONO_CVALUE = colfmt('''{
+{column(COLUMN_NONE), "<< "},
+{column(TRACK_TITLE), "",  -1, -1, A_BOLD},
+{column(COLUMN_NONE), " >>"}}''')
+
+INFOLINE_FORMAT_BOTTOM_MONO = '''"\
+artist{bold} ' - ' album{bold} ' (' year{} ')'"'''
+
+INFOLINE_FORMAT_BOTTOM_MONO_CVALUE = colfmt('''{
+{column(TRACK_ARTIST),  "",     -1, -1, A_BOLD},
+{column(COLUMN_NONE),   " - "},
+{column(ALBUM_TITLE),   "",     -1, -1, A_BOLD},
+{column(COLUMN_NONE),   " ("},
+{column(ALBUM_YEAR),    "",     -1, -1, 0},
+{column(COLUMN_NONE),   ")"}
+}''')
+
+
+INFOLINE_FORMAT_TOP_8 = '''"\
 '<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"'''
 
-INFOLINE_FORMAT_TOP_CVALUE = colfmt('''{
+INFOLINE_FORMAT_TOP_8_CVALUE = colfmt('''{
 {column(COLUMN_NONE), "<< ", COLOR_BLACK},
 {column(TRACK_TITLE), "",    COLOR_YELLOW, -1, A_BOLD},
 {column(COLUMN_NONE), " >>", COLOR_BLACK}}''')
 
-INFOLINE_FORMAT_BOTTOM = '''"\
+INFOLINE_FORMAT_BOTTOM_8 = '''"\
 artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"'''
 
-INFOLINE_FORMAT_BOTTOM_CVALUE = colfmt('''{
+INFOLINE_FORMAT_BOTTOM_8_CVALUE = colfmt('''{
 {column(TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
 {column(COLUMN_NONE),   " - "},
 {column(ALBUM_TITLE),   "",     COLOR_RED, -1, A_BOLD},
@@ -35,6 +57,7 @@ INFOLINE_FORMAT_BOTTOM_CVALUE = colfmt('''{
 {column(ALBUM_YEAR),    "",     COLOR_CYAN, -1, 0},
 {column(COLUMN_NONE),   ")"}
 }''')
+
 
 INFOLINE_FORMAT_TOP_256 = '''"\
 '<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"'''
@@ -202,11 +225,29 @@ options = [
         default: 'true',
         help: 'Enable/display infoline',
         }),
-    ('infoline.format_top', {
+    ('infoline.format_top_mono', {
         type: 'InfoLineFormat', set: 'parse_infoline_format',
-        default: INFOLINE_FORMAT_TOP,
-        c_default: INFOLINE_FORMAT_TOP_CVALUE,
-        help: 'Format of first line in infoline',
+        default: INFOLINE_FORMAT_TOP_MONO,
+        c_default: INFOLINE_FORMAT_TOP_MONO_CVALUE,
+        help: 'Format of first line in infoline (mono colors)',
+        }),
+    ('infoline.format_bottom_mono', {
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
+        default: INFOLINE_FORMAT_BOTTOM_MONO,
+        c_default: INFOLINE_FORMAT_BOTTOM_MONO_CVALUE,
+        help: 'Format of second line in infoline (mono colors)',
+        }),
+    ('infoline.format_top_8', {
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
+        default: INFOLINE_FORMAT_TOP_8,
+        c_default: INFOLINE_FORMAT_TOP_8_CVALUE,
+        help: 'Format of first line in infoline (8 colors)',
+        }),
+    ('infoline.format_bottom_8', {
+        type: 'InfoLineFormat', set: 'parse_infoline_format',
+        default: INFOLINE_FORMAT_BOTTOM_8,
+        c_default: INFOLINE_FORMAT_BOTTOM_8_CVALUE,
+        help: 'Format of second line in infoline (8 colors)',
         }),
     ('infoline.format_top_256', {
         type: 'InfoLineFormat', set: 'parse_infoline_format',
@@ -214,16 +255,10 @@ options = [
         c_default: INFOLINE_FORMAT_TOP_256_CVALUE,
         help: 'Format of first line in infoline (256 colors)',
         }),
-    ('infoline.format_bottom', {
-        type: 'InfoLineFormat', set: 'parse_infoline_format',
-        default: INFOLINE_FORMAT_BOTTOM,
-        c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
-        help: 'Format of second line in infoline',
-        }),
     ('infoline.format_bottom_256', {
         type: 'InfoLineFormat', set: 'parse_infoline_format',
         default: INFOLINE_FORMAT_BOTTOM_256,
-        c_default: INFOLINE_FORMAT_BOTTOM_CVALUE,
+        c_default: INFOLINE_FORMAT_BOTTOM_256_CVALUE,
         help: 'Format of second line in infoline (256 colors)',
         }),
     ('tabbar.visible', {

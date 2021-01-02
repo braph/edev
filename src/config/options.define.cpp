@@ -16,11 +16,15 @@ std::string                 Config :: cache_dir /* will be initialized later */;
 std::string                 Config :: archive_dir /* will be initialized later */;
 std::string                 Config :: download_dir = "/tmp";
 std::string                 Config :: database_file /* will be initialized later */;
-InfoLineFormat              Config :: infoline_format_top = {
+InfoLineFormat              Config :: infoline_format_top_8 = {
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< ", COLOR_BLACK},
 {static_cast<Database::ColumnID>(Database::TRACK_TITLE), "",    COLOR_YELLOW, -1, A_BOLD},
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE), " >>", COLOR_BLACK}};
-InfoLineFormat              Config :: infoline_format_bottom = {
+InfoLineFormat              Config :: infoline_format_top_256 = {
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< ", 236},
+{static_cast<Database::ColumnID>(Database::TRACK_TITLE), "",    178, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), " >>", 236}};
+InfoLineFormat              Config :: infoline_format_bottom_8 = {
 {static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " - "},
 {static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   "",     COLOR_RED, -1, A_BOLD},
@@ -28,16 +32,24 @@ InfoLineFormat              Config :: infoline_format_bottom = {
 {static_cast<Database::ColumnID>(Database::ALBUM_YEAR),    "",     COLOR_CYAN, -1, 0},
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE),   ")"}
 };
-InfoLineFormat              Config :: infoline_format_top_256 = {
-{static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< ", 236},
-{static_cast<Database::ColumnID>(Database::TRACK_TITLE), "",    178, -1, A_BOLD},
-{static_cast<Database::ColumnID>(Database::COLUMN_NONE), " >>", 236}};
+InfoLineFormat              Config :: infoline_format_top_mono = {
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), "<< "},
+{static_cast<Database::ColumnID>(Database::TRACK_TITLE), "",  -1, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE), " >>"}};
 InfoLineFormat              Config :: infoline_format_bottom_256 = {
-{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  "",     COLOR_BLUE, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  "",     24, -1, A_BOLD},
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " - "},
-{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   "",     COLOR_RED, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   "",     160, -1, A_BOLD},
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " ("},
-{static_cast<Database::ColumnID>(Database::ALBUM_YEAR),    "",     COLOR_CYAN, -1, 0},
+{static_cast<Database::ColumnID>(Database::ALBUM_YEAR),    "",     37, -1, 0},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   ")"}
+};
+InfoLineFormat              Config :: infoline_format_bottom_mono = {
+{static_cast<Database::ColumnID>(Database::TRACK_ARTIST),  "",     -1, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " - "},
+{static_cast<Database::ColumnID>(Database::ALBUM_TITLE),   "",     -1, -1, A_BOLD},
+{static_cast<Database::ColumnID>(Database::COLUMN_NONE),   " ("},
+{static_cast<Database::ColumnID>(Database::ALBUM_YEAR),    "",     -1, -1, 0},
 {static_cast<Database::ColumnID>(Database::COLUMN_NONE),   ")"}
 };
 PlaylistColumns             Config :: browser_columns /* will be initialized later */;

@@ -309,6 +309,35 @@ Field Tracks::Track::operator[](ColumnID id) const noexcept {
   }
 }
 
+// ============================================================================
+// Erm... yeah.... TODO? ======================================================
+// ============================================================================
+
+const char* track_column_to_string(const Tracks::Track& track, ColumnID id) {
+  static char buf[256];
+
+  Field f = track[id];
+
+  if (AlbumColumnID(id) == ALBUM_STYLES) {
+    buf[0] = '\0';
+    const char* comma = "";
+    for (auto id : extract_set_bits(f.value.i)) {
+      std::strcat(buf, comma);
+      std::strcat(buf, track.table->db.styles[size_t(id)].name());
+      comma = "|";
+    }
+    return buf;
+  }
+
+  switch (f.type) {
+    case Field::STRING:  return f.value.s;
+    case Field::INTEGER: return std::sprintf(buf, "%02d",   f.value.i), buf;
+    case Field::FLOAT:   return std::sprintf(buf, "%02.2f", f.value.f), buf;
+    case Field::TIME:    return REPORT_BUG;
+    default:             return REPORT_BUG;
+  }
+}
+
 } // namespace Database
 
 // ============================================================================

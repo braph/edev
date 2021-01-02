@@ -9,6 +9,7 @@
 #include <string>
 #include <cstdio>
 #include <cstdarg>
+#include <exception>
 
 #define VERSION                     "0.0.0"
 #define GITHUB_URL                  "https://github.com/braph/ektoplayer"
@@ -86,11 +87,11 @@ std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 
 } // namespace Ektoplayer
 
-template <typename T, typename std::enable_if<has_c_str<T, const char*(T::*)()>::value, T>::type* = nullptr>
-const char* pprintpp::to_s(const T& s) { return s.c_str(); }
-
-template <typename T, typename std::enable_if<has_what<T, const char*(T::*)()>::value, T>::type* = nullptr>
-const char* pprintpp::to_s(const T& e) { return e.what();  }
+namespace pprintpp {
+template<> const char* to_s<const std::string&>       (const std::string& s)        { return s.c_str(); }
+template<> const char* to_s<const Filesystem::path&>  (const Filesystem::path& s)   { return s.c_str(); }
+template<> const char* to_s<const std::exception&>    (const std::exception& e)     { return e.what();  }
+}
 
 template<class strprov, typename ... Ts> 
 void logwrite_bla(const Ts& ... args) {
