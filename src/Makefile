@@ -8,7 +8,7 @@ WARNINGS += -Wmissing-include-dirs
 WARNINGS += -Wpessimizing-move -Wredundant-move
 WARNINGS += -Wno-variadic-macros
 #WARNINGS += -Werror # -Wfatal-errors
-#WARNINGS += -Wdisabled-optimization -Wformat=2 -Wshadow -Wswitch-default -Wstrict-overflow=5 
+#WARNINGS += -Wdisabled-optimization -Wformat=2 -Wshadow -Wswitch-default -Wstrict-overflow=5
 #-D_GLIBCXX_ASSERTIONS
 
 STD = c++11

@@ -1,6 +1,4 @@
 TODO
-  - Maybe we want to replace ActionID::SEARCH by ActionID::SEARCH_UP + ActionID::SEARCH_DOWN
-
   - browsepage.cpp / updater.cpp:
     Ensure that exceptions will be logged instead of terminating the program
 
@@ -13,19 +11,15 @@ TODO
   - lib/packedvector.hpp:
     - is a complete mess
     - add tests (including performance tests!)
-    - add support for const-references/const-iterators, maybe even reverse iterators?!
-        packedvector::operator[] ---- const char* get(size_t i) noexcept { // TODO: this should be const!
     - maybe rename `__enter__` and `__leave__`
 
   - lib/downloads.cpp:
     - Downloads :: addDownload(Download*): Should this own the passed download?
 
-  - trackloader.cpp / lib/downloads.cpp:
+  - trackloader.cpp:
     - Exceptions? Are they logged yet?!
     - Add code for downloading a whole album (keybinding `$`?)
     - Add code for playing a file from a downloaded album
-
-  - Write a complete sample config file (or a generator for it)
 
   - playlist:
     ^S for saving?
@@ -49,8 +43,7 @@ MAYBE
   - lib/cstring.hpp
     - merge char/wchar_t classes into a templated class like basic_string<>
     - add starts_with and other functions?
-  - application.cpp:
-    - make the application object global for accessing player/updater/etc. instead of using a context object
+  - strinkchunk: eliminate CString
 
 
 NOTES

@@ -303,6 +303,7 @@ with open('ektoplayer.rc', 'w') as fh:
     for name, o in options:
         print('#', o[help].replace('\n', '\n# '), file=fh)
         print('set', name, o[default], file=fh)
+        print(file=fh)
 
     print("# vim: filetype=sh", file=fh)
 

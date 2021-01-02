@@ -1,64 +1,94 @@
 # Database file for storing ektoplazm metadata
 set database_file "~/.config/ektoplayer/meta.db"
+
 # File used for logging
 set log_file "~/.config/ektoplayer/ektoplayer.log"
+
 # Directory for storing mp3 files. If empty, the downloaded mp3 files won't be moved to `cache_dir`. Instead they will be kept `temp_dir` and will be deleted on application start and exit.
 # Directory will be created if it does not exist, parent directories will not be created.
 set cache_dir "~/.cache/ektoplayer"
+
 # Where to unpack downloaded album archives to
 set album_dir "~/.config/ektoplayer/albums"
+
 # Where to download album archives (zip/rar)
 set archive_dir "~/.config/ektoplayer/archives"
+
 # Enable/disable automatic extraction of downloaded MP3
 # archives from `download_dir` to `archive_dir`
 set auto_extract_to_archive_dir true
+
 # In combination `with auto_extract_to_archive_dir`:
 # Delete zip archive after successful extraction
 set delete_after_extraction true
+
 # How many tracks from database should be added to the playlist on application start.
 set playlist_load_newest 1000
+
 # Specify after how many percent the next track shall be prefetched. Set it to 0 to disable it.
 set prefetch 0.50
+
 # How many pages should be fetched after start
 set small_update_pages 3
+
 # Choose color capabilities. auto|mono|8|256
 set use_colors "auto"
+
 # Columns of playlist
 set playlist.columns "number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%} title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}"
+
 # Columns of playlist (256 colors)
 set playlist.columns_256 "number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%} title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}"
+
 # Columns of browser
 set browser.columns "number{fg=magenta size=3} artist{fg=blue size=25%} album{fg=red size=30%} title {fg=yellow size=33%} styles{fg=cyan size=20%} bpm{fg=green size=3 right}"
+
 # Columns of browser (256 colors)
 set browser.columns_256 "number{fg=97 size=3} artist{fg=24 size=25%} album{fg=160 size=30%} title {fg=178 size=33%} styles{fg=37 size=20%} bpm{fg=28 size=3 right}"
+
 # Enable/disable progressbar
 set progressbar.display true
+
 # Character used for displaying playing progress
 set progressbar.progress_char '~'
+
 # Character used for the rest of the line
 set progressbar.rest_char '~'
+
 # Enable/display infoline
 set infoline.display true
+
 # Format of first line in infoline (mono colors)
 set infoline.format_top_mono "'<< ' title{bold} ' >>'"
+
 # Format of second line in infoline (mono colors)
 set infoline.format_bottom_mono "artist{bold} ' - ' album{bold} ' (' year{} ')'"
+
 # Format of first line in infoline (8 colors)
 set infoline.format_top_8 "'<< '{fg=black} title{fg=yellow,bold} ' >>'{fg=black}"
+
 # Format of second line in infoline (8 colors)
 set infoline.format_bottom_8 "artist{fg=blue,bold} ' - ' album{fg=red,bold} ' (' year{fg=cyan} ')'"
+
 # Format of first line in infoline (256 colors)
 set infoline.format_top_256 "'<< '{fg=236} title{fg=178,bold} ' >>'{fg=236}"
+
 # Format of second line in infoline (256 colors)
 set infoline.format_bottom_256 "artist{fg=24,bold} ' - ' album{fg=160,bold} ' (' year{fg=37} ')'"
+
 # Enable/disable tabbar visibility
 set tabbar.visible true
+
 # Enable/disable infoline visibility
 set infoline.visible true
+
 # Enable/disable progressbar visibility
 set progressbar.visible true
+
 # Specify widget order of tabbar (left to right)
 set tabs.widgets "splash,playlist,browser,info,help"
+
 # Specify widgets to show (up to down)
 set main.widgets "infoline,tabbar,readline,windows,progressbar"
+
 # vim: filetype=sh
