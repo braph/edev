@@ -7,7 +7,6 @@
 
 #include <lib/stringpack.hpp>
 #include <lib/downloads.hpp>
-#include <lib/cstring.hpp>
 #include <lib/string.hpp>
 
 #include <cstring>
@@ -21,7 +20,7 @@ static std::string& clean_str(std::string& s) {
 }
 
 static std::string make_markdown(const std::string& description) {
-  std::string s = Html2Markdown::convert(description);
+  std::string s = Html2Markdown::convert(description.c_str(), description.size());
 
   // Replace protected email links:
   //  [[/cdn-cgi/l/email-protection#284b47444174...]]

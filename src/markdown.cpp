@@ -1,6 +1,6 @@
 #include "markdown.hpp"
 
-#include <lib/cstring.hpp>
+#include <lib/cstring.hpp> // ensure_string
 #include <lib/stringpack.hpp>
 #include <lib/xml/sax.hpp>
 
@@ -66,15 +66,15 @@ void characters(void* self_, const xmlChar* ch, int len) {
 
 namespace Html2Markdown {
 
-std::string convert(const std::string& src) {
+std::string convert(const char* src, size_t size) {
   xmlSAXHandler handler = {};
   handler.startElement  = startElement;
   handler.endElement    = endElement;
   handler.characters    = characters;
 
   State state;
-  state.result.reserve(src.size() * 0.5);
-  ::xmlSAXUserParseMemory(&handler, &state, &src[0], src.size());
+  state.result.reserve(size * 0.5);
+  ::xmlSAXUserParseMemory(&handler, &state, src, size);
   return state.result;
 }
 

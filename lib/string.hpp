@@ -26,6 +26,15 @@ static void erase_all(std::string& s, const char* search) {
     s.erase(pos, std::strlen(search));
 }
 
+static inline char* erase_all(char* str, char c) {
+  char* it = str;
+  do {
+    if (*it != c)
+      *str++ = *it;
+  } while (*it++);
+  return str;
+}
+
 static inline std::string& replace_all(std::string& s, const char* needle, size_t needle_len, char replacement) {
   for (size_t pos = 0; (pos = s.find(needle, pos, needle_len)) != std::string::npos; pos += 1)
     s.replace(pos, needle_len, 1, replacement);
@@ -46,6 +55,15 @@ static inline std::string& replace_all(std::string& s, const char* needle, char 
   return replace_all(s, needle, std::strlen(needle), replacement);
 }
 
+static bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
+  return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
+}
+
+template<size_t N>
+inline bool ends_with(const std::string& s, const char (&prefix)[N]) {
+  return ends_with(&s[0], s.size(), prefix, N - 1);
+}
+
 static inline bool strip_extension(std::string &s, const char* ext, size_t ext_len) {
   if (std::string::npos != s.find(ext, s.size() - ext_len)) {
     s.erase(s.size() - ext_len);
@@ -56,6 +74,17 @@ static inline bool strip_extension(std::string &s, const char* ext, size_t ext_l
 
 static inline bool strip_extension(std::string &s, const char* ext) {
   return strip_extension(s, ext, std::strlen(ext));
+}
+
+static inline std::string& trim(std::string& s, const char* chars = " \n\t\f\v") {
+  size_t count = std::strspn(s.c_str(), chars);
+  if (count)
+    s.erase(0, count);
+
+  while (! s.empty() && std::strchr(chars, s.back()))
+    s.pop_back();
+
+  return s;
 }
 
 template<class String, class Predicate>

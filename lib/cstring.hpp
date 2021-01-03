@@ -8,8 +8,6 @@
 #include <cstdio>
 #include <cstdarg>
 
-// TODO: this is a mess
-
 static inline const char* ensure_string(const char* s) { return (s ? s : ""); }
 
 // ============================================================================
@@ -155,35 +153,6 @@ private:
 };
 
 // ============================================================================
-
-static bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
-  return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
-}
-
-template<size_t N>
-inline bool ends_with(const std::string& s, const char (&prefix)[N]) {
-  return ends_with(&s[0], s.size(), prefix, N - 1);
-}
-
-static inline char* erase_all(char* str, char c) {
-  char* it = str;
-  do {
-    if (*it != c)
-      *str++ = *it;
-  } while (*it++);
-  return str;
-}
-
-static inline std::string& trim(std::string& s, const char* chars = " \n\t\f\v") {
-  size_t count = std::strspn(s.c_str(), chars);
-  if (count)
-    s.erase(0, count);
-
-  while (! s.empty() && std::strchr(chars, s.back()))
-    s.pop_back();
-
-  return s;
-}
 
 template<size_t N>
 char* time_format(char (&buf)[N], const char* fmt, std::time_t t) {

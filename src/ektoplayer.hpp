@@ -4,7 +4,6 @@
 #include "../third_party/pprintpp/include/pprintpp/pprintpp.hpp"
 
 #include <lib/filesystem.hpp>
-#include <lib/type_traits.hpp>
 
 #include <string>
 #include <cstdio>
@@ -94,12 +93,12 @@ template<> const char* to_s<const std::exception&>    (const std::exception& e) 
 }
 
 template<class strprov, typename ... Ts>
-void logwrite_bla(const Ts& ... args) {
+void logwrite_helper(const Ts& ... args) {
   using paramtypes = decltype(pprintpp::tie_types(pprintpp::to_s(args)...));
   using af = pprintpp::autoformat_t<strprov, paramtypes>;
   fprintf(stderr, af::str(), pprintpp::to_s(args)...);
 }
 
-#define log_write(...) AUTOFORMAT(logwrite_bla, __VA_ARGS__);
+#define log_write(...) AUTOFORMAT(logwrite_helper, __VA_ARGS__);
 
 #endif

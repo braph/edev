@@ -10,7 +10,7 @@ namespace Html2Markdown {
    * to:
    *   Some HTML ((link text))[[url]] **bold** __italic__
    */
-  std::string convert(const std::string&);
+  std::string convert(const char*, size_t);
 }
 
 #endif

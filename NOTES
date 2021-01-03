@@ -1,5 +1,91 @@
 - grep 'thread' for non threadable fu
 
+- When in doubt: use const char* instead of std::string!!!!
+- Use const char* until you get problems 
+
+- If you want to be able to provide user-defined "overloads" always use template-specialization, not argument overloads:
+
+    void dummy(...) {}
+
+    template<class T> const char* x(T t) { static_assert(0&&t, "FUCKU"); return t; }
+
+    int x(int i) { return i; }
+
+    // If the function is declared _here_, everything is fine.....
+    //const char* x(const char* s) { return s; }
+
+    template<typename ... T>
+    void f(T ... t) {
+      dummy(x(t)...);
+    }
+
+    //const char* x(const char* s) { return s; }
+    template<>
+    const char* x(const char* s) { return s; }
+
+    int main() {
+      f(1, "foo");
+    }
+
+- For overloading on multiple string types:
+
+  #include <cstdio>
+  #include <string>
+  
+  template<class T>
+  void f2(const T& s) // Handle all kinds of string objects
+  { std::printf("string object: %s\n", s.c_str()); }
+  
+  void f2(const char* s) // Handle const char*
+  { std::printf("const char*: %s\n", s); }
+  
+  // ----------------------------------------------------------------------------
+  
+  template<size_t N>
+  void f(const char(&s)[N]) // Handle const char array
+  { std::printf("const char[%zu]: %s\n", N, s); }
+  
+  template<size_t N>
+  void f(char(&s)[N]) // Handle char array
+  { std::printf("char[%zu]: %s\n", N, s); }
+  
+  template<class T>
+  inline void f(T&& s) // Handle other cases
+  { f2(std::forward<T>(s)); }
+  
+  int main() {
+    std::string stringObj     = "some kind of string object ...";
+    char charArr[]            = "char array";
+    const char constCharArr[] = "const char array";
+    const char* constCharPtr  = "const char pointer";
+  
+    f(stringObj);
+    f(charArr);
+    f(constCharArr);
+    f(constCharPtr);
+    //f("const char array");
+  }
+
+
+- Boost may not be the best library, especially for simple tasks:
+
+  #include<string>
+  #include<boost/algorithm/string/erase.hpp>
+
+  int main(int, const char**argv) {
+    std::string s(argv[0]);
+    boost::algorithm::erase_all(s, "foo");
+    return s.size();
+  }
+
+- Templates compile faster than functions...
+
+- Always use a second compiler to obtain better error messages ;)
+
+- String::pack (thanks to alipha :D)
+
+
+
 - Important: Overloads for std::string only for functions/methods, NOT class members:
   void foo(std::string& s) -> foo(s.c_str())  GOOD
   Foo(std::string& s)      -> Foo(s.c_str())  BAD

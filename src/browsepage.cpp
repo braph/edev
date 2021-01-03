@@ -4,7 +4,6 @@
 
 #include <lib/base64.hpp>
 #include <lib/sscan.hpp>
-#include <lib/cstring.hpp>
 #include <lib/stringpack.hpp>
 #include <lib/string.hpp>
 
