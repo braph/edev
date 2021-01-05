@@ -87,9 +87,9 @@ std::string& url_expand(std::string&, const char*, const char* suffix = NULL);
 } // namespace Ektoplayer
 
 namespace pprintpp {
-template<> const char* to_s<const std::string&>       (const std::string& s)        { return s.c_str(); }
-template<> const char* to_s<const Filesystem::path&>  (const Filesystem::path& s)   { return s.c_str(); }
-template<> const char* to_s<const std::exception&>    (const std::exception& e)     { return e.what();  }
+template<> inline const char* to_s<const std::string&>       (const std::string& s)        { return s.c_str(); }
+template<> inline const char* to_s<const Filesystem::path&>  (const Filesystem::path& s)   { return s.c_str(); }
+template<> inline const char* to_s<const std::exception&>    (const std::exception& e)     { return e.what();  }
 }
 
 template<class strprov, typename ... Ts>
