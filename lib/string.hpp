@@ -21,6 +21,16 @@ inline bool starts_with(const TString& s, const TPrefix& prefix) {
   return !std::strncmp(cstr(s), cstr(prefix), std::strlen(cstr(prefix)));
 }
 
+static inline bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
+  return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
+}
+
+template<class TString, class TSuffix>
+inline bool ends_with(const TString& s, const TSuffix & suffix) {
+  return ends_with(cstr(s), std::strlen(cstr(s)), cstr(suffix), std::strlen(cstr(suffix)));
+}
+
+
 static void erase_all(std::string& s, const char* search) {
   for (size_t pos; (pos = s.find(search)) != std::string::npos;)
     s.erase(pos, std::strlen(search));
@@ -53,15 +63,6 @@ static inline std::string& replace_all(std::string& s, char search, const char* 
 
 static inline std::string& replace_all(std::string& s, const char* needle, char replacement) {
   return replace_all(s, needle, std::strlen(needle), replacement);
-}
-
-static bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
-  return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
-}
-
-template<size_t N>
-inline bool ends_with(const std::string& s, const char (&prefix)[N]) {
-  return ends_with(&s[0], s.size(), prefix, N - 1);
 }
 
 static inline bool strip_extension(std::string &s, const char* ext, size_t ext_len) {

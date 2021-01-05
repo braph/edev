@@ -19,7 +19,7 @@
 #define EKTOPLAZM_TRACK_BASE_URL    EKTOPLAZM_URL "/audio/"
 #define EKTOPLAZM_STYLE_BASE_URL    EKTOPLAZM_URL "/style/"
 #define EKTOPLAZM_ARCHIVE_BASE_URL  EKTOPLAZM_URL "/files/"
-#define EKTOPLAZM_TEMP_FILE_PREFIX  "~ekto~-"
+#define EKTOPLAZM_DOWNLOAD_SUFFIX   ".ekto.part"
 #define REPORT_BUG                  "REPORT A BUG, PLEASE!"
 #define TEST_DB                     "/tmp/ektoplayer-test.db"
 

@@ -36,7 +36,7 @@ public:
 
 private:
   void print_db_stats();
-  void cleanup_files();
+  void cleanup_stale_download_files();
 };
 
 Application :: Application()
@@ -46,7 +46,7 @@ Application :: Application()
 
 Application :: ~Application() {
   ::endwin();
-  cleanup_files();
+  cleanup_stale_download_files();
 
   try {
     // Write unoptimized database just in case shrink() fails
@@ -248,13 +248,12 @@ HANDLE_KEY:
   goto MAINLOOP;
 }
 
-void Application :: cleanup_files() {
-#if 0 /* TODO */
+void Application :: cleanup_stale_download_files() {
   Filesystem::error_code e;
-  for (const auto& f : Filesystem::directory_iterator(Config::temp_dir, e))
-    if (starts_with(f.path().filename(), EKTOPLAZM_TEMP_FILE_PREFIX))
-      Filesystem::remove(f, e);
-#endif
+  for (auto dir : {&Config::cache_dir, &Config::archive_dir})
+    for (const auto& f : Filesystem::directory_iterator(*dir, e))
+      if (ends_with(f.path().filename(), EKTOPLAZM_DOWNLOAD_SUFFIX))
+        Filesystem::remove(f, e);
 }
 
 void Application :: print_db_stats() {
