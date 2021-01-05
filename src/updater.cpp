@@ -50,11 +50,14 @@ Updater :: Updater(Database::Database &db) noexcept
 {
 }
 
-void Updater :: fetch_page(int page) noexcept {
+void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
   BufferDownload* dl = new BufferDownload(Ektoplayer::browse_url(page));
+  dl->buffer() = std::move(recycle_buffer);
   dl->buffer().reserve(BROWSEPAGE_HTML_SIZE);
+  dl->buffer().clear();
 
-  dl->onFinished = [this,page](Download& dl, CURLcode code) {
+  _downloads.add_download(dl, [this,page](Download& dl_, CURLcode code) {
+    auto& dl = static_cast<BufferDownload&>(dl_);
     log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(code), dl.http_code());
 
     if (code != CURLE_OK)
@@ -62,17 +65,17 @@ void Updater :: fetch_page(int page) noexcept {
     else if (dl.http_code() == 404)
       _max_pages = std::min(_max_pages, page);
     else if (dl.http_code() == 200) {
-      BrowsePageParser parser(static_cast<BufferDownload&>(dl).buffer());
-      _max_pages = std::min(_max_pages, parser.num_pages());
+      BrowsePageParser parser(dl.buffer());
+      _max_pages = std::min(_max_pages, parser.num_pages()); // TODO?
       for (Album _; ! (_ = parser.next_album()).empty(); insert_album(_));
 
       int next_page = page + _downloads.parallel();
       if (next_page <= _max_pages)
-        fetch_page(next_page);
+        fetch_page(next_page, std::move(dl.buffer()));
     }
-  };
 
-  _downloads.addDownload(dl);
+    return Downloads::Action::Remove;
+  });
 }
 
 bool Updater :: start(int pages) noexcept {
@@ -86,7 +89,7 @@ bool Updater :: start(int pages) noexcept {
   return true;
 }
 
-void Updater :: insert_album(Album& album) {
+void Updater :: insert_album(Album& album) noexcept {
   // Album Styles =============================================================
   unsigned albumStyleIDs = 0;
   for (auto &style : album.styles) {
@@ -151,7 +154,7 @@ void Updater :: insert_album(Album& album) {
   }
 }
 
-void Updater :: insert_browsepage(const std::string& source) {
+void Updater :: insert_browsepage(const std::string& source) noexcept {
   BrowsePageParser parser(source);
   for (;;) {
     Album album = parser.next_album();
@@ -218,7 +221,7 @@ int main() {
   // Perform a database update ================================================
   Updater updater(db);
   updater.downloads().parallel(10);
-#ifdef USE_FILESYSTEM
+#if defined(USE_FILESYSTEM) && USE_FILESYSTEM
   printf("Updating using filesystem ...\n");
   Filesystem::error_code e;
 
@@ -229,9 +232,8 @@ int main() {
   }
 #else
   printf("Updating using network ...\n");
-  abort();
   updater.start();
-  while (updater.downloads().work()) { usleep(3000); }
+  while (updater.downloads().work() || updater.downloads().running_downloads()) { usleep(3000); }
 #endif
 
   // Save the database and ensure that the amount of data is the same =========

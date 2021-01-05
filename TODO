@@ -1,8 +1,8 @@
-TODO
+TODO [most important first]
+  - Add a browser view
+
   - browsepage.cpp / updater.cpp:
     Ensure that exceptions will be logged instead of terminating the program
-
-  - Add filenames to error messages (WHICH FILES?!)
 
   - lib/bit_tools.hpp:
     - not portable yet (check if __builtin_clz is available and provide alternatives)
@@ -13,9 +13,6 @@ TODO
     - add tests (including performance tests!)
     - maybe rename `__enter__` and `__leave__`
 
-  - lib/downloads.cpp:
-    - Downloads :: addDownload(Download*): Should this own the passed download?
-
   - trackloader.cpp:
     - Exceptions? Are they logged yet?!
     - Add code for downloading a whole album (keybinding `$`?)
@@ -24,7 +21,9 @@ TODO
   - playlist:
     ^S for saving?
 
-  - Add a browser
+  - database.cpp: track_column_to_string ???
+
+  - Add filenames to error messages (WHICH FILES?!)
 
 MAYBE
   - Create a "StringScan" class that replaces sscanf() and use it in browsepage.cpp
@@ -33,17 +32,21 @@ MAYBE
 
   - Instead of having multiple settings for each terminal setup (MONO/8/256 - infoline.format_top/infoline.format_top_256)
     we could only use the setting for 256 colors and deduce the setting for 8-bit terminals
-  - Maybe we should add the `pprintpp` library instead of using printf()? Hey, it's zero cost!
+
   - config.cpp:
-    - Probe for $TMPDIR/$TEMP instead of using hardcoded /tmp for download directory
+    - expand_path(): maybe include a $TEMP?
+
   - xml.hpp:
     messy code... iterators?!
+
   - keybindings:
     ^R/F5 for reloading the browser after a database update has been done
+
   - lib/cstring.hpp
     - merge char/wchar_t classes into a templated class like basic_string<>
     - add starts_with and other functions?
-  - strinkchunk: eliminate CString
+
+  - strinkchunk: drop CString?
 
 
 NOTES

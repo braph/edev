@@ -45,7 +45,7 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
   FileDownload* download = new FileDownload(track_url, file_in_cache.string() +  ".part");
   download->setopt(CURLOPT_TIMEOUT, 60);
 
-  download->onFinished = [=](Download& _dl, CURLcode e) {
+  _downloads.add_download(download, [=](Download& _dl, CURLcode e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
     log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(e), dl.http_code());
 
@@ -54,9 +54,10 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
       Filesystem::rename(dl.filename(), file_in_cache, ex);
     else
       Filesystem::remove(dl.filename(), ex);
-  };
 
-  _downloads.addDownload(download);
+    return Downloads::Action::Remove;
+  });
+
   return download->filename();
 }
 
@@ -74,8 +75,9 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
   log_write("Starting download: %s -> %s\n", url, archive.string() + ".part");
 
   FileDownload* download = new FileDownload(url, archive.string() +  ".part");
-  download->onFinished = [=](Download& _dl, CURLcode e) {
-    FileDownload& dl = static_cast<FileDownload&>(_dl);
+
+  _downloads.add_download(download, [=](Download& dl_, CURLcode e) {
+    auto& dl = static_cast<FileDownload&>(dl_);
     log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(e), dl.http_code());
 
     Filesystem::error_code ex;
@@ -90,7 +92,7 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
     }
     else
       Filesystem::remove(dl.filename(), ex);
-  };
 
-  _downloads.addDownload(download);
+    return Downloads::Action::Remove;
+  });
 }

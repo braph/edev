@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstdio>
 #include <functional>
+#include <memory>
 
 class Downloads;
 
@@ -19,12 +20,21 @@ public:
   Download(const std::string&);
   virtual ~Download();
 
-  std::function<void(Download&, CURLcode)> onFinished;
-
-  CURLcode perform();
-  void cleanup() noexcept;
-  int http_code() const noexcept;
+  void cleanup()               noexcept;
+  int http_code()        const noexcept;
   const char* last_url() const noexcept;
+
+  void reset() noexcept {
+    curl_easy_reset(curl_easy);
+  }
+
+  CURLcode perform() noexcept {
+    return curl_easy_perform(curl_easy);
+  }
+
+  inline void url(const char* URL) noexcept {
+    setopt(CURLOPT_URL, URL);
+  }
 
   template<typename T>
   inline CURLcode setopt(CURLoption option, T value) noexcept {
@@ -36,7 +46,7 @@ public:
     return curl_easy_getinfo(curl_easy, info, &value);
   }
 
-private:
+protected:
   friend class Downloads;
   CURL *curl_easy;
 };
@@ -51,7 +61,7 @@ public:
 
   std::string& buffer() noexcept { return _buffer; }
 
-private:
+protected:
   std::string _buffer;
 };
 
@@ -66,7 +76,7 @@ public:
 
   const std::string& filename() const noexcept { return _filename; }
 
-private:
+protected:
   std::string _filename;
   std::FILE* _fh;
 };
@@ -77,24 +87,36 @@ private:
 
 class Downloads {
 public:
+  enum Action { Keep, Remove };
+  using onFinished_t = std::function<Action(Download&, CURLcode)>;
+
+private:
+  struct DL {
+    enum State : char { Waiting, Loading, Finished };
+
+    std::unique_ptr<Download> download;
+    onFinished_t onFinished;
+    State state;
+  };
+
+public:
   Downloads();
  ~Downloads();
 
-  void addDownload(Download*);
-  int work() noexcept;
-
-  void parallel(int)               noexcept;
-  int  parallel()            const noexcept { return _parallel;                }
-  std::vector<Download*>& queue()  noexcept { return _queue;                   }
-  size_t running_downloads() const noexcept { return size_t(_running_handles); }
-  size_t queued_downloads()  const noexcept { return _queue.size();            }
+  void add_download(Download*, onFinished_t);
+  int  work()                        noexcept;
+  void parallel(int)                 noexcept;
+  int  parallel()              const noexcept { return _parallel;        }
+  int  running_downloads()     const noexcept { return _running_handles; }
+  int  queued_downloads()      const noexcept { return _queued_handles;  }
+  std::vector<DL>& downloads()       noexcept { return _downloads;       }
 
 private:
   CURLM* _curl_multi;
-  std::vector<Download*> _queue;
-  int _parallel;
+  std::vector<DL> _downloads;
   int _running_handles;
+  int _queued_handles;
+  int _parallel;
 };
 
 #endif
-

@@ -3,14 +3,15 @@
 #include <climits>
 #include <cstring>
 #include <stdexcept>
+#include <algorithm>
 
 /* ============================================================================
  * Download
  * ==========================================================================*/
 
-Download :: Download(const std::string &url) {
+Download :: Download(const std::string &url_) {
   if ((curl_easy = curl_easy_init())) {
-    setopt(CURLOPT_URL, url.c_str());
+    url(url_.c_str());
     setopt(CURLOPT_PRIVATE, this);
     setopt(CURLOPT_FOLLOWLOCATION, 1);
     return;
@@ -22,13 +23,6 @@ Download :: Download(const std::string &url) {
 
 Download :: ~Download() {
   cleanup();
-}
-
-CURLcode Download :: perform() {
-  CURLcode e = curl_easy_perform(curl_easy);
-  if (onFinished)
-    onFinished(*this, e);
-  return e;
 }
 
 int Download :: http_code() const noexcept {
@@ -55,7 +49,7 @@ void Download :: cleanup() noexcept {
  * ==========================================================================*/
 
 static size_t write_buffer_cb(char *data, size_t size, size_t nmemb, void *buffer) {
-  static_cast<std::string*>(buffer)->append(data, size*nmemb);
+  static_cast<std::string*>(buffer)->append(data, size * nmemb);
   return size*nmemb;
 }
 
@@ -91,7 +85,9 @@ FileDownload :: ~FileDownload() {
  * ==========================================================================*/
 
 Downloads :: Downloads()
-: _parallel(INT_MAX), _running_handles(0)
+  : _running_handles(0)
+  , _queued_handles(0)
+  , _parallel(INT_MAX)
 {
   curl_global_init(CURL_GLOBAL_ALL);
   if ((_curl_multi = curl_multi_init()))
@@ -103,8 +99,6 @@ Downloads :: Downloads()
 }
 
 Downloads :: ~Downloads() {
-  for (auto* dl : _queue)
-    delete dl;
   curl_multi_cleanup(_curl_multi);
   curl_global_cleanup();
 }
@@ -114,36 +108,49 @@ void Downloads :: parallel(int parallel) noexcept {
   curl_multi_setopt(_curl_multi, CURLMOPT_MAXCONNECTS, long(parallel));
 }
 
-void Downloads :: addDownload(Download* dl) {
-  _queue.push_back(dl);
+void Downloads :: add_download(Download* dl, onFinished_t cb) {
+  _downloads.push_back(DL{std::unique_ptr<Download>(dl), cb, DL::State::Waiting});
+  _queued_handles++;
 }
 
 int Downloads :: work() noexcept {
   curl_multi_perform(_curl_multi, &_running_handles);
-  while (_running_handles < _parallel && _queue.size()) {
-    ++_running_handles;
-    Download *dl = _queue.back();
-    _queue.pop_back();
-    curl_multi_add_handle(_curl_multi, dl->curl_easy);
+
+  for (auto& dl : _downloads) {
+    if (_queued_handles && _running_handles < _parallel) {
+      if (dl.state == DL::State::Waiting) {
+        if (CURLM_OK == curl_multi_add_handle(_curl_multi, dl.download->curl_easy)) {
+          dl.state = DL::State::Loading;
+          ++_running_handles;
+          --_queued_handles;
+        }
+      }
+    }
+    else break;
   }
 
   CURLMsg *msg;
   int msgs_left;
   while ((msg = curl_multi_info_read(_curl_multi, &msgs_left))) {
-    CURL *curl_easy = msg->easy_handle;
-    Download *dl;
-    curl_easy_getinfo(curl_easy, CURLINFO_PRIVATE, &dl);
-    const char *url = dl->last_url();
-
     if (msg->msg == CURLMSG_DONE) {
-      if (dl->onFinished)
-        dl->onFinished(*dl, msg->data.result);
+      CURL *curl_easy = msg->easy_handle;
       curl_multi_remove_handle(_curl_multi, curl_easy);
-      delete dl;
+
+      for (auto it = _downloads.begin(), end = _downloads.end(); it != end; ++it) {
+        if (curl_easy == it->download->curl_easy) {
+          it->state = DL::Finished;
+          Action action = Action::Remove;
+
+          if (it->onFinished)
+            action = it->onFinished(*(it->download), msg->data.result);
+
+          if (action == Action::Remove)
+            _downloads.erase(it);
+
+          break;
+        }
+      }
     }
-#ifndef NDEBUG
-    else abort();
-#endif
   }
 
   int ready_filedescriptors;
