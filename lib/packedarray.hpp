@@ -109,7 +109,7 @@ template<unsigned TBits, typename TStorage>
 struct TinyPackedArray {
   TStorage     _storage;
   size_t       _size;
-  enum { _capacity = elements_fit_in_bits(TBits, sizeof(TStorage)*8) };
+  enum { _capacity = sizeof(TStorage)*CHAR_BIT / TBits };
 
   TinyPackedArray()           : _storage(0), _size(0) {}
   TinyPackedArray(TStorage v) : _storage(v), _size(_capacity) {}

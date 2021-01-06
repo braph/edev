@@ -1,22 +1,20 @@
 TODO [most important first]
-  - Add a browser view
-
-  - browsepage.cpp / updater.cpp:
-    Ensure that exceptions will be logged instead of terminating the program
-
-  - lib/bit_tools.hpp:
-    - not portable yet (check if __builtin_clz is available and provide alternatives)
-    - replace_bits/extract_bits...
-
   - lib/packedvector.hpp:
     - is a complete mess
     - add tests (including performance tests!)
     - maybe rename `__enter__` and `__leave__`
 
+  - lib/bit_tools.hpp:
+    - not portable yet (check if __builtin_clz is available and provide alternatives)
+    - replace_bits/extract_bits... 
+
+  - Add a browser view
+
+  - browsepage.cpp / updater.cpp:
+    Ensure that exceptions will be logged instead of terminating the program
+
   - trackloader.cpp:
     - Exceptions? Are they logged yet?!
-    - Add code for downloading a whole album (keybinding `$`?)
-    - Add code for playing a file from a downloaded album
 
   - playlist:
     ^S for saving?
@@ -43,7 +41,6 @@ MAYBE
     ^R/F5 for reloading the browser after a database update has been done
 
   - lib/cstring.hpp
-    - merge char/wchar_t classes into a templated class like basic_string<>
     - add starts_with and other functions?
 
   - strinkchunk: drop CString?

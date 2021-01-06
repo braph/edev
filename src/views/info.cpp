@@ -238,6 +238,15 @@ void Info :: draw() {
     draw_info(y++, _clickable_urls[i].data.title);
     addstr(y++, START_INFO + 2, _clickable_urls[i].data.url);
   }
+
+#if 0
+  // Downloads ==============================================================
+  y++;
+  draw_heading(y++, "Downloads");
+  for (const auto& dl : trackloader.downloads().downloads()) {
+    addstr(y++, START_INFO, dl.download->last_url());
+  }
+#endif
 }
 
 bool Info :: handle_key(int n) {

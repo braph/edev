@@ -120,7 +120,7 @@ struct WidgetDrawable : public Widget, public CursesWindow {
   WidgetDrawable() {}
  ~WidgetDrawable() { if (win) delwin(win); }
 
-  inline WINDOW *getWINDOW() const noexcept { return win; }
+  inline WINDOW *getWINDOW() const noexcept override { return win; }
 
   // cursor-methods ===========================================================
   inline Pos  cursorPos() const noexcept { Pos p; getyx(p.y, p.x); return p; }
@@ -147,7 +147,7 @@ public:
 #endif
   }
 
-  void layout(Pos pos, Size size) {
+  void layout(Pos pos, Size size) override {
     if (size != this->size) {
       this->size = size;
       wresize(win, size.height, size.width);
@@ -159,7 +159,7 @@ public:
     draw();
   }
 
-  void noutrefresh() {
+  void noutrefresh() override {
     wnoutrefresh(win);
   }
 };
@@ -183,7 +183,7 @@ public:
 #endif
   }
 
-  void noutrefresh() {
+  void noutrefresh() override {
     pnoutrefresh(win, pad_minrow, pad_mincol, pos.y, pos.x,
         pos.y + size.height - 1, pos.x + size.width - 1);
   }

@@ -62,13 +62,9 @@ static inline int bitlength(char n) noexcept {
 }
 
 // ============================================================================
-static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
+static inline /*constexpr*/ size_t size_for_bits(size_t bits, size_t storage_size = 1) {
   storage_size *= CHAR_BIT;
-  return (bits%storage_size ? bits/storage_size + 1 : bits/storage_size);
-}
-
-static inline constexpr size_t elements_fit_in_bits(size_t bits, size_t storage_bits) {
-  return (storage_bits%bits ? storage_bits/bits : storage_bits/bits);
+  return ((bits % storage_size) ? bits/storage_size + 1 : bits/storage_size);
 }
 
 /**

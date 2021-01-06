@@ -4,7 +4,6 @@
 #include "bit_tools.hpp"
 #include "genericiterator.hpp"
 #include "genericreference.hpp"
-#include "packedarray.hpp" // TODO
 
 #include <new>
 #include <memory>

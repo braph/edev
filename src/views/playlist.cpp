@@ -26,12 +26,12 @@ void TrackRenderer :: operator()(
     const Database::Tracks::Track &item,
     int index,
     bool cursor,
-    bool active /* selection */
+    bool active, /* selection */
+    int selection
 ) {
   unsigned int additional_attributes = 0;
   if (active) additional_attributes |= A_BOLD;
   if (cursor) additional_attributes |= A_STANDOUT;
-  int selection = 0; // TODO: this is a parameter
 
   int y = getcury(_win);
   int x = 0;

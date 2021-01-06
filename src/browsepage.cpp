@@ -40,9 +40,9 @@ inline std::ostream& operator<<(std::ostream& o, const Album& a) {
     << "\nDownloads:   " << a.download_count
     << "\nRated:       " << a.rating << " (" << a.votes << " votes)"
     << "\nURL:         " << a.url
-    << "\nStyles:      "; for (auto& s : a.styles)       { o << s << ',';  }
+    << "\nStyles:      "; for (auto& i : a.styles)       { o << i << ',';  }
   o << "\nArchives:    "; for (auto& i : a.archive_urls) { o << i << ',';  }
-  o << "\nTracks:      "; for (auto& t : a.tracks)       { o << '\n' << t; }
+  o << "\nTracks:      "; for (auto& i : a.tracks)       { o << '\n' << i; }
   return o;
 }
 #endif

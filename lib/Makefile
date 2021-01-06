@@ -57,5 +57,5 @@ test_xml:
 	$(VALGRIND) ./a.out
 
 test_packedvector:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/packedvector.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector.cpp $^
 	$(VALGRIND) ./a.out
