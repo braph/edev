@@ -23,8 +23,8 @@ private:
   int _max_pages;
 
   void fetch_page(int, std::string&&="")     noexcept;
-  void insert_album(Album&)                  noexcept ;
-  void insert_browsepage(const std::string&) noexcept ;
+  void insert_album(Album&)                  noexcept;
+  void insert_browsepage(const std::string&) noexcept;
 };
 
 #endif

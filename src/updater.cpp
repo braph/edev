@@ -66,7 +66,11 @@ void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
       _max_pages = std::min(_max_pages, page);
     else if (dl.http_code() == 200) {
       BrowsePageParser parser(dl.buffer());
-      _max_pages = std::min(_max_pages, parser.num_pages()); // TODO?
+
+      const int num_pages = parser.num_pages();
+      if (num_pages > 0 && num_pages < _max_pages)
+        _max_pages = num_pages;
+
       for (Album _; ! (_ = parser.next_album()).empty(); insert_album(_));
 
       int next_page = page + _downloads.parallel();
@@ -168,8 +172,6 @@ void Updater :: insert_browsepage(const std::string& source) noexcept {
 #include <lib/test.hpp>
 #include <lib/filesystem.hpp>
 #include <cstdio>
-#include <fstream>
-#include <streambuf>
 #define USE_FILESYSTEM 1
 #define TESTDATA_DIR "/tmp/testdata" // Dir that contains HTML files
 /* mkdir /tmp/testdata
@@ -191,14 +193,11 @@ static void test_warning(const Database::Tracks::Track& track, const char* msg)
 #define warn_if(OBJECT, ...) \
   if (__VA_ARGS__) test_warning(OBJECT, #__VA_ARGS__)
 
-static void read_file_into_string(const std::string& file, std::string& s) {
-  s.clear();
-  ifstream stream(file);
-  stream.seekg(0, std::ios::end);
-  std::streamoff size = stream.tellg();
-  s.resize(size_t(size), '\0');
-  stream.seekg(0);
-  stream.read(&s[0], size);
+static void read_file_into_string(const char* file, std::string& str) {
+  static char buf[4*1024*1024]; buf[0] = '\0';
+  auto fh = fopen(file, "r");
+  if (fh) { buf[fread(buf, 1, sizeof(buf), fh)] = '\0'; fclose(fh); }
+  str = buf;
 }
 
 // Updater tests *will replace* the existing database file!
@@ -227,7 +226,7 @@ int main() {
 
   string src;
   for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
-    read_file_into_string(f.path().string(), src);
+    read_file_into_string(f.path().c_str(), src);
     updater.insert_browsepage(src);
   }
 #else
