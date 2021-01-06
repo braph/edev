@@ -1,11 +1,9 @@
 #ifndef SSCAN_HPP
 #define SSCAN_HPP
 
-#include <cstdio>
 #include <cstdlib>
 #include <climits>
 #include <cstring>
-#include <cassert>
 #include <cerrno>
 #include <cinttypes>
 

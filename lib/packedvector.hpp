@@ -5,21 +5,17 @@
 #include "genericiterator.hpp"
 #include "genericreference.hpp"
 
-#include <new>
-#include <memory>
-#include <iterator>
-
 // TODO: const_reference, const_iterator etc.
 
-#ifdef DEBUG_VECTOR
+#ifdef LIB_PACKEDVECTOR_DEBUG
 #include <cstdio>
 static int call_level = 0;
 struct Trace { ~Trace() { --call_level; } };
-#define __enter__(FMT, ...) \
+#define LIB_PACKEDVECTOR_TRACE(FMT, ...) \
   Trace T{}; printf("%*s%s(" FMT ")\n", call_level++, "", __PRETTY_FUNCTION__, __VA_ARGS__)
 #define debug(FMT, ...) printf("%*s" FMT "\n", call_level, "", __VA_ARGS__)
 #else
-#define __enter__(...) (void)0
+#define LIB_PACKEDVECTOR_TRACE(...) (void)0
 #define debug() (void)0
 #endif
 
@@ -28,25 +24,26 @@ struct Trace { ~Trace() { --call_level; } };
  * ==========================================================================*/
 
 class PackedVector {
-  using data_type = uint32_t;
+public:
+  using data_type  = unsigned;
+  using iterator   = GenericIterator<PackedVector>;
+  using reference  = GenericReference<PackedVector>;
+  using value_type = int;
 
+private:
   data_type* _data;
   size_t     _size;     // element count
   size_t     _capacity; // element count
   uint8_t    _bits;
 
 public:
-  using iterator   = GenericIterator<PackedVector>;
-  using reference  = GenericReference<PackedVector>;
-  using value_type = int;
-
   PackedVector(int bits) noexcept
   : _data(NULL)
   , _size(0)
   , _capacity(0)
   , _bits(unsigned(bits))
   {
-    __enter__("bits = %u", bits);
+    LIB_PACKEDVECTOR_TRACE("bits = %u", bits);
     if (_bits < 1)
       _bits = 1;
     else if (_bits > 32)
@@ -59,7 +56,7 @@ public:
   , _capacity(rhs._capacity)
   , _bits(rhs._bits)
   {
-    __enter__("%s", "rhs");
+    LIB_PACKEDVECTOR_TRACE("%s", "rhs");
     rhs._data = NULL;
     rhs._size = 0;
     rhs._capacity = 0;
@@ -70,7 +67,7 @@ public:
   }
 
   PackedVector& operator=(PackedVector&& rhs) noexcept {
-    __enter__("%s", "rhs");
+    LIB_PACKEDVECTOR_TRACE("%s", "rhs");
     std::swap(_data, rhs._data);
     std::swap(_size, rhs._size);
     std::swap(_capacity, rhs._capacity);
@@ -112,7 +109,7 @@ protected:
   , _capacity(capacity)
   , _bits(bits)
   {
-    __enter__("(priv) %d, %lu, iterator, iterator", bits, capacity);
+    LIB_PACKEDVECTOR_TRACE("(priv) %d, %lu, iterator, iterator", bits, capacity);
 
     while (begIt != endIt)
       push_back(*begIt++);
@@ -129,15 +126,17 @@ protected:
 
 class DynamicPackedVector {
 private:
+  using parent_t = PackedVector;
   PackedVector _vec;
+
 public:
   DynamicPackedVector() : _vec(1) { }
 
-  using data_type       = uint32_t;
+  using data_type       = parent_t::data_type;
+  using value_type      = parent_t::value_type;
   using reference       = GenericReference<DynamicPackedVector>;
   using const_reference = GenericConstReference<DynamicPackedVector>;
   using iterator        = GenericIterator<DynamicPackedVector>;
-  using value_type      = int;
 
   reference       operator[](size_t idx) noexcept       { return reference(this, idx);   }
   const_reference operator[](size_t idx) const noexcept { return const_reference(this, idx);   }

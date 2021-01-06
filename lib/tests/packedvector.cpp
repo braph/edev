@@ -1,7 +1,6 @@
 #include "../test.hpp"
 #include "../packedvector.hpp"
 #include <vector>
-#include <initializer_list>
 
 /**
  * Foo

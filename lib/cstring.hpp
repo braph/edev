@@ -2,7 +2,6 @@
 #define LIB_CSTRING_HPP
 
 #include <string>
-#include <cstring>
 #include <ctime>
 #include <cstdio>
 #include <cstdarg>

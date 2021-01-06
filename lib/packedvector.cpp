@@ -17,7 +17,7 @@ union BitShiftHelper {
  * ==========================================================================*/
 
 void PackedVector :: reserve(size_t n) {
-  __enter__("%lu", n);
+  LIB_PACKEDVECTOR_TRACE("%lu", n);
 
   if (n > _capacity) {
     data_type* new_data = new data_type[size_for_bits(_bits * n, sizeof(data_type))];
@@ -29,7 +29,7 @@ void PackedVector :: reserve(size_t n) {
 }
 
 void PackedVector :: resize(size_t n, value_type value) {
-  __enter__("%lu, %d", n, value);
+  LIB_PACKEDVECTOR_TRACE("%lu, %d", n, value);
 
   reserve(n);
   while (_size < n)
@@ -37,7 +37,7 @@ void PackedVector :: resize(size_t n, value_type value) {
 }
 
 void PackedVector :: push_back(value_type value) {
-  __enter__("%d", value);
+  LIB_PACKEDVECTOR_TRACE("%d", value);
 
   if (_size == _capacity)
     reserve(_size * GROW_FACTOR + 1);
@@ -56,16 +56,16 @@ PackedVector::value_type PackedVector :: get(size_t index) const noexcept {
     uint32_t e = _data[dataIndex];
     e = (e >> bitOffset) &~(0xFFFFFFFFu << _bits);
     return value_type(e);
-  } else {
+  }
+  else
 #endif
+  {
     BitShiftHelper store;
     store.u32.u1 = _data[dataIndex];
     store.u32.u2 = _data[dataIndex+1];
     uint32_t e = (store.u64 >> bitOffset) &~(0xFFFFFFFFu << _bits);
     return value_type(e);
-#if ! USE_POSSIBLE_FASTER_IMPLEMENTATION
-}
-#endif
+  }
 }
 
 void PackedVector :: set(size_t index, value_type value) noexcept {
@@ -90,7 +90,7 @@ void PackedVector :: set(size_t index, value_type value) noexcept {
  * ==========================================================================*/
 
 void DynamicPackedVector :: reserve(size_t n, int bits) {
-  __enter__("n = %lu, bits = %d", n, bits);
+  LIB_PACKEDVECTOR_TRACE("n = %lu, bits = %d", n, bits);
 
   if (bits > _vec.bits()) {
     if (n < _vec.capacity())
@@ -102,7 +102,7 @@ void DynamicPackedVector :: reserve(size_t n, int bits) {
 }
 
 void DynamicPackedVector :: resize(size_t n, value_type value) {
-  __enter__("%lu, %d", n, value);
+  LIB_PACKEDVECTOR_TRACE("%lu, %d", n, value);
 
   reserve(n, bitlength(value));
   while (_vec._size < n)
@@ -110,7 +110,7 @@ void DynamicPackedVector :: resize(size_t n, value_type value) {
 }
 
 void DynamicPackedVector :: set(size_t index, value_type value) noexcept {
-  __enter__("index = %lu, value = %d", index, value);
+  LIB_PACKEDVECTOR_TRACE("index = %lu, value = %d", index, value);
 
   int value_bits = bitlength(value);
   if (value_bits > _vec.bits())
@@ -119,7 +119,7 @@ void DynamicPackedVector :: set(size_t index, value_type value) noexcept {
 }
 
 void DynamicPackedVector :: push_back(value_type value) {
-  __enter__("%d", value);
+  LIB_PACKEDVECTOR_TRACE("%d", value);
 
   int value_bits = bitlength(value);
   if (value_bits > _vec.bits())

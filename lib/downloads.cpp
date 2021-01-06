@@ -1,9 +1,7 @@
 #include "downloads.hpp"
-#include <cstdlib>
 #include <climits>
 #include <cstring>
 #include <stdexcept>
-#include <algorithm>
 
 /* ============================================================================
  * Download

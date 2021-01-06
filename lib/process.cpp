@@ -1,13 +1,11 @@
 #include "process.hpp"
 
-#include <unistd.h>
-#include <signal.h>
-#include <sys/wait.h>
+#include <unistd.h>   // pipe, close, setpgid, fork, dup2, sysconf
+#include <signal.h>   // kill
+#include <sys/wait.h> // waitpid
 
 #include <cstdlib>
-#include <cstdio>
 #include <cassert>
-#include <stdexcept>
 
 Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
   : _pid(-1)
