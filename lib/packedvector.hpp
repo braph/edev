@@ -11,16 +11,17 @@
 
 // TODO: const_reference, const_iterator etc.
 
+#define DEBUG_VECTOR
+
 #ifdef DEBUG_VECTOR
 #include <cstdio>
 static int call_level = 0;
+struct Trace { ~Trace() { --call_level; } };
 #define __enter__(FMT, ...) \
-  printf("%*s%s(" FMT ")\n", call_level++, "", __PRETTY_FUNCTION__, __VA_ARGS__)
-#define __leave__() --call_level
+  Trace T{}; printf("%*s%s(" FMT ")\n", call_level++, "", __PRETTY_FUNCTION__, __VA_ARGS__)
 #define debug(FMT, ...) printf("%*s" FMT "\n", call_level, "", __VA_ARGS__)
 #else
 #define __enter__(...) (void)0
-#define __leave__(...) (void)0
 #define debug() (void)0
 #endif
 
@@ -52,7 +53,6 @@ public:
       _bits = 1;
     else if (_bits > 32)
       _bits = 32;
-    __leave__();
   }
 
   PackedVector(PackedVector&& rhs) noexcept
@@ -65,7 +65,6 @@ public:
     rhs._data = NULL;
     rhs._size = 0;
     rhs._capacity = 0;
-    __leave__();
   }
 
  ~PackedVector() {
@@ -78,7 +77,6 @@ public:
     std::swap(_size, rhs._size);
     std::swap(_capacity, rhs._capacity);
     _bits = rhs._bits;
-    __leave__();
     return *this;
   }
 
@@ -92,9 +90,14 @@ public:
   size_t     capacity()       const noexcept { return _capacity;  }
   void       shrink_to_fit()                 { /* TODO */         }
 
+  // TODO...
+  reference  front()                noexcept { return operator[](0);          }
+  reference  back()                 noexcept { return operator[](size() - 1); }
+
   void    push_back(value_type);
   void    reserve(size_t);
   void    resize(size_t n, value_type value = 0);
+  void    emplace_back(value_type v) { push_back(v); } // TODO?
 
   // PackedVector specific methods (not available in std::vector)
   int         bits()      const noexcept  { return _bits; }
@@ -119,8 +122,6 @@ protected:
     int s = 0;
     set(s++, *begIt++);
 #endif
-
-    __leave__();
   }
 };
 
@@ -154,12 +155,17 @@ public:
   int          bits()           const noexcept { return _vec.bits();       }
   value_type   get(size_t idx)  const noexcept { return _vec.get(idx);     }
 
+// TODO...
+  reference  front()                noexcept { return operator[](0);          }
+  reference  back()                 noexcept { return operator[](size() - 1); }
+
   // Methods that may replace the underlying _vec object
   void reserve(size_t, int bits = 1);
   void resize(size_t, value_type value = 0);
   void set(size_t, value_type) noexcept;
   void push_back(value_type);
   void shrink_to_fit();
+  void emplace_back(value_type v) { push_back(v); } // TODO?
 };
 
 #endif

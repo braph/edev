@@ -2,7 +2,7 @@ TODO [most important first]
   - lib/packedvector.hpp:
     - is a complete mess
     - add tests (including performance tests!)
-    - maybe rename `__enter__` and `__leave__`
+    - maybe rename `__enter__`
 
   - lib/bit_tools.hpp:
     - not portable yet (check if __builtin_clz is available and provide alternatives)

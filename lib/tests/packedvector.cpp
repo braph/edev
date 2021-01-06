@@ -26,6 +26,7 @@ struct VectorTester {
   proxy0(void,clear)
   proxy0(void,pop_back)
   proxy1(void,push_back,value_type,v)
+  proxy1(void,emplace_back,value_type,v)
   proxy1(void,reserve,size_t,n)
   proxy1(void,resize,size_t,n)
 
@@ -57,9 +58,9 @@ struct VectorTester {
 
   void check_empty()    { _check( testee.empty()    == expect.empty() ); }
   void check_size()     { _check( testee.size()     == expect.size()  ); }
-  void check_front()    { _check( testee.front()    == expect.front() ); }
-  void check_back()     { _check( testee.back()     == expect.back()  ); }
   void check_capacity() { _check( testee.capacity() == expect.capacity() ); }
+  void check_front()    { if (!testee.empty()) { _check( testee.front()    == expect.front() ); } }
+  void check_back()     { if (!testee.empty()) { _check( testee.back()     == expect.back()  ); } }
   void check_equals_using_index_access() {
     size_t sz = expect.size();
     for (size_t i = 0; i < sz; ++i)
@@ -74,6 +75,14 @@ struct VectorTester {
 
     _check( testee_it == testee_end );
     _check( expect_it == expect_end );
+  }
+
+  void check_all() {
+    check_empty();
+    check_size();
+    check_front();
+    check_back();
+    // TODO?
   }
 
  ~VectorTester() {
@@ -99,20 +108,24 @@ int main() {
       v.push_back(i);
   }
 
-  { V v; // emplace_back
+  {
+    V v; // emplace_back
     for (int i = 0; i < 1024; ++i)
-      v.emplace_back(i); }
+      v.emplace_back(i);
 
     // Clear
     v.clear();
     v.check_all();
 
+#if 0
     // Foo
     for (int i = 0; i <= INT_MAX; i *= 2)
       v.push_back(i);
     v.check_all();
     v.clear();
+#endif
 
+#if 0
     // Direct access (get)
     for (int i = 0) {}
 
@@ -120,9 +133,10 @@ int main() {
     for (int i = 0; i < TODO; ++i)
       v[i] = 2;
     v.check_all();
-
+#endif
   }
 
+#if 0
 #define SZ 1048576
   {
     std::cerr << "*iterator =\n";
@@ -135,6 +149,7 @@ int main() {
       assert(v[i] == 33);
     }
   }
+#endif
 
   TEST_END();
 }

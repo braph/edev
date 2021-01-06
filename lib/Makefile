@@ -28,34 +28,35 @@ VALGRIND = valgrind --tool=memcheck --errors-for-leak-kinds=definite --leak-chec
 # Tests....
 # ============================================================================
 
-test_sscan:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/sscan.cpp $^
+test_filesystem:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/filesystem.cpp $^
+	$(VALGRIND) ./a.out
+
+test_packedvector: packedvector.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector.cpp $^
 	$(VALGRIND) ./a.out
 
 test_shellsplit:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/shellsplit.cpp $^
 	$(VALGRIND) ./a.out
 
-test_stringchunk:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/stringchunk.cpp $^
+test_spanview:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/spanview.cpp $^
+	$(VALGRIND) ./a.out
+
+test_sscan:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/sscan.cpp $^
 	$(VALGRIND) ./a.out
 
 test_string:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/string.cpp $^
 	$(VALGRIND) ./a.out
 
-test_filesystem:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/filesystem.cpp $^
-	$(VALGRIND) ./a.out
-
-test_spanview:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/spanview.cpp $^
+test_stringchunk:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/stringchunk.cpp $^
 	$(VALGRIND) ./a.out
 
 test_xml:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) lib/xml.cpp $^
 	$(VALGRIND) ./a.out
 
-test_packedvector:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector.cpp $^
-	$(VALGRIND) ./a.out

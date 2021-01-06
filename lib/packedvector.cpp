@@ -26,8 +26,6 @@ void PackedVector :: reserve(size_t n) {
     _data = new_data;
     _capacity = n;
   }
-
-  __leave__();
 }
 
 void PackedVector :: resize(size_t n, value_type value) {
@@ -36,8 +34,6 @@ void PackedVector :: resize(size_t n, value_type value) {
   reserve(n);
   while (_size < n)
     set(_size++, value);
-
-  __leave__();
 }
 
 void PackedVector :: push_back(value_type value) {
@@ -48,8 +44,6 @@ void PackedVector :: push_back(value_type value) {
 
   set(_size, value);
   ++_size;
-
-  __leave__();
 }
 
 #define USE_POSSIBLE_FASTER_IMPLEMENTATION 0
@@ -105,8 +99,6 @@ void DynamicPackedVector :: reserve(size_t n, int bits) {
   }
   else
     _vec.reserve(n);
-
-  __leave__();
 }
 
 void DynamicPackedVector :: resize(size_t n, value_type value) {
@@ -115,8 +107,6 @@ void DynamicPackedVector :: resize(size_t n, value_type value) {
   reserve(n, bitlength(value));
   while (_vec._size < n)
     _vec.set(_vec._size++, value);
-
-  __leave__();
 }
 
 void DynamicPackedVector :: set(size_t index, value_type value) noexcept {
@@ -126,8 +116,6 @@ void DynamicPackedVector :: set(size_t index, value_type value) noexcept {
   if (value_bits > _vec.bits())
     _vec = PackedVector(value_bits, _vec.capacity(), _vec.begin(), _vec.end());
   _vec.set(index, value);
-
-  __leave__();
 }
 
 void DynamicPackedVector :: push_back(value_type value) {
@@ -145,8 +133,6 @@ void DynamicPackedVector :: push_back(value_type value) {
 
   _vec.set(_vec._size, value);
   ++_vec._size;
-
-  __leave__();
 }
 
 void DynamicPackedVector :: shrink_to_fit() {
