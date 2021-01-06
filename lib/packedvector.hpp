@@ -11,8 +11,6 @@
 
 // TODO: const_reference, const_iterator etc.
 
-#define DEBUG_VECTOR
-
 #ifdef DEBUG_VECTOR
 #include <cstdio>
 static int call_level = 0;
