@@ -11,23 +11,28 @@
  */
 template<typename TContainer>
 struct SpanView {
-  SpanView()
+  using size_type  = size_t;
+  using value_type = typename TContainer::value_type;
+
+  inline SpanView() noexcept
     : _container(NULL)
   {}
 
-  SpanView(TContainer& container)
+  inline SpanView(TContainer& container) noexcept
     : _container(&container)
   {}
 
-  SpanView& operator=(const SpanView& rhs)
-  { _container = rhs._container; return *this; }
+  inline SpanView& operator=(const SpanView& rhs) noexcept {
+    _container = rhs._container;
+    return *this;
+  }
 
-  typename TContainer::value_type get(const size_t size, const size_t index) {
+  inline value_type get(const size_type size, const size_type index) {
     size_t i = _container->size() * index / size;
     return (*_container)[i];
   }
 
-  typename TContainer::value_type get2(const size_t size, const size_t index) {
+  inline value_type get2(const size_type size, const size_type index) {
     const size_t container_size = _container->size();
     size_t i = container_size * index * 2 / size;
     if (i >= container_size)
