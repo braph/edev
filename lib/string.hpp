@@ -102,23 +102,17 @@ void split(std::vector<std::string>& result, const String& str, const Predicate&
     result.push_back(std::move(rs));
 }
 
-static bool icontains(const char* haystack, const char* needle) {
-  if (!*needle)
+static bool icontains(const char* haystack, const char* needle, size_t needle_len) {
+  if (! needle_len)
     return true;
 
-  const char *h, *n;
-
   while (*haystack) {
-    if ((*haystack | 0x20) == (*needle| 0x20)) {
-      h = haystack + 1;
-      n = needle + 1;
-      for (; *n && *h; ++h, ++n)
-        if ((*h | 0x20) != (*n | 0x20))
-          goto NEXT;
-      if (*n == *h)
+    if ((*haystack | 0x20) == (*needle | 0x20)) {
+      size_t i = 1;
+      for (; i < needle_len && (haystack[i] | 0x20) == (needle[i] | 0x20); ++i);
+      if (i == needle_len)
         return true;
     }
-NEXT:
     ++haystack;
   }
 
@@ -127,7 +121,7 @@ NEXT:
 
 template<class T1, class T2>
 bool icontains(const T1& haystack, const T2& needle) {
-  return icontains(cstr(haystack), cstr(needle));
+  return icontains(cstr(haystack), cstr(needle), strlen(cstr(needle)));
 }
 
 #endif // LIB_STRING_HPP

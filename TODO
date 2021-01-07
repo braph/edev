@@ -1,6 +1,4 @@
 TODO [most important first]
-  - There is a BUG if search term matches th first part...
-
   - lib/packedvector.hpp:
     - is a complete mess
     - add tests (including performance tests!)
