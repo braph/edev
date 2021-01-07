@@ -1,4 +1,6 @@
 TODO [most important first]
+  - There is a BUG if search term matches th first part...
+
   - lib/packedvector.hpp:
     - is a complete mess
     - add tests (including performance tests!)
@@ -38,12 +40,6 @@ MAYBE
 
   - keybindings:
     ^R/F5 for reloading the browser after a database update has been done
-
-  - lib/cstring.hpp
-    - add starts_with and other functions?
-
-  - strinkchunk: drop CString?
-
 
 NOTES
   - I observed that the `constexpr` qualifier increases the binary size

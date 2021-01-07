@@ -71,7 +71,7 @@ static inline /*constexpr*/ size_t size_for_bits(size_t bits, size_t storage_siz
  * Example for replace_bits<uint_16t>(18, 7, 3, 3)
  *
  * BIT_COUNT: 16
- * 0xFFFF:    11111111 11111111 -- TUIntType with all bits set
+ * 0xFFFF:    11111111 11111111 -- All bits set
  * src:       00000000 00010010 -- Initial value that is going to be altered
  * val:       00000000 00000111 -- Value to to insert
  * offset:                 ^---------- where to put the value
@@ -82,27 +82,38 @@ static inline /*constexpr*/ size_t size_for_bits(size_t bits, size_t storage_siz
  *            00000000 00010010
  *            00000000 00000010
  */
-template<typename TUIntType> // TODO std::make_unsigned
-inline TUIntType replace_bits(TUIntType src, TUIntType val, int offset, int len) {
-  enum { BIT_COUNT = CHAR_BIT * sizeof(TUIntType) };
-  const TUIntType OxFFFF = std::numeric_limits<TUIntType>::max();
+template<typename T>
+inline T replace_bits(T src, T val, int offset, int len) {
+  enum { BIT_COUNT = CHAR_BIT * sizeof(T) };
+  using Unsigned_T = typename std::make_unsigned<T>::type;
+  enum: Unsigned_T { OxFFFF = std::numeric_limits<Unsigned_T>::max() };
+  const Unsigned_T unsigned_src = static_cast<Unsigned_T>(src);
+        Unsigned_T unsigned_val = static_cast<Unsigned_T>(val);
 
   // secure val to len bits
-  val = val & ~(OxFFFF << len);
+  unsigned_val = unsigned_val & ~(OxFFFF << len);
 
   // 4.52637 +- 0.00775 seconds time elapsed
   // We are replacing the whole `src`
   if (! offset && len == BIT_COUNT)
     return val;
 
-  TUIntType mask = (~(OxFFFF << len)) << offset;
-  return (src & ~mask) | (val << offset);
+  Unsigned_T mask = (~(OxFFFF << len)) << offset;
+
+  return static_cast<T>(
+    (unsigned_src & ~mask) | (unsigned_val << offset)
+  );
 }
 
-template<typename TUIntType>
-inline TUIntType extract_bits(TUIntType src, int offset, int len) {
-  const TUIntType OxFFFF = std::numeric_limits<TUIntType>::max();
-  return (src >> offset) &~(OxFFFF << len);
+template<typename T>
+inline T extract_bits(T src, int offset, int len) {
+  using Unsigned_T = typename std::make_unsigned<T>::type;
+  enum: Unsigned_T { OxFFFF = std::numeric_limits<Unsigned_T>::max() };
+  const Unsigned_T unsigned_src = static_cast<Unsigned_T>(src);
+
+  return static_cast<T>(
+    (unsigned_src >> offset) &~(OxFFFF << len)
+  );
 }
 
 #endif

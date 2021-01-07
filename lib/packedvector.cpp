@@ -1,16 +1,9 @@
 #include "packedvector.hpp"
+#include "packed/packed_traits.hpp"
 
 #include <cstring>
 
 #define GROW_FACTOR 2
-
-union BitShiftHelper {
-  struct {
-    uint32_t u1;
-    uint32_t u2;
-  } u32;
-  uint64_t u64;
-};
 
 /* ============================================================================
  * PackedVector
@@ -46,43 +39,12 @@ void PackedVector :: push_back(value_type value) {
   ++_size;
 }
 
-#define USE_POSSIBLE_FASTER_IMPLEMENTATION 0
 PackedVector::value_type PackedVector :: get(size_t index) const noexcept {
-  unsigned int dataIndex = (index * _bits) / 32;
-  unsigned int bitOffset = (index * _bits) % 32;
-
-#if ! USE_POSSIBLE_FASTER_IMPLEMENTATION
-  if (bitOffset + _bits <= 32) {
-    uint32_t e = _data[dataIndex];
-    e = (e >> bitOffset) &~(0xFFFFFFFFu << _bits);
-    return value_type(e);
-  }
-  else
-#endif
-  {
-    BitShiftHelper store;
-    store.u32.u1 = _data[dataIndex];
-    store.u32.u2 = _data[dataIndex+1];
-    uint32_t e = (store.u64 >> bitOffset) &~(0xFFFFFFFFu << _bits);
-    return value_type(e);
-  }
+  return packed_traits<data_type, value_type>::get(_data, _bits, index);
 }
 
 void PackedVector :: set(size_t index, value_type value) noexcept {
-  unsigned int dataIndex = (index * _bits) / 32;
-  unsigned int bitOffset = (index * _bits) % 32;
-
-  if (bitOffset + _bits <= 32) {
-    uint32_t e = _data[dataIndex];
-    _data[dataIndex] = replace_bits<uint32_t>(e, uint32_t(value), int(bitOffset), int(_bits));
-  } else {
-    BitShiftHelper store;
-    store.u32.u1 = _data[dataIndex];
-    store.u32.u2 = _data[dataIndex+1];
-    store.u64 = replace_bits<uint64_t>(store.u64, uint32_t(value), int(bitOffset), int(_bits));
-    _data[dataIndex] = store.u32.u1;
-    _data[dataIndex+1] = store.u32.u2;
-  }
+  packed_traits<data_type, value_type>::set(_data, _bits, index, value);
 }
 
 /* ============================================================================
