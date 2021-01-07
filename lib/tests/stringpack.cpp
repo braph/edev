@@ -1,4 +1,4 @@
-#include <lib/strinpack.hpp>
+#include "../stringpack.hpp"
 
 #include <cassert>
 #include <iostream>

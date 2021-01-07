@@ -19,6 +19,12 @@ StaticVector<char, sizeof(TInt) * CHAR_BIT> extract_set_bits(TInt value) {
   return result;
 }
 
+template<class T>
+constexpr int bitlength_const(T n) noexcept {
+  return (n ? 1 + bitlength_const(n >> 1) : 0);
+}
+
+#if (defined(__GNUC__) || defined(__clang__))
 // Unsigned ===================================================================
 static inline int bitlength(unsigned long long n) noexcept {
   return (!n ? 0 : int(sizeof(long long) * CHAR_BIT) - __builtin_clzll(n));
@@ -60,6 +66,9 @@ static inline int bitlength(short n) noexcept {
 static inline int bitlength(char n) noexcept {
   return bitlength(static_cast<unsigned char>(n));
 }
+#else
+template<class T> int bitlength(T n) noexcept { return bitlength_const(n); }
+#endif
 
 // ============================================================================
 static inline /*constexpr*/ size_t size_for_bits(size_t bits, size_t storage_size = 1) {

@@ -4,7 +4,6 @@ TODO [most important first]
     - add tests (including performance tests!)
 
   - lib/bit_tools.hpp:
-    - not portable yet (check if __builtin_clz is available and provide alternatives)
     - replace_bits/extract_bits... 
 
   - Add a browser view

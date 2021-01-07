@@ -4,8 +4,15 @@
 #include <cstdint>
 
 int main() {
-  // extract_bits
+  // bitlength_const
+  assert(0  == bitlength_const(0));
+  assert(1  == bitlength_const(1));
+  assert(2  == bitlength_const(2));
+  assert(2  == bitlength_const(3));
+  assert(3  == bitlength_const(4));
+  assert(64 == bitlength_const(ULLONG_MAX));
 
+  // extract_bits
 
   // replace_bits
   assert(0xFF == replace_bits<uint8_t>(0x00, 0xFF, 0, 8) );

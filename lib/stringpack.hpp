@@ -2,8 +2,13 @@
 #define LIB_STRINGPACK_HPP
 
 // Stolen and adapted from https://github.com/alipha/cpp/blob/master/switch_pack/switch_pack.h
-
+//
+// Notes:
+//  - We return the value `1` as a sentinel for unmatched characters.
+//    That's why every converter function adds `1` to its result.
+//
 // TODO: add  7bit-ascii pack (enables 1 more char) ?
+
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -24,36 +29,31 @@ enum : uint64_t { overflow = ~uint64_t(0) };
 // Helper
 // ============================================================================
 
-constexpr int bitlength(unsigned char i) {
-  return
-    i < 2   ? 1 :
-    i < 4   ? 2 :
-    i < 8   ? 3 :
-    i < 16  ? 4 :
-    i < 32  ? 5 :
-    i < 64  ? 6 :
-    i < 128 ? 7 : 8;
-}
+template<class T> constexpr int bitlength(T n)
+{ return (n ? 1 + bitlength(n >> 1) : 0); }
 
+/**
+ * Information about converter functions.
+ */
 template<conv_func conv>
-constexpr uint8_t max_impl(int i) {
-  return (i > 255 ? 0 : (conv(i) | max_impl<conv>(i + 1)));
-}
+struct conv_info {
+  static constexpr uint8_t max_bitlength() {
+    return bitlength(max_bitlength_impl(1));
+  }
 
-template<conv_func conv>
-constexpr uint8_t max() {
-  return max_impl<conv>(1);
-}
+  static constexpr size_t shift_count() {
+    return max_bitlength();
+  }
 
-template<conv_func conv>
-constexpr size_t conv_shift_count() {
-  return bitlength(max<conv>());
-}
+  static constexpr size_t max_strlen() {
+    return 64 / max_bitlength();
+  }
 
-template<conv_func conv>
-constexpr size_t conv_max_strlen() {
-  return 64 / bitlength(max<conv>());
-}
+private:
+  static constexpr uint8_t max_bitlength_impl(int i) {
+    return (i > 255 ? 0 : (conv(i) | max_bitlength_impl(i + 1)));
+  }
+};
 
 /**
  * Compiletime pack implementation.
@@ -66,12 +66,12 @@ constexpr size_t conv_max_strlen() {
 template<
   conv_func conv,
   size_t N,
-  size_t bit_shift  = conv_shift_count<conv>(),
-  size_t max_length = conv_max_strlen<conv>()
+  size_t bit_shift  = conv_info<conv>::shift_count(),
+  size_t max_length = conv_info<conv>::max_strlen()
 >
 constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
-  static_assert(bit_shift == conv_shift_count<conv>(), "DO NOT SET THIS TEMPLATE PARAMETER");
-  static_assert(max_length == conv_max_strlen<conv>(), "DO NET SET THIS TEMPLATE PARAMETER");
+  static_assert(bit_shift  == conv_info<conv>::shift_count(), "DO NOT SET THIS TEMPLATE PARAMETER");
+  static_assert(max_length == conv_info<conv>::max_strlen(),  "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
 
   return
@@ -89,11 +89,11 @@ constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
  * Returns the packed chars of `s` as an integer or `overflow` if the
  * input string exceeded the maximum length.
  */
-template< conv_func conv >
+template<conv_func conv >
 uint64_t pack_runtime(const char* s) noexcept {
   enum : size_t {
-    bit_shift = conv_shift_count<conv>(),
-    max_length = conv_max_strlen<conv>()
+    bit_shift  = conv_info<conv>::shift_count(),
+    max_length = conv_info<conv>::max_strlen()
   };
 
   uint64_t result = 0;
@@ -104,11 +104,11 @@ uint64_t pack_runtime(const char* s) noexcept {
   return *s ? overflow : result;
 }
 
-template< conv_func conv >
+template<conv_func conv >
 uint64_t pack_runtime(const char* s, size_t len) noexcept {
   enum : size_t {
-    bit_shift = conv_shift_count<conv>(),
-    max_length = conv_max_strlen<conv>()
+    bit_shift  = conv_info<conv>::shift_count(),
+    max_length = conv_info<conv>::max_strlen()
   };
 
   if (len > max_length)
@@ -128,43 +128,43 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
 // ============================================================================
 
 /// Include a single character
-template< uint8_t Char, conv_func next >
+template< uint8_t Char, conv_func next>
 inline constexpr uint8_t character(uint8_t c) {
   return 1 + (c == Char ? 0 : next(c));
 }
 
 /// Include a range of characters
-template< uint8_t from, uint8_t to, conv_func next >
+template< uint8_t from, uint8_t to, conv_func next>
 inline constexpr uint8_t range(uint8_t c) {
   return 1 + (c >= from && c <= to ? c - from : to - from + next(c));
 }
 
 /// Include 0-9
-template< conv_func next >
+template<conv_func next>
 inline constexpr uint8_t numeric(uint8_t c) {
   return range<'0', '9', next>(c);
 }
 
 /// Include a-z
-template< conv_func next >
+template<conv_func next>
 inline constexpr uint8_t lower(uint8_t c) {
   return range<'a', 'z', next>(c);
 }
 
 /// Include A-Z
-template< conv_func next >
+template<conv_func next>
 inline constexpr uint8_t upper(uint8_t c) {
   return range<'A', 'Z', next>(c);
 }
 
 /// Include a-zA-Z
-template< conv_func next >
+template<conv_func next>
 inline constexpr uint8_t alpha(uint8_t c) {
   return lower<upper<next>>(c);
 }
 
 /// Include a-zA-Z (case insensitive)
-template< conv_func next >
+template<conv_func next>
 inline constexpr uint8_t alpha_nocase(uint8_t c) {
   return 1 + (
     c >= 'a' && c <= 'z' ? c - 'a' :
@@ -183,9 +183,11 @@ inline constexpr uint8_t unmatched(uint8_t) {
   return 1;
 }
 
-template< conv_func conv >
+template<conv_func conv >
 struct packer {
-  // `_const_ char[]` is the only case where we want *compile time* implementation!
+  // pack() --- compile time ==================================================
+  // This is a close as we can get to ensure this function is only used on string literals.
+
   template<size_t N>
   static inline constexpr uint64_t pack(const char (&s)[N]) noexcept
   { return pack_compiletime<conv, N>(s, 0); }
@@ -231,10 +233,10 @@ struct packer {
 
   // Information ==============================================================
   static inline constexpr size_t max_size() noexcept
-  { return conv_max_strlen<conv>(); }
+  { return conv_info<conv>::max_strlen(); }
 
   static inline constexpr int bit_shift() noexcept
-  { return conv_shift_count<conv>(); }
+  { return conv_info<conv>::shift_count(); }
 };
 
 using Generic     = packer<all>;
