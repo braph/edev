@@ -71,8 +71,8 @@ template<class T> int bitlength(T n) noexcept { return bitlength_const(n); }
 #endif
 
 // ============================================================================
-static inline /*constexpr*/ size_t size_for_bits(size_t bits, size_t storage_size = 1) {
-  storage_size *= CHAR_BIT;
+static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
+  storage_size *= CHAR_BIT; // TODO constexpr
   return ((bits % storage_size) ? bits/storage_size + 1 : bits/storage_size);
 }
 
@@ -90,39 +90,28 @@ static inline /*constexpr*/ size_t size_for_bits(size_t bits, size_t storage_siz
  * clearing `src` with `& ~mask`:
  *            00000000 00010010
  *            00000000 00000010
+ *
+ * XXX this example is wrong :D
  */
 template<typename T>
 inline T replace_bits(T src, T val, int offset, int len) {
-  enum { BIT_COUNT = CHAR_BIT * sizeof(T) };
   using Unsigned_T = typename std::make_unsigned<T>::type;
   enum: Unsigned_T { OxFFFF = std::numeric_limits<Unsigned_T>::max() };
-  const Unsigned_T unsigned_src = static_cast<Unsigned_T>(src);
-        Unsigned_T unsigned_val = static_cast<Unsigned_T>(val);
-
-  // secure val to len bits
-  unsigned_val = unsigned_val & ~(OxFFFF << len);
-
-  // 4.52637 +- 0.00775 seconds time elapsed
-  // We are replacing the whole `src`
-  if (! offset && len == BIT_COUNT)
-    return val;
-
-  Unsigned_T mask = (~(OxFFFF << len)) << offset;
-
-  return static_cast<T>(
-    (unsigned_src & ~mask) | (unsigned_val << offset)
-  );
+  const Unsigned_T u_src = static_cast<Unsigned_T>(src);
+  const Unsigned_T u_val = static_cast<Unsigned_T>(val) & ~(OxFFFF << len); // trim `val` to `len` bits
+  const Unsigned_T mask = (~(OxFFFF << len)) << offset;
+  return static_cast<T>((u_src & ~mask) | (u_val << offset));
 }
 
+/**
+ * extract_bits(00001110, 1, 3) -> 00000111
+ */
 template<typename T>
 inline T extract_bits(T src, int offset, int len) {
   using Unsigned_T = typename std::make_unsigned<T>::type;
   enum: Unsigned_T { OxFFFF = std::numeric_limits<Unsigned_T>::max() };
   const Unsigned_T unsigned_src = static_cast<Unsigned_T>(src);
-
-  return static_cast<T>(
-    (unsigned_src >> offset) &~(OxFFFF << len)
-  );
+  return static_cast<T>((unsigned_src >> offset) & ~(OxFFFF << len));
 }
 
 #endif

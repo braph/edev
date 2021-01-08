@@ -3,9 +3,6 @@ TODO [most important first]
     - is a complete mess
     - add tests (including performance tests!)
 
-  - lib/bit_tools.hpp:
-    - replace_bits/extract_bits... 
-
   - Add a browser view
 
   - browsepage.cpp / updater.cpp:

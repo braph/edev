@@ -40,6 +40,10 @@ test_packedvector: packedvector.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector.cpp $^
 	$(VALGRIND) ./a.out
 
+test_packedvector-bench: packedvector.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector-bench.cpp $^
+	perf stat -r 20 ./a.out || $(VALGRIND) ./a.out
+
 test_shellsplit:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/shellsplit.cpp $^
 	$(VALGRIND) ./a.out
