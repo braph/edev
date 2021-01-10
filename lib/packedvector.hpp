@@ -207,7 +207,6 @@ public:
   data_type*      data()                noexcept { return _vec.data();       }
   int             bits()          const noexcept { return _vec.bits();       }
   value_type      get(size_t idx) const noexcept { return _vec.get(idx);     }
-  void            emplace_back(value_type v)     { push_back(v);             }
   void            pop_back()            noexcept { _vec.pop_back();          }
 
   reference       front()               noexcept { return operator[](0);          }
@@ -218,6 +217,10 @@ public:
   // ==========================================================================
   // Following methods may need to replace the underlying vector object
   // ==========================================================================
+
+  void emplace_back(value_type v) {
+    push_back(v);
+  }
 
   void reserve(size_t n, int bits = 1) {
     LIB_PACKEDVECTOR_TRACE("n = %lu, bits = %d", n, bits);
