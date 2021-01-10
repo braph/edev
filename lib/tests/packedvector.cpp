@@ -1,6 +1,10 @@
 #include "../test.hpp"
 #include "../packedvector.hpp"
 #include <vector>
+#include <climits>
+
+#define _check(...) \
+  if (! (__VA_ARGS__)) throw std::runtime_error(#__VA_ARGS__)
 
 /**
  * Foo
@@ -52,20 +56,19 @@ struct VectorTester {
     return reference(testee, expect, pos);
   }
 
-#define _check(...) \
-  if (! (__VA_ARGS__)) throw std::runtime_error(#__VA_ARGS__)
-
   void check_empty()    { _check( testee.empty()    == expect.empty() ); }
   void check_size()     { _check( testee.size()     == expect.size()  ); }
   void check_capacity() { _check( testee.capacity() == expect.capacity() ); }
   void check_front()    { if (!testee.empty()) { _check( testee.front()    == expect.front() ); } }
   void check_back()     { if (!testee.empty()) { _check( testee.back()     == expect.back()  ); } }
-  void check_equals_using_index_access() {
+
+  void check_contents_by_index() {
     size_t sz = expect.size();
     for (size_t i = 0; i < sz; ++i)
       _check( testee[i] == expect[i] );
   }
-  void check_equals_using_iterator_access() {
+
+  void check_contents_by_iterator() {
     auto testee_it = testee.begin(), testee_end = testee.end();
     auto expect_it = expect.begin(), expect_end = expect.end();
 
@@ -74,6 +77,15 @@ struct VectorTester {
 
     _check( testee_it == testee_end );
     _check( expect_it == expect_end );
+  }
+
+  void dump_contents_by_iterator() {
+    auto testee_it = testee.begin(), testee_end = testee.end();
+    auto expect_it = expect.begin(), expect_end = expect.end();
+
+    while (testee_it != testee_end && expect_it != expect_end)
+      printf("%10d %10d\n", *testee_it++, int(*expect_it++));
+    // TODO
   }
 
   void check_all() {
@@ -89,28 +101,39 @@ struct VectorTester {
    check_size();
    check_front();
    check_back();
-   check_equals_using_iterator_access();
-   check_equals_using_index_access();
+   check_contents_by_iterator();
+   check_contents_by_index();
  }
 };
 
 int main() {
   TEST_BEGIN();
 
-  using V = VectorTester<int, std::vector<int>, DynamicPackedVector>;
+  int i;
+  using V = VectorTester<int, std::vector<int>, DynamicPackedVector<int>>;
 
-  { V v; } //assert(v.testee.capacity() == 0);
+  //{ V v; }
 
-  {
-    V v; // push_back
-    for (int i = 0; i < 1024; ++i)
-      v.push_back(i);
+  { // push_back
+    V v;
+    for (i = 0; i < 1024; ++i)                     v.push_back(i);
+    for (i = USHRT_MAX; i < USHRT_MAX + 1024; ++i) v.push_back(i);
+
+    v.check_contents_by_iterator();
   }
 
   {
-    V v; // emplace_back
-    for (int i = 0; i < 1024; ++i)
-      v.emplace_back(i);
+    V v;
+    v.resize(10);
+    v.reserve(20);
+  }
+
+  { // emplace_back
+    V v;
+    for (int i = 0; i < 1024; ++i)                 v.emplace_back(i);
+    for (i = USHRT_MAX; i < USHRT_MAX + 1024; ++i) v.emplace_back(i);
+
+    v.check_contents_by_iterator();
 
     // Clear
     v.clear();

@@ -12,7 +12,7 @@ WARNINGS += -Wpessimizing-move -Wredundant-move
 
 STD = c++11
 
-CXXFLAGS := -std=$(STD) -fno-rtti -Og -g $(WARNINGS)
+CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s $(WARNINGS) -Wfatal-errors
 #CXXFLAGS := -std=$(STD) -fno-rtti -O3 -s -DNDEBUG $(WARNINGS)
 CPPFLAGS := $(shell xml2-config --cflags) -I..
 LDLIBS   := -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
@@ -36,11 +36,11 @@ test_filesystem:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/filesystem.cpp $^
 	$(VALGRIND) ./a.out
 
-test_packedvector: packedvector.cpp
+test_packedvector:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector.cpp $^
 	$(VALGRIND) ./a.out
 
-test_packedvector-bench: packedvector.cpp
+test_packedvector-bench:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) tests/packedvector-bench.cpp $^
 	perf stat -r 20 ./a.out || $(VALGRIND) ./a.out
 

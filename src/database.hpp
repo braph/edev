@@ -183,7 +183,7 @@ struct Field {
 
 // === Column ===============================================================
 #if DATABASE_USE_PACKED_VECTOR
-using Column = DynamicPackedVector;
+using Column = DynamicPackedVector<int>;
 #else
 using Column = std::vector<int>;
 #endif
@@ -271,7 +271,9 @@ struct Styles : public Table {
 
   using value_type = Style;
   using reference  = Style;
+  using const_reference  = Style;
   using iterator   = GenericIterator<Styles>;
+  using const_iterator   = GenericConstIterator<Styles>;
 
   value_type operator[](size_t id) { return value_type(this, id);   }
   iterator begin()                 { return iterator(this, 1);      }
@@ -350,7 +352,9 @@ struct Albums : public Table {
 
   using value_type = Album;
   using reference  = Album;
+  using const_reference  = Album;
   using iterator   = GenericIterator<Albums>;
+  using const_iterator   = GenericConstIterator<Albums>;
 
   value_type operator[](size_t id) { return value_type(this, id);   }
   iterator begin()                 { return iterator(this, 1);      }
@@ -402,7 +406,9 @@ struct Tracks : public Table {
 
   using value_type = Track;
   using reference  = Track;
+  using const_reference  = Track;
   using iterator   = GenericIterator<Tracks>;
+  using const_iterator   = GenericConstIterator<Tracks>;
 
   value_type operator[](size_t id) { return value_type(this, id);   }
   iterator begin()                 { return iterator(this, 1);      }

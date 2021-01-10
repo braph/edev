@@ -27,7 +27,8 @@ struct Dumper {
     dump(size);
   }
 
-  void dump(DynamicPackedVector& v) {
+  template<typename T>
+  void dump(DynamicPackedVector<T>& v) {
     const uint8_t bits = v.bits();
     const size_t  size = v.size();
     dump(bits);
@@ -83,7 +84,8 @@ struct Loader {
       throw std::runtime_error(MSG_BAD_FOOTER);
   }
 
-  void load(DynamicPackedVector& vec) {
+  template<typename T>
+  void load(DynamicPackedVector<T>& vec) {
     const uint8_t bits = load<uint8_t>();
     const size_t  size = load<size_t>();
     vec.reserve(size, bits);

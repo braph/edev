@@ -5,7 +5,6 @@
 #include "../lib/filesystem.cpp"
 #include "../lib/shellsplit.cpp"
 #include "../lib/stringchunk.cpp"
-#include "../lib/packedvector.cpp"
 #include "../lib/process.cpp"
 #include "../lib/xml.cpp"
 
