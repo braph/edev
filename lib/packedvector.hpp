@@ -98,6 +98,7 @@ public:
   size_t          capacity()  const noexcept { return _capacity;  }
   void            shrink_to_fit()            { /* TODO */         }
   void            emplace_back(value_type v) { push_back(v);      }
+  void            pop_back()        noexcept { --_size;           }
 
   reference       front()           noexcept { return operator[](0);          }
   reference       back()            noexcept { return operator[](size() - 1); }
@@ -127,6 +128,7 @@ public:
     reserve(n);
     while (_size < n)
       set(_size++, value);
+    _size = n; // need this if we shrink
   }
 
   void push_back(value_type value) {
@@ -165,7 +167,7 @@ protected:
   }
 
   static constexpr inline int clamp_bits(int bits) {
-    return (bits < 1) ? 1 : (bits > sizeof(data_type) * CHAR_BIT) ? sizeof(data_type) * CHAR_BIT : bits;
+    return (bits < 1) ? 1 : (bits > int(BITSOF(data_type))) ? int(BITSOF(data_type)) : bits;
   }
 };
 
@@ -206,6 +208,7 @@ public:
   int             bits()          const noexcept { return _vec.bits();       }
   value_type      get(size_t idx) const noexcept { return _vec.get(idx);     }
   void            emplace_back(value_type v)     { push_back(v);             }
+  void            pop_back()            noexcept { _vec.pop_back();          }
 
   reference       front()               noexcept { return operator[](0);          }
   reference       back()                noexcept { return operator[](size() - 1); }

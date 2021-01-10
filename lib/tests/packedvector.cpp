@@ -2,36 +2,35 @@
 #include "../packedvector.hpp"
 #include <vector>
 #include <climits>
+#include <cstdlib>
 
-#define _check(...) \
-  if (! (__VA_ARGS__)) throw std::runtime_error(#__VA_ARGS__)
+#define CHCK(...) do { \
+    if (! (__VA_ARGS__)) throw std::runtime_error(#__VA_ARGS__); \
+  } while(0)
 
-/**
- * Foo
- */
+#define RANGE(N) int tmp##__LINE__= 0; tmp##__LINE__ < N; ++tmp##__LINE__
+
 template<typename TValue, typename TTestee, typename TExpect>
 struct VectorTester {
-  using value_type = TValue;
-
   TTestee testee; // The vector TO be tested
   TExpect expect; // The reference vector
 
-#define proxy0(F_RET, F_NAME) \
-  F_RET F_NAME() { \
-    testee.F_NAME(); \
-    expect.F_NAME(); }
+ ~VectorTester() { check_all(); }
 
-#define proxy1(F_RET, F_NAME, A1_TYPE, A1_NAME) \
-  F_RET F_NAME(A1_TYPE A1_NAME) { \
-    testee.F_NAME(A1_NAME); \
-    expect.F_NAME(A1_NAME); }
+#define proxy(NAME) \
+  template<typename ... T> void NAME(T ... args) { \
+    testee.NAME(args...); \
+    expect.NAME(args...); \
+  }
 
-  proxy0(void,clear)
-  proxy0(void,pop_back)
-  proxy1(void,push_back,value_type,v)
-  proxy1(void,emplace_back,value_type,v)
-  proxy1(void,reserve,size_t,n)
-  proxy1(void,resize,size_t,n)
+  proxy(clear)
+  proxy(pop_back)
+  proxy(push_back)
+  proxy(emplace_back)
+  proxy(reserve)
+  proxy(resize)
+
+  size_t size() { return expect.size(); }
 
   struct reference {
     TTestee& testee;
@@ -56,16 +55,16 @@ struct VectorTester {
     return reference(testee, expect, pos);
   }
 
-  void check_empty()    { _check( testee.empty()    == expect.empty() ); }
-  void check_size()     { _check( testee.size()     == expect.size()  ); }
-  void check_capacity() { _check( testee.capacity() == expect.capacity() ); }
-  void check_front()    { if (!testee.empty()) { _check( testee.front()    == expect.front() ); } }
-  void check_back()     { if (!testee.empty()) { _check( testee.back()     == expect.back()  ); } }
+  void check_empty()    { CHCK( testee.empty()    == expect.empty() ); }
+  void check_size()     { CHCK( testee.size()     == expect.size()  ); }
+  void check_capacity() { CHCK( testee.capacity() >= expect.capacity() ); }
+  void check_front()    { if (!expect.empty()) CHCK( testee.front()    == expect.front() ); }
+  void check_back()     { if (!expect.empty()) CHCK( testee.back()     == expect.back()  ); }
 
   void check_contents_by_index() {
     size_t sz = expect.size();
     for (size_t i = 0; i < sz; ++i)
-      _check( testee[i] == expect[i] );
+      CHCK( testee[i] == expect[i] );
   }
 
   void check_contents_by_iterator() {
@@ -73,10 +72,10 @@ struct VectorTester {
     auto expect_it = expect.begin(), expect_end = expect.end();
 
     while (testee_it != testee_end && expect_it != expect_end)
-      _check( *testee_it++ == *expect_it++ );
+      CHCK( *testee_it++ == *expect_it++ );
 
-    _check( testee_it == testee_end );
-    _check( expect_it == expect_end );
+    CHCK( testee_it == testee_end );
+    CHCK( expect_it == expect_end );
   }
 
   void dump_contents_by_iterator() {
@@ -85,7 +84,6 @@ struct VectorTester {
 
     while (testee_it != testee_end && expect_it != expect_end)
       printf("%10d %10d\n", *testee_it++, int(*expect_it++));
-    // TODO
   }
 
   void check_all() {
@@ -93,40 +91,58 @@ struct VectorTester {
     check_size();
     check_front();
     check_back();
-    // TODO?
+    check_contents_by_iterator();
+    check_contents_by_index();
   }
-
- ~VectorTester() {
-   check_empty();
-   check_size();
-   check_front();
-   check_back();
-   check_contents_by_iterator();
-   check_contents_by_index();
- }
 };
+
+static inline int rand(int max) { return rand() % max; }
 
 int main() {
   TEST_BEGIN();
 
   int i;
-  using V = VectorTester<int, std::vector<int>, DynamicPackedVector<int>>;
+  using V = VectorTester<int, DynamicPackedVector<int>, std::vector<int>>;
 
-  //{ V v; }
+  { V v; v.check_all(); }
 
   { // push_back
     V v;
-    for (i = 0; i < 1024; ++i)                     v.push_back(i);
-    for (i = USHRT_MAX; i < USHRT_MAX + 1024; ++i) v.push_back(i);
+    for (RANGE(1024))
+      v.push_back(i);
+    v.check_contents_by_iterator();
 
+    for (i = USHRT_MAX; i < USHRT_MAX + 1024; ++i)
+      v.push_back(i);
     v.check_contents_by_iterator();
   }
 
-  {
+#define MAX_VEC_SIZE 16000
+#define MAX_VEC_VALUE UINT_MAX
+
+#define case break;case
+  for (RANGE(10)) {
     V v;
-    v.resize(10);
-    v.reserve(20);
+    v.check_all();
+
+    int op = 0, arg = 0, arg2 = 0;
+    for (RANGE(10000)) {
+      switch ((op = rand(100))) {
+      default: v.push_back(arg = rand(MAX_VEC_VALUE));
+      case 0:  v.reserve(arg = rand(MAX_VEC_SIZE));
+      case 1:  v.resize(arg = rand(MAX_VEC_SIZE), arg2 = rand(MAX_VEC_VALUE));
+      case 2:  v.clear();
+      case 3:  if (v.size()) v.pop_back();
+      }
+
+      try { v.check_all(); }
+      catch (...) {
+        printf("OP=%d arg=%d arg2=%d\n", op, arg, arg2);
+        throw;
+      }
+    }
   }
+#undef case
 
   { // emplace_back
     V v;
@@ -135,26 +151,11 @@ int main() {
 
     v.check_contents_by_iterator();
 
-    // Clear
-    v.clear();
-    v.check_all();
-
 #if 0
-    // Foo
     for (int i = 0; i <= INT_MAX; i *= 2)
       v.push_back(i);
     v.check_all();
     v.clear();
-#endif
-
-#if 0
-    // Direct access (get)
-    for (int i = 0) {}
-
-    // Direct access (set)
-    for (int i = 0; i < TODO; ++i)
-      v[i] = 2;
-    v.check_all();
 #endif
   }
 

@@ -1,9 +1,56 @@
 #ifndef LIB_PACKED_TRAITS
 #define LIB_PACKED_TRAITS
 
-// This has to be benchmarked again?
-#define LIB_PACKED_TRAITS__USE_POSSIBLE_FASTER_IMPLEMENTATION 0
+#include "../bit_tools.hpp"
 
+#include <type_traits>
+
+#if 1
+template<class T>
+struct packed_traits {
+  using Unsigned = typename std::make_unsigned<T>::type;
+  using Doubled =
+    typename std::conditional<sizeof(T) == 1, uint16_t, 
+    typename std::conditional<sizeof(T) == 2, uint32_t,
+    typename std::conditional<sizeof(T) == 4, uint64_t, void>::type>::type>::type;
+
+  static_assert(!std::is_void<Doubled>::value, "packed_traits<int64_t> not yet implented!");
+
+  enum { TBits      = BITSOF(T) };
+  enum { OxFFFF     = std::numeric_limits<Unsigned>::max() };
+  enum { OxFFFFFFFF = std::numeric_limits<Doubled>::max()  };
+
+  static inline T get(T* data, int bits, int index) noexcept {
+    auto dataIndex = (index * bits) / TBits;
+    auto bitOffset = (index * bits) % TBits;
+
+    if (bitOffset + bits <= TBits) {
+      Unsigned e = data[dataIndex];
+      return (e >> bitOffset) &~(OxFFFF << bits);
+    }
+    else {
+      Doubled e = (Doubled(data[dataIndex + 1]) << TBits) | data[dataIndex + 0];
+      return (e >> bitOffset) &~(OxFFFFFFFF << bits);
+    }
+  }
+
+  static inline void set(T* data, int bits, int index, T value) noexcept {
+    auto dataIndex = (index * bits) / TBits;
+    auto bitOffset = (index * bits) % TBits;
+
+    if (bitOffset + bits <= TBits) {
+      Unsigned e = data[dataIndex];
+      data[dataIndex] = replace_bits<Unsigned>(e, value, bitOffset, bits);
+    } else {
+      Doubled e = (Doubled(data[dataIndex+1]) << TBits) | data[dataIndex+0];
+      e = replace_bits<Doubled>(e, value, bitOffset, bits);
+      data[dataIndex+1] = e >> TBits;
+      data[dataIndex+0] = e & OxFFFF;
+    }
+  }
+};
+#else /* Backup */
+#define LIB_PACKED_TRAITS__USE_POSSIBLE_FASTER_IMPLEMENTATION 0
 template<class store_type>
 struct packed_traits {
 
@@ -16,8 +63,8 @@ struct packed_traits {
   };
 
   static inline store_type get(store_type* _data, int _bits, int index) noexcept {
-    unsigned int dataIndex = (index * _bits) / 32;
-    unsigned int bitOffset = (index * _bits) % 32;
+    unsigned int dataIndex = (index * _bits) / int(BITSOF(store_type));
+    unsigned int bitOffset = (index * _bits) % int(BITSOF(store_type));
 
 #if ! LIB_PACKED_TRAITS__USE_POSSIBLE_FASTER_IMPLEMENTATION
     if (bitOffset + _bits <= 32) {
@@ -36,11 +83,9 @@ struct packed_traits {
     }
   }
 
-  // 00000000 00000000 00000000 00000000
-  // ^-index ^offset
   static inline void set(store_type* _data, int _bits, int index, store_type value) noexcept {
-    unsigned int dataIndex = (index * _bits) / int(sizeof(store_type) * CHAR_BIT);
-    unsigned int bitOffset = (index * _bits) % int(sizeof(store_type) * CHAR_BIT);
+    unsigned int dataIndex = (index * _bits) / int(BITSOF(store_type));
+    unsigned int bitOffset = (index * _bits) % int(BITSOF(store_type));
 
     if (bitOffset + _bits <= sizeof(store_type) * CHAR_BIT) {
       uint32_t e = _data[dataIndex];
@@ -55,5 +100,6 @@ struct packed_traits {
     }
   }
 };
+#endif
 
 #endif
