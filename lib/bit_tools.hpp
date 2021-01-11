@@ -71,10 +71,6 @@ template<class T> int bitlength(T n) noexcept { return bitlength_const(n); }
 #endif
 
 // ============================================================================
-static inline size_t size_for_bits(size_t bits, size_t storage_size = 1) {
-  storage_size *= CHAR_BIT; // TODO constexpr
-  return ((bits % storage_size) ? bits/storage_size + 1 : bits/storage_size);
-}
 
 /**
  * Example for replace_bits<uint_16t>(18, 7, 3, 3)

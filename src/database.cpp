@@ -2,6 +2,7 @@
 
 #include "ektoplayer.hpp"
 
+#include <lib/math.hpp> // ceil_div
 #include <lib/raii/file.hpp>
 
 #include <type_traits>
@@ -33,7 +34,7 @@ struct Dumper {
     const size_t  size = v.size();
     dump(bits);
     dump(size);
-    write(reinterpret_cast<char*>(v.data()), size_for_bits(bits * size));
+    write(reinterpret_cast<char*>(v.data()), ceil_div(bits * size, BITSOF(char)));
     dump(bits);
     dump(size);
   }
@@ -90,7 +91,7 @@ struct Loader {
     const size_t  size = load<size_t>();
     vec.reserve(size, bits);
     vec.resize(size);
-    read(reinterpret_cast<char*>(vec.data()), size_for_bits(bits * size));
+    read(reinterpret_cast<char*>(vec.data()), ceil_div(bits * size, BITSOF(char)));
     if (load<uint8_t>() != bits) throw std::runtime_error(MSG_BAD_FOOTER);
     if (load<size_t>() != size)  throw std::runtime_error(MSG_BAD_FOOTER);
   }
