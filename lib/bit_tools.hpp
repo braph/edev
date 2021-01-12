@@ -6,9 +6,19 @@
 #include <cstddef>
 #include <type_traits>
 #include <iterator>
-#include <string.h> // ffs
+
+#include "types.hpp"
 
 #define BITSOF(T) (CHAR_BIT * sizeof(T))
+
+#if (defined(__GNUC__) || defined(__clang__))
+static inline int find_first_set(int i)                { return __builtin_ffs(i);   }
+static inline int find_first_set(long i)               { return __builtin_ffsl(i);  }
+static inline int find_first_set(long long i)          { return __builtin_ffsll(i); }
+static inline int find_first_set(unsigned int i)       { return __builtin_ffs(sign_cast<signed>(i));   }
+static inline int find_first_set(unsigned long i)      { return __builtin_ffsl(sign_cast<signed>(i));  }
+static inline int find_first_set(unsigned long long i) { return __builtin_ffsll(sign_cast<signed>(i)); }
+#endif
 
 template<class T, bool BitState = 1>
 struct BitIterator {
@@ -23,14 +33,15 @@ struct BitIterator {
   inline BitIterator(T value, unsigned ii = 0) noexcept : val(value), i(ii) { seek(); }
   inline iterator  begin()                   const noexcept { return {val, 0};           }
   inline iterator  end()                     const noexcept { return {0, BITSOF(T)};     }
-  inline iterator& operator++()                    noexcept { ++i; seek(); return *this; }
-  inline unsigned  operator*()               const noexcept { return i;                  }
   inline bool operator==(const iterator& it) const noexcept { return i == it.i;          }
   inline bool operator!=(const iterator& it) const noexcept { return i != it.i;          }
+  inline unsigned  operator*()               const noexcept { return i;                  }
+  inline iterator& operator++()                    noexcept { ++i; seek(); return *this; }
 private:
   inline void  seek() noexcept { while ((!!(val & (1<<i))) != BitState && i < BITSOF(T)) ++i; }
 };
 
+#if (defined(__GNUC__) || defined(__clang__))
 template<class T>
 struct BitIterator<T, 1> {
   using value_type = unsigned;
@@ -39,24 +50,20 @@ struct BitIterator<T, 1> {
   using iterator = BitIterator;
   using iterator_category = std::input_iterator_tag;
   using difference_type = int;
-  unsigned i;
   T val;
-  inline BitIterator(T value = 0, unsigned ii = 0) noexcept : val(value), i(ii)          {}
-  inline iterator  begin()                   const noexcept { int i = ffs(val); return {val>>i, i}; }
-  inline iterator  end()                     const noexcept { return {};        }
-  inline unsigned  operator*()               const noexcept { return i - 1;     }
+  int i;
+  inline BitIterator(T value = 0, int i_ = 0)      noexcept : val(value), i(i_) {}
+  inline iterator  begin()                   const noexcept { return {val, find_first_set(val)}; }
+  inline iterator  end()                     const noexcept { return {0, 0};    }
   inline bool operator==(const iterator& it) const noexcept { return i == it.i; }
   inline bool operator!=(const iterator& it) const noexcept { return i != it.i; }
+  inline int       operator*()               const noexcept { return i - 1;     }
   inline iterator& operator++()                    noexcept {
-    auto old = i;
-    i = ffs(val);
-    if (i) {
-      val >>= i;
-      i += old;
-    }
+    i = ((i < int(BITSOF(T))) ? find_first_set((val >> i) << i) : 0);
     return *this;
   }
 };
+#endif
 
 template<class T>
 BitIterator<T> iterate_set_bits(T val) {
