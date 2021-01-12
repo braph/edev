@@ -151,8 +151,8 @@ void Info :: draw() {
 
     draw_tag(y++, "Styles");
     const char* comma = "";
-    for (auto id : extract_set_bits(album.styles())) {
-      *this << comma << track.table->db.styles[size_t(id)].name();
+    for (auto id : iterate_set_bits(album.styles())) {
+      *this << comma << track.table->db.styles[size_t(id+1)].name();
       comma = ", ";
     }
 

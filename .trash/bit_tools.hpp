@@ -1,3 +1,14 @@
+#include "staticvector.hpp"
+
+template<typename TInt>
+StaticVector<char, sizeof(TInt) * CHAR_BIT> extract_set_bits(TInt value) {
+  StaticVector<char, sizeof(TInt) * CHAR_BIT> result;
+  for (int i = 0; i < int(sizeof(TInt) * CHAR_BIT); ++i)
+    if (value & (1 << i))
+      result.push_back(i + 1);
+  return result;
+}
+
 template<class T>
 constexpr int bitlength_const(T n, int i = sizeof(T)*CHAR_BIT) noexcept {
   using Unsigned_T = typename std::make_unsigned<T>::type;

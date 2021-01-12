@@ -324,9 +324,9 @@ const char* track_column_to_string(const Tracks::Track& track, ColumnID id) {
   if (AlbumColumnID(id) == ALBUM_STYLES) {
     buf[0] = '\0';
     const char* comma = "";
-    for (auto id : extract_set_bits(f.value.i)) {
+    for (auto id : iterate_set_bits(f.value.i)) {
       std::strcat(buf, comma);
-      std::strcat(buf, track.table->db.styles[size_t(id)].name());
+      std::strcat(buf, track.table->db.styles[size_t(id+1)].name());
       comma = "|";
     }
     return buf;

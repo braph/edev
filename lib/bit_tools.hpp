@@ -1,22 +1,66 @@
 #ifndef BIT_TOOLS_HPP
 #define BIT_TOOLS_HPP
 
-#include "staticvector.hpp"
-
 #include <limits>
 #include <climits>
 #include <cstddef>
 #include <type_traits>
+#include <iterator>
+#include <string.h> // ffs
 
 #define BITSOF(T) (CHAR_BIT * sizeof(T))
 
-template<typename TInt>
-StaticVector<char, sizeof(TInt) * CHAR_BIT> extract_set_bits(TInt value) {
-  StaticVector<char, sizeof(TInt) * CHAR_BIT> result;
-  for (int i = 0; i < int(sizeof(TInt) * CHAR_BIT); ++i)
-    if (value & (1 << i))
-      result.push_back(i + 1);
-  return result;
+template<class T, bool BitState = 1>
+struct BitIterator {
+  using value_type = unsigned;
+  using reference = void; 
+  using pointer = void;
+  using iterator = BitIterator;
+  using iterator_category = std::input_iterator_tag;
+  using difference_type = int;
+  T val;
+  unsigned i;
+  inline BitIterator(T value, unsigned ii = 0) noexcept : val(value), i(ii) { seek(); }
+  inline iterator  begin()                   const noexcept { return {val, 0};           }
+  inline iterator  end()                     const noexcept { return {0, BITSOF(T)};     }
+  inline iterator& operator++()                    noexcept { ++i; seek(); return *this; }
+  inline unsigned  operator*()               const noexcept { return i;                  }
+  inline bool operator==(const iterator& it) const noexcept { return i == it.i;          }
+  inline bool operator!=(const iterator& it) const noexcept { return i != it.i;          }
+private:
+  inline void  seek() noexcept { while ((!!(val & (1<<i))) != BitState && i < BITSOF(T)) ++i; }
+};
+
+template<class T>
+struct BitIterator<T, 1> {
+  using value_type = unsigned;
+  using reference = void; 
+  using pointer = void;
+  using iterator = BitIterator;
+  using iterator_category = std::input_iterator_tag;
+  using difference_type = int;
+  unsigned i;
+  T val;
+  inline BitIterator(T value = 0, unsigned ii = 0) noexcept : val(value), i(ii)          {}
+  inline iterator  begin()                   const noexcept { int i = ffs(val); return {val>>i, i}; }
+  inline iterator  end()                     const noexcept { return {};        }
+  inline unsigned  operator*()               const noexcept { return i - 1;     }
+  inline bool operator==(const iterator& it) const noexcept { return i == it.i; }
+  inline bool operator!=(const iterator& it) const noexcept { return i != it.i; }
+  inline iterator& operator++()                    noexcept {
+    auto old = i;
+    i = ffs(val);
+    if (i) {
+      val >>= i;
+      i += old;
+    }
+    return *this;
+  }
+};
+
+template<class T>
+BitIterator<T> iterate_set_bits(T val) {
+  return BitIterator<T, 1>(val);
 }
 
 template<class T>
