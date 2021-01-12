@@ -3,7 +3,7 @@ import sys, string
 from braceexpand import braceexpand
 
 '''
-(Almost) every function in ncurses is implemented as a function and defined as a macro:
+(Almost) every function in ncurses is implemented as a function and also defined as a macro:
   - extern NCURSES_EXPORT(int)  addstr (const char *);	   /* generated */
   - #define addstr(str)         waddnstr(stdscr,(str),-1)
 

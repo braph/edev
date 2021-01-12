@@ -11,10 +11,10 @@
 #include <cstring>
 #include <cstdio>
 
-#define DB_ABI_VERSION      1
-#define DB_ENDIANNESS_CHECK 0xFEFF
-
 namespace Database {
+
+const uint16_t DB_ABI_VERSION      = 1;
+const uint16_t DB_ENDIANNESS_CHECK = 0xFEFF;
 
 struct Dumper {
   Dumper(FILE* fh)
@@ -169,8 +169,8 @@ void Database :: save(const std::string& file) {
     throw std::runtime_error(strerror(errno));
 
   Dumper d(fh);
-  d.dump<uint16_t>(DB_ENDIANNESS_CHECK);
-  d.dump<uint16_t>(DB_ABI_VERSION);
+  d.dump(DB_ENDIANNESS_CHECK);
+  d.dump(DB_ABI_VERSION);
   for (auto p : chunks)
     d.dump(*p);
   for (auto t : tables)

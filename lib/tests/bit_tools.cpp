@@ -38,6 +38,7 @@ int main() {
   assert(0x11FF == replace_bits<uint16_t>(0x1111, 0xFF, 0, 8));
 
   // iterate_bits
+  test_iterate_set_bits(0, {});
   test_iterate_set_bits(1, {0});
   test_iterate_set_bits(2, {1});
   test_iterate_set_bits(0xFFFFFFFF, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31});

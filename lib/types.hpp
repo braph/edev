@@ -18,7 +18,9 @@ template<class T>
 any_sign<T> auto_sign(T i) { return any_sign<T>(i); }
 
 template<class TSign, class T>
-using sign_cast_result_t = typename std::conditional<std::is_same<TSign, signed>::value, typename std::make_signed<T>::type, typename std::make_unsigned<T>::type>::type;
+using sign_cast_result_t =
+  typename std::conditional< std::is_same<TSign, signed>::value,   typename std::make_signed<T>::type,
+  typename std::conditional< std::is_same<TSign, unsigned>::value, typename std::make_unsigned<T>::type, void>::type>::type;
 
 template<class TSign, class T>
 auto sign_cast(T v) -> sign_cast_result_t<TSign, T>

@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <cassert>
 #include <initializer_list>
 
 #define DATABASE_USE_PACKED_VECTOR 1
@@ -276,8 +277,8 @@ struct Styles : public Table {
   using const_iterator   = GenericConstIterator<Styles>;
 
   value_type operator[](size_t id) { return value_type(this, id);   }
-  iterator begin()                 { return iterator(this, 1);      }
-  iterator end()                   { return iterator(this, size()); }
+  iterator   begin()               { return iterator(this, 1);      }
+  iterator   end()                 { return iterator(this, size()); }
   value_type find(CString url, bool create);
 };
 
@@ -357,8 +358,8 @@ struct Albums : public Table {
   using const_iterator   = GenericConstIterator<Albums>;
 
   value_type operator[](size_t id) { return value_type(this, id);   }
-  iterator begin()                 { return iterator(this, 1);      }
-  iterator end()                   { return iterator(this, size()); }
+  iterator   begin()               { return iterator(this, 1);      }
+  iterator   end()                 { return iterator(this, size()); }
   value_type find(CString url, bool create);
 };
 
@@ -411,8 +412,8 @@ struct Tracks : public Table {
   using const_iterator   = GenericConstIterator<Tracks>;
 
   value_type operator[](size_t id) { return value_type(this, id);   }
-  iterator begin()                 { return iterator(this, 1);      }
-  iterator end()                   { return iterator(this, size()); }
+  iterator   begin()               { return iterator(this, 1);      }
+  iterator   end()                 { return iterator(this, size()); }
   value_type find(CString url, bool create);
 };
 

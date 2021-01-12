@@ -22,7 +22,7 @@ CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -I.. -DCURSES_
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
 CONFIG.deps   	= ../lib/shellsplit.o ../lib/filesystem.o ../lib/xml.o
-DATABASE.deps 	= ../lib/stringchunk.o ../lib/packedvector.o
+DATABASE.deps 	= ../lib/stringchunk.o
 BROWSEPAGE.deps = ../lib/base64.o
 PLAYER.deps   	= ../lib/process.o
 THEME.deps    	= ui/colors.o
