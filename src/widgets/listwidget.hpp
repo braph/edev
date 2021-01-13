@@ -24,7 +24,7 @@ public:
   using value_type = typename TContainer::value_type;
   using size_type  = typename TContainer::size_type;
 
-  std::function<void(WINDOW*, int, const value_type&, int, bool, bool)> itemRenderer;
+  std::function<void(WINDOW*, int, int, const value_type&, int, bool, bool)> itemRenderer;
 
   ListWidget()
   : m_cursor(0)
@@ -197,7 +197,7 @@ private:
     if (! itemRenderer)
       return;
     move(line, 0);
-    itemRenderer(win, size.width, (*m_list)[size_t(item_idx)], item_idx, cursor, item_idx == m_active);
+    itemRenderer(win, line, size.width, (*m_list)[size_t(item_idx)], item_idx, cursor, item_idx == m_active);
   }
 
   inline void render_unselected() { render_item(m_top_list_idx + m_cursor, m_cursor, false); }

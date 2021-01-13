@@ -21,19 +21,19 @@ using namespace Views;
  * ==========================================================================*/
 
 void TrackRenderer :: operator()(
-    WINDOW *_win,
+    WINDOW *win,
+    int y,
     int width,
     const Database::Tracks::Track &item,
     int index,
     bool cursor,
     bool active, /* selection */
-    int selection
+    bool selection
 ) {
   unsigned int additional_attributes = 0;
   if (active) additional_attributes |= A_BOLD;
   if (cursor) additional_attributes |= A_STANDOUT;
 
-  int y = getcury(_win);
   int x = 0;
 
   // Substract the space that separates the columns
@@ -51,9 +51,9 @@ void TrackRenderer :: operator()(
 
   for (const auto& column : m_columns) {
     if (selection)
-      wattrset(_win, colors.list_item_selection | additional_attributes);
+      wattrset(win, colors.list_item_selection | additional_attributes);
     else
-      wattrset(_win, Colors::set(column.fg, column.bg) | additional_attributes);
+      wattrset(win, Colors::set(column.fg, column.bg) | additional_attributes);
 
     const char* value = Database::track_column_to_string(item, column.tag);
     size_t len = std::mbstowcs(NULL, value, 0);
@@ -65,15 +65,15 @@ void TrackRenderer :: operator()(
       colwidth = column.size;
 
     // Clear the column field with spaces
-    mvwhline(_win, y, x, ' ', colwidth + 1);
+    mvwhline(win, y, x, ' ', colwidth + 1);
 
     if (column.justify == PlaylistColumnFormat::Justify::Left)
-      mvwaddnstr(_win, y, x, value, colwidth);
+      mvwaddnstr(win, y, x, value, colwidth);
     else if (column.justify == PlaylistColumnFormat::Justify::Right) {
       if (int(len) < colwidth)
-        mvwaddstr(_win, y, x + colwidth - int(len), value); // TODO
+        mvwaddstr(win, y, x + colwidth - int(len), value); // TODO
       else
-        mvwaddnstr(_win, y, x, value, colwidth);
+        mvwaddnstr(win, y, x, value, colwidth);
     }
 
     x += colwidth + 1;
