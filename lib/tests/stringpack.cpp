@@ -1,7 +1,7 @@
 #include "../stringpack.hpp"
 
 #include <cassert>
-#include <iostream>
+#include <cstdio>
 
 // Check if all pack algorithms give the same result
 #define test(CLASS, C_STRING) do { \
@@ -9,14 +9,36 @@
   assert(CLASS::pack_runtime(std::string(C_STRING)) == CLASS::pack(C_STRING)); \
 } while(0)
 
+#define doc(CLASS, DOC) \
+  printf("%-23s | %-5zu | %s\n", #CLASS, CLASS::max_size(), DOC)
+
 int main() {
+  printf("%-23s | %-5s | %s\n", "class", "len", "comment");
+  doc(StringPack::Generic,     "Fastest (no conversion applied)");
+  doc(StringPack::ASCII,       "Fast (chars >= 128 will be converted to 127)");
+  doc(StringPack::Alnum,       "");
+  doc(StringPack::AlnumNoCase, "");
+  doc(StringPack::Alpha,       "");
+  doc(StringPack::AlphaNoCase, "");
+  doc(StringPack::Upper,       "");
+  doc(StringPack::Lower,       "");
+  doc(StringPack::L33tNoCase,  "Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'");
+  doc(StringPack::Numeric,     "");
+
   {
-    using C = StringPack::Numeric;
-    std::cout << "Numeric: " << C::max_size() << ':' << C::bit_shift() << std::endl;
+    using SC = StringPack::L33tNoCase;
+    switch (SC::pack_runtime("0123456789")) {
+      case SC("OLZEASGTBQ"): break;
+      default:               throw;
+    }
+  }
+
+  {
+    using SC = StringPack::Numeric;
 
     const char* s = "123456789";
-    switch (C::pack_runtime(s)) {
-      case C("123456789"): break;
+    switch (SC::pack_runtime(s)) {
+      case SC("123456789"): break;
       default:             throw;
     }
   }
@@ -34,8 +56,8 @@ int main() {
     assert(SC::pack("A") == SC::pack("a"));
 
     switch (SC::pack("A")) {
-      case SC::pack("a"):
-        std::cout << "LOL" << std::endl;
+      case SC::pack("a"): break;
+      default:            throw;
     }
   }
 
@@ -69,10 +91,20 @@ int main() {
   }
 
   {
+    using SC = StringPack::ASCII;
+    assert(0   == SC::pack(""));
+    assert(127 == SC::pack("\x7F"));
+    assert(127 == SC::pack("\x80"));
+
+    test(SC, "nine char");
+    assert(SC::pack_runtime("overflow10") == StringPack::overflow);
+  }
+
+  {
     using SC = StringPack::Lower;
 
-    assert(0 == SC::pack(""));
-    assert(1 == SC::pack("a"));
+    assert(0  == SC::pack(""));
+    assert(1  == SC::pack("a"));
     assert(26 == SC::pack("z"));
     assert(27 == SC::pack("_"));
     assert(28 == SC::pack("+"));

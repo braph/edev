@@ -1,14 +1,34 @@
 #ifndef LIB_STRINGPACK_HPP
 #define LIB_STRINGPACK_HPP
-
+//
 // Stolen and adapted from https://github.com/alipha/cpp/blob/master/switch_pack/switch_pack.h
 //
-// Notes:
-//  - We return the value `1` as a sentinel for unmatched characters.
-//    That's why every converter function adds `1` to its result.
+// Pack strings into a int64_t, useful for switch-case.
+// ====================================================
 //
-// TODO: add  7bit-ascii pack (enables 1 more char) ?
-
+// class                   | len   | comment
+// StringPack::Generic     | 8     | Fastest (no conversion applied)
+// StringPack::ASCII       | 9     | Fast (chars >= 128 will be converted to 127)
+// StringPack::Alnum       | 9     |
+// StringPack::AlnumNoCase | 10    |
+// StringPack::Alpha       | 10    |
+// StringPack::AlphaNoCase | 12    |
+// StringPack::Upper       | 12    |
+// StringPack::Lower       | 12    |
+// StringPack::Numeric     | 16    | Better use `switch(atoi(...)) {}` instead!
+//
+// How does it work
+// ================
+//
+// StringPack::Numeric::pack("012X")  returns  0x000000000000B321
+//
+// - The characters are beeing pushed in reverse order into the result value.
+// - The special value `0` means `no character`
+// - Each character hanled by a conversion function gets enumerated.
+//   The enumeration value will be used in the result: '0' -> 1, '1' -> 2, etc...
+// - The total number of available characters + 2 give the `unmatched` value (10 + 2 == 12 == 0xB)
+// - The `unmatched` value is needed to prevent false matches ("012X" != "012")
+//
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -49,9 +69,23 @@ struct conv_info {
     return 64 / max_bitlength();
   }
 
+  static std::string characters() {
+    uint8_t sentinel_ = sentinel();
+    std::string r;
+    for (unsigned c = 0; c < 255; ++c)
+      if (conv(c) != sentinel_)
+        r.push_back(c);
+    return r;
+  }
+
 private:
   static constexpr uint8_t max_bitlength_impl(int i) {
     return (i > 255 ? 0 : (conv(i) | max_bitlength_impl(i + 1)));
+  }
+
+  static constexpr uint8_t sentinel(uint8_t c = 255, uint8_t return_ = 0) {
+    return c == 0 ? return_ : sentinel(c-1,
+      conv(c) > return_ ? conv(c) : return_);
   }
 };
 
@@ -128,13 +162,13 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
 // ============================================================================
 
 /// Include a single character
-template< uint8_t Char, conv_func next>
+template<uint8_t Char, conv_func next>
 inline constexpr uint8_t character(uint8_t c) {
   return 1 + (c == Char ? 0 : next(c));
 }
 
 /// Include a range of characters
-template< uint8_t from, uint8_t to, conv_func next>
+template<uint8_t from, uint8_t to, conv_func next>
 inline constexpr uint8_t range(uint8_t c) {
   return 1 + (c >= from && c <= to ? c - from : to - from + next(c));
 }
@@ -178,12 +212,37 @@ inline constexpr uint8_t all(uint8_t c) noexcept {
   return c;
 }
 
+/// Use ascii characters (0-127), everything beyound is 127..
+inline constexpr uint8_t ascii(uint8_t c) noexcept {
+  return (c <= 127 ? c : 127);
+}
+
+/// Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'"
+inline constexpr uint8_t l33t_nocase(uint8_t c) noexcept {
+  // Nope. "OLZEASGTBQ"['0' - c] is not constexpr in C++11
+  return 1 + (
+    c == '0' ? 'O' - 'A' :
+    c == '1' ? 'L' - 'A' :
+    c == '2' ? 'Z' - 'A' :
+    c == '3' ? 'E' - 'A' :
+    c == '4' ? 'A' - 'A' :
+    c == '5' ? 'S' - 'A' :
+    c == '6' ? 'G' - 'A' :
+    c == '7' ? 'T' - 'A' :
+    c == '8' ? 'B' - 'A' :
+    c == '9' ? 'Q' - 'A' :
+    c >= 'a' && c <= 'z' ? c - 'a' :
+    c >= 'A' && c <= 'Z' ? c - 'A' :
+    'z' - 'a' + 1
+  );
+}
+
 /// Marker for unmatched characters
 inline constexpr uint8_t unmatched(uint8_t) {
   return 1;
 }
 
-template<conv_func conv >
+template<conv_func conv>
 struct packer {
   // pack() --- compile time ==================================================
   // This is a close as we can get to ensure this function is only used on string literals.
@@ -237,9 +296,13 @@ struct packer {
 
   static inline constexpr int bit_shift() noexcept
   { return conv_info<conv>::shift_count(); }
+
+  static inline std::string characters() noexcept
+  { return conv_info<conv>::characters(); }
 };
 
 using Generic     = packer<all>;
+using ASCII       = packer<ascii>;
 using Lower       = packer<lower<character<'_', unmatched>>>;
 using Upper       = packer<upper<character<'_', unmatched>>>;
 using Numeric     = packer<numeric<unmatched>>;
@@ -247,6 +310,7 @@ using Alpha       = packer<alpha<character<'_', unmatched>>>;
 using AlphaNoCase = packer<alpha_nocase<character<' ', unmatched>>>;
 using Alnum       = packer<numeric<alpha<character<'_', unmatched>>>>;
 using AlnumNoCase = packer<numeric<alpha_nocase<character<'_', unmatched>>>>;
+using L33tNoCase  = packer<l33t_nocase>;
 
 } // namespace StringPack
 
