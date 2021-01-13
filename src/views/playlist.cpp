@@ -65,14 +65,10 @@ void TrackRenderer :: operator()(
     // Clear the column field with spaces
     mvwhline(win, y, x, ' ', colwidth + 1);
 
-    if (column.justify == PlaylistColumnFormat::Justify::Left)
+    if (column.justify == PlaylistColumnFormat::Justify::Right && int(len) < colwidth)
+      mvwaddstr(win, y, x + colwidth - int(len), value);
+    else // Justify::Left or no space to justify
       mvwaddnstr(win, y, x, value, colwidth);
-    else if (column.justify == PlaylistColumnFormat::Justify::Right) {
-      if (int(len) < colwidth)
-        mvwaddstr(win, y, x + colwidth - int(len), value); // TODO
-      else
-        mvwaddnstr(win, y, x, value, colwidth);
-    }
 
     x += colwidth + 1;
   }
