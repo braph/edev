@@ -102,8 +102,8 @@ Theme THEME_256 = {
 };
 
 Theme::Definition* Theme :: get(const std::string& name) noexcept {
-#define X(IDENTIFIER, STRING) case Hash::lose_lose(STRING): return &IDENTIFIER;
-  switch (Hash::lose_lose(name)) { THEME_ELEMENT_IDS }
+#define X(IDENTIFIER, STRING) case Hash::djb2(STRING): return &IDENTIFIER;
+  switch (Hash::djb2(name)) { THEME_ELEMENT_IDS }
 #undef X
   return NULL;
 }

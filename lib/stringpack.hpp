@@ -15,6 +15,7 @@
 // StringPack::AlphaNoCase | 12    |
 // StringPack::Upper       | 12    |
 // StringPack::Lower       | 12    |
+// StringPack::L33tNoCase  | 12    | Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'
 // StringPack::Numeric     | 16    | Better use `switch(atoi(...)) {}` instead!
 //
 // How does it work
@@ -24,7 +25,7 @@
 //
 // - The characters are beeing pushed in reverse order into the result value.
 // - The special value `0` means `no character`
-// - Each character hanled by a conversion function gets enumerated.
+// - Each character handled by a conversion function gets enumerated.
 //   The enumeration value will be used in the result: '0' -> 1, '1' -> 2, etc...
 // - The total number of available characters + 2 give the `unmatched` value (10 + 2 == 12 == 0xB)
 // - The `unmatched` value is needed to prevent false matches ("012X" != "012")
@@ -108,13 +109,10 @@ constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
   static_assert(max_length == conv_info<conv>::max_strlen(),  "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
 
-  return
-    (i < N - 1) ? (
-      pack_compiletime<conv>(s, i + 1) |
-      uint64_t(conv(uint8_t(s[i]))) << (i * bit_shift)
-    ) : (
-      0
-    );
+  return i >= N - 1 ? 0 : (
+    pack_compiletime<conv>(s, i + 1) |
+    uint64_t(conv(uint8_t(s[i]))) << (i * bit_shift)
+  );
 }
 
 /**

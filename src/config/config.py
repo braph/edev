@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys, os
+os.chdir(os.path.dirname(sys.argv[0]))
 
 default   = object()
 c_default = object()
@@ -320,7 +321,7 @@ with open('options.set.cpp', 'w') as fh:
     options.sort(key=lambda o: o[NAME])
     options.sort(key=lambda o: len(o[NAME]))
     for name, o in options:
-        print('else if (! std::strcmp(option, \"%s\")) %s = %s(value);' % (
+        print('case Hash::djb2(\"%s\"): %s = %s(value); break;' % (
             name, name.replace('.', '_'), o[set]
             ), file=fh)
 

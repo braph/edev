@@ -9,15 +9,6 @@
 
 namespace Hash {
 
-constexpr uint64_t lose_lose(const char* s) noexcept {
-  return
-    (*s) ? (
-      lose_lose(s + 1) + uint64_t(*s)
-    ) : (
-      0
-    );
-}
-
 constexpr uint64_t djb2(const char* s) noexcept {
   return
     (*s) ? (
@@ -36,9 +27,18 @@ constexpr uint64_t sdbm(const char* s) noexcept {
     );
 }
 
-template<class T> uint64_t lose_lose(const T& s) noexcept { return lose_lose(s.c_str()); }
+constexpr uint64_t lose_lose(const char* s) noexcept {
+  return
+    (*s) ? (
+      lose_lose(s + 1) + uint64_t(*s)
+    ) : (
+      0
+    );
+}
+
 template<class T> uint64_t djb2     (const T& s) noexcept { return djb2(s.c_str());      }
 template<class T> uint64_t sdbm     (const T& s) noexcept { return sdbm(s.c_str());      }
+template<class T> uint64_t lose_lose(const T& s) noexcept { return lose_lose(s.c_str()); }
 
 } // namespace Hash
 

@@ -84,7 +84,7 @@
 
 - String::pack (thanks to alipha :D)
 
-
+- case (Hash::djb2()) - for eliminating strings...
 
 - Important: Overloads for std::string only for functions/methods, NOT class members:
   void foo(std::string& s) -> foo(s.c_str())  GOOD

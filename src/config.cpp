@@ -8,6 +8,7 @@
 #include <lib/shellsplit.hpp>
 #include <lib/stringpack.hpp>
 #include <lib/raii/file.hpp>
+#include <lib/hash.hpp>
 
 #include <vector>
 #include <cstdio>
@@ -295,9 +296,10 @@ void Config :: set(const string_array& args) {
   const char* value  = args[1];
 
   try {
-    if (0) {}
+    switch (Hash::djb2(option)) {
 #include "config/options.set.cpp"
-    else throw ConfigError("unknown option");
+    default: throw ConfigError("unknown option");
+    }
   } catch (const std::exception &e) {
     throw ConfigError(option, e.what());
   }
