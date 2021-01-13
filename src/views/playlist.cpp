@@ -26,13 +26,11 @@ void TrackRenderer :: operator()(
     int width,
     const Database::Tracks::Track &item,
     int index,
-    bool cursor,
-    bool active, /* selection */
-    bool selection
+    unsigned flags
 ) {
   unsigned int additional_attributes = 0;
-  if (active) additional_attributes |= A_BOLD;
-  if (cursor) additional_attributes |= A_STANDOUT;
+  if (flags & ITEM_ACTIVE)       additional_attributes |= A_BOLD;
+  if (flags & ITEM_UNDER_CURSOR) additional_attributes |= A_STANDOUT;
 
   int x = 0;
 
@@ -50,7 +48,7 @@ void TrackRenderer :: operator()(
   }
 
   for (const auto& column : m_columns) {
-    if (selection)
+    if (flags & ITEM_SELECTED)
       wattrset(win, colors.list_item_selection | additional_attributes);
     else
       wattrset(win, Colors::set(column.fg, column.bg) | additional_attributes);

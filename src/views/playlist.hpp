@@ -41,7 +41,7 @@ namespace Views {
 class TrackRenderer {
 public:
   TrackRenderer(const PlaylistColumns& columns) : m_columns(columns) { }
-  void operator()(WINDOW*, int, int, const Database::Tracks::Track&, int, bool, bool, bool = 0); // marked, selection
+  void operator()(WINDOW*, int, int, const Database::Tracks::Track&, int, unsigned);
 private:
   const PlaylistColumns& m_columns;
 };

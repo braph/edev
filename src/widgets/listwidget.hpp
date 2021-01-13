@@ -13,6 +13,12 @@
  * ListWidget - Template for displaying containers as a ncurses list
  * ==========================================================================*/
 
+enum : unsigned {
+  ITEM_UNDER_CURSOR = 0x1,
+  ITEM_ACTIVE       = 0x2,
+  ITEM_SELECTED     = 0x4,
+};
+
 template<typename TContainer>
 class ListWidget : public UI::Window {
   int m_cursor;
@@ -21,10 +27,10 @@ class ListWidget : public UI::Window {
   TContainer* m_list;
 
 public:
-  using value_type = typename TContainer::value_type;
-  using size_type  = typename TContainer::size_type;
+  using value_type    = typename TContainer::value_type;
+  using size_type     = typename TContainer::size_type;
 
-  std::function<void(WINDOW*, int, int, const value_type&, int, bool, bool)> itemRenderer;
+  std::function<void(WINDOW*, int, int, const value_type&, int, unsigned)> itemRenderer;
 
   ListWidget()
   : m_cursor(0)
@@ -193,63 +199,18 @@ private:
     clamp(&m_active,       -1, list_size() - 1);
   }
 
-  inline void render_item(int item_idx, int line, bool cursor) {
+  inline void render_item(int item_idx, int line, bool item_under_cursor) {
     if (! itemRenderer)
       return;
     move(line, 0);
-    itemRenderer(win, line, size.width, (*m_list)[size_t(item_idx)], item_idx, cursor, item_idx == m_active);
+    unsigned flags =
+      (item_under_cursor    ? ITEM_UNDER_CURSOR : 0u) |
+      (item_idx == m_active ? ITEM_ACTIVE       : 0u);
+    itemRenderer(win, line, size.width, (*m_list)[size_t(item_idx)], item_idx, flags);
   }
 
   inline void render_unselected() { render_item(m_top_list_idx + m_cursor, m_cursor, false); }
   inline void render_selected()   { render_item(m_top_list_idx + m_cursor, m_cursor, true);  }
 };
-
-// === Testing ================================================================
-template<typename TContainer, typename TRender>
-void testListWidget(
-  TContainer& testData,
-  TRender& render
-) {
-  ListWidget<TContainer> listWidget;
-  listWidget.itemRenderer = render;
-  listWidget.list(&testData);
-  listWidget.layout({0,0}, {LINES,COLS});
-  listWidget.draw();
-  listWidget.noutrefresh();
-  doupdate();
-
-  for (;;) {
-    switch (wgetch(listWidget.getWINDOW())) {
-      case 'k': listWidget.up();        break;
-      case 'j': listWidget.down();      break;
-      case KEY_PPAGE:
-      case 'K': listWidget.page_up();   break;
-      case KEY_NPAGE:
-      case 'J': listWidget.page_down(); break;
-      case 'g': listWidget.top();       break;
-      case 'G': listWidget.bottom();    break;
-      case 'l': listWidget.draw();      break;
-      case 'q': return;
-    }
-    listWidget.noutrefresh();
-    doupdate();
-  }
-}
-
-template<typename TContainer, typename TRender>
-void testListItemRenderer(TContainer& container, TRender& render) {
-  int cursor = LINES / 2;
-
-  for (int y = 0; y < container.size(); ++y) {
-    if (y >= LINES)
-      break;
-
-    wmove(stdscr, y, 0);
-    render(stdscr, COLS, container[y], y, y == 3, y == cursor);
-  }
-  refresh();
-  getch();
-}
-// ============================================================================
 
 #endif

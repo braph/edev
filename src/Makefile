@@ -125,7 +125,7 @@ test_readline:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_READLINE widgets/readline.cpp $^
 	$(TERMINAL) ./a.out
 
-test_listwidget: theme.o $(THEME.deps) config.o $(CONFIG.deps)
+test_listwidget:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_LISTWIDGET widgets/listwidget.cpp $^
 	$(TERMINAL) ./a.out
 
