@@ -1,11 +1,3 @@
-#ifndef LIB_PACKEDARRAY_HPP
-#define LIB_PACKEDARRAY_HPP
-
-// TODO!!!!!!
-
-/* ============================================================================
- * TinyPackedArray - PackedVector's little brother
- * ==========================================================================*/
 
 template<unsigned TBits, typename TStorage>
 struct ArrayReference {
@@ -105,29 +97,3 @@ struct ArrayIterator { //: public ArrayReference<TBits, TStorage> {
   { return ptrdiff_t(_i) + ptrdiff_t(I._i); }
 };
 
-template<unsigned TBits, typename TStorage>
-struct TinyPackedArray {
-  TStorage     _storage;
-  size_t       _size;
-  enum { _capacity = sizeof(TStorage)*CHAR_BIT / TBits };
-
-  TinyPackedArray()           : _storage(0), _size(0) {}
-  TinyPackedArray(TStorage v) : _storage(v), _size(_capacity) {}
-
-  inline void push_back(TStorage value) {
-    if (_size < _capacity)
-      (*this)[_size++] = value;
-  }
-
-  using value_type        = ArrayReference<TBits, TStorage>;
-
-  size_t     capacity()     const { return _capacity;   }
-  size_t     size()         const { return _size;       }
-  void       fullSize()           { _size = _capacity;  }
-  TStorage&  data()               { return _storage;    }
-  ArrayIterator<TBits, TStorage>   begin()              { return ArrayIterator<TBits, TStorage>(&_storage, 0);      }
-  ArrayIterator<TBits, TStorage>   end()                { return ArrayIterator<TBits, TStorage>(&_storage, size()); }
-  ArrayReference<TBits, TStorage>  operator[](size_t i) { return ArrayReference<TBits, TStorage>(&_storage, i);     }
-};
-
-#endif

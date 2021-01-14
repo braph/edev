@@ -10,8 +10,8 @@ using const_iterator         = const T*;
 using reverse_iterator       = std::reverse_iterator<iterator>;
 using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-inline size_type size()                     const noexcept { return _size;          }
-inline bool      empty()                    const noexcept { return  _size == 0;    }
+inline size_type       size()               const noexcept { return _size;          }
+inline bool            empty()              const noexcept { return  _size == 0;    }
 
 inline reference       operator[](size_t i)       noexcept { return  _data[i];      }
 inline const_reference operator[](size_t i) const noexcept { return  _data[i];      }
