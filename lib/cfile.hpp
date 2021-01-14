@@ -2,6 +2,7 @@
 #define LIB_CFILE_HPP
 
 #include <cstdio>
+#include <system_error>
 
 struct CFile {
   CFile(FILE* fh) noexcept : _fh(fh) {}
@@ -10,16 +11,24 @@ struct CFile {
     close();
   }
 
-  static CFile fopen(const char *pathname, const char *mode) noexcept
-  { return CFile(fopen(pathname, mode)); }
+  static CFile open(const char *pathname, const char *mode) {
+    auto fh = std::fopen(pathname, mode);
+    if (! fh)
+      throw std::system_error(errno, std::generic_category());
+    return CFile(fh);
+  }
 
 #if _POSIX_C_SOURCE
-  static CFile fdopen(int fd, const char *mode) noexcept
-  { return CFile(fdopen(fd, mode)); }
+  static CFile fdopen(int fd, const char *mode) {
+    auto fh = ::fdopen(fd, mode);
+    if (! fh)
+      throw std::system_error(errno, std::generic_category());
+    return CFile(fh);
+  }
 #endif
 
-  void reopen(const char *pathname, const char *mode, FILE *stream) noexcept
-  { _fh = freopen(pathname, mode, _fh); }
+//void reopen(const char *pathname, const char *mode, FILE *stream)
+//{ _fh = std::freopen(pathname, mode, _fh); }
 
   inline operator FILE*() const noexcept { return _fh; }
   inline operator bool()  const noexcept { return _fh; }
@@ -63,23 +72,23 @@ struct CFile {
     return std::vfprintf(_fh, format, ap);
   }
 
-  inline int clearerr()           noexcept { return std::clearerr(_fh); }
-  inline int close()              noexcept { return std::fclose(_fh);   }
-  inline int eof()                noexcept { return std::feof(_fh);     }
-  inline int error()              noexcept { return std::ferror(_fh);   }
-  inline int flush()              noexcept { return std::fflush(_fh);   }
-  inline int getc()               noexcept { return std::fgetc(_fh);    }
+  inline void  clearerr()           noexcept { return std::clearerr(_fh); }
+  inline int   close()              noexcept { return std::fclose(_fh);   }
+  inline int   eof()                noexcept { return std::feof(_fh);     }
+  inline int   error()              noexcept { return std::ferror(_fh);   }
+  inline int   flush()              noexcept { return std::fflush(_fh);   }
+  inline int   getc()               noexcept { return std::fgetc(_fh);    }
   inline char *gets(char *s, int size)     { return std::fgets(s, size, _fh); }
-  inline int fputc(int c)         noexcept { return std::fputc(c, _fh); }
-  inline int fputs(const char *s) noexcept { return std::fputs(s, _fh); }
+  inline int   fputc(int c)         noexcept { return std::fputc(c, _fh); }
+  inline int   fputs(const char *s) noexcept { return std::fputs(s, _fh); }
 
-  inline int getpos(fpos_t *pos)       noexcept { return std::fgetpos(_fh, pos); }
-  inline int setpos(const fpos_t *pos) noexcept { return std::fsetpos(_fh, pos); }
+  inline int   getpos(fpos_t *pos)       noexcept { return std::fgetpos(_fh, pos); }
+  inline int   setpos(const fpos_t *pos) noexcept { return std::fsetpos(_fh, pos); }
 
-  inline long tell()                  noexcept { return std::ftell(_fh);  }
-  inline void rewind()                 noexcept { return std::rewind(_fh); }
+  inline long  tell()                  noexcept { return std::ftell(_fh);  }
+  inline void  rewind()                 noexcept { return std::rewind(_fh); }
 
-  inline int  seek(long offset, int whence) noexcept { return std::fseek(_fh, offset, whence); }
+  inline int   seek(long offset, int whence) noexcept { return std::fseek(_fh, offset, whence); }
 
 #if 0
   int      fseeko(FILE *, off_t, int);

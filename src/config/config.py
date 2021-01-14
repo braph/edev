@@ -279,13 +279,13 @@ options = [
         help: 'Enable/disable progressbar visibility',
         }),
     ('tabs.widgets', {
-        type: 'std::array<Views::TabWidgets, 5>', set: 'parse_tabs_widgets',
+        type: 'packed::TinyArray<Views::TabWidgets, uint32_t, 3>', set: 'parse_tabs_widgets',
         default: '"splash,playlist,browser,info,help"',
         c_default: '{Views::TabWidgets::SPLASH,Views::TabWidgets::PLAYLIST,Views::TabWidgets::BROWSER,Views::TabWidgets::INFO,Views::TabWidgets::HELP}',
         help: 'Specify widget order of tabbar (left to right)',
         }),
     ('main.widgets', {
-        type: 'std::array<Views::MainWidgets, 5>', set: 'parse_main_widgets',
+        type: 'packed::TinyArray<Views::MainWidgets, uint32_t, 3>', set: 'parse_main_widgets',
         default: '"infoline,tabbar,readline,windows,progressbar"',
         c_default: '{Views::MainWidgets::INFOLINE,Views::MainWidgets::TABBAR,Views::MainWidgets::READLINE,Views::MainWidgets::WINDOWS,Views::MainWidgets::PROGRESSBAR}',
         help: 'Specify widgets to show (up to down)',

@@ -3,7 +3,7 @@
 #include "ektoplayer.hpp"
 
 #include <lib/math.hpp> // ceil_div
-#include <lib/raii/file.hpp>
+#include <lib/cfile.hpp>
 
 #include <type_traits>
 #include <climits>
@@ -18,7 +18,7 @@ const uint16_t DB_ENDIANNESS_CHECK = 0xFEFF;
 
 struct Dumper {
   Dumper(FILE* fh)
-    : fs(fh)
+    : _fh(fh)
   {}
 
   void dump(StringChunk& p) {
@@ -62,17 +62,17 @@ struct Dumper {
   }
 
 private:
-  FILE* fs;
+  FILE* _fh;
 
   void write(char* buf, size_t size) {
-    if (::fwrite(buf, size, 1, fs) != 1)
+    if (::fwrite(buf, size, 1, _fh) != 1)
       throw std::runtime_error(strerror(EIO));
   }
 };
 
 struct Loader {
-  Loader(FILE* fs)
-    : fs(fs)
+  Loader(FILE* fh)
+    : _fh(fh)
   {}
 
 #define MSG_BAD_FOOTER "bad footer"
@@ -122,10 +122,10 @@ struct Loader {
   }
 
 private:
-  FILE* fs;
+  FILE* _fh;
 
   void read(char* buf, size_t size) {
-    if (::fread(buf, size, 1, fs) != 1)
+    if (::fread(buf, size, 1, _fh) != 1)
       throw std::runtime_error(strerror(EIO));
   }
 };
@@ -145,9 +145,7 @@ Database :: Database() noexcept
 }
 
 void Database :: load(const std::string& file) {
-  RAII::FILE fh( fopen(file.c_str(), "r") );
-  if (! fh)
-    throw std::runtime_error(strerror(errno));
+  auto fh = CFile::open(file.c_str(), "r"); // TODO
 
   Loader l(fh);
   if (l.load<uint16_t>() != DB_ENDIANNESS_CHECK)
@@ -164,9 +162,7 @@ void Database :: load(const std::string& file) {
 }
 
 void Database :: save(const std::string& file) {
-  RAII::FILE fh( fopen(file.c_str(), "w") );
-  if (! fh)
-    throw std::runtime_error(strerror(errno));
+  auto fh = CFile::open(file.c_str(), "w");
 
   Dumper d(fh);
   d.dump(DB_ENDIANNESS_CHECK);

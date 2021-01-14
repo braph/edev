@@ -68,5 +68,5 @@ PlaylistColumns             Config :: playlist_columns_256 = {
 {static_cast<Database::ColumnID>(Database::TRACK_TITLE),   178,  -1, 33, true},
 {static_cast<Database::ColumnID>(Database::ALBUM_STYLES),  37,   -1, 20, true},
 {static_cast<Database::ColumnID>(Database::TRACK_BPM),     28,   -1, 3}};
-std::array<Views::TabWidgets, 5> Config :: tabs_widgets = {Views::TabWidgets::SPLASH,Views::TabWidgets::PLAYLIST,Views::TabWidgets::BROWSER,Views::TabWidgets::INFO,Views::TabWidgets::HELP};
-std::array<Views::MainWidgets, 5> Config :: main_widgets = {Views::MainWidgets::INFOLINE,Views::MainWidgets::TABBAR,Views::MainWidgets::READLINE,Views::MainWidgets::WINDOWS,Views::MainWidgets::PROGRESSBAR};
+packed::TinyArray<Views::TabWidgets, uint32_t, 3> Config :: tabs_widgets = {Views::TabWidgets::SPLASH,Views::TabWidgets::PLAYLIST,Views::TabWidgets::BROWSER,Views::TabWidgets::INFO,Views::TabWidgets::HELP};
+packed::TinyArray<Views::MainWidgets, uint32_t, 5> Config :: main_widgets = {Views::MainWidgets::INFOLINE,Views::MainWidgets::TABBAR,Views::MainWidgets::READLINE,Views::MainWidgets::WINDOWS,Views::MainWidgets::PROGRESSBAR};

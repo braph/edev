@@ -7,7 +7,7 @@
 #include <lib/filesystem.hpp>
 #include <lib/shellsplit.hpp>
 #include <lib/stringpack.hpp>
-#include <lib/raii/file.hpp>
+#include <lib/cfile.hpp>
 #include <lib/hash.hpp>
 
 #include <vector>
@@ -337,17 +337,14 @@ void Config :: unbind_all(const string_array& args) {
 }
 
 void Config :: read(const char* file) {
-  RAII::FILE fh( std::fopen(file, "r") );
-  if (! fh)
-    throw std::runtime_error(std::strerror(errno));
-
+  auto fh = CFile::open(file, "r");
   char line[8192];
   std::vector<std::string> splitted;
   const char* c_args[64]; // XXX
   unsigned int no = 0;
 
   try {
-    while (std::fgets(line, sizeof(line), fh)) {
+    while (fh.gets(line, sizeof(line))) {
       line[std::max(size_t(1), std::strlen(line)) - 1] = '\0';
 
       ++no;
@@ -374,13 +371,13 @@ void Config :: read(const char* file) {
     }
   }
   catch (const std::exception &e) {
-    char _[1024];
-    std::snprintf(_, sizeof(_), "%s:%u: %s: %s", file, no, c_args[0], e.what());
-    throw ConfigError(_);
+    char fname[PATH_MAX+16];
+    std::snprintf(fname, sizeof(fname), "%s:%u", file, no);
+    throw ConfigError(fname, c_args[0], e.what());
   }
 
-  if (std::ferror(fh))
-    throw std::runtime_error(std::strerror(EIO));
+  if (fh.error())
+    throw std::system_error(EIO, std::generic_category());
 }
 
 #ifdef TEST_CONFIG
