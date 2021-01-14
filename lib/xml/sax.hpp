@@ -7,6 +7,8 @@
 
 namespace Xml {
 
+const xmlChar empty[1] = {'\0'};
+
 namespace Sax {
 
 template<typename TClass>
@@ -29,19 +31,19 @@ static void wrap_characters(void* self, const xmlChar* ch, int len) {
       len);
 }
 
-template<bool UseNULLCheck>
+template<bool UseEmptyStringFallback>
 class XmlString {
   const xmlChar* _s;
 public:
   XmlString(const xmlChar* s)
-    : _s(s)
+    : _s(UseEmptyStringFallback ? (s ? s : empty) : s)
   {}
 
   explicit inline operator bool() const noexcept
-  { return _s; }
+  { return *_s; }
 
   inline bool operator!() const noexcept
-  { return !_s; }
+  { return !*_s; }
 
   inline operator const char*() const noexcept
   { return reinterpret_cast<const char*>(_s); }
@@ -50,23 +52,14 @@ public:
   { return reinterpret_cast<const xmlChar*>(_s); }
 
   static inline int cmp(XmlString l, const char* r) noexcept {
-    if (UseNULLCheck)
-      if (! l)
-        return false;
     return std::strcmp(l, r);
   }
 
   static inline int cmp(XmlString l, const xmlChar* r) noexcept {
-    if (UseNULLCheck)
-      if (! l)
-        return false;
     return std::strcmp(l, reinterpret_cast<const char*>(r));
   }
 
   static inline int cmp(XmlString l, const std::string& r) noexcept {
-    if (UseNULLCheck)
-      if (! l)
-        return false;
     return std::strcmp(l, r.c_str());
   }
 
@@ -86,17 +79,14 @@ public:
   LIB_XML_DEFINE_COMPARISON(const char*)
   LIB_XML_DEFINE_COMPARISON(const xmlChar*)
   LIB_XML_DEFINE_COMPARISON(const std::string&)
-  //LIB_XML_DEFINE_COMPARISON(const XmlString)
+//LIB_XML_DEFINE_COMPARISON(const XmlString)
 #undef LIB_XML_DEFINE_COMPARISON
 
-#if 0
-  inline bool operator==(char c) {
-    if (UseNULLCheck)
-      if (! l)
-        return false;
-    return *_value == rhs && _value[1] == '\0';
+  inline bool operator=(char c) const noexcept {
+    return *_s && *_s == c && _s[1] == '\0';
   }
 
+#if 0
   inline bool starts_with(const char* rhs) {
     return _value && !std::strncmp(_value, rhs, std::strlen(rhs));
   }

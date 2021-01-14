@@ -58,12 +58,14 @@ using ccstr = const char*;
  * validation is performed, so the database may be rebuilt on errors.
  * And after all the database is more like a cache.
  *
- * XXX NOTE XXX
- * The `Album::styles` field stores at max 4 styles...
- * Records with ID = 0 (first row) are used for representing a NULL value.
+ * XXX NOTES XXX
+ *
+ * Records with ID == 0 (first row) are used for representing a NULL value.
  * The row count of a table will therefore be off by one.
  * It is easier to do a `-1` on the return value of Table::size() than applying
- * this -1 logic all over the place. this won't be fixed.
+ * this -1 logic all over the place. This won't be fixed.
+ *
+ * The `Album::styles` is implemented as a bit-set type.
  */
 
 /* ==========================================================================
@@ -97,7 +99,7 @@ enum AlbumColumnID : unsigned char {
   ALBUM_DESCRIPTION,
   ALBUM_DATE,
   ALBUM_DAY,   // -.
-  ALBUM_MONTH, //  +- View
+  ALBUM_MONTH, //  +- No real colums, just view
   ALBUM_YEAR,  // -'
   ALBUM_RATING,
   ALBUM_VOTES,
@@ -144,32 +146,34 @@ static ColumnID columnIDFromStr(const std::string &s) noexcept {
  * ========================================================================*/
 
 struct Field {
-  enum Type : unsigned char {
-    STRING,
-    INTEGER,
-    FLOAT,
-    TIME
-  };
-
   union Value {
     ccstr s;
     int i;
     float f;
     time_t t;
-  };
 
-  Value value;
-  Type  type;
+    inline Value(ccstr s_)  noexcept : s(s_) {}
+    inline Value(int i_)    noexcept : i(i_) {}
+    inline Value(float f_)  noexcept : f(f_) {}
+    inline Value(time_t t_) noexcept : t(t_) {}
+  } value;
 
-  inline Field(ccstr s)           noexcept { set_string(s);  }
-  inline Field(int i)             noexcept { set_integer(i); }
-  inline Field(float f)           noexcept { set_float(f);   }
-  inline Field(time_t t)          noexcept { set_time(t);    }
+  enum Type {
+    STRING,
+    INTEGER,
+    FLOAT,
+    TIME
+  } type;
 
-  inline void set_string(ccstr s) noexcept { type = STRING;  value.s = s; }
-  inline void set_integer(int i)  noexcept { type = INTEGER; value.i = i; }
-  inline void set_float(float f)  noexcept { type = FLOAT;   value.f = f; }
-  inline void set_time(time_t t)  noexcept { type = TIME;    value.t = t; }
+  inline Field(ccstr s)  noexcept : value(s), type(STRING)  {}
+  inline Field(int i)    noexcept : value(i), type(INTEGER) {}
+  inline Field(float f)  noexcept : value(f), type(FLOAT)   {}
+  inline Field(time_t t) noexcept : value(t), type(TIME)    {}
+
+  inline void set_string(ccstr s) noexcept { type = STRING;  value = s; }
+  inline void set_integer(int i)  noexcept { type = INTEGER; value = i; }
+  inline void set_float(float f)  noexcept { type = FLOAT;   value = f; }
+  inline void set_time(time_t t)  noexcept { type = TIME;    value = t; }
 
   int compare(const Field rhs) const noexcept {
     assert(type == rhs.type);

@@ -51,8 +51,8 @@ public:
   inline operator FILE*() const noexcept { return _fh; }
   inline operator bool()  const noexcept { return _fh; }
 
-  inline size_t fread(void *ptr, size_t size, size_t nmemb)        { return std::fread(ptr, size, nmemb, _fh); }
-  inline size_t fwrite(const void *ptr, size_t size, size_t nmemb) { return std::fwrite(ptr, size, nmemb, _fh); }
+  inline size_t read(void *ptr, size_t size, size_t nmemb)        { return std::fread(ptr, size, nmemb, _fh);  }
+  inline size_t write(const void *ptr, size_t size, size_t nmemb) { return std::fwrite(ptr, size, nmemb, _fh); }
 
   inline int  (getc)()              noexcept { return std::getc(_fh);           }
   inline char* gets(char *s, int size)       { return std::fgets(s, size, _fh); }

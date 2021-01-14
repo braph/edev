@@ -92,7 +92,7 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
         Process([file, dest_dir](){
           Filesystem::error_code e;
           if (Filesystem::create_directory(dest_dir, e)) {
-            if (0 != Programs::file_archiver(file.c_str(), dest_dir.c_str()).get_exit_status())
+            if (0 != Programs::file_archiver(file, dest_dir).get_exit_status())
               Filesystem::remove_all(dest_dir, e);
             else if (Config::delete_after_extraction)
               Filesystem::remove(file, e);

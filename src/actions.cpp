@@ -30,7 +30,7 @@ int Actions :: call(ActionID id) {
       auto track = mainwindow->playlist.active_item();
       std::string cover_url = track.album().cover_url();
       Ektoplayer::url_expand(cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-      Programs::image_viewer(cover_url.c_str());
+      Programs::image_viewer(cover_url).detach();
     }
     break;
 

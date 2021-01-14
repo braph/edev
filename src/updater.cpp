@@ -20,7 +20,7 @@ static std::string& clean_str(std::string& s) {
 }
 
 static std::string make_markdown(const std::string& description) {
-  std::string s = Html2Markdown::convert(description.c_str(), description.size());
+  std::string s = Html2Markdown::convert(description);
 
   // Replace protected email links:
   //  [[/cdn-cgi/l/email-protection#284b47444174...]]
@@ -170,8 +170,8 @@ void Updater :: insert_browsepage(const std::string& source) noexcept {
 
 #ifdef TEST_UPDATER
 #include <lib/test.hpp>
+#include <lib/cfile.hpp>
 #include <lib/filesystem.hpp>
-#include <cstdio>
 #define USE_FILESYSTEM 1
 #define TESTDATA_DIR "/tmp/testdata" // Dir that contains HTML files
 /* mkdir /tmp/testdata
@@ -195,8 +195,7 @@ static void test_warning(const Database::Tracks::Track& track, const char* msg)
 
 static void read_file_into_string(const char* file, std::string& str) {
   static char buf[4*1024*1024]; buf[0] = '\0';
-  auto fh = fopen(file, "r");
-  if (fh) { buf[fread(buf, 1, sizeof(buf), fh)] = '\0'; fclose(fh); }
+  buf[CFile::open(file, "r").read(buf, 1, sizeof(buf))] = '\0';
   str = buf;
 }
 

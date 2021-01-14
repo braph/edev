@@ -10,7 +10,15 @@
 
 namespace Programs {
 
-static inline Process file_archiver(const char* archive, const char* dest_dir) {
+struct String {
+  const char *s;
+  template<class T>
+  inline String(const T& s_)          noexcept : s(s_.c_str()) {}
+  inline String(const char* s_)       noexcept : s(s_)         {}
+  inline operator const char*() const noexcept { return s; }
+};
+
+static inline Process file_archiver(String archive, String dest_dir) {
   return {[=](){
     ::close(STDIN_FILENO);
     ::dup2(STDERR_FILENO, STDOUT_FILENO);
@@ -19,7 +27,7 @@ static inline Process file_archiver(const char* archive, const char* dest_dir) {
   }, false, false, false, dest_dir};
 }
 
-static inline Process image_viewer(const char* url) {
+static inline Process image_viewer(String url) {
   return {[=](){
     ::execlp("/bin/feh",      "feh",      url, NULL);
     ::execlp("/bin/display",  "display",  url, NULL);
@@ -27,7 +35,7 @@ static inline Process image_viewer(const char* url) {
   }, true, false, false};
 }
 
-static inline Process browser(const char* url) {
+static inline Process browser(String url) {
   const char* dot = std::strrchr(url, '.');
   using pack = StringPack::AlphaNoCase;
   switch (pack::pack_runtime(dot ? dot : "")) {

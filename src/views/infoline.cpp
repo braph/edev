@@ -117,8 +117,8 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
   for (const auto& fmt : format) {
     const char* s;
 
-    if (fmt.text.length())
-      s = fmt.text.c_str();
+    if (fmt.text.size())
+      s = &fmt.text[0];
     else
       s = Database::track_column_to_string(_track, fmt.tag);
 

@@ -6,8 +6,6 @@
 #include <cstdio>
 #include <cstdarg>
 
-static inline const char* ensure_string(const char* s) { return (s ? s : ""); }
-
 // ============================================================================
 
 template<class TChar = char>

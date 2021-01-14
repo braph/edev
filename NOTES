@@ -66,6 +66,7 @@
     //f("const char array");
   }
 
+- string_view only if size matters..
 
 - Boost may not be the best library, especially for simple tasks:
 

@@ -1,6 +1,5 @@
 #include "markdown.hpp"
 
-#include <lib/cstring.hpp> // ensure_string
 #include <lib/stringpack.hpp>
 #include <lib/xml/sax.hpp>
 
@@ -14,52 +13,52 @@ struct State {
 };
 
 void startElement(void* self_, const xmlChar* name, const xmlChar** attrs) {
-  State* self = static_cast<State*>(self_);
+  auto& self = *static_cast<State*>(self_);
 
   using pack = StringPack::Generic;
   switch (pack::pack_runtime(name)) {
   case pack("i"):
   case pack("em"):
-    self->result.append(2, '_');
+    self.result.append(2, '_');
     break;
   case pack("b"):
   case pack("strong"):
-    self->result.append(2, '*');
+    self.result.append(2, '*');
     break;
   case pack("a"):
-    self->result.append(2, '(');
-    self->url = ensure_string(Xml::Sax::Attributes(attrs)["href"].value);
+    self.result.append(2, '(');
+    self.url = Xml::Sax::Attributes(attrs)["href"].value;
     break;
   case pack("br"):
-    self->result.append(1, '\n');
+    self.result.append(1, '\n');
     break;
   }
 }
 
 void endElement(void* self_, const xmlChar* name) {
-  State* self = static_cast<State*>(self_);
+  auto& self = *static_cast<State*>(self_);
 
   using pack = StringPack::Generic;
   switch (pack::pack_runtime(name)) {
   case pack("i"):
   case pack("em"):
-    self->result.append(2, '_');
+    self.result.append(2, '_');
     return;
   case pack("b"):
   case pack("strong"):
-    self->result.append(2, '*');
+    self.result.append(2, '*');
     return;
   case pack("a"):
-    self->result.append(2, ')');
-    self->result.append(2, '[');
-    self->result.append(self->url);
-    self->result.append(2, ']');
+    self.result.append(2, ')');
+    self.result.append(2, '[');
+    self.result.append(self.url);
+    self.result.append(2, ']');
   }
 }
 
 void characters(void* self_, const xmlChar* ch, int len) {
-  State* self = static_cast<State*>(self_);
-  self->result.append(reinterpret_cast<const char*>(ch), size_t(len));
+  auto& self = *static_cast<State*>(self_);
+  self.result.append(reinterpret_cast<const char*>(ch), size_t(len));
 }
 
 } // namespace

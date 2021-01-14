@@ -267,7 +267,7 @@ bool Info :: handle_mouse(MEVENT& m) {
     m.x += pad_mincol;
     auto event = _clickable_urls.find(m);
     if (event != _clickable_urls.end())
-      Programs::browser(event->data.url.c_str()).detach();
+      Programs::browser(event->data.url).detach();
     return true;
   }
   return false;
