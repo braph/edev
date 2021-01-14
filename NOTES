@@ -66,6 +66,11 @@
     //f("const char array");
   }
 
+- T x = v << no implicit conversion
+
+- void x(TString) < only if no implicit conversion needed
+  else: templates
+
 - string_view only if size matters..
 
 - Boost may not be the best library, especially for simple tasks:
