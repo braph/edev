@@ -5,7 +5,7 @@
 #include "../theme.hpp"
 #include "../config.hpp"
 #include "../player.hpp"
-#include "../launchers.hpp"
+#include "../programs.hpp"
 #include "../ui/colors.hpp"
 #include <lib/filesystem.hpp>
 #include <lib/bit_tools.hpp>
@@ -267,7 +267,7 @@ bool Info :: handle_mouse(MEVENT& m) {
     m.x += pad_mincol;
     auto event = _clickable_urls.find(m);
     if (event != _clickable_urls.end())
-      Lauchers::open_url(event->data.url.c_str()).detach();
+      Programs::browser(event->data.url.c_str()).detach();
     return true;
   }
   return false;

@@ -3,7 +3,7 @@
 #include "player.hpp"
 #include "updater.hpp"
 #include "database.hpp"
-#include "launchers.hpp"
+#include "programs.hpp"
 #include "trackloader.hpp"
 #include "views/mainwindow.hpp"
 
@@ -30,7 +30,7 @@ int Actions :: call(ActionID id) {
       auto track = mainwindow->playlist.active_item();
       std::string cover_url = track.album().cover_url();
       Ektoplayer::url_expand(cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
-      Lauchers::open_image(cover_url.c_str());
+      Programs::image_viewer(cover_url.c_str());
     }
     break;
 

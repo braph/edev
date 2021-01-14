@@ -1,12 +1,15 @@
 #include "trackloader.hpp"
 
 #include "ektoplayer.hpp"
-#include "launchers.hpp"
+#include "programs.hpp"
 #include "config.hpp"
 
 #include <lib/filesystem.hpp>
+#include <lib/process.hpp> // TODO
 
 #include <thread>
+
+#include <unistd.h>
 
 TrackLoader :: TrackLoader()
 {
@@ -64,11 +67,11 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
 }
 
 void TrackLoader :: download_album(const Database::Tracks::Track& track) {
-  auto album_dir = Filesystem::path(Config::album_dir) / track.album().title();
+  auto album_dir = Filesystem::absolute(Config::album_dir) / track.album().title();
   if (Filesystem::exists(album_dir))
     return;
 
-  auto archive = Filesystem::path(Config::archive_dir) / track.album().title();
+  auto archive = Filesystem::absolute(Config::archive_dir) / track.album().title();
   if (Filesystem::exists(archive))
     return;
 
@@ -85,13 +88,18 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
     Filesystem::error_code ex;
     if (e == CURLE_OK && dl.http_code() == 200) {
       if (Config::auto_extract_to_archive_dir) {
-        std::thread([](std::string&& file, std::string&& dest_dir){
-          int ret = Lauchers::unpack_archive(file.c_str(), dest_dir.c_str()).get_exit_status();
-          if (ret == 0 && Config::delete_after_extraction) {
-            Filesystem::error_code ex;
-            Filesystem::remove(file, ex);
+        auto file     = std::move(dl.filename()); // dl will vanish
+        auto dest_dir = std::move(album_dir);
+
+        std::thread([file, dest_dir](){
+          Filesystem::error_code e;
+          if (Filesystem::create_directory(dest_dir, e)) {
+            if (0 != Programs::file_archiver(file.c_str(), dest_dir.c_str()).get_exit_status())
+              Filesystem::remove_all(dest_dir, e);
+            else if (Config::delete_after_extraction)
+              Filesystem::remove(file, e);
           }
-        }, std::move(dl.filename()), std::move(album_dir.string())).detach();
+        }).detach();
       }
       else {
         Filesystem::rename(dl.filename(), archive, ex);

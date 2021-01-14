@@ -7,18 +7,18 @@
 #include <cstdlib>
 #include <cassert>
 
-Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept
+Process :: Process(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr, const char* cwd) noexcept
   : _pid(-1)
   , _closed(true)
 {
-  open(function, pipe_stdin, pipe_stdout, pipe_stderr);
+  open(function, pipe_stdin, pipe_stdout, pipe_stderr, cwd);
 }
 
 Process :: ~Process() {
   close_fds();
 }
 
-pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr) noexcept {
+pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr, const char* cwd) noexcept {
   assert(function && "No function passed");
 
   int stdin_p[2], stdout_p[2], stderr_p[2];
@@ -57,6 +57,9 @@ pid_t Process :: open(std::function<void()> function, bool pipe_stdin, bool pipe
       close(fd);
 
     setpgid(0, 0);
+
+    if (cwd && chdir(cwd) < 0)
+      _exit(EXIT_FAILURE);
 
     function();
 

@@ -17,7 +17,8 @@ public:
       std::function<void()> function,
       bool pipe_stdin=true,
       bool pipe_stdout=true,
-      bool pipe_stderr=true) noexcept;
+      bool pipe_stderr=true,
+      const char* cwd = 0) noexcept;
  ~Process();
 
   pid_t  get_id()                         const noexcept { return _pid; }
@@ -38,7 +39,7 @@ private:
   pid_t _pid;
   bool _closed;
 
-  pid_t open(std::function<void()>, bool, bool, bool) noexcept;
+  pid_t open(std::function<void()>, bool, bool, bool, const char*) noexcept;
   void close_fds() noexcept;
 };
 
