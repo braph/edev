@@ -193,7 +193,7 @@ static void test_warning(const Database::Tracks::Track& track, const char* msg)
 #define warn_if(OBJECT, ...) \
   if (__VA_ARGS__) test_warning(OBJECT, #__VA_ARGS__)
 
-static void read_file_into_string(const char* file, std::string& str) {
+static void read_file_into_string(const Filesystem::path& file, std::string& str) {
   static char buf[4*1024*1024]; buf[0] = '\0';
   buf[CFile::open(file, "r").read(buf, 1, sizeof(buf))] = '\0';
   str = buf;
@@ -225,7 +225,7 @@ int main() {
 
   string src;
   for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
-    read_file_into_string(f.path().c_str(), src);
+    read_file_into_string(f.path(), src);
     updater.insert_browsepage(src);
   }
 #else
