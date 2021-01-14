@@ -1,10 +1,12 @@
 #include "trackloader.hpp"
 
 #include "ektoplayer.hpp"
-#include "url_handler.hpp"
+#include "launchers.hpp"
 #include "config.hpp"
 
 #include <lib/filesystem.hpp>
+
+#include <thread>
 
 TrackLoader :: TrackLoader()
 {
@@ -83,8 +85,13 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
     Filesystem::error_code ex;
     if (e == CURLE_OK && dl.http_code() == 200) {
       if (Config::auto_extract_to_archive_dir) {
-        unpack_archive(dl.filename().c_str(), album_dir.c_str());
-        // TODO if (Config::delete_after_extraction) {}
+        std::thread([](std::string&& file, std::string&& dest_dir){
+          int ret = Lauchers::unpack_archive(file.c_str(), dest_dir.c_str()).get_exit_status();
+          if (ret == 0 && Config::delete_after_extraction) {
+            Filesystem::error_code ex;
+            Filesystem::remove(file, ex);
+          }
+        }, std::move(dl.filename()), std::move(album_dir.string())).detach();
       }
       else {
         Filesystem::rename(dl.filename(), archive, ex);

@@ -16,6 +16,7 @@ public:
   X(PAGE_DOWN,              "page_down")              \
   X(TOP,                    "top")                    \
   X(BOTTOM,                 "bottom")                 \
+  X(SHOW_COVER,             "show_cover")             \
   X(SEARCH_UP,              "search.up")              \
   X(SEARCH_DOWN,            "search.down")            \
   X(SEARCH_NEXT,            "search.next")            \

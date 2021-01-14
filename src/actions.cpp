@@ -3,6 +3,7 @@
 #include "player.hpp"
 #include "updater.hpp"
 #include "database.hpp"
+#include "launchers.hpp"
 #include "trackloader.hpp"
 #include "views/mainwindow.hpp"
 
@@ -23,6 +24,14 @@ int Actions :: call(ActionID id) {
     break;
   case UPDATE:
     updater.start();
+    break;
+  case SHOW_COVER:
+    if (! mainwindow->playlist.empty() && mainwindow->playlist.active_index() >= 0) {
+      auto track = mainwindow->playlist.active_item();
+      std::string cover_url = track.album().cover_url();
+      Ektoplayer::url_expand(cover_url, EKTOPLAZM_COVER_BASE_URL, ".jpg");
+      Lauchers::open_image(cover_url.c_str());
+    }
     break;
 
   // Player

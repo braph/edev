@@ -113,10 +113,12 @@ bool Process :: running() noexcept {
 }
 
 void Process :: close_fds() noexcept {
-  stdin_pipe.close();
-  stdout_pipe.close();
-  stderr_pipe.close();
-  // if (_pid > 0) ?!
+  if (_pid > 0) {
+    stdin_pipe.close();
+    stdout_pipe.close();
+    stderr_pipe.close();
+    _pid = -1;
+  }
 }
 
 void Process :: kill(bool force) noexcept {
@@ -126,5 +128,9 @@ void Process :: kill(bool force) noexcept {
     else
       ::kill(-_pid, SIGINT);
   }
+}
+
+void Process :: detach() noexcept {
+  _pid = -1;
 }
 

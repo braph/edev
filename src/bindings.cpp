@@ -30,6 +30,7 @@ void init() {
   _[C('l')]                               = Actions::REDRAW;
   _['U']                                  = Actions::UPDATE;
   _['q']                                  = Actions::QUIT;
+  _['I']                                  = Actions::SHOW_COVER;
 //_[C('r')]                               = RELOAD;
 #undef _
 

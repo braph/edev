@@ -26,6 +26,7 @@ public:
   void   close_stdin()                          noexcept;
   void   kill(bool force=false)                 noexcept;
   bool   running()                              noexcept;
+  void   detach()                               noexcept;
 
   template<typename T>
   Process& operator<<(const T& v) noexcept {
