@@ -145,7 +145,7 @@ Database :: Database() noexcept
 }
 
 void Database :: load(const std::string& file) {
-  auto fh = CFile::open(file.c_str(), "r"); // TODO
+  auto fh = CFile::open(file, "r");
 
   Loader l(fh);
   if (l.load<uint16_t>() != DB_ENDIANNESS_CHECK)
@@ -162,7 +162,7 @@ void Database :: load(const std::string& file) {
 }
 
 void Database :: save(const std::string& file) {
-  auto fh = CFile::open(file.c_str(), "w");
+  auto fh = CFile::open(file, "w");
 
   Dumper d(fh);
   d.dump(DB_ENDIANNESS_CHECK);
