@@ -5,9 +5,7 @@
 #include "config.hpp"
 
 #include <lib/filesystem.hpp>
-#include <lib/process.hpp> // TODO
-
-#include <thread>
+#include <lib/process.hpp>
 
 #include <unistd.h>
 
@@ -91,7 +89,7 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
         auto file     = std::move(dl.filename()); // dl will vanish
         auto dest_dir = std::move(album_dir);
 
-        std::thread([file, dest_dir](){
+        Process([file, dest_dir](){
           Filesystem::error_code e;
           if (Filesystem::create_directory(dest_dir, e)) {
             if (0 != Programs::file_archiver(file.c_str(), dest_dir.c_str()).get_exit_status())

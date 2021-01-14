@@ -13,8 +13,10 @@ public:
   PipeStream stdout_pipe;
   PipeStream stderr_pipe;
 
+  using function_t = std::function<void()>;
+
   Process(
-      std::function<void()> function,
+      function_t&& function,
       bool pipe_stdin=true,
       bool pipe_stdout=true,
       bool pipe_stderr=true,
@@ -39,7 +41,7 @@ private:
   pid_t _pid;
   bool _closed;
 
-  pid_t open(std::function<void()>, bool, bool, bool, const char*) noexcept;
+  pid_t open(function_t&&, bool, bool, bool, const char*) noexcept;
   void close_fds() noexcept;
 };
 
