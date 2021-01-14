@@ -97,6 +97,7 @@ public:
   bool            empty()     const noexcept { return _size == 0; }
   void            clear()           noexcept { _size = 0;         }
   data_type*      data()            noexcept { return _data;      }
+  const data_type*data()      const noexcept { return _data;      }
   size_t          capacity()  const noexcept { return _capacity;  }
   void            shrink_to_fit()            { /* TODO */         }
   void            emplace_back(value_type v) { push_back(v);      }
@@ -207,6 +208,7 @@ public:
   bool            empty()         const noexcept { return _vec.empty();      }
   size_t          capacity()      const noexcept { return _vec.capacity();   }
   data_type*      data()                noexcept { return _vec.data();       }
+  const data_type*data()          const noexcept { return _vec.data();       }
   int             bits()          const noexcept { return _vec.bits();       }
   value_type      get(size_t idx) const noexcept { return _vec.get(idx);     }
   void            pop_back()            noexcept { _vec.pop_back();          }

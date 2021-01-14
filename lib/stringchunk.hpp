@@ -31,9 +31,10 @@ public:
   char const* get(int id) const noexcept { return _data.c_str() + id; }
   int         size()      const noexcept { return _data.size();       }
   int         capacity()  const noexcept { return _data.capacity();   }
-  char*       data()            noexcept { return const_cast<char*>(_data.data()); }
   void        resize(size_t n)           { _data.resize(n);  }
   void        reserve(size_t n)          { _data.reserve(n); }
+  char*       data()            noexcept { return const_cast<char*>(_data.data()); }
+  const char* data()      const noexcept { return _data.data(); }
 
   struct Shrinker {
     void add(int id);

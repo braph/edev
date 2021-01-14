@@ -21,31 +21,31 @@ struct Dumper {
     : _fh(fh)
   {}
 
-  void dump(StringChunk& p) {
+  void dump(const StringChunk& p) {
     const size_t size = size_t(p.size());
     dump(size);
-    write(reinterpret_cast<char*>(p.data()), size);
+    write(p.data(), size);
     dump(size);
   }
 
   template<typename T>
-  void dump(DynamicPackedVector<T>& v) {
+  void dump(const DynamicPackedVector<T>& v) {
     const uint8_t bits = v.bits();
     const size_t  size = v.size();
     dump(bits);
     dump(size);
-    write(reinterpret_cast<char*>(v.data()), ceil_div(bits * size, BITSOF(char)));
+    write(v.data(), ceil_div(bits * size, BITSOF(char)));
     dump(bits);
     dump(size);
   }
 
   template<typename T>
-  void dump(std::vector<T>& v) {
+  void dump(const std::vector<T>& v) {
     const uint8_t bytes = sizeof(T);
     const size_t  size  = v.size();
     dump(bytes);
     dump(size);
-    write(reinterpret_cast<char*>(v.data()), bytes * size);
+    write(v.data(), bytes * size);
     dump(bytes);
     dump(size);
   }
@@ -53,7 +53,7 @@ struct Dumper {
   template<typename T>
   inline void dump(T value) {
     static_assert(std::is_arithmetic<T>::value, "T not an integer");
-    write(reinterpret_cast<char*>(&value), sizeof(value));
+    write(&value, sizeof(value));
   }
 
   void dump(Table& t) {
@@ -64,9 +64,9 @@ struct Dumper {
 private:
   FILE* _fh;
 
-  void write(char* buf, size_t size) {
-    if (::fwrite(buf, size, 1, _fh) != 1)
-      throw std::runtime_error(strerror(EIO));
+  void write(const void* buf, size_t size) {
+    if (std::fwrite(buf, size, 1, _fh) != 1)
+      throw std::runtime_error(std::strerror(EIO));
   }
 };
 
@@ -75,14 +75,12 @@ struct Loader {
     : _fh(fh)
   {}
 
-#define MSG_BAD_FOOTER "bad footer"
-
   void load(StringChunk& chunk) {
     const size_t size = load<size_t>();
     chunk.resize(size);
-    read(reinterpret_cast<char*>(chunk.data()), size);
+    read(chunk.data(), size);
     if (load<size_t>() != size)
-      throw std::runtime_error(MSG_BAD_FOOTER);
+      throw std::runtime_error("bad footer");
   }
 
   template<typename T>
@@ -91,9 +89,9 @@ struct Loader {
     const size_t  size = load<size_t>();
     vec.reserve(size, bits);
     vec.resize(size);
-    read(reinterpret_cast<char*>(vec.data()), ceil_div(bits * size, BITSOF(char)));
-    if (load<uint8_t>() != bits) throw std::runtime_error(MSG_BAD_FOOTER);
-    if (load<size_t>() != size)  throw std::runtime_error(MSG_BAD_FOOTER);
+    read(vec.data(), ceil_div(bits * size, BITSOF(char)));
+    if (load<uint8_t>() != bits) throw std::runtime_error("bad footer");
+    if (load<size_t>() != size)  throw std::runtime_error("bad footer");
   }
 
   template<typename T>
@@ -103,16 +101,16 @@ struct Loader {
     if (bytes != sizeof(T))
       throw std::runtime_error("byte count != sizeof(T)");
     v.resize(size);
-    read(reinterpret_cast<char*>(v.data()), size);
-    if (load<uint8_t>() != bytes) throw std::runtime_error(MSG_BAD_FOOTER);
-    if (load<size_t>() != size)   throw std::runtime_error(MSG_BAD_FOOTER);
+    read(v.data(), size);
+    if (load<uint8_t>() != bytes) throw std::runtime_error("bad footer");
+    if (load<size_t>() != size)   throw std::runtime_error("bad footer");
   }
 
   template<typename T>
   inline T load() {
     T value;
     static_assert(std::is_arithmetic<T>::value, "T not an integer");
-    read(reinterpret_cast<char*>(&value), sizeof(value));
+    read(&value, sizeof(value));
     return value;
   }
 
@@ -124,9 +122,9 @@ struct Loader {
 private:
   FILE* _fh;
 
-  void read(char* buf, size_t size) {
-    if (::fread(buf, size, 1, _fh) != 1)
-      throw std::runtime_error(strerror(EIO));
+  void read(void* buf, size_t size) {
+    if (std::fread(buf, size, 1, _fh) != 1)
+      throw std::runtime_error(std::strerror(EIO));
   }
 };
 
