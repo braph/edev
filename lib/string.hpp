@@ -42,6 +42,14 @@ struct CharsLen : public Chars {
   inline CharsLen(char* s_)          noexcept : Chars(s_), len(std::strlen(s)) {}
   inline CharsLen(signed char* s_)   noexcept : Chars(s_), len(std::strlen(s)) {}
   inline CharsLen(unsigned char* s_) noexcept : Chars(s_), len(std::strlen(s)) {}
+  template<class T>
+  inline CharsLen(T& s_, size_t n)             noexcept : Chars(s_), len(n) {}
+  inline CharsLen(char* s_, size_t n)          noexcept : Chars(s_), len(n) {}
+  inline CharsLen(signed char* s_, size_t n)   noexcept : Chars(s_), len(n) {}
+  inline CharsLen(unsigned char* s_, size_t n) noexcept : Chars(s_), len(n) {}
+
+  inline size_t length() const noexcept { return len;  }
+  inline bool   empty()  const noexcept { return !len; }
 };
 
 struct ConstCharsLen : public ConstChars {
@@ -51,6 +59,14 @@ struct ConstCharsLen : public ConstChars {
   inline ConstCharsLen(const char* s_)          noexcept : ConstChars(s_), len(std::strlen(s)) {}
   inline ConstCharsLen(const signed char* s_)   noexcept : ConstChars(s_), len(std::strlen(s)) {}
   inline ConstCharsLen(const unsigned char* s_) noexcept : ConstChars(s_), len(std::strlen(s)) {}
+  template<class T>
+  inline ConstCharsLen(const T& s_, size_t n)             noexcept : ConstChars(s_), len(n) {}
+  inline ConstCharsLen(const char* s_, size_t n)          noexcept : ConstChars(s_), len(n) {}
+  inline ConstCharsLen(const signed char* s_, size_t n)   noexcept : ConstChars(s_), len(n) {}
+  inline ConstCharsLen(const unsigned char* s_, size_t n) noexcept : ConstChars(s_), len(n) {}
+
+  inline size_t length() const noexcept { return len;  }
+  inline bool   empty()  const noexcept { return !len; }
 };
 
 /**
@@ -272,7 +288,7 @@ protected:
   size_t _len;
 };
 
-using CString = Basic_CString<char>;
+//using CString = Basic_CString<char>;
 
 // ============================================================================
 

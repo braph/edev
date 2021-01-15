@@ -8,6 +8,8 @@
 
 class StringChunk {
 public:
+  using CString = ConstCharsLen;
+
   /* First string in the chunk is always an empty string "" with ID 0 */
   StringChunk() : _data(1, '\0') {}
 

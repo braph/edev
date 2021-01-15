@@ -21,6 +21,7 @@ namespace Database {
 
 class Database;
 using ccstr = const char*;
+using CString = ConstCharsLen;
 
 /* ============================================================================
  * Metadata Database

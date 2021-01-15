@@ -1,6 +1,7 @@
 #ifndef PROGRAMS_HPP
 #define PROGRAMS_HPP
 
+#include <lib/string.hpp>
 #include <lib/process.hpp>
 #include <lib/stringpack.hpp>
 
@@ -10,13 +11,7 @@
 
 namespace Programs {
 
-struct String {
-  const char *s;
-  template<class T>
-  inline String(const T& s_)          noexcept : s(s_.c_str()) {}
-  inline String(const char* s_)       noexcept : s(s_)         {}
-  inline operator const char*() const noexcept { return s; }
-};
+using String = ConstChars;
 
 static inline Process file_archiver(String archive, String dest_dir) {
   return {[=](){
