@@ -3,7 +3,7 @@
 #include "ektoplayer.hpp"
 
 #include <lib/process.hpp>
-#include <lib/cstring.hpp> // temp_sprintf
+#include <lib/string.hpp> // temp_sprintf
 #include <lib/stringpack.hpp>
 
 #include <fcntl.h>

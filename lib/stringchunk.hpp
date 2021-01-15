@@ -1,7 +1,7 @@
 #ifndef LIB_STRINGCHUNK_HPP
 #define LIB_STRINGCHUNK_HPP
 
-#include "cstring.hpp"
+#include "string.hpp"
 #include "heaparray.hpp"
 
 #include <string>
