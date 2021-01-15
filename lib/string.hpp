@@ -4,13 +4,145 @@
 #include <string>
 #include <vector>
 #include <cstring>
-#include <string>
 #include <ctime>
 #include <cstdio>
 #include <cstdarg>
+#include <iterator>
 
-// TODO: includes...
-// TODO: this is a *complete* mess...
+/**
+ * Converter classes. 
+ */
+
+struct Chars {
+  char *s;
+  template<class T>
+  inline Chars(T& s_)             noexcept : s(s_.c_str()) {}
+  inline Chars(char* s_)          noexcept : s(s_)         {}
+  inline Chars(signed char* s_)   noexcept : s(reinterpret_cast<char*>(s_)) {}
+  inline Chars(unsigned char* s_) noexcept : s(reinterpret_cast<char*>(s_)) {}
+  inline operator char*()         noexcept { return s; }
+//inline char operator*()   const noexcept { return *s; }
+};
+
+struct ConstChars {
+  const char *s;
+  template<class T>
+  inline ConstChars(const T& s_)             noexcept : s(s_.c_str()) {}
+  inline ConstChars(const char* s_)          noexcept : s(s_)         {}
+  inline ConstChars(const signed char* s_)   noexcept : s(reinterpret_cast<const char*>(s_)) {}
+  inline ConstChars(const unsigned char* s_) noexcept : s(reinterpret_cast<const char*>(s_)) {}
+  inline operator const char*()              noexcept { return s; }
+//inline char operator*()   const noexcept { return *s; }
+};
+
+struct CharsLen : public Chars {
+  size_t len;
+  template<class T>
+  inline CharsLen(T& s_)             noexcept : Chars(s_), len(std::strlen(s)) {}
+  inline CharsLen(char* s_)          noexcept : Chars(s_), len(std::strlen(s)) {}
+  inline CharsLen(signed char* s_)   noexcept : Chars(s_), len(std::strlen(s)) {}
+  inline CharsLen(unsigned char* s_) noexcept : Chars(s_), len(std::strlen(s)) {}
+};
+
+struct ConstCharsLen : public ConstChars {
+  size_t len;
+  template<class T>
+  inline ConstCharsLen(const T& s_)             noexcept : ConstChars(s_), len(std::strlen(s)) {}
+  inline ConstCharsLen(const char* s_)          noexcept : ConstChars(s_), len(std::strlen(s)) {}
+  inline ConstCharsLen(const signed char* s_)   noexcept : ConstChars(s_), len(std::strlen(s)) {}
+  inline ConstCharsLen(const unsigned char* s_) noexcept : ConstChars(s_), len(std::strlen(s)) {}
+};
+
+/**
+ * Predicate functions
+ */
+
+static inline bool starts_with(ConstChars s, ConstCharsLen prefix) {
+  return !std::strncmp(s, prefix, prefix.len);
+}
+
+static inline bool ends_with(ConstCharsLen s, ConstCharsLen suffix) {
+  return s.len >= suffix.len && !std::strcmp(s + s.len - suffix.len, suffix);
+}
+
+static bool icontains(ConstChars haystack_, ConstCharsLen needle) {
+  if (! needle.len)
+    return true;
+
+  const char needle0 = *needle | 0x20;
+  const char* haystack = haystack_;
+
+  while (*haystack) {
+    if ((*haystack | 0x20) == needle0) {
+      size_t i = 1;
+      for (; i < needle.len && (haystack[i] | 0x20) == (needle[i] | 0x20); ++i);
+      if (i == needle.len)
+        return true;
+    }
+    ++haystack;
+  }
+
+  return false;
+}
+
+
+#if 0
+
+static inline size_t span(ConstChars s, ConstChars accept)  { return std::strspn(s, accept);  }
+static inline size_t cspan(ConstChars s, ConstChars reject) { return std::strcspn(s, reject); }
+
+template<class T> void shrink(T& s, size_t n) { s.resize(n); }
+template<class T> void shrink(T* s, size_t n) { s[n] = '\0'; }
+
+template<class T> size_t len(const T& s)    { return s.size(); }
+inline            size_t len(const char* s) { return std::strlen(s); }
+
+template<class T>
+T& erase_all(T& s, char c) {
+  auto it     = std::cbegin(s);
+  auto result = std::begin(s);
+
+  do {
+    if (*it != c)
+      *result++ = *it;
+  } while (*it++);
+
+  auto new_size = result - std::begin(s) - 1;
+  shrink(s, new_size);
+  return s;
+}
+
+template<class T>
+T& trim(T& s, const char* chars = " \n\t\n\f\v") {
+  size_t beg = span(s, chars);
+  size_t end = len(s);
+  while (end > beg && std::strchr(chars, s[--end]));
+  std::memmove(&s[0], &s[beg], end - beg + 1);
+  shrink(s, end - beg + 1);
+  return s;
+}
+
+template<class T, class F>
+void foreach_overlap(T& s) {
+next:
+  auto result = find(s, search);
+  if (! is_npos(result)) {
+    F(result);
+    goto next;
+  }
+}
+
+template<class T>
+void eraes_all_overlap(T& s, ConstCharsLen search) {
+  foreach_overlap(s, (size_t i)[]{ erase(s, i, search.len); });
+}
+#endif
+
+
+
+/**
+ * TODO Here begins the mess TODO
+ */
 
 template<class T> inline T*   cstr(T* s)                          { return s;         }
 template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
@@ -20,21 +152,6 @@ template<class T, size_t N> inline size_t s_len(      T(&s)[N])   { return std::
 template<class T, size_t N> inline size_t s_len(const T(&s)[N])   { return N - 1;          }
 template<class T>           inline size_t s_len(const T& s)       { return s.size();       }
 #endif
-
-template<class TString, class TPrefix>
-inline bool starts_with(const TString& s, const TPrefix& prefix) {
-  return !std::strncmp(cstr(s), cstr(prefix), std::strlen(cstr(prefix)));
-}
-
-static inline bool ends_with(const char* s, const size_t len, const char* suffix, const size_t suffix_len) {
-  return len >= suffix_len && !std::strcmp(s + len - suffix_len, suffix);
-}
-
-template<class TString, class TSuffix>
-inline bool ends_with(const TString& s, const TSuffix & suffix) {
-  return ends_with(cstr(s), std::strlen(cstr(s)), cstr(suffix), std::strlen(cstr(suffix)));
-}
-
 
 static void erase_all(std::string& s, const char* search) {
   for (size_t pos; (pos = s.find(search)) != std::string::npos;)
@@ -105,28 +222,6 @@ void split(std::vector<std::string>& result, const String& str, const Predicate&
   }
   if (rs.size())
     result.push_back(std::move(rs));
-}
-
-static bool icontains(const char* haystack, const char* needle, size_t needle_len) {
-  if (! needle_len)
-    return true;
-
-  while (*haystack) {
-    if ((*haystack | 0x20) == (*needle | 0x20)) {
-      size_t i = 1;
-      for (; i < needle_len && (haystack[i] | 0x20) == (needle[i] | 0x20); ++i);
-      if (i == needle_len)
-        return true;
-    }
-    ++haystack;
-  }
-
-  return false;
-}
-
-template<class T1, class T2>
-bool icontains(const T1& haystack, const T2& needle) {
-  return icontains(cstr(haystack), cstr(needle), strlen(cstr(needle)));
 }
 
 // ============================================================================
@@ -246,4 +341,22 @@ char* time_format(char (&buf)[N], const char* fmt, std::time_t t) {
   return buf;
 }
 
+#if 0
+#include <string>
+#include <iostream>
+#include <cassert>
+int main(int, const char**args) {
+  assert(starts_with("foo", "foo"));
+  assert(starts_with("foo bar", "foo"));
+  assert(ends_with("bar", "bar"));
+  assert(ends_with("foo bar", "bar"));
+  std::string s("foxbax"); assert(erase_all(s, 'x') == "foba");
+
+  std::string t("  foobar  "); std::cout << '|' << trim(t) << '|' << std::endl; //assert(trim(t) == "foobar");
+  std::string u(""); std::cout << '|' << trim(u) << '|' << std::endl; //assert(trim(t) == "foobar");
+
+  //std::cout << '|' << erase_all(s, 'x') << '|' << std::endl;
+  //assert(s == "foba");
+}
+#endif
 #endif // LIB_STRING_HPP
