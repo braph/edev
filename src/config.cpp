@@ -279,15 +279,15 @@ static InfoLineFormat parse_infoline_format(const char* s) {
  * End of option parsing functions
  * ==========================================================================*/
 
+static inline void check_arg_count(const Config::string_array& args, size_t min, size_t max) {
+  if (args.size() < min) throw ConfigError("Missing arguments");
+  if (args.size() > max) throw ConfigError("Too many arguments");
+}
+
 #include "config/options.define.cpp"
 
 void Config :: init() {
 #include "config/options.initialize.cpp"
-}
-
-static inline void check_arg_count(const string_array& args, size_t min, size_t max) {
-  if (args.size() < min) throw ConfigError("Missing arguments");
-  if (args.size() > max) throw ConfigError("Too many arguments");
 }
 
 void Config :: set(const string_array& args) {

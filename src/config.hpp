@@ -22,11 +22,10 @@ struct ConfigError : public std::invalid_argument {
   {}
 };
 
-using string_array = ArrayView<const char*>;
-
 namespace Config {
 
 using namespace Views;
+using string_array = ArrayView<const char*>;
 
 #include "config/options.declare.hpp"
 
