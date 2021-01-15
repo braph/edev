@@ -8,7 +8,7 @@ Actions::ActionID global[KEY_MAX];
 Actions::ActionID playlist[KEY_MAX];
 Actions::ActionID pad[KEY_MAX];
 
-void init() {
+inline void init() {
 #define _ global
   _['f']                  = _[KEY_RIGHT]  = Actions::PLAYER_FORWARD;
   _['b']                  = _[KEY_LEFT]   = Actions::PLAYER_BACKWARD;

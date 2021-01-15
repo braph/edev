@@ -9,14 +9,11 @@
 
 #include <unistd.h>
 
-TrackLoader :: TrackLoader()
-{
-}
-
 std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, bool force_download) {
+  Filesystem::error_code e;
+
   auto album_dir = Filesystem::path(Config::album_dir) / track.album().title();
   if (Filesystem::exists(album_dir)) {
-    Filesystem::error_code e;
     auto track_no = track.number();
     for (const auto& f : Filesystem::directory_iterator(album_dir, e)) {
       if (std::atoi(f.path().filename().c_str()) == track_no) {
@@ -32,10 +29,8 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
 
   auto file_in_cache = Filesystem::path(Config::cache_dir) / track_file;
 
-  if (force_download) {
-    Filesystem::error_code e;
+  if (force_download)
     Filesystem::remove(file_in_cache, e);
-  }
 
   if (Filesystem::exists(file_in_cache)) {
     log_write("Track %s -> CACHE: %s\n", track.title(), file_in_cache);
@@ -45,7 +40,7 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
   Ektoplayer::url_expand(track_url, EKTOPLAZM_TRACK_BASE_URL, ".mp3");
   log_write("Track %s -> DOWNLOAD: %s\n", track.title(), track_url);
 
-  FileDownload* download = new FileDownload(track_url, file_in_cache.string() + EKTOPLAZM_DOWNLOAD_SUFFIX);
+  auto download = new FileDownload(track_url, file_in_cache.string() + EKTOPLAZM_DOWNLOAD_SUFFIX);
   download->setopt(CURLOPT_TIMEOUT, 60);
 
   _downloads.add_download(download, [=](Download& _dl, CURLcode e) {
@@ -76,7 +71,7 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
   std::string url = track.album().archive_mp3_url();
   Ektoplayer::url_expand(url, EKTOPLAZM_ARCHIVE_BASE_URL, "MP3.zip");
 
-  FileDownload* download = new FileDownload(url, archive.string() +  EKTOPLAZM_DOWNLOAD_SUFFIX);
+  auto download = new FileDownload(url, archive.string() +  EKTOPLAZM_DOWNLOAD_SUFFIX);
   log_write("Starting download: %s -> %s\n", url, download->filename());
 
   _downloads.add_download(download, [=](Download& dl_, CURLcode e) {

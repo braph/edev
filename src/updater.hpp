@@ -12,7 +12,7 @@ namespace Database { class Database; }
 class Updater {
 public:
   Updater(Database::Database&)    noexcept;
-  bool start(int pages = INT_MAX) noexcept;
+  void start(int pages = INT_MAX) noexcept;
   Downloads& downloads()          noexcept { return _downloads; }
 
 #ifndef TEST_UPDATER

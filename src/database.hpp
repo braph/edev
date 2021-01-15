@@ -59,7 +59,7 @@ using CString = ConstCharsLen;
  * validation is performed, so the database may be rebuilt on errors.
  * And after all the database is more like a cache.
  *
- * XXX NOTES XXX
+ * === NOTES ===
  *
  * Records with ID == 0 (first row) are used for representing a NULL value.
  * The row count of a table will therefore be off by one.

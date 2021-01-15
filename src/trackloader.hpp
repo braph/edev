@@ -9,12 +9,11 @@
 
 class TrackLoader {
 public:
-  TrackLoader();
-
-  Downloads& downloads() noexcept { return _downloads; }
+  TrackLoader() {}
 
   std::string get_file_for_track(Database::Tracks::Track, bool force_reload=false);
   void download_album(const Database::Tracks::Track&);
+  Downloads& downloads() noexcept { return _downloads; }
 
 private:
   Downloads _downloads;

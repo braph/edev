@@ -51,7 +51,7 @@ Updater :: Updater(Database::Database &db) noexcept
 }
 
 void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
-  BufferDownload* dl = new BufferDownload(Ektoplayer::browse_url(page));
+  auto dl = new BufferDownload(Ektoplayer::browse_url(page));
   dl->buffer() = std::move(recycle_buffer);
   dl->buffer().reserve(BROWSEPAGE_HTML_SIZE);
   dl->buffer().clear();
@@ -82,15 +82,13 @@ void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
   });
 }
 
-bool Updater :: start(int pages) noexcept {
+void Updater :: start(int pages) noexcept {
   log_write("Started database update (max %d pages)\n", pages);
   _max_pages = pages;
 
   if (! (_downloads.running_downloads() + _downloads.queued_downloads()))
     for (int i = 1; i <= _downloads.parallel(); ++i)
       fetch_page(i);
-
-  return true;
 }
 
 void Updater :: insert_album(Album& album) noexcept {
