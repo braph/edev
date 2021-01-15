@@ -118,7 +118,7 @@ enum TrackColumnID : unsigned char {
   TRACK_ENUM_END,
 };
 
-static ColumnID columnIDFromStr(const std::string &s) noexcept {
+static ColumnID columnIDFromStr(const char* s) noexcept {
   using pack = StringPack::AlphaNoCase;
   switch (pack::pack_runtime(s)) {
   case pack("style"):         return static_cast<ColumnID>(STYLE_NAME);
