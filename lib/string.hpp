@@ -228,6 +228,10 @@ static inline std::string& trim(std::string& s, const char* chars = " \n\t\f\v")
   return s;
 }
 
+static inline std::string& rtrim(std::string& s, const char* chars = " \n\t\f\v") {
+  return trim(s, chars); // TODO
+}
+
 template<class String, class Predicate>
 void split(std::vector<std::string>& result, const String& str, const Predicate& pred) {
   std::string rs;

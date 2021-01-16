@@ -8,15 +8,12 @@ static inline std::string& url_unescape(std::string& url) { return replace_all(u
 static inline std::string& url_escape(std::string& url)   { return replace_all(url, ' ', "%20"); }
 
 /// https://foo.com/bar/ -> bar
-static std::string& url_basename(std::string &url) {
-  if (url.size()) {
-    if (url.back() == '/')
-      url.pop_back();
+static std::string& url_dirname(std::string &url) {
+  rtrim(url, "/");
 
-    size_t pos = url.rfind('/');
-    if (pos != std::string::npos)
-      url.erase(0, pos+1);
-  }
+  size_t pos = url.rfind('/');
+  if (pos != std::string::npos)
+    url.erase(0, pos+1);
 
   return url;
 }
@@ -26,7 +23,7 @@ namespace Ektoplayer {
 std::string& url_shrink(std::string& url, const char* prefix, const char* suffix) {
   (void) prefix; // UNUSED for now
   url_unescape(url);
-  url_basename(url);
+  url_dirname(url);
   if (suffix)
     strip_extension(url, suffix);
   return url;
