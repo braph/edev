@@ -18,6 +18,17 @@
 // StringPack::L33tNoCase  | 12    | Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'
 // StringPack::Numeric     | 16    | Better use `switch(atoi(...)) {}` instead!
 //
+// Ordered by performance (better first)
+// =====================================
+//
+// 1. Raw
+// 2. ASCII
+// 3. Alpha, Lower, Upper, Numeric, Floatic
+// 4. AlphaNoCase
+// 5. Alnum
+// 6. AlnumNoCase
+// 7. L33tNoCase
+//
 // How does it work
 // ================
 //
@@ -159,60 +170,55 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
 // Building blocks for creating sets of possible `character sets`
 // ============================================================================
 
+/// Marker for unmatched characters
+inline constexpr uint8_t unmatched(uint8_t) {
+  return 1;
+}
+
 /// Include a single character
-template<uint8_t Char, conv_func next>
+template<uint8_t Char, conv_func next = unmatched>
 inline constexpr uint8_t character(uint8_t c) {
   return 1 + (c == Char ? 0 : next(c));
 }
 
 /// Include a range of characters
-template<uint8_t from, uint8_t to, conv_func next>
+template<uint8_t from, uint8_t to, conv_func next = unmatched>
 inline constexpr uint8_t range(uint8_t c) {
   return 1 + (c >= from && c <= to ? c - from : to - from + next(c));
 }
 
 /// Include 0-9
-template<conv_func next>
+template<conv_func next = unmatched>
 inline constexpr uint8_t numeric(uint8_t c) {
   return range<'0', '9', next>(c);
 }
 
 /// Include a-z
-template<conv_func next>
+template<conv_func next = unmatched>
 inline constexpr uint8_t lower(uint8_t c) {
   return range<'a', 'z', next>(c);
 }
 
 /// Include A-Z
-template<conv_func next>
+template<conv_func next = unmatched>
 inline constexpr uint8_t upper(uint8_t c) {
   return range<'A', 'Z', next>(c);
 }
 
 /// Include a-zA-Z
-template<conv_func next>
+template<conv_func next = unmatched>
 inline constexpr uint8_t alpha(uint8_t c) {
   return lower<upper<next>>(c);
 }
 
 /// Include a-zA-Z (case insensitive)
-template<conv_func next>
+template<conv_func next = unmatched>
 inline constexpr uint8_t alpha_nocase(uint8_t c) {
   return 1 + (
     c >= 'a' && c <= 'z' ? c - 'a' :
     c >= 'A' && c <= 'Z' ? c - 'A' :
     'z' - 'a' + next(c)
   );
-}
-
-/// Use all characters (0-255)
-inline constexpr uint8_t raw(uint8_t c) noexcept {
-  return c;
-}
-
-/// Use ascii characters (0-127), everything beyound is 127..
-inline constexpr uint8_t ascii(uint8_t c) noexcept {
-  return (c <= 127 ? c : 127);
 }
 
 /// Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'"
@@ -235,10 +241,44 @@ inline constexpr uint8_t l33t_nocase(uint8_t c) noexcept {
   );
 }
 
-/// Marker for unmatched characters
-inline constexpr uint8_t unmatched(uint8_t) {
-  return 1;
+/**
+ * Those are optimized for execution time but may include other characters.
+ */
+namespace fast {
+
+/// Use all characters (0-255)
+inline constexpr uint8_t raw(uint8_t c) noexcept {
+  return c;
 }
+
+/// Use ascii characters (0-127), everything beyound is will be truncated to 127
+inline constexpr uint8_t ascii(uint8_t c) noexcept {
+  return (c <= 127 ? c : 127);
+}
+
+// Use 0-9,.
+template<conv_func next = unmatched>
+inline constexpr uint8_t floatic(uint8_t c) noexcept {
+  return range<',', '9', next>(c);
+}
+
+/// Use a-zA-Z_
+template<conv_func next = unmatched>
+inline constexpr uint8_t alpha(uint8_t c) noexcept {
+  return range<'A', 'z', next>(c);
+}
+
+/// Use a-zA-Z_ (converted to lower case)
+template<conv_func next = unmatched>
+inline constexpr uint8_t alpha_nocase(uint8_t c) noexcept {
+  return 1 + (c >= 'A' && c <= 'z' ? (c&~0x20) - 'A' : 'Z' - 'A' + next(c));
+}
+
+using StringPack::lower;
+using StringPack::upper;
+using StringPack::numeric;
+
+} // namespace fast
 
 template<conv_func conv>
 struct packer {
@@ -299,15 +339,16 @@ struct packer {
   { return conv_info<conv>::characters(); }
 };
 
-using Raw         = packer<raw>;
-using ASCII       = packer<ascii>;
-using Lower       = packer<lower<character<'_', unmatched>>>;
-using Upper       = packer<upper<character<'_', unmatched>>>;
-using Numeric     = packer<numeric<unmatched>>;
-using Alpha       = packer<alpha<character<'_', unmatched>>>;
-using AlphaNoCase = packer<alpha_nocase<character<' ', unmatched>>>;
-using Alnum       = packer<numeric<alpha<character<'_', unmatched>>>>;
-using AlnumNoCase = packer<numeric<alpha_nocase<character<'_', unmatched>>>>;
+using Raw         = packer<fast::raw>;
+using ASCII       = packer<fast::ascii>;
+using Alpha       = packer<fast::alpha>;
+using AlphaNoCase = packer<fast::alpha_nocase>;
+using Floatic     = packer<fast::floatic>;
+using Lower       = packer<fast::lower>;
+using Upper       = packer<fast::upper>;
+using Numeric     = packer<fast::numeric>;
+using Alnum       = packer<numeric<alpha<character<'_'>>>>;
+using AlnumNoCase = packer<numeric<alpha_nocase<character<'_'>>>>;
 using L33tNoCase  = packer<l33t_nocase>;
 
 } // namespace StringPack

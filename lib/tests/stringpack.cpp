@@ -9,12 +9,15 @@
   assert(CLASS::pack_runtime(std::string(C_STRING)) == CLASS::pack(C_STRING)); \
 } while(0)
 
+#define test_conversion(STRING_1, STRING_2) \
+  assert(SC::pack_runtime(STRING_1) == SC::pack(STRING_2))
+
 #define doc(CLASS, DOC) \
   printf("%-23s | %-5zu | %s\n", #CLASS, CLASS::max_size(), DOC)
 
 int main() {
   printf("%-23s | %-5s | %s\n", "class", "len", "comment");
-  doc(StringPack::Generic,     "Fastest (no conversion applied)");
+  doc(StringPack::Raw,         "Fastest (no conversion applied)");
   doc(StringPack::ASCII,       "Fast (chars >= 128 will be converted to 127)");
   doc(StringPack::Alnum,       "");
   doc(StringPack::AlnumNoCase, "");
@@ -24,45 +27,10 @@ int main() {
   doc(StringPack::Lower,       "");
   doc(StringPack::L33tNoCase,  "Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'");
   doc(StringPack::Numeric,     "");
+  doc(StringPack::Floatic,     "");
 
   {
-    using SC = StringPack::L33tNoCase;
-    switch (SC::pack_runtime("0123456789")) {
-      case SC("OLZEASGTBQ"): break;
-      default:               throw;
-    }
-  }
-
-  {
-    using SC = StringPack::Numeric;
-
-    const char* s = "123456789";
-    switch (SC::pack_runtime(s)) {
-      case SC("123456789"): break;
-      default:             throw;
-    }
-  }
-
-  {
-    using SC = StringPack::AlphaNoCase;
-    switch (SC::pack_runtime("progressBar")) {
-      case SC::pack("progressbar"): break;
-      default:                      throw;
-    }
-  }
-
-  {
-    using SC = StringPack::AlnumNoCase;
-    assert(SC::pack("A") == SC::pack("a"));
-
-    switch (SC::pack("A")) {
-      case SC::pack("a"): break;
-      default:            throw;
-    }
-  }
-
-  {
-    using SC = StringPack::Generic;
+    using SC = StringPack::Raw;
 
     assert(0   == SC::pack(""));
     assert('a' == SC::pack("a"));
@@ -101,13 +69,23 @@ int main() {
   }
 
   {
+    using SC = StringPack::AlphaNoCase;
+    test_conversion("ABC_def_GHI", "abc_DEF_ghi");
+  }
+
+  {
+    using SC = StringPack::AlnumNoCase;
+    test_conversion("aBc_123", "AbC_123");
+  }
+
+  {
     using SC = StringPack::Lower;
 
     assert(0  == SC::pack(""));
     assert(1  == SC::pack("a"));
     assert(26 == SC::pack("z"));
     assert(27 == SC::pack("_"));
-    assert(28 == SC::pack("+"));
+    assert(27 == SC::pack("+"));
 
     assert(SC::pack_runtime("overflow_overflow")   == StringPack::overflow);
   //assert(pack("overflow0")   == pack("overflow0"));
@@ -133,5 +111,20 @@ int main() {
     test(SC, "abcdefgh");
     test(SC, "b");
     test(SC, "x");
+  }
+
+  {
+    using SC = StringPack::Numeric;
+    test(SC, "123456789");
+  }
+
+  {
+    using SC = StringPack::Floatic;
+    test(SC, "0.,123456789");
+  }
+
+  {
+    using SC = StringPack::L33tNoCase;
+    test_conversion("0123456789", "OLZEASGTBQ");
   }
 }
