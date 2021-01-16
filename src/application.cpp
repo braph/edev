@@ -107,9 +107,8 @@ void Application :: init() {
       fs::create_directory(Config::archive_dir);
 
     e = "Error opening log file";
-    if (! std::freopen(Config::log_file.c_str(), "a", stderr))
-      throw std::runtime_error(std::strerror(errno));
-    std::setvbuf(stderr, NULL, _IOLBF, 0);
+    CFile::stderr().reopen(Config::log_file, "a");
+    CFile::stderr().setlinebuf();
 
     e = "Error reading database file. Try again, then delete it. Sorry!";
     if (fs::exists(Config::database_file))

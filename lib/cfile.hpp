@@ -90,6 +90,20 @@ public:
   inline void unlockfile()  noexcept { return ::funlockfile(_fh);  }
 #endif
 
+
+  inline int setvbuf(char *buf, int mode, size_t size) noexcept
+  { return std::setvbuf(_fh, buf, mode, size); }
+
+  inline int setbuf(char *buf) noexcept
+  { return std::setvbuf(_fh, buf, buf ? _IOFBF : _IONBF, BUFSIZ); };
+
+  inline int setbuffer(char *buf, size_t size) noexcept
+  { return std::setvbuf(_fh, buf, buf ? _IOFBF : _IONBF, BUFSIZ); };
+
+  inline int setlinebuf() noexcept
+  { return std::setvbuf(_fh, NULL, _IOLBF, 0); }
+
+
 #if !defined(NDEBUG) && (defined(__GNUC__) || defined(__clang__))
   __attribute__((__format__(__printf__, 2, 3)))
   int printf(const char* fmt, ...) noexcept {
@@ -125,6 +139,9 @@ public:
   inline int vfprintf(const char *format, va_list ap) noexcept {
     return std::vfprintf(_fh, format, ap);
   }
-};
 
+  static CFile& stdin()  { return reinterpret_cast<CFile&>(::stdin);  };
+  static CFile& stdout() { return reinterpret_cast<CFile&>(::stdout); };
+  static CFile& stderr() { return reinterpret_cast<CFile&>(::stderr); };
+};
 #endif
