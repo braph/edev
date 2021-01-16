@@ -7,7 +7,7 @@
 // ====================================================
 //
 // class                   | len   | comment
-// StringPack::Generic     | 8     | Fastest (no conversion applied)
+// StringPack::Raw         | 8     | Fastest (no conversion applied)
 // StringPack::ASCII       | 9     | Fast (chars >= 128 will be converted to 127)
 // StringPack::Alnum       | 9     |
 // StringPack::AlnumNoCase | 10    |
@@ -206,7 +206,7 @@ inline constexpr uint8_t alpha_nocase(uint8_t c) {
 }
 
 /// Use all characters (0-255)
-inline constexpr uint8_t all(uint8_t c) noexcept {
+inline constexpr uint8_t raw(uint8_t c) noexcept {
   return c;
 }
 
@@ -299,7 +299,7 @@ struct packer {
   { return conv_info<conv>::characters(); }
 };
 
-using Generic     = packer<all>;
+using Raw         = packer<raw>;
 using ASCII       = packer<ascii>;
 using Lower       = packer<lower<character<'_', unmatched>>>;
 using Upper       = packer<upper<character<'_', unmatched>>>;

@@ -111,7 +111,7 @@ void Mpg123Playback :: parse_stdout_line(const char* line) noexcept {
   if (! rest)
     return;
 
-  using pack = StringPack::Generic;
+  using pack = StringPack::Raw;
   switch (pack::pack_runtime(line, size_t(rest-line))) {
     case pack("@SAMPLE"): // 16063 21920052
       if (_sample_rate) {

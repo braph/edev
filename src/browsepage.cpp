@@ -211,7 +211,7 @@ Album BrowsePageParser :: next_album() {
   for (const auto& tracklist : xpath.query(cache[".//div[@class = 'tl']"], post)) {
     Track track;
     for (const auto& span : xpath.query(cache[".//span"], tracklist)) {
-      using pack = StringPack::Generic;
+      using pack = StringPack::Raw;
       switch (pack::pack_runtime(span["class"])) {
         case pack("n"):
           if (! track.url.empty()) {

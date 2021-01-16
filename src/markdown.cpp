@@ -15,7 +15,7 @@ struct State {
 void startElement(void* self_, const xmlChar* name, const xmlChar** attrs) {
   auto& self = *static_cast<State*>(self_);
 
-  using pack = StringPack::Generic;
+  using pack = StringPack::Raw;
   switch (pack::pack_runtime(name)) {
   case pack("i"):
   case pack("em"):
@@ -38,7 +38,7 @@ void startElement(void* self_, const xmlChar* name, const xmlChar** attrs) {
 void endElement(void* self_, const xmlChar* name) {
   auto& self = *static_cast<State*>(self_);
 
-  using pack = StringPack::Generic;
+  using pack = StringPack::Raw;
   switch (pack::pack_runtime(name)) {
   case pack("i"):
   case pack("em"):
