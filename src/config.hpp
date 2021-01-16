@@ -7,18 +7,16 @@
 #include "views/mainwindow.hpp"
 #include <lib/arrayview.hpp>
 #include <lib/packed/tinyarray.hpp>
+#include <lib/string.hpp>
 
 #include <string>
 
 struct ConfigError : public std::invalid_argument {
   using std::invalid_argument::invalid_argument;
 
-  ConfigError(std::string s1, const char* s2)
-    : invalid_argument(s1+": "+s2)
-  {}
-
-  ConfigError(std::string s1, const char* s2, const char* s3)
-    : invalid_argument(s1+": "+s2+": "+s3)
+  template<class S, typename ... T>
+  ConfigError(S a, ConstChars b, T ... c)
+    : ConfigError(std::string(a) + ": " + b.s, c ...)
   {}
 };
 

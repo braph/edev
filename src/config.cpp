@@ -19,7 +19,7 @@ using namespace Views;
 
 // Parsing functions for primitives ===========================================
 
-static int parse_int(const char* s) {
+static int parse_int(ConstChars s) {
   char *end;
   int i = std::strtoimax(s, &end, 10);
   if (!*s || *end)
@@ -27,7 +27,7 @@ static int parse_int(const char* s) {
   return i;
 }
 
-static float parse_float(const char* s) {
+static float parse_float(ConstChars s) {
   char *end;
   float f = std::strtof(s, &end);
   if (!*s || *end)
@@ -35,7 +35,7 @@ static float parse_float(const char* s) {
   return f;
 }
 
-static bool parse_bool(const char* s) {
+static bool parse_bool(ConstChars s) {
   using pack = StringPack::AlnumNoCase;
   switch (pack::pack_runtime(s)) {
     case pack("true"):  return true;
@@ -44,7 +44,7 @@ static bool parse_bool(const char* s) {
   throw ConfigError(s, "Expected `true` or `false`");
 }
 
-static wchar_t parse_char(const char* s) {
+static wchar_t parse_char(ConstChars s) {
   wchar_t wide[2];
   if (1 != std::mbstowcs(wide, s, 2))
     throw ConfigError(s, "Expected a single character");
@@ -53,7 +53,7 @@ static wchar_t parse_char(const char* s) {
 
 // Parsing functions for `special` primitives =================================
 
-static int parse_use_colors(const char* s) {
+static int parse_use_colors(ConstChars s) {
   using pack = StringPack::AlnumNoCase;
   switch (pack::pack_runtime(s)) {
     case pack("auto"):  return -1;
@@ -64,21 +64,21 @@ static int parse_use_colors(const char* s) {
   throw ConfigError(s, "Expected auto|mono|8|256");
 }
 
-static short parse_color(const char* s) {
-  short color = UI::Color::parse(s);
+static short parse_color(ConstChars s) {
+  short color = UI::Color::parse(s.s);
   if (color != UI::Color::Invalid)
     return color;
   throw ConfigError(s, "Invalid color");
 }
 
-static attr_t parse_attribute(const char* s) {
-  attr_t attr = UI::Attribute::parse(s);
+static attr_t parse_attribute(ConstChars s) {
+  attr_t attr = UI::Attribute::parse(s.s);
   if (attr != UI::Attribute::Invalid)
     return attr;
   throw ConfigError(s, "Invalid attribute");
 }
 
-static Database::ColumnID parse_column(const char* s) {
+static Database::ColumnID parse_column(ConstChars s) {
   Database::ColumnID column = Database::columnIDFromStr(s);
   if (column != Database::COLUMN_NONE)
     return column;
@@ -87,7 +87,7 @@ static Database::ColumnID parse_column(const char* s) {
 
 // Parsing functions for complex objects ======================================
 
-static decltype(Config::tabs_widgets) parse_tabs_widgets(const char* s) {
+static decltype(Config::tabs_widgets) parse_tabs_widgets(ConstChars s) {
   decltype(Config::tabs_widgets) widgets = {};
   size_t idx = 0;
   const char *cs = s;
@@ -111,7 +111,7 @@ static decltype(Config::tabs_widgets) parse_tabs_widgets(const char* s) {
   return widgets;
 }
 
-static decltype(Config::main_widgets) parse_main_widgets(const char* s) {
+static decltype(Config::main_widgets) parse_main_widgets(ConstChars s) {
   decltype(Config::main_widgets) widgets = {};
   size_t idx = 0;
   const char *cs = s;
@@ -143,7 +143,7 @@ static inline const char* skipWhitespace(const char *s) {
 struct AttributeParser {
   const char* s;
   std::string name, value;
-  AttributeParser(const char* s) : s(s) {}
+  AttributeParser(ConstChars s) : s(s) {}
 
   bool next() {
     name.clear();
@@ -165,7 +165,7 @@ struct FormatParser {
   Database::ColumnID column;
   std::string text;
   std::string _attributes;
-  FormatParser(const char* str) : s(str) {}
+  FormatParser(ConstChars str) : s(str) {}
 
   bool next() {
     column = Database::COLUMN_NONE;
@@ -190,7 +190,7 @@ struct FormatParser {
       if (text.empty())
         return false;
 
-      column = parse_column(text.c_str());
+      column = parse_column(text);
 
       text.clear();
     }
@@ -208,11 +208,11 @@ struct FormatParser {
   }
 
   AttributeParser attributes() {
-    return AttributeParser(_attributes.c_str());
+    return AttributeParser(_attributes);
   }
 };
 
-static PlaylistColumns parse_playlist_columns(const char* s) {
+static PlaylistColumns parse_playlist_columns(ConstChars s) {
   PlaylistColumns result;
   FormatParser formatParser(s);
   while (formatParser.next()) {
@@ -227,8 +227,8 @@ static PlaylistColumns parse_playlist_columns(const char* s) {
     while (attr.next()) {
       using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(attr.name)) {
-        case pack("fg"):    fmt.fg = parse_color(attr.value.c_str());  break;
-        case pack("bg"):    fmt.bg = parse_color(attr.value.c_str());  break;
+        case pack("fg"):    fmt.fg = parse_color(attr.value);  break;
+        case pack("bg"):    fmt.bg = parse_color(attr.value);  break;
         case pack("right"): fmt.justify = PlaylistColumnFormat::Justify::Right;  break;
         case pack("left"):  fmt.justify = PlaylistColumnFormat::Justify::Left;   break;
         case pack("size"):
@@ -247,7 +247,7 @@ static PlaylistColumns parse_playlist_columns(const char* s) {
 }
 
 //"<text fg='black'>&lt;&lt; </text><title bold='on' fg='yellow' /><text fg='black'> &gt;&gt;</text>";
-static InfoLineFormat parse_infoline_format(const char* s) {
+static InfoLineFormat parse_infoline_format(ConstChars s) {
   InfoLineFormat result;
 
   FormatParser formatParser(s);
@@ -263,9 +263,9 @@ static InfoLineFormat parse_infoline_format(const char* s) {
     while (attr.next()) {
       using pack = StringPack::AlnumNoCase;
       switch (pack::pack_runtime(attr.name)) {
-        case pack("fg"): fmt.fg = parse_color(attr.value.c_str()); break;
-        case pack("bg"): fmt.bg = parse_color(attr.value.c_str()); break;
-        default:         fmt.attributes |= parse_attribute(attr.name.c_str());
+        case pack("fg"): fmt.fg = parse_color(attr.value); break;
+        case pack("bg"): fmt.bg = parse_color(attr.value); break;
+        default:         fmt.attributes |= parse_attribute(attr.name);
       }
     }
 
