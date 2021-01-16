@@ -347,8 +347,8 @@ using Floatic     = packer<fast::floatic>;
 using Lower       = packer<fast::lower>;
 using Upper       = packer<fast::upper>;
 using Numeric     = packer<fast::numeric>;
-using Alnum       = packer<numeric<alpha<character<'_'>>>>;
-using AlnumNoCase = packer<numeric<alpha_nocase<character<'_'>>>>;
+using Alnum       = packer<numeric<fast::alpha>>;
+using AlnumNoCase = packer<numeric<fast::alpha_nocase>>;
 using L33tNoCase  = packer<l33t_nocase>;
 
 } // namespace StringPack
