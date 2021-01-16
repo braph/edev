@@ -4,11 +4,11 @@
 
 #include <lib/base64.hpp>
 #include <lib/sscan.hpp>
-#include <lib/stringpack.hpp>
 #include <lib/string.hpp>
+#include <lib/stringpack.hpp>
 
-#include <string>
 #include <cctype>
+#include <string>
 
 #ifndef NDEBUG
 #include <iostream>
@@ -116,6 +116,10 @@ Album BrowsePageParser :: next_album() {
   if (! xpath_albums_it)
     return album;
 
+  album.styles.reserve(3);
+  album.tracks.reserve(11);
+  album.archive_urls.reserve(3);
+
   Xml::Node post = xpath_albums_it.next();
 
   // Date
@@ -151,7 +155,7 @@ Album BrowsePageParser :: next_album() {
   for (const auto& a : xpath.query(cache[".//span[@class = 'style']//a"], post)) {
     std::string url = a["href"];
     if (! url.empty())
-      album.styles.push_back(Style(std::move(url), a.nearestContent()));
+      album.styles.push_back(Style{std::move(url), a.nearestContent()});
   }
 
   // Description (first <p> </p>)
@@ -212,7 +216,7 @@ Album BrowsePageParser :: next_album() {
         case pack("n"):
           if (! track.url.empty()) {
             album.tracks.push_back(std::move(track));
-            track = Track();
+            track = Track{};
           }
 
           track.number = std::atoi(safe_str(span.nearestContent()));

@@ -7,19 +7,11 @@
 #include <ctime>
 #include <string>
 #include <vector>
-
-#ifndef NDEBUG
 #include <iosfwd>
-#endif
 
 struct Style {
   std::string url;
   std::string name;
-
-  inline Style(std::string url, std::string name) noexcept
-  : url(std::move(url))
-  , name(std::move(name))
-  {}
 
 #ifndef NDEBUG
   friend inline std::ostream& operator<<(std::ostream&, const Style&);
@@ -34,12 +26,6 @@ struct Track {
   short       bpm;
   short       length;
   short       number;
-
-  inline Track() noexcept
-  : bpm(0)
-  , length(0)
-  , number(0)
-  {}
 
 #ifndef NDEBUG
   friend inline std::ostream& operator<<(std::ostream&, const Track&);
@@ -60,18 +46,6 @@ struct Album {
   std::vector<std::string> archive_urls;
   std::vector<Style> styles;
   std::vector<Track> tracks;
-
-  inline Album() noexcept
-  : date(0)
-  , download_count(0)
-  , votes(0)
-  , rating(0)
-  , is_single_url(false)
-  {
-    styles.reserve(3);
-    tracks.reserve(11);
-    archive_urls.reserve(3);
-  }
 
   inline bool empty() const noexcept {
     return tracks.empty();
