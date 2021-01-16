@@ -5,9 +5,9 @@
 #include "database.hpp"
 #include "bindings.hpp"
 #include "updater.hpp"
-#include "player.hpp"
 #include "config.hpp"
 #include "theme.hpp"
+#include "mpg123playback.hpp"
 #include "views/mainwindow.hpp"
 
 #include <lib/string.hpp>
@@ -20,7 +20,7 @@
 
 Database::Database database;
 Updater updater(database);
-Mpg123Player player;
+Mpg123Playback player;
 TrackLoader trackloader;
 Views::MainWindow* mainwindow;
 

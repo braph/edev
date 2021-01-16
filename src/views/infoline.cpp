@@ -24,7 +24,7 @@ InfoLine :: InfoLine()
 : UI::Window({0,0}, {2,0})
 , _track_length(0)
 , _track_position(0)
-, _state(Mpg123Player::STOPPED)
+, _state(Mpg123Playback::STOPPED)
 {
   _fmt_top    = &Config::infoline_format_top_mono;
   _fmt_bottom = &Config::infoline_format_bottom_mono;
@@ -48,7 +48,7 @@ void InfoLine :: track(Database::Tracks::Track track) noexcept {
   }
 }
 
-void InfoLine :: state(Mpg123Player::State state) noexcept {
+void InfoLine :: state(Mpg123Playback::State state) noexcept {
   if (state != _state) {
     _state = state;
     draw_state();

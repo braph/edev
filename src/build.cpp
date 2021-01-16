@@ -13,7 +13,7 @@
 #include "widgets/readline.cpp"
 
 #include "ektoplayer.cpp"
-#include "player.cpp"
+#include "mpg123playback.cpp"
 #include "markdown.cpp"
 #include "database.cpp"
 #include "config.cpp"

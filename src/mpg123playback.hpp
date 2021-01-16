@@ -1,5 +1,5 @@
-#ifndef MPG123_PLAYER_HPP
-#define MPG123_PLAYER_HPP
+#ifndef MPG123_PLAYBACK_HPP
+#define MPG123_PLAYBACK_HPP
 
 #include <string>
 #include <memory>
@@ -7,7 +7,7 @@
 
 #include <lib/process.hpp>
 
-class Mpg123Player {
+class Mpg123Playback {
 public:
   enum State : uint8_t {
     STOPPED = 0, // <-.
@@ -16,7 +16,7 @@ public:
     LOADING = 3, // <--- New introduced
   };
 
-  Mpg123Player();
+  Mpg123Playback();
 
   void work()             noexcept;
   void play()             noexcept;

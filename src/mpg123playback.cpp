@@ -1,4 +1,4 @@
-#include "player.hpp"
+#include "mpg123playback.hpp"
 
 #include "ektoplayer.hpp"
 
@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <cinttypes>
 
-Mpg123Player :: Mpg123Player()
+Mpg123Playback :: Mpg123Playback()
 : _failed(0)
 , _state(STOPPED)
 , _track_completed(false)
@@ -25,7 +25,7 @@ Mpg123Player :: Mpg123Player()
 {
 }
 
-void Mpg123Player :: reset() noexcept {
+void Mpg123Playback :: reset() noexcept {
   _state = STOPPED;
   _failed = 0;
   _channels = 0;
@@ -36,35 +36,35 @@ void Mpg123Player :: reset() noexcept {
   _track_completed = false;
 }
 
-void Mpg123Player :: play(std::string file) noexcept {
+void Mpg123Playback :: play(std::string file) noexcept {
   _file = std::move(file);
   play();
 }
 
-void Mpg123Player :: play() noexcept {
+void Mpg123Playback :: play() noexcept {
   reset();
   _state = LOADING;
   work();
 }
 
-void Mpg123Player :: stop() noexcept {
+void Mpg123Playback :: stop() noexcept {
   _process = nullptr;
   reset();
 }
 
-void Mpg123Player :: work() noexcept {
+void Mpg123Playback :: work() noexcept {
   if (_state == STOPPED)
     return;
 
   // Start process if it died (or wasn't even started yet)
   if (!_process || !_process->running()) {
     _process = std::unique_ptr<Process>(
-      new Process([](){ execlp("mpg123", "mpg123", "--fuzzy", "-R", NULL); }, true));
+      new Process([](){ ::execlp("mpg123", "mpg123", "--fuzzy", "-R", NULL); }, true));
 
     int fd = _process->stdout_pipe.fd();
-    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+    ::fcntl(fd, F_SETFL, ::fcntl(fd, F_GETFL) | O_NONBLOCK);
     fd = _process->stderr_pipe.fd();
-    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+    ::fcntl(fd, F_SETFL, ::fcntl(fd, F_GETFL) | O_NONBLOCK);
   }
 
   read_stdout();
@@ -81,16 +81,16 @@ void Mpg123Player :: work() noexcept {
   read_stderr();
 }
 
-void Mpg123Player :: read_stderr() noexcept {
+void Mpg123Playback :: read_stderr() noexcept {
   char buffer[128];
-  ssize_t n = _process->stderr_pipe.read(buffer);
+  const ssize_t n = _process->stderr_pipe.read(buffer);
   if (n > 0)
     ++_failed;
 }
 
-void Mpg123Player :: read_stdout() noexcept {
+void Mpg123Playback :: read_stdout() noexcept {
   char buffer[512];
-  ssize_t len = _process->stdout_pipe.read(buffer);
+  const ssize_t len = _process->stdout_pipe.read(buffer);
 
   for (ssize_t i = 0; i < len; ++i)
     if (buffer[i] != '\n')
@@ -105,7 +105,7 @@ void Mpg123Player :: read_stdout() noexcept {
  *   @FORMAT 44100 2
  *   @E Unknown command or no arguments: foo
  */
-void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
+void Mpg123Playback :: parse_stdout_line(const char* line) noexcept {
   //log_write("PARSE: %s\n", line);
   char* rest = const_cast<char*>(std::strchr(line, ' '));
   if (! rest)
@@ -157,38 +157,38 @@ void Mpg123Player :: parse_stdout_line(const char* line) noexcept {
   }
 }
 
-void Mpg123Player :: position(int seconds) noexcept {
+void Mpg123Playback :: position(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J %ds\n", seconds);
 }
 
-void Mpg123Player :: seek(int seconds) noexcept {
+void Mpg123Playback :: seek(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J %+ds\n", seconds);
 }
 
-void Mpg123Player :: seek_forward(int seconds) noexcept {
+void Mpg123Playback :: seek_forward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J +%ds\n", seconds);
 }
 
-void Mpg123Player :: seek_backward(int seconds) noexcept {
+void Mpg123Playback :: seek_backward(int seconds) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("J -%ds\n", seconds);
 }
 
-void Mpg123Player :: pause() noexcept {
+void Mpg123Playback :: pause() noexcept {
   if (_process && _process->running())
     if (_state == PLAYING)
       *_process << "P\n";
 }
 
-void Mpg123Player :: toggle() noexcept {
+void Mpg123Playback :: toggle() noexcept {
   if (_process && _process->running())
     *_process << "P\n";
 }
 
-void Mpg123Player :: volume(int volume) noexcept {
+void Mpg123Playback :: volume(int volume) noexcept {
   if (_process && _process->running())
     *_process << temp_sprintf<20>("VOLUME %d\n", volume);
 }
@@ -199,7 +199,7 @@ void Mpg123Player :: volume(int volume) noexcept {
 int main() {
   TEST_BEGIN();
 
-  Mpg123Player player;
+  Mpg123Playback player;
   assert (! player.is_playing());
   assert (! player.is_paused());
   assert (  player.is_stopped());

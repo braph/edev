@@ -1,10 +1,10 @@
 #include "actions.hpp"
 
-#include "player.hpp"
 #include "updater.hpp"
 #include "database.hpp"
 #include "programs.hpp"
 #include "trackloader.hpp"
+#include "mpg123playback.hpp"
 #include "views/mainwindow.hpp"
 
 #include <csignal>

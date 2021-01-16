@@ -3,7 +3,7 @@
 
 #include "../application.hpp"
 #include "../database.hpp"
-#include "../player.hpp"
+#include "../mpg123playback.hpp"
 #include "../ui/core.hpp"
 
 #include <lib/staticvector.hpp>
@@ -45,7 +45,7 @@ public:
   void layout(UI::Pos, UI::Size)          override;
   bool handle_mouse(MEVENT&)              override;
 
-  void state(Mpg123Player::State)         noexcept;
+  void state(Mpg123Playback::State)       noexcept;
   void track(Database::Tracks::Track)     noexcept;
   void set_position_and_length(int, int)  noexcept;
 
@@ -57,7 +57,7 @@ private:
   InfoLineFormat*         _fmt_bottom;
   int                     _track_length;
   int                     _track_position;
-  Mpg123Player::State     _state;
+  Mpg123Playback::State   _state;
 
   void print_formatted_strings(int, const InfoLineFormat&);
   void draw_position_and_length();

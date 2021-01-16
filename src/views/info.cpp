@@ -4,7 +4,7 @@
 #include "../bindings.hpp"
 #include "../theme.hpp"
 #include "../config.hpp"
-#include "../player.hpp"
+#include "../mpg123playback.hpp"
 #include "../programs.hpp"
 #include "../ui/colors.hpp"
 #include <lib/filesystem.hpp>
