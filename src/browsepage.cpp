@@ -212,7 +212,7 @@ Album BrowsePageParser :: next_album() {
     Track track;
     for (const auto& span : xpath.query(cache[".//span"], tracklist)) {
       using pack = StringPack::Raw;
-      switch (pack::pack_runtime(span["class"])) {
+      switch (pack(span["class"])) {
         case pack("n"):
           if (! track.url.empty()) {
             album.tracks.push_back(std::move(track));

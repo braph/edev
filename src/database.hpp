@@ -120,7 +120,7 @@ enum TrackColumnID : unsigned char {
 
 static ColumnID columnIDFromStr(const char* s) noexcept {
   using pack = StringPack::AlphaNoCase;
-  switch (pack::pack_runtime(s)) {
+  switch (pack(s)) {
   case pack("style"):         return static_cast<ColumnID>(STYLE_NAME);
   case pack("album"):         return static_cast<ColumnID>(ALBUM_TITLE);
   case pack("album_artist"):  return static_cast<ColumnID>(ALBUM_ARTIST);

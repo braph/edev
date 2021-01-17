@@ -52,10 +52,10 @@
 namespace StringPack {
 
 using std::size_t;
-using std::uint8_t;
 using std::uint64_t;
-using conv_func = uint8_t(*)(uint8_t);
-enum : uint64_t { overflow = ~uint64_t(0) };
+using conv_func = unsigned(*)(unsigned);
+enum : uint64_t { overflow  = ~uint64_t(0) };
+enum : unsigned { skip_char = 0xFF00       };
 
 // ============================================================================
 // Helper
@@ -69,20 +69,25 @@ template<class T> constexpr int bitlength(T n)
  */
 template<conv_func conv>
 struct conv_info {
-  static constexpr uint8_t max_bitlength() {
-    return bitlength(max_bitlength_impl(1));
+  static constexpr unsigned max_bitlength() {
+    return bitlength(bitmask() & 0xFF); // TODO...
   }
 
-  static constexpr size_t shift_count() {
-    return max_bitlength();
-  }
-
-  static constexpr size_t max_strlen() {
+  static constexpr unsigned max_strlen() {
     return 64 / max_bitlength();
   }
 
+  static constexpr unsigned char_count(unsigned c = 0, unsigned return_ = 0) {
+    return c > 255 ? return_ : char_count(c + 1,
+      (conv(c) != skip_char && conv(c) > return_) ? conv(c) : return_);
+  }
+
+  static constexpr bool has_skip_char(unsigned c = 0) {
+    return c > 255 ? false : ((conv(c) == skip_char ? true : has_skip_char(c + 1)));
+  }
+
   static std::string characters() {
-    uint8_t sentinel_ = sentinel();
+    unsigned sentinel_ = sentinel();
     std::string r;
     for (unsigned c = 0; c < 255; ++c)
       if (conv(c) != sentinel_)
@@ -91,12 +96,12 @@ struct conv_info {
   }
 
 private:
-  static constexpr uint8_t max_bitlength_impl(int i) {
-    return (i > 255 ? 0 : (conv(i) | max_bitlength_impl(i + 1)));
+  static constexpr unsigned bitmask(int i = 0) {
+    return (i > 255 ? 0 : (conv(i) | bitmask(i + 1)));
   }
 
-  static constexpr uint8_t sentinel(uint8_t c = 255, uint8_t return_ = 0) {
-    return c == 0 ? return_ : sentinel(c-1,
+  static constexpr unsigned sentinel(unsigned c = 0, unsigned return_ = 0) {
+    return c > 255 ? return_ : sentinel(c + 1,
       conv(c) > return_ ? conv(c) : return_);
   }
 };
@@ -111,18 +116,23 @@ private:
  */
 template<
   conv_func conv,
-  size_t N,
-  size_t bit_shift  = conv_info<conv>::shift_count(),
-  size_t max_length = conv_info<conv>::max_strlen()
+  unsigned N,
+  unsigned bit_shift     = conv_info<conv>::max_bitlength(),
+  unsigned max_length    = conv_info<conv>::max_strlen(),
+  bool     has_skip_char = conv_info<conv>::has_skip_char()
 >
-constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
-  static_assert(bit_shift  == conv_info<conv>::shift_count(), "DO NOT SET THIS TEMPLATE PARAMETER");
+constexpr uint64_t pack_compiletime(const char (&s)[N], unsigned i, int shift = 0, uint64_t return_ = 0) {
+  static_assert(bit_shift  == conv_info<conv>::max_bitlength(), "DO NOT SET THIS TEMPLATE PARAMETER");
   static_assert(max_length == conv_info<conv>::max_strlen(),  "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
 
-  return i >= N - 1 ? 0 : (
-    pack_compiletime<conv>(s, i + 1) |
-    uint64_t(conv(uint8_t(s[i]))) << (i * bit_shift)
+  return i >= N - 1 ? return_ : (
+    (has_skip_char && conv(unsigned(s[i])) == skip_char) ? (
+      pack_compiletime<conv>(s, i + 1, shift, return_)
+    ) : (
+      pack_compiletime<conv>(s, i + 1, shift + 1, return_ |
+        uint64_t(conv(unsigned(s[i]))) << (shift * bit_shift))
+    )
   );
 }
 
@@ -132,35 +142,42 @@ constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i) {
  * Returns the packed chars of `s` as an integer or `overflow` if the
  * input string exceeded the maximum length.
  */
-template<conv_func conv >
+template<conv_func conv>
 uint64_t pack_runtime(const char* s) noexcept {
-  enum : size_t {
-    bit_shift  = conv_info<conv>::shift_count(),
-    max_length = conv_info<conv>::max_strlen()
+  enum : unsigned {
+    bit_shift     = conv_info<conv>::max_bitlength(),
+    max_length    = conv_info<conv>::max_strlen(),
+    has_skip_char = conv_info<conv>::has_skip_char()
   };
 
   uint64_t result = 0;
 
-  for (size_t i = 0; i < max_length && *s; ++i)
-    result |= uint64_t(conv(uint8_t(*s++))) << (i * bit_shift);
+  for (unsigned i = 0; i < max_length && *s; ++s)
+    if (has_skip_char && conv(unsigned(*s)) == skip_char)
+      continue;
+    else
+      result |= uint64_t(conv(unsigned(*s))) << (i++ * bit_shift);
 
   return *s ? overflow : result;
 }
 
-template<conv_func conv >
-uint64_t pack_runtime(const char* s, size_t len) noexcept {
-  enum : size_t {
-    bit_shift  = conv_info<conv>::shift_count(),
-    max_length = conv_info<conv>::max_strlen()
+template<conv_func conv>
+uint64_t pack_runtime(const char* s, unsigned len) noexcept {
+  enum : unsigned {
+    bit_shift     = conv_info<conv>::max_bitlength(),
+    max_length    = conv_info<conv>::max_strlen(),
+    has_skip_char = conv_info<conv>::has_skip_char()
   };
 
-  if (len > max_length)
+  if (!has_skip_char && len > max_length)
     return overflow;
 
   uint64_t result = 0;
-  while (len) {
-    --len;
-    result |= uint64_t(conv(uint8_t(s[len]))) << (len * bit_shift);
+  unsigned shift = 0;
+  for (unsigned i = 0; i < len; ++i) {
+    if (has_skip_char && conv(unsigned(s[i])) == skip_char)
+      continue;
+    result |= uint64_t(conv(unsigned(s[i]))) << (shift++ * bit_shift);
   }
 
   return result;
@@ -170,59 +187,97 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
 // Building blocks for creating sets of possible `character sets`
 // ============================================================================
 
-/// Marker for unmatched characters
-inline constexpr uint8_t unmatched(uint8_t) {
-  return 1;
+template<unsigned base>
+inline constexpr unsigned combine(unsigned c) {
+  return base;
 }
 
+template<unsigned base, conv_func f, conv_func ... T>
+inline constexpr unsigned combine(unsigned c) {
+  return f(c) ? base + f(c) : combine<base + conv_info<f>::char_count(), T ...>(c);
+}
+
+template<conv_func ... Fs>
+inline constexpr unsigned combine(unsigned c) {
+  return combine<0, Fs ...>(c);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+struct bitset_t {
+  uint64_t d[4];
+  bool constexpr operator[](unsigned i) const { return d[i/64] & 1ULL << (i%64); }
+};
+
+template<uint64_t a, uint64_t b, uint64_t c, uint64_t d, unsigned ... Chars>
+struct make_bitset_t;
+
+template<uint64_t a, uint64_t b, uint64_t c, uint64_t d, unsigned Char, unsigned ... Chars>
+struct make_bitset_t<a, b, c, d, Char, Chars...> {
+  static constexpr bitset_t value() {
+    return make_bitset_t<
+      a | ((Char / 64 == 0) ? (1ULL << (Char % 64)) : 0),
+      b | ((Char / 64 == 1) ? (1ULL << (Char % 64)) : 0),
+      c | ((Char / 64 == 2) ? (1ULL << (Char % 64)) : 0),
+      d | ((Char / 64 == 3) ? (1ULL << (Char % 64)) : 0),
+    Chars...>::value();
+  }
+};
+
+template<uint64_t a, uint64_t b, uint64_t c, uint64_t d>
+struct make_bitset_t<a, b, c, d> {
+  static constexpr bitset_t value() { return bitset_t{a,b,c,d}; };
+};
+
+template<unsigned ... Chars>
+inline constexpr unsigned skip_chars(unsigned c) {
+  return make_bitset_t<0, 0, 0, 0, Chars...>::value()[c] * skip_char;
+}
+///////////////////////////////////////////////////////////////////////////////
+
+
 /// Include a single character
-template<uint8_t Char, conv_func next = unmatched>
-inline constexpr uint8_t character(uint8_t c) {
-  return 1 + (c == Char ? 0 : next(c));
+template<unsigned Char>
+inline constexpr unsigned character(unsigned c) {
+  return c == Char;
 }
 
 /// Include a range of characters
-template<uint8_t from, uint8_t to, conv_func next = unmatched>
-inline constexpr uint8_t range(uint8_t c) {
-  return 1 + (c >= from && c <= to ? c - from : to - from + next(c));
+template<unsigned from, unsigned to>
+inline constexpr unsigned range(unsigned c) {
+  return (c >= from && c <= to ? c - from + 1 : 0);
 }
 
 /// Include 0-9
-template<conv_func next = unmatched>
-inline constexpr uint8_t numeric(uint8_t c) {
-  return range<'0', '9', next>(c);
+inline constexpr unsigned numeric(unsigned c) {
+  return range<'0', '9'>(c);
 }
 
 /// Include a-z
-template<conv_func next = unmatched>
-inline constexpr uint8_t lower(uint8_t c) {
-  return range<'a', 'z', next>(c);
+inline constexpr unsigned lower(unsigned c) {
+  return range<'a', 'z'>(c);
 }
 
 /// Include A-Z
-template<conv_func next = unmatched>
-inline constexpr uint8_t upper(uint8_t c) {
-  return range<'A', 'Z', next>(c);
+inline constexpr unsigned upper(unsigned c) {
+  return range<'A', 'Z'>(c);
 }
 
 /// Include a-zA-Z
-template<conv_func next = unmatched>
-inline constexpr uint8_t alpha(uint8_t c) {
-  return lower<upper<next>>(c);
+inline constexpr unsigned alpha(unsigned c) {
+  return combine<lower, upper>(c);
 }
 
 /// Include a-zA-Z (case insensitive)
-template<conv_func next = unmatched>
-inline constexpr uint8_t alpha_nocase(uint8_t c) {
-  return 1 + (
-    c >= 'a' && c <= 'z' ? c - 'a' :
-    c >= 'A' && c <= 'Z' ? c - 'A' :
-    'z' - 'a' + next(c)
-  );
+inline constexpr unsigned alpha_nocase(unsigned c) {
+  return (
+    c >= 'a' && c <= 'z' ? c - 'a' + 1:
+    c >= 'A' && c <= 'Z' ? c - 'A' + 1:
+    0);
 }
 
 /// Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'"
-inline constexpr uint8_t l33t_nocase(uint8_t c) noexcept {
+inline constexpr unsigned l33t_nocase(unsigned c) noexcept {
   // Nope. "OLZEASGTBQ"['0' - c] is not constexpr in C++11
   return 1 + (
     c == '0' ? 'O' - 'A' :
@@ -241,115 +296,116 @@ inline constexpr uint8_t l33t_nocase(uint8_t c) noexcept {
   );
 }
 
+inline constexpr unsigned unmatched(unsigned) noexcept {
+  return 1;
+}
+
+
 /**
- * Those are optimized for execution time but may include other characters.
+ * These functions guarantee the best execution time.
+ * Howewer, they may include some other characters.
  */
 namespace fast {
 
 /// Use all characters (0-255)
-inline constexpr uint8_t raw(uint8_t c) noexcept {
+inline constexpr unsigned raw(unsigned c) noexcept {
   return c;
 }
 
 /// Use ascii characters (0-127), everything beyound is will be truncated to 127
-inline constexpr uint8_t ascii(uint8_t c) noexcept {
+inline constexpr unsigned ascii(unsigned c) noexcept {
   return (c <= 127 ? c : 127);
 }
 
 // Use 0-9,.
-template<conv_func next = unmatched>
-inline constexpr uint8_t floatic(uint8_t c) noexcept {
-  return range<',', '9', next>(c);
+inline constexpr unsigned floatic(unsigned c) noexcept {
+  return range<',', '9'>(c);
 }
 
 /// Use a-zA-Z_
-template<conv_func next = unmatched>
-inline constexpr uint8_t alpha(uint8_t c) noexcept {
-  return range<'A', 'z', next>(c);
+inline constexpr unsigned alpha(unsigned c) noexcept {
+  return range<'A', 'z'>(c);
 }
 
-/// Use a-zA-Z_ (converted to lower case)
-template<conv_func next = unmatched>
-inline constexpr uint8_t alpha_nocase(uint8_t c) noexcept {
-  return 1 + (c >= 'A' && c <= 'z' ? (c&~0x20) - 'A' : 'Z' - 'A' + next(c));
+/// Use a-zA-Z_ (converted to upper case)
+inline constexpr unsigned alpha_nocase(unsigned c) noexcept {
+  return (c >= 'A' && c <= 'z' ? (c & ~0x20) - 'A' + 1 : 0);
 }
-
-using StringPack::lower;
-using StringPack::upper;
-using StringPack::numeric;
 
 } // namespace fast
 
+
 template<conv_func conv>
 struct packer {
-  // pack() --- compile time ==================================================
-  // This is a close as we can get to ensure this function is only used on string literals.
-
-  template<size_t N>
+  // packer::pack() --- compile time ==========================================
+  template<unsigned N>
   static inline constexpr uint64_t pack(const char (&s)[N]) noexcept
   { return pack_compiletime<conv, N>(s, 0); }
 
-  template<size_t N>
-  static inline constexpr uint64_t pack(char (&s)[N]) noexcept
-  { static_assert(N&&0, "Please use `pack_runtime` for non-const char"); return 0; }
+  // packer::pack() --- run time ==============================================
+  template<typename ... T>
+  static inline uint64_t pack(const T& ... args) noexcept
+  { return packer::pack_runtime(args...); }
 
-  // pack_runtime() ===========================================================
+  // packer::packer() --- compile time ========================================
+  template<unsigned N>
+  inline constexpr packer(const char (&s)[N]) noexcept
+    : _s(pack_compiletime<conv, N>(s, 0))
+  {}
+
+  // packer::packer() --- run time ============================================
+  template<typename ... T>
+  inline packer(const T& ... args) noexcept
+    : _s(packer::pack_runtime(args...))
+  {}
+
+
+  static inline uint64_t pack_runtime(const char* s, unsigned len) noexcept
+  { return StringPack::pack_runtime<conv>(s, len); }
+
+  static inline uint64_t pack_runtime(const unsigned char* s, unsigned len) noexcept
+  { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s), len); }
+
   static inline uint64_t pack_runtime(const char* s) noexcept
   { return StringPack::pack_runtime<conv>(s); }
 
   static inline uint64_t pack_runtime(const unsigned char* s) noexcept
   { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s)); }
 
-  static inline uint64_t pack_runtime(const char* s, size_t len) noexcept
-  { return StringPack::pack_runtime<conv>(s, len); }
-
-  static inline uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept
-  { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s), len); }
-
   static inline uint64_t pack_runtime(const std::string& s) noexcept
   { return StringPack::pack_runtime<conv>(s.c_str(), s.size()); }
 
-  // packer() =================================================================
-  uint64_t _s;
-
-  template<size_t N>
-  constexpr packer(const char (&s)[N])
-    : _s(pack_compiletime<conv, N>(s, 0))
-  {}
-
-  template<size_t N>
-  constexpr packer(char (&s)[N])
-    : _s(0)
-  {
-    static_assert(N&&0, "Please use `pack_runtime` for non-const char");
-  }
-
-  constexpr inline operator uint64_t() noexcept {
-    return _s;
-  }
 
   // Information ==============================================================
-  static inline constexpr size_t max_size() noexcept
+  static inline constexpr unsigned max_strlen() noexcept
   { return conv_info<conv>::max_strlen(); }
 
-  static inline constexpr int bit_shift() noexcept
-  { return conv_info<conv>::shift_count(); }
+  static inline constexpr unsigned bit_shift() noexcept
+  { return conv_info<conv>::max_bitlength(); }
 
   static inline std::string characters() noexcept
   { return conv_info<conv>::characters(); }
+
+  static inline constexpr unsigned char_count() noexcept
+  { return conv_info<conv>::char_count(); }
+
+
+  constexpr inline operator uint64_t() const noexcept { return _s; }
+private:
+  uint64_t _s;
 };
 
-using Raw         = packer<fast::raw>;
-using ASCII       = packer<fast::ascii>;
-using Alpha       = packer<fast::alpha>;
-using AlphaNoCase = packer<fast::alpha_nocase>;
-using Floatic     = packer<fast::floatic>;
-using Lower       = packer<fast::lower>;
-using Upper       = packer<fast::upper>;
-using Numeric     = packer<fast::numeric>;
-using Alnum       = packer<numeric<fast::alpha>>;
-using AlnumNoCase = packer<numeric<fast::alpha_nocase>>;
-using L33tNoCase  = packer<l33t_nocase>;
+using Raw         = packer<combine<fast::raw>>;
+using ASCII       = packer<combine<fast::ascii>>;
+using Alpha       = packer<combine<fast::alpha>>;
+using AlphaNoCase = packer<combine<fast::alpha_nocase>>;
+using Floatic     = packer<combine<fast::floatic>>;
+using Lower       = packer<combine<lower, unmatched>>;
+using Upper       = packer<combine<upper>>;
+using Numeric     = packer<combine<numeric>>;
+using Alnum       = packer<combine<numeric, fast::alpha>>;
+using AlnumNoCase = packer<combine<numeric, fast::alpha_nocase>>;
+using L33tNoCase  = packer<combine<l33t_nocase>>;
 
 } // namespace StringPack
 

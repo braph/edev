@@ -33,7 +33,7 @@ static inline Process image_viewer(String url) {
 static inline Process browser(String url) {
   const char* dot = std::strrchr(url, '.');
   using pack = StringPack::AlphaNoCase;
-  switch (pack::pack_runtime(dot ? dot : "")) {
+  switch (pack(dot ? dot : "")) {
   case pack(".png"):
   case pack(".jpg"):
   case pack(".jpeg"):

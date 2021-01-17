@@ -32,7 +32,7 @@ struct ConstChars {
   inline ConstChars(const char* s_)          noexcept : s(s_)         {}
   inline ConstChars(const signed char* s_)   noexcept : s(reinterpret_cast<const char*>(s_)) {}
   inline ConstChars(const unsigned char* s_) noexcept : s(reinterpret_cast<const char*>(s_)) {}
-  inline operator const char*()              noexcept { return s; }
+  inline operator const char*()        const noexcept { return s; }
   inline const char* c_str()                 noexcept { return s; }
 //inline char operator*()   const noexcept { return *s; }
 };

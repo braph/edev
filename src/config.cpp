@@ -37,7 +37,7 @@ static float parse_float(ConstChars s) {
 
 static bool parse_bool(ConstChars s) {
   using pack = StringPack::AlnumNoCase;
-  switch (pack::pack_runtime(s)) {
+  switch (pack(s)) {
     case pack("true"):  return true;
     case pack("false"): return false;
   }
@@ -55,7 +55,7 @@ static wchar_t parse_char(ConstChars s) {
 
 static int parse_use_colors(ConstChars s) {
   using pack = StringPack::AlnumNoCase;
-  switch (pack::pack_runtime(s)) {
+  switch (pack(s)) {
     case pack("auto"):  return -1;
     case pack("mono"):  return 0;
     case pack("8"):     return 8;
@@ -98,7 +98,7 @@ static decltype(Config::tabs_widgets) parse_tabs_widgets(ConstChars s) {
     cs += len;
 
     using pack = StringPack::AlnumNoCase;
-    switch (pack::pack_runtime(w)) {
+    switch (pack(w)) {
       case pack("splash"):    widgets[idx] = TabWidgets::SPLASH;   break;
       case pack("playlist"):  widgets[idx] = TabWidgets::PLAYLIST; break;
       case pack("browser"):   widgets[idx] = TabWidgets::BROWSER;  break;
@@ -122,7 +122,7 @@ static decltype(Config::main_widgets) parse_main_widgets(ConstChars s) {
     cs += len;
 
     using pack = StringPack::AlphaNoCase;
-    switch (pack::pack_runtime(w)) {
+    switch (pack(w)) {
       case pack("infoline"):    widgets[idx] = MainWidgets::INFOLINE;    break;
       case pack("tabbar"):      widgets[idx] = MainWidgets::TABBAR;      break;
       case pack("readline"):    widgets[idx] = MainWidgets::READLINE;    break;
@@ -226,7 +226,7 @@ static PlaylistColumns parse_playlist_columns(ConstChars s) {
     auto attr = formatParser.attributes();
     while (attr.next()) {
       using pack = StringPack::AlnumNoCase;
-      switch (pack::pack_runtime(attr.name)) {
+      switch (pack(attr.name)) {
         case pack("fg"):    fmt.fg = parse_color(attr.value);  break;
         case pack("bg"):    fmt.bg = parse_color(attr.value);  break;
         case pack("right"): fmt.justify = PlaylistColumnFormat::Justify::Right;  break;
@@ -262,7 +262,7 @@ static InfoLineFormat parse_infoline_format(ConstChars s) {
     auto attr = formatParser.attributes();
     while (attr.next()) {
       using pack = StringPack::AlnumNoCase;
-      switch (pack::pack_runtime(attr.name)) {
+      switch (pack(attr.name)) {
         case pack("fg"): fmt.fg = parse_color(attr.value); break;
         case pack("bg"): fmt.bg = parse_color(attr.value); break;
         default:         fmt.attributes |= parse_attribute(attr.name);
@@ -358,7 +358,7 @@ void Config :: read(const char* file) {
       ArrayView<const char*> args(c_args + 1, splitted.size() - 1);
 
       using pack = StringPack::AlnumNoCase;
-      switch (pack::pack_runtime(c_args[0])) {
+      switch (pack(c_args[0])) {
         case pack("set"):          set(args);               break;
         case pack("color"):        color(THEME_8,    args); break;
         case pack("color_256"):    color(THEME_256,  args); break;
