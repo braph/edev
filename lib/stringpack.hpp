@@ -45,10 +45,6 @@
 #include <cstdint>
 #include <string>
 
-/**
- * Pack strings into uint64_t.
- */
-
 namespace StringPack {
 
 using std::size_t;
@@ -121,7 +117,7 @@ template<
   unsigned max_length    = conv_info<conv>::max_strlen(),
   bool     has_skip_char = conv_info<conv>::has_skip_char()
 >
-constexpr uint64_t pack_compiletime(const char (&s)[N], unsigned i, int shift = 0, uint64_t return_ = 0) {
+constexpr uint64_t pack_compiletime(const char (&s)[N], unsigned i, unsigned shift = 0, uint64_t return_ = 0) {
   static_assert(bit_shift  == conv_info<conv>::max_bitlength(), "DO NOT SET THIS TEMPLATE PARAMETER");
   static_assert(max_length == conv_info<conv>::max_strlen(),  "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
@@ -189,7 +185,7 @@ uint64_t pack_runtime(const char* s, unsigned len) noexcept {
 
 template<unsigned base>
 inline constexpr unsigned combine(unsigned c) {
-  return base;
+  return base; // Unhandeled TODO
 }
 
 template<unsigned base, conv_func f, conv_func ... T>
@@ -300,13 +296,6 @@ inline constexpr unsigned unmatched(unsigned) noexcept {
   return 1;
 }
 
-
-/**
- * These functions guarantee the best execution time.
- * Howewer, they may include some other characters.
- */
-namespace fast {
-
 /// Use all characters (0-255)
 inline constexpr unsigned raw(unsigned c) noexcept {
   return c;
@@ -316,6 +305,12 @@ inline constexpr unsigned raw(unsigned c) noexcept {
 inline constexpr unsigned ascii(unsigned c) noexcept {
   return (c <= 127 ? c : 127);
 }
+
+/**
+ * These functions guarantee the best execution time.
+ * Howewer, they may include some other characters.
+ */
+namespace fast {
 
 // Use 0-9,.
 inline constexpr unsigned floatic(unsigned c) noexcept {
@@ -395,8 +390,8 @@ private:
   uint64_t _s;
 };
 
-using Raw         = packer<combine<fast::raw>>;
-using ASCII       = packer<combine<fast::ascii>>;
+using Raw         = packer<raw>;
+using ASCII       = packer<ascii>;
 using Alpha       = packer<combine<fast::alpha>>;
 using AlphaNoCase = packer<combine<fast::alpha_nocase>>;
 using Floatic     = packer<combine<fast::floatic>>;

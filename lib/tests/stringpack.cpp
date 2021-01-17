@@ -22,14 +22,16 @@
   printf("%-23s | %-5zu | %s\n", #CLASS, CLASS::max_strlen(), DOC)
 
 int main() {
+  {
+    auto bs = StringPack::make_bitset_t<0,0,0,0>::value();
+    for (int i = 0; i < 255; ++i)
+      assert(!bs[i]);
+  }
 
-#if 0
-  auto x = StringPack::make_ignore_t(0,0,0,0, 1, 96);
-  auto x = StringPack::make_ignore_t<0,0,0,0, 'a', 1>::value();
-  printf("%lu %lu %lu %lu\n", x.ign[3], x.ign[2], x.ign[1], x.ign[0]);
-  printf("%lu\n", StringPack::ignore<'a','b', 255>(255));
-  return StringPack::ignore<'a','b'>('a');
-#endif
+  {
+    auto bs = StringPack::make_bitset_t<0,0,0,0, 0, 1, 255>::value();
+    assert(bs[0] && bs[1] && bs[255]);
+  }
 
   printf("%-23s | %-5s | %s\n", "class", "len", "comment");
   doc(StringPack::Raw,         "Fastest (no conversion applied)");
@@ -48,10 +50,14 @@ int main() {
     using SC = StringPack::packer<
       StringPack::combine<
         StringPack::skip_chars<'_'>,
-        StringPack::fast::raw
-    >>;
+        StringPack::raw>>;
 
-    printf("foo:%d\n", SC::max_strlen());
+    printf("foo:%u\n", SC::max_strlen());
+/*
+    printf(">>>>%d\n", SC::char_count());
+    for (int i = 0; i < 255; ++i)
+      printf(">>>> %c, %d\n", i, StringPack::fast::alpha_nocase(i));
+*/
 
     test("a");
     test("ab");
@@ -97,11 +103,6 @@ int main() {
 
   {
     using SC = StringPack::AlphaNoCase;
-/*
-    printf(">>>>%d\n", SC::char_count());
-    for (int i = 0; i < 255; ++i)
-      printf(">>>> %c, %d\n", i, StringPack::fast::alpha_nocase(i));
-*/
     test_switch_case("abc_DEF_ghi", "ABC_def_GHI");
   }
 
@@ -116,7 +117,7 @@ int main() {
     assert(0  == SC::pack(""));
     assert(1  == SC::pack("a"));
     assert(26 == SC::pack("z"));
-    printf(">>>>>>>>>>>>>>%d\n", SC::pack("_"));
+    printf(">>>>>>>>>>>>>>%u\n", SC::pack("_"));
     assert(27 == SC::pack("_"));
     assert(27 == SC::pack("+"));
 
