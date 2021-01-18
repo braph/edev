@@ -112,10 +112,7 @@ PLAYLIST_PLAY:
     goto SELECT_TAB;
 
 SELECT_TAB:
-    if (index < 0)
-      index = mainwindow->windows.count() - 1;
-    else if (index >= mainwindow->windows.count())
-      index = 0;
+    index = (index + mainwindow->windows.count()) % mainwindow->windows.count();
     mainwindow->windows.current_index(index);
     mainwindow->tabBar.current_index(index);
     std::raise(SIGWINCH); // TODO: We shouldn't need to refresh the screen

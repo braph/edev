@@ -7,9 +7,11 @@
 
 namespace Xml {
 
-const xmlChar empty[1] = {'\0'};
-
 namespace Sax {
+
+// We guarantee that no xmlChar* is pointing to NULL.
+// This is used as a replacement for NULL.
+const xmlChar empty[1] = {'\0'};
 
 template<typename TClass>
 static void wrap_startElement(void* self, const xmlChar* name, const xmlChar** attrs) {
@@ -40,10 +42,10 @@ public:
   {}
 
   explicit inline operator bool() const noexcept
-  { return *_s; }
+  { return _s != empty; }
 
   inline bool operator!() const noexcept
-  { return !*_s; }
+  { return _s == empty; }
 
   inline operator const char*() const noexcept
   { return reinterpret_cast<const char*>(_s); }

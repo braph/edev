@@ -195,25 +195,21 @@ public:
 
   void up(int n = 1) {
     pad_minrow -= n;
+    const int max_y = getmaxy();
     if (pad_minrow < 0)
       pad_minrow = 0;
-    else {
-      int max_y = getmaxy();
-      if (pad_minrow > max_y)
-        pad_minrow = max_y;
-    }
+    else if (pad_minrow > max_y)
+      pad_minrow = max_y;
     noutrefresh();
   }
 
   void down(int n = 1) {
     pad_minrow += n;
+    const int max_y = getmaxy() - size.height;
     if (pad_minrow < 0)
       pad_minrow = 0;
-    else {
-      int max_y = getmaxy() - size.height;
-      if (pad_minrow > max_y)
-        pad_minrow = max_y;
-    }
+    else if (pad_minrow > max_y)
+      pad_minrow = max_y;
     noutrefresh();
   }
 
