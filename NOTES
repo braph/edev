@@ -1,7 +1,7 @@
 - grep 'thread' for non threadable fu
 
 - When in doubt: use const char* instead of std::string!!!!
-- Use const char* until you get problems 
+- Use const char* until you get problems
 
 - If you want to be able to provide user-defined "overloads" always use template-specialization, not argument overloads:
 
@@ -31,34 +31,34 @@
 
   #include <cstdio>
   #include <string>
-  
+ 
   template<class T>
   void f2(const T& s) // Handle all kinds of string objects
   { std::printf("string object: %s\n", s.c_str()); }
-  
+ 
   void f2(const char* s) // Handle const char*
   { std::printf("const char*: %s\n", s); }
-  
+ 
   // ----------------------------------------------------------------------------
-  
+ 
   template<size_t N>
   void f(const char(&s)[N]) // Handle const char array
   { std::printf("const char[%zu]: %s\n", N, s); }
-  
+ 
   template<size_t N>
   void f(char(&s)[N]) // Handle char array
   { std::printf("char[%zu]: %s\n", N, s); }
-  
+ 
   template<class T>
   inline void f(T&& s) // Handle other cases
   { f2(std::forward<T>(s)); }
-  
+ 
   int main() {
     std::string stringObj     = "some kind of string object ...";
     char charArr[]            = "char array";
     const char constCharArr[] = "const char array";
     const char* constCharPtr  = "const char pointer";
-  
+ 
     f(stringObj);
     f(charArr);
     f(constCharArr);
@@ -70,6 +70,8 @@
 
 - void x(TString) < only if no implicit conversion needed
   else: templates
+
+- use lambdas instead of private functions that are only used in one place
 
 - string_view only if size matters..
 

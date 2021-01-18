@@ -31,10 +31,10 @@ struct TinyArray {
   uint8_t  _size;
   enum { _capacity = sizeof(TStorage) * CHAR_BIT / TBits };
 
-  TinyArray()           : _data(0), _size(0) {}
-  TinyArray(TStorage v) : _data(v), _size(_capacity) {}
-  TinyArray(const T* v, unsigned N) : _data(pack(N, v, TBits)), _size(N) {}
-  TinyArray(const std::initializer_list<T>& l) : TinyArray(l.begin(), l.end()-l.begin()) {}
+  constexpr TinyArray()           : _data(0), _size(0) {}
+  constexpr TinyArray(TStorage v) : _data(v), _size(_capacity) {}
+  constexpr TinyArray(const T* v, unsigned N) : _data(pack(N, v, TBits)), _size(N) {}
+  constexpr TinyArray(const std::initializer_list<T>& l) : TinyArray(l.begin(), l.end()-l.begin()) {}
 
   inline void push_back(value_type value) {
     if (_size < _capacity)

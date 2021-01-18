@@ -21,10 +21,10 @@ namespace Views {
 enum class MainWidgets : unsigned char {
   NONE,
   INFOLINE,
-  PROGRESSBAR,
   TABBAR,
   READLINE,
-  WINDOWS
+  WINDOWS,
+  PROGRESSBAR
 };
 
 enum class TabWidgets : unsigned char {

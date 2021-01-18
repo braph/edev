@@ -97,16 +97,17 @@ static decltype(Config::tabs_widgets) parse_tabs_widgets(ConstChars s) {
     std::string w(cs, len);
     cs += len;
 
+    int val = 0;
     using pack = StringPack::AlnumNoCase;
     switch (pack(w)) {
-      case pack("splash"):    widgets[idx] = TabWidgets::SPLASH;   break;
-      case pack("playlist"):  widgets[idx] = TabWidgets::PLAYLIST; break;
-      case pack("browser"):   widgets[idx] = TabWidgets::BROWSER;  break;
-      case pack("info"):      widgets[idx] = TabWidgets::INFO;     break;
-      case pack("help"):      widgets[idx] = TabWidgets::HELP;     break;
       default:                throw ConfigError(w, "Invalid widget");
+      case pack("help"):      ++val; // fall-through
+      case pack("info"):      ++val; // fall-through
+      case pack("browser"):   ++val; // fall-through
+      case pack("playlist"):  ++val; // fall-through
+      case pack("splash"):    ++val; // fall-through
+                              widgets[idx++] = static_cast<TabWidgets>(val);
     }
-    ++idx; // XXX We don't care about bounds checking
   }
   return widgets;
 }
@@ -121,16 +122,17 @@ static decltype(Config::main_widgets) parse_main_widgets(ConstChars s) {
     std::string w(cs, len);
     cs += len;
 
+    int val = 0;
     using pack = StringPack::AlphaNoCase;
     switch (pack(w)) {
-      case pack("infoline"):    widgets[idx] = MainWidgets::INFOLINE;    break;
-      case pack("tabbar"):      widgets[idx] = MainWidgets::TABBAR;      break;
-      case pack("readline"):    widgets[idx] = MainWidgets::READLINE;    break;
-      case pack("windows"):     widgets[idx] = MainWidgets::WINDOWS;     break;
-      case pack("progressbar"): widgets[idx] = MainWidgets::PROGRESSBAR; break;
       default:                  throw ConfigError(w, "Invalid widget");
+      case pack("progressbar"): ++val; // fall-through
+      case pack("windows"):     ++val; // fall-through
+      case pack("readline"):    ++val; // fall-through
+      case pack("tabbar"):      ++val; // fall-through
+      case pack("infoline"):    ++val; // fall-through
+                                widgets[idx++] = static_cast<MainWidgets>(val);
     }
-    ++idx; // XXX We don't care about bounds checking
   }
   return widgets;
 }

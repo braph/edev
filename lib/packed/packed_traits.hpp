@@ -45,4 +45,23 @@ struct packed_traits {
   }
 };
 
+#if 0
+namespace compiletime {
+template<class T, uint64_t Result, unsigned Bits, T ... Values>
+struct pack;
+
+template<class T, uint64_t Result, unsigned Bits, T Value, T ... Values>
+struct pack<T, Result, Bits, Value, Values...> {
+  static constexpr uint64_t value() {
+    return pack<T, Result << Bits | Value, Bits, Values...>::value();
+  }
+};
+
+template<class T, uint64_t Result, unsigned Bits>
+struct pack<T, Result, Bits> {
+  static constexpr uint64_t value() { return Result; }
+};
+}
+#endif
+
 #endif
