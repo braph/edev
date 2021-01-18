@@ -148,21 +148,6 @@ void Application :: run() {
   Views::MainWindow mainwindow;
   ::mainwindow = &mainwindow;
 
-  // Connecting widgets events
-  mainwindow.progressBar.percent_changed = [&](float percent) {
-    player.percent(percent);
-    mainwindow.progressBar.percent(percent);
-  };
-
-  mainwindow.tabBar.index_changed = [&](int index) {
-    mainwindow.tabBar.current_index(index);
-    mainwindow.windows.current_index(index);
-  };
-
-  mainwindow.infoLine.on_click = [&]() {
-    player.toggle();
-  };
-
   int key;
   WINDOW *win;
   MEVENT mouse;

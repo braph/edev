@@ -56,6 +56,21 @@ MainWindow :: MainWindow()
     }
   }
 #undef case
+
+  // Connecting widgets events
+  infoLine.on_click = [&]() {
+    player.toggle();
+  };
+
+  progressBar.percent_changed = [&](float percent) {
+    player.percent(percent);
+    progressBar.percent(percent);
+  };
+
+  tabBar.index_changed = [&](int index) {
+    tabBar.current_index(index);
+    windows.current_index(index);
+  };
 }
 
 void MainWindow :: readline(std::string prompt, ReadlineWidget::onFinishFunction callback) {
