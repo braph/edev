@@ -45,7 +45,7 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
 
   _downloads.add_download(download, [=](Download& _dl, CURLcode e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
-    log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(e), dl.http_code());
+    log_write("%s: %s [%d]\n", dl.effective_url(), curl_easy_strerror(e), dl.http_code());
 
     Filesystem::error_code ex;
     if (e == CURLE_OK && dl.http_code() == 200)
@@ -76,7 +76,7 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
 
   _downloads.add_download(download, [=](Download& dl_, CURLcode e) {
     auto& dl = static_cast<FileDownload&>(dl_);
-    log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(e), dl.http_code());
+    log_write("%s: %s [%d]\n", dl.effective_url(), curl_easy_strerror(e), dl.http_code());
 
     Filesystem::error_code ex;
     if (e == CURLE_OK && dl.http_code() == 200) {

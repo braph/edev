@@ -9,9 +9,7 @@
 #include "../ui/colors.hpp"
 #include <lib/filesystem.hpp>
 #include <lib/bit_tools.hpp>
-
-using namespace UI;
-using namespace Views;
+#include <lib/string.hpp>
 
 #define START_HEADING    1
 #define START_TAG        3
@@ -20,6 +18,8 @@ using namespace Views;
 #define START_INFO_VALUE 26
 #define TRY_LINE_BREAK   70 // Try to break the line on next space
 #define FORCE_LINE_BREAK 85 // Forces line breaks even in words
+
+namespace Views {
 
 struct MarkupParser {
   enum Type { BOLD = 1, ITALIC = 2, LINK_TEXT = 4, LINK_URL = 8 };
@@ -62,7 +62,7 @@ struct MarkupParser {
   }
 };
 
-void Info :: layout(Pos pos, Size size) {
+void Info :: layout(UI::Pos pos, UI::Size size) {
   this->pos  = pos;
   this->size = size;
   resize(110, size.width);
@@ -77,35 +77,34 @@ void Info :: track(Database::Tracks::Track track) noexcept {
   }
 }
 
-inline void Info :: draw_heading(int y, const char* heading) noexcept {
-  attrset(colors.info_head);
-  addstr(y, START_HEADING, heading);
-}
-
-inline void Info :: draw_tag(int y, const char* tag) noexcept {
-  attrset(colors.info_tag);
-  addstr(y, START_TAG, tag);
-  attrset(colors.info_value);
-  move(y, START_TAG_VALUE);
-}
-
-template<class Str>
-inline void Info :: draw_info(int y, Str&& info) noexcept {
-  attrset(colors.info_tag);
-  addstr(y, START_INFO, info);
-  attrset(colors.info_value);
-  move(y, START_INFO_VALUE);
-}
-
-template<class Str, class Str1>
-inline void Info :: draw_link(Str&& url, Str1&& title) noexcept {
-  attrset(colors.url);
-  UI::Pos start = cursorPos();
-  addstr(title);
-  _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
-}
-
 void Info :: draw() {
+  auto draw_heading = [this](int y, const char* heading) noexcept {
+    attrset(colors.info_head);
+    addstr(y, START_HEADING, heading);
+  };
+
+  auto draw_tag = [this](int y, const char* tag) noexcept {
+    attrset(colors.info_tag);
+    addstr(y, START_TAG, tag);
+    attrset(colors.info_value);
+    move(y, START_TAG_VALUE);
+  };
+
+  auto draw_info = [this](int y, ConstChars info) noexcept {
+    attrset(colors.info_tag);
+    addstr(y, START_INFO, info);
+    attrset(colors.info_value);
+    move(y, START_INFO_VALUE);
+  };
+
+  auto draw_link = [this](std::string&& url, std::string&& title) noexcept {
+    attrset(colors.url);
+    UI::Pos start = cursorPos();
+    addstr(title);
+    _clickable_urls.add(start, cursorPos(), {std::move(url), std::move(title)});
+  };
+
+
   clear();
   _clickable_urls.clear();
   int x, y = 1;
@@ -181,8 +180,8 @@ void Info :: draw() {
         linkURL.append(markupParser.multibyte);
       else {
         attr_t attr = colors.info_value;
-        if (markupParser.type & MarkupParser::BOLD)   attr |= A_BOLD;
-        if (markupParser.type & MarkupParser::ITALIC) attr |= A_UNDERLINE;
+        attr |= (markupParser.type & MarkupParser::BOLD)   ? A_BOLD      : 0;
+        attr |= (markupParser.type & MarkupParser::ITALIC) ? A_UNDERLINE : 0;
 
         getyx(y, x);
         if      (x < START_TAG)                   move(y,   START_TAG);
@@ -195,6 +194,8 @@ void Info :: draw() {
           else
             linkURL = "http://" + linkURL; // http?s stripped off, updater.cpp
           draw_link(std::move(linkURL), std::move(linkText));
+          linkURL.clear();
+          linkText.clear();
         }
 
         attrset(attr);
@@ -244,7 +245,7 @@ void Info :: draw() {
   y++;
   draw_heading(y++, "Downloads");
   for (const auto& dl : trackloader.downloads().downloads()) {
-    addstr(y++, START_INFO, dl.download->last_url());
+    addstr(y++, START_INFO, dl.download->effective_url());
   }
 #endif
 }
@@ -273,3 +274,4 @@ bool Info :: handle_mouse(MEVENT& m) {
   return false;
 }
 
+}

@@ -58,7 +58,7 @@ void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
 
   _downloads.add_download(dl, [this,page](Download& dl_, CURLcode code) {
     auto& dl = static_cast<BufferDownload&>(dl_);
-    log_write("%s: %s [%d]\n", dl.last_url(), curl_easy_strerror(code), dl.http_code());
+    log_write("%s: %s [%d]\n", dl.effective_url(), curl_easy_strerror(code), dl.http_code());
 
     if (code != CURLE_OK)
       fetch_page(page);

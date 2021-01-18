@@ -22,7 +22,7 @@ public:
 
   void cleanup()               noexcept;
   int http_code()        const noexcept;
-  const char* last_url() const noexcept;
+  const char* effective_url() const noexcept;
 
   void reset() noexcept {
     curl_easy_reset(curl_easy);

@@ -511,7 +511,7 @@ public:
   { return std::vector<Tracks::Track>(tracks.begin(), tracks.end()); }
 
 private:
-  void shrink_chunk_to_fit(StringChunk&, std::initializer_list<Column*>);
+  static void shrink_chunk_to_fit(StringChunk&, std::initializer_list<Column*>);
 };
 
 const char* track_column_to_string(const Tracks::Track&, ColumnID);

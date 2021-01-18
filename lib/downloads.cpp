@@ -29,7 +29,7 @@ int Download :: http_code() const noexcept {
   return code;
 }
 
-const char* Download :: last_url() const noexcept {
+const char* Download :: effective_url() const noexcept {
   char *url = NULL;
   if (CURLE_OK != getinfo(CURLINFO_EFFECTIVE_URL, url))
     return "<UNKNOWN URL>";

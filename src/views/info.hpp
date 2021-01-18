@@ -24,11 +24,6 @@ private:
 
   Database::Tracks::Track _track;
   UI::MouseEvents<UrlAndTitle> _clickable_urls;
-
-  void draw_heading(int, const char*) noexcept;
-  void draw_tag(int, const char*)     noexcept;
-  template<class Str> inline void draw_info(int, Str&&)    noexcept;
-  template<class Str, class Str1> inline void draw_link(Str&&, Str1&&) noexcept;
 };
 
 } // namespace Views

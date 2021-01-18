@@ -33,7 +33,7 @@ struct ConstChars {
   inline ConstChars(const signed char* s_)   noexcept : s(reinterpret_cast<const char*>(s_)) {}
   inline ConstChars(const unsigned char* s_) noexcept : s(reinterpret_cast<const char*>(s_)) {}
   inline operator const char*()        const noexcept { return s; }
-  inline const char* c_str()                 noexcept { return s; }
+  inline const char* c_str()           const noexcept { return s; }
 //inline char operator*()   const noexcept { return *s; }
 };
 
@@ -162,9 +162,6 @@ void eraes_all_overlap(T& s, ConstCharsLen search) {
  * TODO Here begins the mess TODO
  */
 
-template<class T> inline T*   cstr(T* s)                          { return s;         }
-template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
-
 #if 0
 template<class T, size_t N> inline size_t s_len(      T(&s)[N])   { return std::strlen(s); }
 template<class T, size_t N> inline size_t s_len(const T(&s)[N])   { return N - 1;          }
@@ -231,6 +228,10 @@ static inline std::string& trim(std::string& s, const char* chars = " \n\t\f\v")
 static inline std::string& rtrim(std::string& s, const char* chars = " \n\t\f\v") {
   return trim(s, chars); // TODO
 }
+
+
+template<class T> inline T*   cstr(T* s)                          { return s;         }
+template<class T> inline auto cstr(T& s) -> decltype(T{}.c_str()) { return s.c_str(); }
 
 template<class String, class Predicate>
 void split(std::vector<std::string>& result, const String& str, const Predicate& pred) {
