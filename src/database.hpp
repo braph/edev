@@ -118,6 +118,12 @@ enum TrackColumnID : unsigned char {
   TRACK_ENUM_END,
 };
 
+struct column_cast {
+  ColumnID _id;
+  template<class T> constexpr column_cast(T id) : _id(static_cast<ColumnID>(id)) {}
+  template<class T> constexpr operator T() const { return static_cast<T>(_id); }
+};
+
 static ColumnID columnIDFromStr(const char* s) noexcept {
   using pack = StringPack::AlphaNoCase;
   switch (pack(s)) {

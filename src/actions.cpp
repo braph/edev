@@ -111,7 +111,7 @@ PLAYLIST_PLAY:
     index = mainwindow->windows.index_of(&mainwindow->playlist);
     goto SELECT_TAB;
   case BROWSER_SHOW:
-    index = mainwindow->windows.index_of(&mainwindow->playlist); // TODO [later]
+    index = mainwindow->windows.index_of(&mainwindow->browser);
     goto SELECT_TAB;
   case INFO_SHOW:
     index = mainwindow->windows.index_of(&mainwindow->info);

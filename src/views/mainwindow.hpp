@@ -9,6 +9,7 @@
 #include "progressbar.hpp"
 #include "infoline.hpp"
 #include "playlist.hpp"
+#include "browser.hpp"
 #include "tabbar.hpp"
 
 #include "../ui/core.hpp"
@@ -52,6 +53,7 @@ public:
   UI::StackedContainer  windows;
   Views::Splash         splash;
   Views::Playlist       playlist;
+  Views::Browser        browser;
   Views::Info           info;
   Views::Help           help;
 };

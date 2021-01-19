@@ -200,6 +200,8 @@ MAINLOOP:
   doupdate();
 
   win = mainwindow.getWINDOW();
+  if (! win)
+    win = stdscr;
 
   // Do as much download work as possible, be only interrupted by the user
   wtimeout(win, 0);

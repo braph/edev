@@ -13,6 +13,7 @@ MainWindow :: MainWindow()
 , windows()
 , splash()
 , playlist()
+, browser()
 , info()
 , help()
 {
@@ -45,7 +46,7 @@ MainWindow :: MainWindow()
       windows.add_widget(&playlist);
       tabBar.add_tab("playlist");
     case TabWidgets::BROWSER:
-      windows.add_widget(&playlist); // TODO [later]
+      windows.add_widget(&browser);
       tabBar.add_tab("browser");
     case TabWidgets::INFO:
       windows.add_widget(&info);

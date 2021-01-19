@@ -32,5 +32,6 @@
 #include "views/help.cpp"
 #include "views/info.cpp"
 #include "views/playlist.cpp"
+#include "views/browser.cpp"
 
 #include "application.cpp"
