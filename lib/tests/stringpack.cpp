@@ -117,7 +117,6 @@ int main() {
     assert(0  == SC::pack(""));
     assert(1  == SC::pack("a"));
     assert(26 == SC::pack("z"));
-    printf(">>>>>>>>>>>>>>%u\n", SC::pack("_"));
     assert(27 == SC::pack("_"));
     assert(27 == SC::pack("+"));
 

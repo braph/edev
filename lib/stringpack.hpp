@@ -272,7 +272,7 @@ inline constexpr unsigned alpha_nocase(unsigned c) {
     0);
 }
 
-/// Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'"
+/// Like AlnumNoCase, but 0-9 are converted to 'OLZEASGTBQ'
 inline constexpr unsigned l33t_nocase(unsigned c) noexcept {
   // Nope. "OLZEASGTBQ"['0' - c] is not constexpr in C++11
   return 1 + (
