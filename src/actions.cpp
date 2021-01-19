@@ -67,8 +67,13 @@ int Actions :: call(ActionID id) {
     mainwindow->playlist.goto_active();
     break;
   case PLAYLIST_DOWNLOAD:
-    if (! mainwindow->playlist.empty() && mainwindow->playlist.cursor_index() >= 0)
-      trackloader.download_album(mainwindow->playlist.cursor_item());
+    if (! mainwindow->playlist.empty() && mainwindow->playlist.cursor_index() >= 0) {
+      try {
+        trackloader.download_album(mainwindow->playlist.cursor_item());
+      } catch (const std::exception& e) {
+        log_write("%s\n", e);
+      }
+    }
     break;
   case PLAYLIST_NEXT:
     index = mainwindow->playlist.active_index() + 1;
@@ -83,8 +88,12 @@ int Actions :: call(ActionID id) {
 PLAYLIST_PLAY:
     mainwindow->playlist.active_index(index);
     if (! mainwindow->playlist.empty() && mainwindow->playlist.active_index() >= 0) {
-      auto track = mainwindow->playlist.active_item();
-      player.play(trackloader.get_file_for_track(track, false));
+      try {
+        auto track = mainwindow->playlist.active_item();
+        player.play(trackloader.get_file_for_track(track, false));
+      } catch (const std::exception& e) {
+        log_write("%s\n", e);
+      }
     }
     break;
 
@@ -129,24 +138,24 @@ SELECT_TAB:
   case SEARCH_DOWN:
   case SEARCH_PREV:
   case SEARCH_NEXT:
-  case ACTIONID_ENUM_LAST: break;
+  case ACTIONID_COUNT: break;
   default: assert(0);
   }
 
   return 0;
 }
 
-static const char *action_strings[Actions::ACTIONID_ENUM_LAST] = {
+static const char *action_strings[Actions::ACTIONID_COUNT] = {
 #define X(ENUM, STR) STR,
   XACTIONS
 #undef X
 };
 
 Actions::ActionID Actions :: parse(const std::string& s) {
-  for (int i = 0; i < Actions::ACTIONID_ENUM_LAST; ++i)
+  for (int i = 0; i < Actions::ACTIONID_COUNT; ++i)
     if (s == action_strings[i])
       return static_cast<Actions::ActionID>(i);
-  return Actions::ACTIONID_ENUM_LAST;
+  return Actions::ACTIONID_COUNT;
 }
 
 const char* Actions :: to_string(Actions::ActionID id) {

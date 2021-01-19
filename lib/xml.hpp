@@ -125,14 +125,14 @@ public:
   Attribute    attributes()    const noexcept { return Attribute(m_node->properties); }
 
   // <currentNode><otherTags>bar</otherTags></currentNode>
-  //   ^--- nearestContent() -^
-  const char* nearestContent() const noexcept {
+  //   ^--- nearest_content() -^
+  const char* nearest_content() const noexcept {
     const char* s = NULL;
 
     for (Node node = children(); node; node = node.next())
       if ((s = node.content()))
         return s;
-      else if ((s = node.nearestContent()))
+      else if ((s = node.nearest_content()))
         return s;
 
     return s;
@@ -150,7 +150,7 @@ public:
   }
 #endif
 
-  std::string allText() const {
+  std::string all_text() const {
     std::string value;
     for (Node node = children(); node; node = node.next())
       if (node.type() == XML_TEXT_NODE) {
@@ -158,7 +158,7 @@ public:
           value += node.content();
       }
       else
-        value += node.allText();
+        value += node.all_text();
     return value;
   }
 

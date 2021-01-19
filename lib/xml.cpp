@@ -43,8 +43,8 @@ int main() {
     }
   }
 
-  cout << "alltext=" << doc.getRootElement().allText() << "<" << endl;
-  cout << "content=" << doc.getRootElement().nearestContent() << "<" << endl;
+  cout << "alltext=" << doc.getRootElement().all_text() << "<" << endl;
+  cout << "content=" << doc.getRootElement().nearest_content() << "<" << endl;
 
 #if 0
   Xml::Doc doc2 = Html::readDoc("/tmp/ekt.html", NULL, 0);

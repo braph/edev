@@ -1,12 +1,12 @@
 #ifndef UPDATER_HPP
 #define UPDATER_HPP
 
+#include "browsepage.hpp"
 #include <lib/downloads.hpp>
 
 #include <string>
 #include <cstdint>
 
-class Album;
 namespace Database { class Database; }
 
 class Updater {
@@ -24,7 +24,7 @@ private:
 
   void fetch_page(int, std::string&&="")     noexcept;
   void insert_album(Album&)                  noexcept;
-  void insert_browsepage(const std::string&) noexcept;
+  void insert_browsepage(BrowsePageParser&)  noexcept;
 };
 
 #endif

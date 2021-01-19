@@ -11,8 +11,8 @@ class TrackLoader {
 public:
   TrackLoader() {}
 
-  std::string get_file_for_track(Database::Tracks::Track, bool force_reload=false);
-  void download_album(const Database::Tracks::Track&);
+  std::string get_file_for_track(Database::Tracks::Track, bool force_reload=false); /* throws */
+  void download_album(const Database::Tracks::Track&); /* throws */
   Downloads& downloads() noexcept { return _downloads; }
 
 private:

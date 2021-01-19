@@ -5,18 +5,8 @@ TODO [most important first]
 
   - Add a browser view
 
-  - browsepage.cpp / updater.cpp:
-    Ensure that exceptions will be logged instead of terminating the program
-
-  - trackloader.cpp:
-    - Exceptions? Are they logged yet?!
-
   - playlist:
     ^S for saving?
-
-  - database.cpp: track_column_to_string ???
-
-  - Add filenames to error messages (WHICH FILES?!)
 
 MAYBE
   - Create a "StringScan" class that replaces sscanf() and use it in browsepage.cpp

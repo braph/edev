@@ -48,7 +48,7 @@ public:
 #define X(ENUM, STR) ENUM,
   XACTIONS
 #undef X
-  ACTIONID_ENUM_LAST
+  ACTIONID_COUNT
   };
 
   static int call(ActionID);

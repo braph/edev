@@ -148,14 +148,14 @@ Album BrowsePageParser :: next_album() {
   // Rating, Voting count
   // <span class="d">Rated <strong>89.10%</strong> with <strong>189</strong>
   auto strongs = xpath.query(cache[".//p[@class = 'postmetadata']//span[@class = 'd']//strong"], post);
-  album.rating = std::atof(safe_str(strongs[0].nearestContent()));
-  album.votes  = std::atoi(safe_str(strongs[1].nearestContent()));
+  album.rating = std::atof(safe_str(strongs[0].nearest_content()));
+  album.votes  = std::atoi(safe_str(strongs[1].nearest_content()));
 
   // Styles
   for (const auto& a : xpath.query(cache[".//span[@class = 'style']//a"], post)) {
     std::string url = a["href"];
     if (! url.empty())
-      album.styles.push_back(Style{std::move(url), a.nearestContent()});
+      album.styles.push_back(Style{std::move(url), a.nearest_content()});
   }
 
   // Description (first <p> </p>)
@@ -168,7 +168,7 @@ Album BrowsePageParser :: next_album() {
   // Album title and URL
   auto a_title = xpath.query(cache[".//h1/a"], post)[0];
   album.url   = a_title["href"];
-  album.title = a_title.allText();
+  album.title = a_title.all_text();
   trim(album.title);
 
   // Archive URLs (<span class="dll"><a href="...zip">MP3 Download</a>)
@@ -183,7 +183,7 @@ Album BrowsePageParser :: next_album() {
   std::vector<std::string> tracks;
   for (const auto& script : xpath.query(cache[".//script"], post)) {
     const char *base64_begin, *base64_end;
-    if (! (base64_begin = script.nearestContent()))
+    if (! (base64_begin = script.nearest_content()))
       continue;
     if (! (base64_begin = std::strstr(base64_begin, "soundFile:")))
       continue;
@@ -219,23 +219,23 @@ Album BrowsePageParser :: next_album() {
             track = Track{};
           }
 
-          track.number = std::atoi(safe_str(span.nearestContent()));
+          track.number = std::atoi(safe_str(span.nearest_content()));
           if (album.is_single_url)
             track.url = *track_urls_iter;
           else if (track_urls_iter)
             track.url = std::move(track_urls_iter.next());
           break;
         case pack("t"):
-          trim((track.title = span.allText()));
+          trim((track.title = span.all_text()));
           break;
         case pack("r"):
-          trim((track.remix = span.allText()), "\t ()");
+          trim((track.remix = span.all_text()), "\t ()");
           break;
         case pack("a"):
-          trim((track.artist = span.allText()));
+          trim((track.artist = span.all_text()));
           break;
         case pack("d"):
-          const char* s = span.nearestContent();
+          const char* s = span.nearest_content();
           if (s) {
             if (std::strchr(s, ':')) { // "(4:32)"
               short minutes = 0;

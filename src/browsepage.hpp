@@ -60,7 +60,7 @@ class BrowsePageParser {
 public:
   BrowsePageParser(const std::string&);
   int num_pages();
-  Album next_album();
+  Album next_album(); /* throws */
 
 private:
   Html::Doc doc;

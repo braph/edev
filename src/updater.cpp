@@ -71,7 +71,7 @@ void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
       if (num_pages > 0 && num_pages < _max_pages)
         _max_pages = num_pages;
 
-      for (Album _; ! (_ = parser.next_album()).empty(); insert_album(_));
+      insert_browsepage(parser);
 
       int next_page = page + _downloads.parallel();
       if (next_page <= _max_pages)
@@ -156,13 +156,16 @@ void Updater :: insert_album(Album& album) noexcept {
   }
 }
 
-void Updater :: insert_browsepage(const std::string& source) noexcept {
-  BrowsePageParser parser(source);
+void Updater :: insert_browsepage(BrowsePageParser& parser) noexcept {
   for (;;) {
-    Album album = parser.next_album();
-    if (album.empty())
-      return;
-    insert_album(album);
+    try {
+      Album album = parser.next_album();
+      if (album.empty())
+        return;
+      insert_album(album);
+    } catch (const std::exception& e) {
+      log_write("%s\n", e);
+    }
   }
 }
 

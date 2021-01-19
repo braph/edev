@@ -41,7 +41,7 @@ void Help :: draw() {
     addstr(++y, 1, widget.name);
     move(++y, KEYS_START);
 
-    for (int id = 1; id < Actions::ACTIONID_ENUM_LAST; ++id) {
+    for (int id = 1; id < Actions::ACTIONID_COUNT; ++id) {
       int nkeys = 0;
 
       attrset(colors.help_key_name);
