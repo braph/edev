@@ -11,8 +11,6 @@ namespace Views {
 
 using namespace Database;
 
-struct Browser;
-
 struct Item {
   enum type_t {
     ITEM_TRACK,  // Column rendered track
@@ -36,26 +34,23 @@ struct Item {
   Item(type_t t, Tracks::Track track)   : type(t), data(track) {}
 };
 
-struct Window0 : public ListWidget<std::vector<Item>> {
-  Window0(Browser*, const Window0* = NULL, const ColumnID* = NULL);
-  Window0(Browser*, const Window0*, const ColumnID*, Field);
+struct Browser : public ListWidget<std::vector<Item>> {
+  Browser();
 
   bool handle_key(int key) override;
   void render(WINDOW*, int, int, const Item&, int, unsigned);
   void fill_list();
 
 private:
-  Browser*        _browser;
-  const Window0*  _parent;
-  const ColumnID* _current_column;
-  Field           _current_filter;
-  std::vector<Item> _list;
-};
+  struct Filter {
+    ColumnID column;
+    Field    field;
+  };
 
-struct Browser : public UI::StackedContainer {
-  Browser();
-private:
-  Window0 _root;
+  const ColumnID*    _current_column;
+  ColumnID           _current_column_display;
+  std::vector<Filter> _filters;
+  std::vector<Item>   _list;
 };
 
 } // namespace Views

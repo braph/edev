@@ -42,10 +42,8 @@ static const ColumnID paths[3][3] = {
   {  column_cast(ALBUM_YEAR),    column_cast(ALBUM_TITLE),  column_cast(COLUMN_NONE)  },
 };
 
-Window0 :: Window0(Browser* browser, const Window0* parent, const ColumnID* current_column)
-  : _browser(browser)
-  , _parent(parent)
-  , _current_column(current_column)
+Browser :: Browser()
+  : _current_column(NULL)
 {
   itemRenderer = [this]
     (WINDOW* win, int y, int width, const Item& item, int i, unsigned flags)
@@ -54,20 +52,7 @@ Window0 :: Window0(Browser* browser, const Window0* parent, const ColumnID* curr
   fill_list();
 }
 
-Window0 :: Window0(Browser* browser, const Window0* parent, const ColumnID* current_column, Field filter)
-  : _browser(browser)
-  , _parent(parent)
-  , _current_column(current_column)
-  , _current_filter(filter)
-{
-  itemRenderer = [this]
-    (WINDOW* win, int y, int width, const Item& item, int i, unsigned flags)
-    { render(win, y, width, item, i, flags); };
-  list(&_list);
-  fill_list();
-}
-
-void Window0 :: render(
+void Browser :: render(
     WINDOW *win,
     int y,
     int width,
@@ -75,65 +60,65 @@ void Window0 :: render(
     int index,
     unsigned flags
 ) {
-  const char* text;
-  const Tracks::Track track = item.data.track;
+  const char* text = "[..]";
   switch (item.type) {
-    case Item::ITEM_TRACK:   return Views::TrackRenderer(Config::playlist_columns)(win, y, width, track, index, flags);
-    case Item::ITEM_BACK:    text = "[..]"; break;
-    case Item::ITEM_FOLDER:  text = track_column_to_string(item.data.track, *_current_column); break;
+    case Item::ITEM_TRACK:   Views::TrackRenderer(Config::playlist_columns)(win, y, width, item.data.track, index, flags); return;
+    case Item::ITEM_BACK:    break;
+    case Item::ITEM_FOLDER:  text = track_column_to_string(item.data.track, _current_column_display); break;
     case Item::ITEM_PATH:    text = column_id_to_string(*item.data.path); break;
   }
 
-  unsigned int attributes = 0;
+  attr_t attributes = (index % 2) ? colors.list_item_odd : colors.list_item_even;
   if (flags & ITEM_ACTIVE)       attributes |= A_BOLD;
   if (flags & ITEM_UNDER_CURSOR) attributes |= A_STANDOUT;
   if (flags & ITEM_SELECTED)     attributes |= colors.list_item_selection;
-  attributes |= (index % 2) ? colors.list_item_odd : colors.list_item_even;
   wattrset(win, attributes);
   wprintw(win, "[%s]", text);
 }
 
-void Window0 :: fill_list() {
+void Browser :: fill_list() {
+  auto is_accepted = [this](const Database::Tracks::Track& track) {
+    for (const auto& filter : _filters)
+      if (! (track[filter.column] == filter.field))
+        return false;
+    return true;
+  };
+
   _list.clear();
 
-  if (! _parent /* This is our root window */) {
+  if (!_current_column /* Root window */) {
     _list.push_back(Item(Item::ITEM_PATH, paths[0]));
     _list.push_back(Item(Item::ITEM_PATH, paths[1]));
     _list.push_back(Item(Item::ITEM_PATH, paths[2]));
+    _list.push_back(Item(Item::ITEM_PATH, &paths[0][0]));
   }
 
-  if (_current_column && *_current_column /* We list folders */) {
-    assert(_parent);
+  // Folders
+  if (_current_column && *_current_column != COLUMN_NONE) {
+    auto beg = _list.end();
+    for (auto track : database.tracks) {
+      auto folder_is_in_list = [&](const Item& item){ return item.data.track[*_current_column] == track[*_current_column]; };
+      // TODO: styles exception
 
-    // TODO _current_filter
-
-    ColumnID col = *_current_column;
-    if (col == static_cast<ColumnID>(STYLE_NAME))
-      col = static_cast<ColumnID>(ALBUM_STYLES);
-
-    std::vector<Database::Field> having;
-    for (auto item : _parent->_list)
-      if (item.type == Item::ITEM_TRACK && having.end() == std::find(having.begin(), having.end(), item.data.track[col])) {
-        _list.push_back(Item(Item::ITEM_FOLDER, item.data.track));
-        having.push_back(item.data.track[col]);
-      }
+      if (is_accepted(track) && _list.end() == std::find_if(beg, _list.end(), folder_is_in_list))
+        _list.push_back(Item(Item::ITEM_FOLDER, track));
+    }
   }
 
   // List all the tracks
-  if (_parent) {
-    for (auto item : _parent->_list) {
-      if (item.type == Item::ITEM_TRACK)
-        _list.push_back(item);
-    }
-  }
-  else {
-    for (auto track : make_iterator_pair(database.tracks.begin(), database.tracks.end())) {
+  for (auto track : database.tracks)
+    if (is_accepted(track))
       _list.push_back(Item(Item::ITEM_TRACK, track));
-    }
-  }
 }
 
-bool Window0 :: handle_key(int key) {
+bool Browser :: handle_key(int key) {
+  auto update_column_id = [this](){
+    if (_current_column)
+      _current_column_display = *_current_column;
+    if (_current_column_display == static_cast<ColumnID>(STYLE_NAME))
+      _current_column_display = static_cast<ColumnID>(ALBUM_STYLES);
+  };
+
   if (Bindings::playlist[key]) {
     switch (Bindings::playlist[key]) {
     case Actions::TOP:       top();        break;
@@ -146,15 +131,21 @@ bool Window0 :: handle_key(int key) {
       auto item = cursor_item();
       switch (item.type) {
       case Item::ITEM_PATH:
-        _browser->add_widget(new Window0(_browser, this, item.data.path));
-        _browser->current_index(_browser->count() - 1);
+        _current_column = item.data.path;
+        update_column_id();
+        fill_list();
         return true;
       case Item::ITEM_BACK:
-        _browser->pop_back();
+        _filters.pop_back();
+        _current_column--;
+        update_column_id();
+        fill_list();
         return true;
       case Item::ITEM_FOLDER:
-        _browser->add_widget(new Window0(_browser, this, _current_column + 1, item.data.track[*_current_column]));
-        _browser->current_index(_browser->count() - 1);
+        _filters.push_back(Filter{*_current_column, item.data.track[*_current_column]});
+        ++_current_column;
+        update_column_id();
+        fill_list();
         return true;
       case Item::ITEM_TRACK:
       default:
@@ -166,12 +157,6 @@ bool Window0 :: handle_key(int key) {
   }
   
   return false;
-}
-
-Browser :: Browser()
-  : _root(this)
-{
-  add_widget(&_root);
 }
 
 } // namespace Views
