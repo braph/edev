@@ -23,9 +23,9 @@ struct Track {
   std::string title;
   std::string artist;
   std::string remix;
-  short       bpm;
-  short       length;
-  short       number;
+  short       bpm = 0;
+  short       length = 0;
+  short       number = 0;
 
 #ifndef NDEBUG
   friend inline std::ostream& operator<<(std::ostream&, const Track&);
@@ -39,10 +39,10 @@ struct Album {
   std::string description;
   std::string cover_url;
   std::time_t date;
-  int         download_count;
-  int         votes;
-  float       rating;
-  bool        is_single_url;
+  int         download_count = 0;
+  int         votes = 0;
+  float       rating = 0.0;
+  bool        is_single_url = 0;
   std::vector<std::string> archive_urls;
   std::vector<Style> styles;
   std::vector<Track> tracks;

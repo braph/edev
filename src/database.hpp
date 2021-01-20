@@ -20,7 +20,7 @@
 namespace Database {
 
 class Database;
-using ccstr = const char*;
+using ccstr   = const char*;
 using CString = ConstCharsLen;
 
 /* ============================================================================
@@ -169,9 +169,12 @@ struct Field {
     STRING,
     INTEGER,
     FLOAT,
-    TIME
+    TIME,
+    NONE
   } type;
 
+
+  inline Field()         noexcept : value(0), type(NONE)    {}
   inline Field(ccstr s)  noexcept : value(s), type(STRING)  {}
   inline Field(int i)    noexcept : value(i), type(INTEGER) {}
   inline Field(float f)  noexcept : value(f), type(FLOAT)   {}
@@ -185,12 +188,14 @@ struct Field {
   int compare(const Field rhs) const noexcept {
     assert(type == rhs.type);
     switch (type) {
-    case STRING:  return std::strcmp(value.s, rhs.value.s);
+    case STRING:  return value.s == rhs.value.s ? 0 : std::strcmp(value.s, rhs.value.s);
     case INTEGER: return value.i - rhs.value.i;
     case FLOAT:   return value.f - rhs.value.f;
     case TIME:    return value.t - rhs.value.t;
     }
   }
+
+  inline bool operator==(const Field& rhs) { return 0 == compare(rhs); }
 };
 
 // === Column ===============================================================
@@ -224,7 +229,7 @@ struct Record {
   TablePointer table;
   size_t id;
   Record() : table(NULL), id(0) {}
-  Record(TablePointer t, size_t id) : table(t), id(id) {}
+  Record(TablePointer t, size_t i) : table(t), id(i) {}
   operator bool()                   const noexcept { return id != 0;    }
   bool operator!=(const Record& r)  const noexcept { return id != r.id; }
   bool operator==(const Record& r)  const noexcept { return id == r.id; }
@@ -504,7 +509,7 @@ public:
   Database() noexcept;
 
   void load(const std::string&);
-  void save(const std::string&);
+  void save(const std::string&) const;
   void shrink_to_fit();
 
   inline std::vector<Styles::Style> get_styles()

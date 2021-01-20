@@ -79,6 +79,14 @@ bool GenericContainer :: empty() const noexcept {
   return _widgets.empty();
 }
 
+void GenericContainer :: pop_back() noexcept {
+  if (_widgets.size()) {
+    _widgets.pop_back();
+    if (_current >= _widgets.size())
+      --_current;
+  }
+}
+
 /* ============================================================================
  * VerticalContainer
  * ==========================================================================*/

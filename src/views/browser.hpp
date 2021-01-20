@@ -11,47 +11,51 @@ namespace Views {
 
 using namespace Database;
 
+struct Browser;
+
 struct Item {
-  enum type {
+  enum type_t {
     ITEM_TRACK,  // Column rendered track
     ITEM_BACK,   // [..]
     ITEM_FOLDER, // [Some Artist Title] / [Some Album Title]
     ITEM_PATH,   // [Artist] / [Album]
   };
 
-  union data {
-    Tracks::Track track; // For ITEM_TRACK and ITEM_FOLDER
-    const ColumnID* path;          // For ITEM_PATH
+  union data_t {
+    Tracks::Track track;   // For ITEM_TRACK and ITEM_FOLDER
+    const ColumnID* path;  // For ITEM_PATH
 
-    data(Tracks::Track t) : track(t) {}
-    data(const ColumnID* p)         : path(p) {}
+    data_t(Tracks::Track t)   : track(t) {}
+    data_t(const ColumnID* p) : path(p) {}
   };
 
-  type type;
-  data data;
+  type_t type;
+  data_t data;
 
-  Item(enum type t, const ColumnID* path)  : type(t), data(path)  {}
-  Item(enum type t, Tracks::Track track)   : type(t), data(track) {}
+  Item(type_t t, const ColumnID* path)  : type(t), data(path)  {}
+  Item(type_t t, Tracks::Track track)   : type(t), data(track) {}
 };
 
 struct Window0 : public ListWidget<std::vector<Item>> {
-  Window0(Window0* = NULL, ColumnID* = NULL);
+  Window0(Browser*, const Window0* = NULL, const ColumnID* = NULL);
+  Window0(Browser*, const Window0*, const ColumnID*, Field);
+
   bool handle_key(int key) override;
   void render(WINDOW*, int, int, const Item&, int, unsigned);
   void fill_list();
+
 private:
-  Window0*   _parent;
-  ColumnID* _current_column;
-  int       _current_filter_id;
+  Browser*        _browser;
+  const Window0*  _parent;
+  const ColumnID* _current_column;
+  Field           _current_filter;
   std::vector<Item> _list;
-  std::vector<Item>::const_iterator _tracks_begin;
-  std::vector<Item>::const_iterator _tracks_end;
 };
 
 struct Browser : public UI::StackedContainer {
   Browser();
 private:
-  Window0 root;
+  Window0 _root;
 };
 
 } // namespace Views

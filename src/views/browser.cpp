@@ -42,9 +42,23 @@ static const ColumnID paths[3][3] = {
   {  column_cast(ALBUM_YEAR),    column_cast(ALBUM_TITLE),  column_cast(COLUMN_NONE)  },
 };
 
-Window0 :: Window0(Window0* parent, ColumnID* current_column)
-  : _parent(parent)
+Window0 :: Window0(Browser* browser, const Window0* parent, const ColumnID* current_column)
+  : _browser(browser)
+  , _parent(parent)
   , _current_column(current_column)
+{
+  itemRenderer = [this]
+    (WINDOW* win, int y, int width, const Item& item, int i, unsigned flags)
+    { render(win, y, width, item, i, flags); };
+  list(&_list);
+  fill_list();
+}
+
+Window0 :: Window0(Browser* browser, const Window0* parent, const ColumnID* current_column, Field filter)
+  : _browser(browser)
+  , _parent(parent)
+  , _current_column(current_column)
+  , _current_filter(filter)
 {
   itemRenderer = [this]
     (WINDOW* win, int y, int width, const Item& item, int i, unsigned flags)
@@ -70,11 +84,12 @@ void Window0 :: render(
     case Item::ITEM_PATH:    text = column_id_to_string(*item.data.path); break;
   }
 
-  unsigned int additional_attributes = 0;
-  if (flags & ITEM_ACTIVE)       additional_attributes |= A_BOLD;
-  if (flags & ITEM_UNDER_CURSOR) additional_attributes |= A_STANDOUT;
-  if (flags & ITEM_SELECTED)     additional_attributes |= colors.list_item_selection;
-  wattrset(win, additional_attributes);
+  unsigned int attributes = 0;
+  if (flags & ITEM_ACTIVE)       attributes |= A_BOLD;
+  if (flags & ITEM_UNDER_CURSOR) attributes |= A_STANDOUT;
+  if (flags & ITEM_SELECTED)     attributes |= colors.list_item_selection;
+  attributes |= (index % 2) ? colors.list_item_odd : colors.list_item_even;
+  wattrset(win, attributes);
   wprintw(win, "[%s]", text);
 }
 
@@ -88,19 +103,34 @@ void Window0 :: fill_list() {
   }
 
   if (_current_column && *_current_column /* We list folders */) {
-    for (auto item : make_iterator_pair(_parent->_tracks_begin, _parent->_tracks_end))
-      _list.push_back({Item::ITEM_FOLDER, item.data.track});
+    assert(_parent);
+
+    // TODO _current_filter
+
+    ColumnID col = *_current_column;
+    if (col == static_cast<ColumnID>(STYLE_NAME))
+      col = static_cast<ColumnID>(ALBUM_STYLES);
+
+    std::vector<Database::Field> having;
+    for (auto item : _parent->_list)
+      if (item.type == Item::ITEM_TRACK && having.end() == std::find(having.begin(), having.end(), item.data.track[col])) {
+        _list.push_back(Item(Item::ITEM_FOLDER, item.data.track));
+        having.push_back(item.data.track[col]);
+      }
   }
 
   // List all the tracks
-  _tracks_begin = _list.begin();
-  if (_parent)
-    for (auto item : make_iterator_pair(_parent->_tracks_begin, _parent->_tracks_end))
-      _list.push_back({Item::ITEM_TRACK, item.data.track});
-  else
-    for (auto track : make_iterator_pair(database.tracks.begin(), database.tracks.end()))
-      _list.push_back({Item::ITEM_TRACK, track});
-  _tracks_end = _list.end();
+  if (_parent) {
+    for (auto item : _parent->_list) {
+      if (item.type == Item::ITEM_TRACK)
+        _list.push_back(item);
+    }
+  }
+  else {
+    for (auto track : make_iterator_pair(database.tracks.begin(), database.tracks.end())) {
+      _list.push_back(Item(Item::ITEM_TRACK, track));
+    }
+  }
 }
 
 bool Window0 :: handle_key(int key) {
@@ -112,6 +142,24 @@ bool Window0 :: handle_key(int key) {
     case Actions::DOWN:      down();       break;
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
+    case Actions::PLAYLIST_PLAY: { // TODO
+      auto item = cursor_item();
+      switch (item.type) {
+      case Item::ITEM_PATH:
+        _browser->add_widget(new Window0(_browser, this, item.data.path));
+        _browser->current_index(_browser->count() - 1);
+        return true;
+      case Item::ITEM_BACK:
+        _browser->pop_back();
+        return true;
+      case Item::ITEM_FOLDER:
+        _browser->add_widget(new Window0(_browser, this, _current_column + 1, item.data.track[*_current_column]));
+        _browser->current_index(_browser->count() - 1);
+        return true;
+      case Item::ITEM_TRACK:
+      default:
+        return true;
+      }}
     default: Actions::call(Bindings::playlist[key]);
     }
     return true;
@@ -120,8 +168,10 @@ bool Window0 :: handle_key(int key) {
   return false;
 }
 
-Browser :: Browser() {
-  add_widget(&root);
+Browser :: Browser()
+  : _root(this)
+{
+  add_widget(&_root);
 }
 
 } // namespace Views

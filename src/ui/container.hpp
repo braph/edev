@@ -25,6 +25,7 @@ public:
   int     index_of(Widget*)        const noexcept;
   bool    empty()                  const noexcept;
   int     count()                  const noexcept;
+  void    pop_back()                     noexcept;
 
 protected:
   std::vector<Widget*> _widgets;

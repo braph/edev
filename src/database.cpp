@@ -159,7 +159,7 @@ void Database :: load(const std::string& file) {
     l.load(*t);
 }
 
-void Database :: save(const std::string& file) {
+void Database :: save(const std::string& file) const {
   auto fh = CFile::open(file, "w");
 
   Dumper d(fh);

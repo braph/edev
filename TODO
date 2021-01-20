@@ -6,6 +6,9 @@ TODO [most important first]
   - playlist:
     ^S for saving?
 
+  - IDK if I miunderstood the iterator interface in general or my GenericIterator implementation
+    is flawed. vector.begin() + N  gave some strange results.
+
 MAYBE
   - Create a "StringScan" class that replaces sscanf() and use it in browsepage.cpp
     [try_]{read,peek,search,skip,eat}_[span_]{re,str,char,char_of}
