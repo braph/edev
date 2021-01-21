@@ -191,7 +191,7 @@ private:
   { return size.height - 1; }
 
   inline int max_top_list_index() const noexcept
-  { return list_size() - max_cursor() - 1; }
+  { return list_size() <= size.height ? 0 : list_size() - max_cursor() - 1; }
 
   void clamp_vars() {
     clamp(&m_top_list_idx,  0, max_top_list_index());

@@ -60,7 +60,7 @@ void Browser :: render(
     int index,
     unsigned flags
 ) {
-  const char* text = "[..]";
+  const char* text = "..";
   switch (item.type) {
     case Item::ITEM_TRACK:   Views::TrackRenderer(Config::playlist_columns)(win, y, width, item.data.track, index, flags); return;
     case Item::ITEM_BACK:    break;
@@ -85,22 +85,25 @@ void Browser :: fill_list() {
   };
 
   _list.clear();
+  _list.shrink_to_fit(); // TODO
 
   if (!_current_column /* Root window */) {
     _list.push_back(Item(Item::ITEM_PATH, paths[0]));
     _list.push_back(Item(Item::ITEM_PATH, paths[1]));
     _list.push_back(Item(Item::ITEM_PATH, paths[2]));
-    _list.push_back(Item(Item::ITEM_PATH, &paths[0][0]));
-  }
+    _list.push_back(Item(Item::ITEM_PATH, &paths[0][1]));
+  } else
+    _list.push_back(Item(Item::ITEM_BACK, NULL));
 
   // Folders
   if (_current_column && *_current_column != COLUMN_NONE) {
-    auto beg = _list.end();
     for (auto track : database.tracks) {
-      auto folder_is_in_list = [&](const Item& item){ return item.data.track[*_current_column] == track[*_current_column]; };
+      auto folder_is_in_list = [&](const Item& item){
+        return item.type == Item::ITEM_FOLDER && item.data.track[*_current_column] == track[*_current_column];
+      };
       // TODO: styles exception
 
-      if (is_accepted(track) && _list.end() == std::find_if(beg, _list.end(), folder_is_in_list))
+      if (is_accepted(track) && _list.end() == std::find_if(_list.begin(), _list.end(), folder_is_in_list))
         _list.push_back(Item(Item::ITEM_FOLDER, track));
     }
   }
@@ -109,6 +112,11 @@ void Browser :: fill_list() {
   for (auto track : database.tracks)
     if (is_accepted(track))
       _list.push_back(Item(Item::ITEM_TRACK, track));
+
+  for (auto i : _list)
+    if (i.type == Item::ITEM_TRACK)
+      if (i.data.track.id == 0)
+        throw 0;
 }
 
 bool Browser :: handle_key(int key) {
@@ -127,7 +135,7 @@ bool Browser :: handle_key(int key) {
     case Actions::DOWN:      down();       break;
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
-    case Actions::PLAYLIST_PLAY: { // TODO
+    case Actions::PLAYLIST_PLAY: {
       auto item = cursor_item();
       switch (item.type) {
       case Item::ITEM_PATH:
@@ -136,7 +144,8 @@ bool Browser :: handle_key(int key) {
         fill_list();
         return true;
       case Item::ITEM_BACK:
-        _filters.pop_back();
+        if (_filters.size())
+          _filters.pop_back();
         _current_column--;
         update_column_id();
         fill_list();
