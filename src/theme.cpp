@@ -102,9 +102,8 @@ Theme THEME_256 = {
 };
 
 Theme::Definition* Theme :: get(const std::string& name) noexcept {
-#define X(IDENTIFIER, STRING) case Hash::djb2(STRING): return &IDENTIFIER;
-  switch (Hash::djb2(name)) { THEME_ELEMENT_IDS }
-#undef X
+#define THEME_HPP__CASE_AND_RETURN(NAME, STRING) case Hash::djb2(STRING): return &NAME;
+  switch (Hash::djb2(name)) { THEME_HPP__FOREACH_ELEMENT(THEME_HPP__CASE_AND_RETURN) }
   return NULL;
 }
 
@@ -118,9 +117,8 @@ static attr_t theme_set_color(Theme::Definition& def, Theme::Definition& default
 void Theme :: load_theme(LoadedColors& colors) noexcept {
   UI::Colors::reset();
 
-#define X(IDENTIFIER, _) colors.IDENTIFIER = theme_set_color(IDENTIFIER, default_);
-  THEME_ELEMENT_IDS
-#undef X
+#define THEME_HPP__SET_COLOR(NAME, _) colors.NAME = theme_set_color(NAME, default_);
+  THEME_HPP__FOREACH_ELEMENT(THEME_HPP__SET_COLOR)
 }
 
 void load_theme_by_colors(int num_colors, LoadedColors& colors) noexcept {

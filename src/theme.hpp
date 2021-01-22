@@ -5,40 +5,40 @@
 
 #include <string>
 
-#define THEME_ELEMENT_IDS                            \
-  X(default_,               "default")               \
-  X(url,                    "url")                   \
+#define THEME_HPP__FOREACH_ELEMENT(_)                \
+  _(default_,               "default")               \
+  _(url,                    "url")                   \
                                                      \
-  X(info_head,              "info.head")             \
-  X(info_tag,               "info.tag")              \
-  X(info_value,             "info.value")            \
-  X(info_description,       "info.description")      \
-  X(info_download_file,     "info.file")             \
-  X(info_download_percent,  "info.download_percent") \
-  X(info_download_error,    "info.download_error")   \
+  _(info_head,              "info.head")             \
+  _(info_tag,               "info.tag")              \
+  _(info_value,             "info.value")            \
+  _(info_description,       "info.description")      \
+  _(info_download_file,     "info.file")             \
+  _(info_download_percent,  "info.download_percent") \
+  _(info_download_error,    "info.download_error")   \
                                                      \
-  X(progressbar_progress,   "progressbar.progress")  \
-  X(progressbar_rest,       "progressbar.rest")      \
+  _(progressbar_progress,   "progressbar.progress")  \
+  _(progressbar_rest,       "progressbar.rest")      \
                                                      \
-  X(tabbar_selected,        "tabbar.selected")       \
-  X(tabbar_unselected,      "tabbar.unselected")     \
+  _(tabbar_selected,        "tabbar.selected")       \
+  _(tabbar_unselected,      "tabbar.unselected")     \
                                                      \
-  X(list_item_even,         "list.item_even")        \
-  X(list_item_odd,          "list.item_odd")         \
-  X(list_item_selection,    "list.item_selection")   \
+  _(list_item_even,         "list.item_even")        \
+  _(list_item_odd,          "list.item_odd")         \
+  _(list_item_selection,    "list.item_selection")   \
                                                      \
-  X(infoline_position,      "infoline.position")     \
-  X(infoline_state,         "infoline.state")        \
+  _(infoline_position,      "infoline.position")     \
+  _(infoline_state,         "infoline.state")        \
                                                      \
-  X(help_widget_name,       "help.widget_name")      \
-  X(help_key_name,          "help.key_name")         \
-  X(help_command_name,      "help.command_name")     \
-  X(help_command_desc,      "help.command_desc")     \
+  _(help_widget_name,       "help.widget_name")      \
+  _(help_key_name,          "help.key_name")         \
+  _(help_command_name,      "help.command_name")     \
+  _(help_command_desc,      "help.command_desc")     \
+
 
 struct LoadedColors {
-#define X(IDENTIFIER, _) attr_t IDENTIFIER;
-  THEME_ELEMENT_IDS
-#undef X
+#define THEME_HPP__DECLARE_ATTR_T(NAME, _) attr_t NAME;
+  THEME_HPP__FOREACH_ELEMENT(THEME_HPP__DECLARE_ATTR_T)
 };
 
 struct Theme {
@@ -52,9 +52,8 @@ struct Theme {
     {}
   };
 
-#define X(IDENTIFIER, _) Definition IDENTIFIER;
-  THEME_ELEMENT_IDS
-#undef X
+#define THEME_HPP__DECLARE_DEFINITION(NAME, _) Definition NAME;
+  THEME_HPP__FOREACH_ELEMENT(THEME_HPP__DECLARE_DEFINITION)
 
   Definition* get(const std::string&) noexcept;
   void load_theme(LoadedColors&)      noexcept;

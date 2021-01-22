@@ -16,7 +16,7 @@ namespace Views {
 struct InfoLineFormatString {
   short fg;
   short bg;
-  unsigned int attributes;
+  attr_t attributes;
   std::string text;
   Database::ColumnID tag;
 
@@ -25,7 +25,7 @@ struct InfoLineFormatString {
     std::string text_ = "",
     short fg_ = -1,
     short bg_ = -1,
-    unsigned int attributes_ = 0
+    attr_t attributes_ = 0
   )
     : fg(fg_)
     , bg(bg_)
