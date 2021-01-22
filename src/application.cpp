@@ -83,7 +83,6 @@ void Application :: init() {
     ::mousemask(ALL_MOUSE_EVENTS, NULL);
     ::wresize(stdscr, 1, 1); // Save some bytes...
 
-    Bindings::init();
     Config::init();
     updater.downloads().parallel(10);
 

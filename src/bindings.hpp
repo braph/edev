@@ -7,10 +7,10 @@
 
 namespace Bindings {
 
-void init();
-extern Actions::ActionID pad[KEY_MAX];
-extern Actions::ActionID global[KEY_MAX];
-extern Actions::ActionID playlist[KEY_MAX];
+void init() noexcept;
+extern Actions::ActionID (&pad)[KEY_MAX];
+extern Actions::ActionID (&global)[KEY_MAX];
+extern Actions::ActionID (&playlist)[KEY_MAX];
 
 } // namespace Bindings
 
