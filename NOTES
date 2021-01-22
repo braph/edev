@@ -3,6 +3,13 @@
 - When in doubt: use const char* instead of std::string!!!!
 - Use const char* until you get problems
 
+- Initializing of structs/classes:
+  - default member initializers (int foo = 1; ) will destroy POD state
+  - to enable initialization in .data 
+
+- Constexpr makes most sense for data things^^
+
+
 - If you want to be able to provide user-defined "overloads" always use template-specialization, not argument overloads:
 
     void dummy(...) {}

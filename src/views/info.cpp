@@ -7,17 +7,10 @@
 #include "../mpg123playback.hpp"
 #include "../programs.hpp"
 #include "../ui/colors.hpp"
+
 #include <lib/filesystem.hpp>
 #include <lib/bit_tools.hpp>
 #include <lib/string.hpp>
-
-#define START_HEADING    1
-#define START_TAG        3
-#define START_TAG_VALUE  20
-#define START_INFO       3
-#define START_INFO_VALUE 26
-#define TRY_LINE_BREAK   70 // Try to break the line on next space
-#define FORCE_LINE_BREAK 85 // Forces line breaks even in words
 
 namespace Views {
 
@@ -78,6 +71,14 @@ void Info :: track(Database::Tracks::Track track) noexcept {
 }
 
 void Info :: draw() {
+  const int START_HEADING    = 1;
+  const int START_TAG        = 3;
+  const int START_TAG_VALUE  = 20;
+  const int START_INFO       = 3;
+  const int START_INFO_VALUE = 26;
+  const int TRY_LINE_BREAK   = 70; // Try to break the line on next space
+  const int FORCE_LINE_BREAK = 85; // Forces line breaks even in words
+
   auto draw_heading = [this](int y, const char* heading) noexcept {
     attrset(colors.info_head);
     addstr(y, START_HEADING, heading);

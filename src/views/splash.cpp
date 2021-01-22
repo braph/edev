@@ -6,8 +6,10 @@
 #include <lib/spanview.hpp>
 #include <lib/arrayview.hpp>
 
-#define LOGO_WIDTH  78
-#define LOGO_HEIGHT 10
+enum {
+  LOGO_WIDTH  = 78,
+  LOGO_HEIGHT = 10
+};
 static const char LOGO[LOGO_HEIGHT][LOGO_WIDTH+1] = {
   {"   ____    _   _     _             ____    _       _____   ______   _ ___ ___"},
   {"  /  __)  ; | | ;   | |           |  _ \\  | |     /___  \\ |____  | | '_  `_  \\"},
@@ -21,8 +23,10 @@ static const char LOGO[LOGO_HEIGHT][LOGO_WIDTH+1] = {
   {"  \\____)  |_| |_|   \\___/         |_|     \\____/  \\_____| |______| |_|     |_|"},
 };
 
-#define SIGNATURE_WIDTH  69
-#define SIGNATURE_HEIGHT 4
+enum {
+  SIGNATURE_WIDTH  = 69,
+  SIGNATURE_HEIGHT = 4
+};
 static const unsigned char SIGNATURE[SIGNATURE_HEIGHT][SIGNATURE_WIDTH+1] = {
   {"  ___                   _   _    _ _                  _   _          "},
   {" / __| ___ _  _ _ _  __| | | |  (_) |__  ___ _ _ __ _| |_(_)___ _ _  "},
@@ -30,7 +34,7 @@ static const unsigned char SIGNATURE[SIGNATURE_HEIGHT][SIGNATURE_WIDTH+1] = {
   {" |___/\\___/\\_,_|_||_\\__,_| |____|_|_.__/\\___|_| \\__,_|\\__|_\\___/_||_|"},
 };
 
-#define BUBBLES_SIZE 6
+enum { BUBBLES_SIZE = 6 };
 static const char BUBBLES[BUBBLES_SIZE][2] = {{6,3}, {6,7}, {28,1}, {28,9}, {46,7}, {71,9}};
 
 static const short colorFading_0[]       = {-1};
@@ -45,9 +49,10 @@ static const short signatureFading_256[] = {99,105,111,117};
 
 using namespace UI;
 using namespace Views;
-#define setFG(COLOR) UI::Colors::set(COLOR, -1)
 
 void Splash :: draw() {
+  auto setFG = [](int color){ return UI::Colors::set(color, -1); };
+
   clear();
   if (LOGO_HEIGHT > size.height || LOGO_WIDTH > size.width)
     return;
@@ -69,8 +74,8 @@ void Splash :: draw() {
   }
 
   SpanView<ArrayView<const short>> fader;
-  int w_center = size.width / 2;
-  int h_center = size.height / 2;
+  const int w_center = size.width / 2;
+  const int h_center = size.height / 2;
   int left_pad = w_center - (LOGO_WIDTH / 2);
   int top_pad  = h_center - (LOGO_HEIGHT / 2);
   bool draw_signature = false;

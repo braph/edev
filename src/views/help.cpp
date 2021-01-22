@@ -5,10 +5,6 @@
 #include "../bindings.hpp"
 #include "../ui/colors.hpp"
 
-#define KEYS_START          3
-#define COMMANDS_START      30
-#define DESCRIPTIONS_START  45
-
 using namespace UI;
 using namespace Views;
 
@@ -32,8 +28,11 @@ void Help :: layout(Pos pos, Size size) {
 }
 
 void Help :: draw() {
-  clear();
+  const int KEYS_START         = 3;
+  const int COMMANDS_START     = 30;
+  const int DESCRIPTIONS_START = 45;
 
+  clear();
   int y = 0;
 
   for (const auto& widget : widgets) {

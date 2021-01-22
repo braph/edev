@@ -7,8 +7,6 @@
 #include "../actions.hpp"
 #include "../bindings.hpp"
 
-#include <lib/iterator/iterator_pair.hpp>
-
 namespace Views {
 
 using namespace Database;
@@ -36,14 +34,21 @@ static const char* column_id_to_string(ColumnID id) {
   }
 }
 
-static const ColumnID paths[3][3] = {
-  {  column_cast(ALBUM_ARTIST),  column_cast(ALBUM_TITLE),  column_cast(COLUMN_NONE)  },
-  {  column_cast(STYLE_NAME),    column_cast(ALBUM_TITLE),  column_cast(COLUMN_NONE)  },
-  {  column_cast(ALBUM_YEAR),    column_cast(ALBUM_TITLE),  column_cast(COLUMN_NONE)  },
+// This is a bit strange, but since we walk the folder hierarchy by incrementing/decrementing
+// a pointer to `paths`, we need sentinel values.
+static const ColumnID BEGIN_MARKER = static_cast<ColumnID>(0xFE);
+static const ColumnID END_MARKER   = static_cast<ColumnID>(0xFF);
+static inline bool is_marker(ColumnID id) { return (id & 0xFE) == 0xFE; }
+
+static const ColumnID paths[4][4] = {
+  { BEGIN_MARKER, column_cast(ALBUM_ARTIST), column_cast(ALBUM_TITLE), END_MARKER },
+  { BEGIN_MARKER, column_cast(STYLE_NAME),   column_cast(ALBUM_TITLE), END_MARKER },
+  { BEGIN_MARKER, column_cast(ALBUM_YEAR),   column_cast(ALBUM_TITLE), END_MARKER },
+  { BEGIN_MARKER, column_cast(ALBUM_TITLE),  END_MARKER },
 };
 
 Browser :: Browser()
-  : _current_column(NULL)
+  : _current_column(&paths[0][0])
 {
   itemRenderer = [this]
     (WINDOW* win, int y, int width, const Item& item, int i, unsigned flags)
@@ -78,6 +83,7 @@ void Browser :: render(
 
 void Browser :: fill_list() {
   auto is_accepted = [this](const Database::Tracks::Track& track) {
+    // TODO: styles exception
     for (const auto& filter : _filters)
       if (! (track[filter.column] == filter.field))
         return false;
@@ -85,44 +91,36 @@ void Browser :: fill_list() {
   };
 
   _list.clear();
-  _list.shrink_to_fit(); // TODO
 
-  if (!_current_column /* Root window */) {
-    _list.push_back(Item(Item::ITEM_PATH, paths[0]));
-    _list.push_back(Item(Item::ITEM_PATH, paths[1]));
-    _list.push_back(Item(Item::ITEM_PATH, paths[2]));
+  if (*_current_column == BEGIN_MARKER) {
     _list.push_back(Item(Item::ITEM_PATH, &paths[0][1]));
+    _list.push_back(Item(Item::ITEM_PATH, &paths[1][1]));
+    _list.push_back(Item(Item::ITEM_PATH, &paths[2][1]));
+    _list.push_back(Item(Item::ITEM_PATH, &paths[3][1]));
   } else
     _list.push_back(Item(Item::ITEM_BACK, NULL));
 
-  // Folders
-  if (_current_column && *_current_column != COLUMN_NONE) {
+  // Add Folders
+  if (! is_marker(*_current_column)) {
     for (auto track : database.tracks) {
       auto folder_is_in_list = [&](const Item& item){
         return item.type == Item::ITEM_FOLDER && item.data.track[*_current_column] == track[*_current_column];
       };
-      // TODO: styles exception
 
       if (is_accepted(track) && _list.end() == std::find_if(_list.begin(), _list.end(), folder_is_in_list))
         _list.push_back(Item(Item::ITEM_FOLDER, track));
     }
   }
 
-  // List all the tracks
+  // Add Tracks
   for (auto track : database.tracks)
     if (is_accepted(track))
       _list.push_back(Item(Item::ITEM_TRACK, track));
-
-  for (auto i : _list)
-    if (i.type == Item::ITEM_TRACK)
-      if (i.data.track.id == 0)
-        throw 0;
 }
 
 bool Browser :: handle_key(int key) {
   auto update_column_id = [this](){
-    if (_current_column)
-      _current_column_display = *_current_column;
+    _current_column_display = *_current_column;
     if (_current_column_display == static_cast<ColumnID>(STYLE_NAME))
       _current_column_display = static_cast<ColumnID>(ALBUM_STYLES);
   };
@@ -142,6 +140,7 @@ bool Browser :: handle_key(int key) {
         _current_column = item.data.path;
         update_column_id();
         fill_list();
+        draw();
         return true;
       case Item::ITEM_BACK:
         if (_filters.size())
@@ -149,12 +148,14 @@ bool Browser :: handle_key(int key) {
         _current_column--;
         update_column_id();
         fill_list();
+        draw();
         return true;
       case Item::ITEM_FOLDER:
         _filters.push_back(Filter{*_current_column, item.data.track[*_current_column]});
         ++_current_column;
         update_column_id();
         fill_list();
+        draw();
         return true;
       case Item::ITEM_TRACK:
       default:

@@ -37,7 +37,7 @@ Theme THEME_MONO = {
   /* help_key_name         */ {},
   /* help_command_name     */ {},
   /* help_command_desc     */ {}
- };
+};
 
 Theme THEME_8 = {
   /* default               */ {COLOR_NONE, COLOR_NONE},

@@ -6,18 +6,18 @@
  */
 
 template<typename TIterator>
-struct IteratorPair {
+struct iterator_pair {
   TIterator _it;
   TIterator _end;
 
   // Constructors =============================================================
   template<typename TContainer>
-  inline IteratorPair(TContainer& container)
+  inline iterator_pair(TContainer& container)
     : _it(container.begin())
     , _end(container.end())
   {}
 
-  inline IteratorPair(TIterator begin, TIterator end) noexcept
+  inline iterator_pair(TIterator begin, TIterator end) noexcept
     : _it(begin)
     , _end(end)
   {}
@@ -52,15 +52,15 @@ struct IteratorPair {
 };
 
 template<typename TContainer>
-inline IteratorPair<typename TContainer::iterator>
+inline iterator_pair<typename TContainer::iterator>
 make_iterator_pair(TContainer& container) {
-  return IteratorPair<typename TContainer::iterator>(container);
+  return iterator_pair<typename TContainer::iterator>(container);
 }
 
 template<typename TIterator>
-inline IteratorPair<TIterator>
+inline iterator_pair<TIterator>
 make_iterator_pair(TIterator begin, TIterator end) {
-  return IteratorPair<TIterator>(begin, end);
+  return iterator_pair<TIterator>(begin, end);
 }
 
 #endif

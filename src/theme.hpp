@@ -47,7 +47,7 @@ struct Theme {
     short bg;
     attr_t attributes;
 
-    Definition(short fg_ = -2, short bg_ = -2, attr_t attrs_ = 0) noexcept
+    constexpr Definition(short fg_ = -2, short bg_ = -2, attr_t attrs_ = 0) noexcept
       : fg(fg_), bg(bg_), attributes(attrs_)
     {}
   };

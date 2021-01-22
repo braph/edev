@@ -66,7 +66,7 @@ private:
   Html::Doc doc;
   Xml::XPath xpath;
   Xml::XPathResult xpath_albums;
-  IteratorPair<Xml::XPathResult::iterator> xpath_albums_it;
+  iterator_pair<Xml::XPathResult::iterator> xpath_albums_it;
 };
 
 #endif

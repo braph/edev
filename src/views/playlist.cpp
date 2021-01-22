@@ -28,7 +28,7 @@ void TrackRenderer :: operator()(
     int index,
     unsigned flags
 ) {
-  unsigned int additional_attributes = 0;
+  attr_t additional_attributes = 0;
   if (flags & ITEM_ACTIVE)       additional_attributes |= A_BOLD;
   if (flags & ITEM_UNDER_CURSOR) additional_attributes |= A_STANDOUT;
 
