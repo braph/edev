@@ -132,7 +132,7 @@ void InfoLine :: print_formatted_strings(int y, const InfoLineFormat& format) {
   move(y, size.width / 2 - int(sum / 2));
   for (const auto& fmt : format) {
     attrset(UI::Colors::set(fmt.fg, fmt.bg) | fmt.attributes);
-    if (fmt.text.length())
+    if (fmt.text.size())
       *this << fmt.text;
     else
       *this << Database::track_column_to_string(_track, fmt.tag);

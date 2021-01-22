@@ -5,6 +5,7 @@
 #include "../database.hpp"
 #include "../ui/container.hpp"
 #include "../widgets/listwidget.hpp"
+
 #include <lib/steppablesearch.hpp>
 #include <lib/staticvector.hpp>
 
@@ -18,7 +19,7 @@ struct PlaylistColumnFormat {
   bool relative;
   Justify justify;
 
-  PlaylistColumnFormat(
+  constexpr PlaylistColumnFormat(
     Database::ColumnID tag_ = Database::COLUMN_NONE,
     short fg_ = -1,
     short bg_ = -1,
