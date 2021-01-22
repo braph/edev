@@ -33,7 +33,7 @@ public:
     return CFile(fh);
   }
 
-#if _POSIX_C_SOURCE
+#ifdef _POSIX_C_SOURCE
   static CFile fdopen(int fd, String mode) {
     auto fh = ::fdopen(fd, mode);
     if (! fh)
@@ -64,7 +64,7 @@ public:
   inline int   flush()              noexcept { return std::fflush(_fh);         }
   inline int   close()              noexcept { int r = std::fclose(_fh); _fh = NULL; return r; }
 
-#if _FILE_OFFSET_BITS == 64 || _POSIX_C_SOURCE >= 200112L
+#if (defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64) || _POSIX_C_SOURCE >= 200112L
   inline int   seeko(off_t offset, int whence) noexcept { return ::fseeko(_fh, offset, whence); }
   inline off_t tello()                   const noexcept { return ::ftello(_fh);                 }
 #endif

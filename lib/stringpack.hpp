@@ -92,7 +92,7 @@ struct conv_info {
   }
 
 private:
-  static constexpr unsigned bitmask(int i = 0) {
+  static constexpr unsigned bitmask(unsigned i = 0) {
     return (i > 255 ? 0 : (conv(i) | bitmask(i + 1)));
   }
 
@@ -312,6 +312,8 @@ inline constexpr unsigned ascii(unsigned c) noexcept {
  */
 namespace fast {
 
+inline constexpr unsigned upper(unsigned c) noexcept { return c & ~0x20U; }
+
 // Use 0-9,.
 inline constexpr unsigned floatic(unsigned c) noexcept {
   return range<',', '9'>(c);
@@ -324,7 +326,7 @@ inline constexpr unsigned alpha(unsigned c) noexcept {
 
 /// Use a-zA-Z_ (converted to upper case)
 inline constexpr unsigned alpha_nocase(unsigned c) noexcept {
-  return (c >= 'A' && c <= 'z' ? (c & ~0x20) - 'A' + 1 : 0);
+  return (c >= 'A' && c <= 'z' ? upper(c) - 'A' + 1 : 0);
 }
 
 } // namespace fast

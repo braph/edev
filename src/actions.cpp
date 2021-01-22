@@ -6,6 +6,7 @@
 #include "trackloader.hpp"
 #include "mpg123playback.hpp"
 #include "views/mainwindow.hpp"
+#include "ektoplayer.hpp"
 
 #include <csignal>
 #include <cassert>

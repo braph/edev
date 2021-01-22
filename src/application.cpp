@@ -12,6 +12,7 @@
 
 #include <lib/string.hpp>
 #include <lib/filesystem.hpp>
+#include <lib/cfile.hpp>
 
 #include <libxml/xmlversion.h>
 

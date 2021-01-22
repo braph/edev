@@ -192,6 +192,7 @@ struct Field {
     case INTEGER: return value.i - rhs.value.i;
     case FLOAT:   return value.f - rhs.value.f;
     case TIME:    return value.t - rhs.value.t;
+    case NONE:    return 0;
     }
   }
 

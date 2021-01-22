@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include <climits> // INT_MAX
+#include <utility> // std::forward
 
 #undef  NCURSES_OK_ADDR
 #define NCURSES_OK_ADDR(WIN) TRUE

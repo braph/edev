@@ -165,7 +165,7 @@ bool Browser :: handle_key(int key) {
     }
     return true;
   }
-  
+ 
   return false;
 }
 

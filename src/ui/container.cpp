@@ -82,8 +82,9 @@ bool GenericContainer :: empty() const noexcept {
 void GenericContainer :: pop_back() noexcept {
   if (_widgets.size()) {
     _widgets.pop_back();
-    if (_current >= _widgets.size())
-      --_current;
+    const auto max_idx = _widgets.size() - 1;
+    if (size_t(_current) > max_idx)
+      _current = max_idx;
   }
 }
 

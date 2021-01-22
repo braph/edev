@@ -7,7 +7,7 @@ WARNINGS += -Wsign-promo -Wsign-compare -Wsign-conversion
 WARNINGS += -Wmissing-include-dirs
 WARNINGS += -Wpessimizing-move -Wredundant-move
 WARNINGS += -Wno-variadic-macros
-#WARNINGS += -Werror # -Wfatal-errors
+#WARNINGS += -Werror
 #WARNINGS += -Wdisabled-optimization -Wformat=2 -Wshadow -Wswitch-default -Wstrict-overflow=5
 #-D_GLIBCXX_ASSERTIONS
 
@@ -21,14 +21,14 @@ CXXFLAGS := -std=$(STD) -fno-rtti -O2 -s -DNDEBUG $(WARNINGS) -Wfatal-errors
 CPPFLAGS := $(shell xml2-config --cflags) -I/usr/include/readline -I.. -DCURSES_INC=$(CURSES_INC)
 LDLIBS   := -lreadline -lncursesw -lboost_system -lboost_filesystem -lpthread -lcurl $(shell xml2-config --libs)
 
-CONFIG.deps   	= ../lib/shellsplit.o ../lib/filesystem.o ../lib/xml.o
-DATABASE.deps 	= ../lib/stringchunk.o
-BROWSEPAGE.deps = ../lib/base64.o
-PLAYER.deps   	= ../lib/process.o
-THEME.deps    	= ui/colors.o
-UPDATER.deps  	= ../lib/downloads.o markdown.o
-VIEWS         	= $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
-VIEWS         	+= widgets/listwidget.hpp widgets/readline.o
+CONFIG.deps   	    = ../lib/shellsplit.o ../lib/filesystem.o ../lib/xml.o
+DATABASE.deps 	    = ../lib/stringchunk.o
+BROWSEPAGE.deps     = ../lib/base64.o
+MPG123PLAYBACK.deps = ../lib/process.o
+THEME.deps    	    = ui/colors.o
+UPDATER.deps  	    = ../lib/downloads.o markdown.o
+VIEWS         	    = $(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o browser.o)
+VIEWS         	    += widgets/listwidget.hpp widgets/readline.o
 
 # Unity build
 build:
@@ -36,7 +36,7 @@ build:
 
 application: config.o $(CONFIG.deps) database.o $(DATABASE.deps) theme.o $(THEME.deps) \
 	browsepage.o $(BROWSEPAGE.deps) updater.o $(UPDATER.deps) $(VIEWS) ui/container.o \
-	 player.o $(PLAYER.deps) actions.o bindings.o ../lib/downloads.o ektoplayer.o trackloader.o
+	 mpg123playback.o $(MPG123PLAYBACK.deps) actions.o bindings.o ../lib/downloads.o ektoplayer.o trackloader.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDLIBS) application.cpp $^
 
 clean:
@@ -48,7 +48,7 @@ clean:
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-noexcept_objs = actions.o bindings.o ektoplayer.o theme.o markdown.o player.o ui/colors.o \
+noexcept_objs = bindings.o ektoplayer.o theme.o markdown.o mpg123playback.o ui/colors.o \
 								$(addprefix ../lib/, downloads.o filesystem.o shellsplit.o stringchunk.o  process.o) \
 								$(addprefix views/, splash.o infoline.o progressbar.o tabbar.o mainwindow.o help.o info.o playlist.o)
 $(noexcept_objs): %.o: %.cpp
@@ -76,7 +76,7 @@ tests: \
 #	$(VALGRIND) ./a.out
 
 test_ektoplayer: ../lib/filesystem.o
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_EKTOPLAYER ektoplayer.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_EKTOMPG123PLAYBACK ektoplayer.cpp $^
 	$(VALGRIND) ./a.out
 
 test_colors:
@@ -92,7 +92,7 @@ test_config: $(CONFIG.deps) ui/colors.o
 	$(VALGRIND) ./a.out
 
 test_player:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_PLAYER player.cpp $^
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_MPG123PLAYBACK player.cpp $^
 	$(VALGRIND) ./a.out
 
 #test_generic:
@@ -140,7 +140,7 @@ test_splash: theme.o $(THEME.deps)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_SPLASH views/splash.cpp $^
 	$(TERMINAL) ./a.out
 
-test_help: theme.o $(THEME.deps) bindings.o actions.o player.o
+test_help: theme.o $(THEME.deps) bindings.o actions.o mpg123playback.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDLIBS) -DTEST_HELP views/help.cpp $^
 	$(TERMINAL) ./a.out
 
