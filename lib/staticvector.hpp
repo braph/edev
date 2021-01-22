@@ -9,6 +9,7 @@
 /**
  * Stack allocated vector
  * XXX: This vector is only usable for POD types...
+ * XXX: Constant initialization(?) like in std::array not possible
  */
 template<typename T, size_t N>
 class StaticVector {
