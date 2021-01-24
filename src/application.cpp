@@ -37,7 +37,7 @@ public:
 
 private:
   void print_db_stats();
-  void cleanup_stale_download_files();
+  void delete_stale_download_files();
 };
 
 Application :: Application()
@@ -47,7 +47,7 @@ Application :: Application()
 
 Application :: ~Application() {
   ::endwin();
-  cleanup_stale_download_files();
+  delete_stale_download_files();
 
   try {
     // Write unoptimized database just in case shrink() fails
@@ -234,7 +234,7 @@ HANDLE_KEY:
   goto MAINLOOP;
 }
 
-void Application :: cleanup_stale_download_files() {
+void Application :: delete_stale_download_files() {
   Filesystem::error_code e;
   for (auto dir : {&Config::cache_dir, &Config::archive_dir})
     for (const auto& f : Filesystem::directory_iterator(*dir, e))

@@ -50,7 +50,7 @@ static const ColumnID paths[4][4] = {
 Browser :: Browser()
   : _current_column(&paths[0][0])
 {
-  itemRenderer = [this]
+  item_renderer = [this]
     (WINDOW* win, int y, int width, const Item& item, int i, unsigned flags)
     { render(win, y, width, item, i, flags); };
   list(&_list);
@@ -125,6 +125,8 @@ bool Browser :: handle_key(int key) {
       _current_column_display = static_cast<ColumnID>(ALBUM_STYLES);
   };
 
+  Item* item;
+
   if (Bindings::playlist[key]) {
     switch (Bindings::playlist[key]) {
     case Actions::TOP:       top();        break;
@@ -133,16 +135,20 @@ bool Browser :: handle_key(int key) {
     case Actions::DOWN:      down();       break;
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
+    case Actions::BACK:                    goto GO_BACK;
+    case Actions::BROWSER_ENTER:           break;
+    case Actions::BROWSER_ENQUEUE:         break;
     case Actions::PLAYLIST_PLAY: {
-      auto item = cursor_item();
-      switch (item.type) {
+      item = &cursor_item();
+      switch (item->type) {
       case Item::ITEM_PATH:
-        _current_column = item.data.path;
+        _current_column = item->data.path;
         update_column_id();
         fill_list();
         draw();
         return true;
       case Item::ITEM_BACK:
+GO_BACK:
         if (_filters.size())
           _filters.pop_back();
         _current_column--;
@@ -151,7 +157,7 @@ bool Browser :: handle_key(int key) {
         draw();
         return true;
       case Item::ITEM_FOLDER:
-        _filters.push_back(Filter{*_current_column, item.data.track[*_current_column]});
+        _filters.push_back(Filter{*_current_column, item->data.track[*_current_column]});
         ++_current_column;
         update_column_id();
         fill_list();

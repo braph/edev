@@ -13,6 +13,12 @@ namespace Programs {
 
 using String = ConstChars;
 
+static inline Process xdg_open(String url) {
+    return {[=](){
+      ::execlp("xdg-open", "xdg-open", url, NULL);
+    }, true, false, false};
+}
+
 static inline Process file_archiver(String archive, String dest_dir) {
   return {[=](){
     ::close(STDIN_FILENO);
@@ -39,9 +45,7 @@ static inline Process browser(String url) {
   case pack(".jpeg"):
     return image_viewer(url);
   default:
-    return {[=](){
-      ::execlp("xdg-open", "xdg-open", url, NULL);
-    }, true, false, false};
+    return xdg_open(url);
   }
 }
 

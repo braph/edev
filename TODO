@@ -31,3 +31,7 @@ NOTES
   - Is there a `return value optimization` in a class initializer list?
   - private -> protected
   - wtf xml.hpp that optimization did'nt work?!
+
+// @bindings[:playlist]
+//   :'playlist.toggle_selection' => ['^v'  ]
+//   :'playlist.reload'           => [?r    ]

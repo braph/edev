@@ -81,7 +81,7 @@ void TrackRenderer :: operator()(
 Playlist :: Playlist()
 : _track_renderer(Config::playlist_columns)
 {
-  this->itemRenderer = _track_renderer;
+  this->item_renderer = _track_renderer;
   this->list(&this->playlist);
 }
 

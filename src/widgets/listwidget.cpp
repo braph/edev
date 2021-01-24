@@ -12,7 +12,7 @@ void testListWidget(
   TRender& render
 ) {
   ListWidget<TContainer> listWidget;
-  listWidget.itemRenderer = render;
+  listWidget.item_renderer = render;
   listWidget.list(&testData);
   listWidget.layout({0,0}, {LINES,COLS});
   listWidget.draw();

@@ -15,10 +15,6 @@
 #include <cstdio> // sprintf
 // Using variadic args (va_list) increases binary size but enables compiler
 // warnings with -Wformat. We enable them if not 'explicity' disabled with -NDEBUG.
-#define USE_C_VARIADIC_ARGS
-#endif
-
-#ifdef USE_C_VARIADIC_ARGS
 #include <cstdarg>
 #endif
 

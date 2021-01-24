@@ -1,14 +1,9 @@
 #ifndef ACTIONS_HPP
 #define ACTIONS_HPP
 
-#include "application.hpp"
-
 #include <string>
 
-class Actions {
-public:
-  enum ActionID : unsigned char {
-#define XACTIONS \
+#define ACTIONS_HPP__FOREACH_ACTION(X)                \
   X(NONE,                   "none")                   \
   X(UP,                     "up")                     \
   X(DOWN,                   "down")                   \
@@ -16,6 +11,7 @@ public:
   X(PAGE_DOWN,              "page_down")              \
   X(TOP,                    "top")                    \
   X(BOTTOM,                 "bottom")                 \
+  X(BACK,                   "back")                   \
   X(SHOW_COVER,             "show_cover")             \
   X(SEARCH_UP,              "search.up")              \
   X(SEARCH_DOWN,            "search.down")            \
@@ -42,13 +38,18 @@ public:
   X(PLAYLIST_CLEAR,         "playlist.clear")         \
   X(PLAYLIST_DELETE,        "playlist.delete")        \
   X(PLAYLIST_GOTO_CURRENT,  "playlist.goto_current")  \
+  X(BROWSER_ENTER,          "browser.enter")          \
+  X(BROWSER_ENQUEUE,        "browser.enqueue")        \
   X(UPDATE,                 "database.update")        \
   X(REDRAW,                 "redraw")                 \
   X(QUIT,                   "quit")
-#define X(ENUM, STR) ENUM,
-  XACTIONS
-#undef X
-  ACTIONID_COUNT
+
+class Actions {
+public:
+  enum ActionID : unsigned char {
+#define ACTIONS_HPP__DEFINE_ENUM(ENUM, _) ENUM,
+    ACTIONS_HPP__FOREACH_ACTION(ACTIONS_HPP__DEFINE_ENUM)
+    ACTIONID_COUNT
   };
 
   static int call(ActionID);

@@ -17,7 +17,7 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
     auto track_no = track.number();
     for (const auto& f : Filesystem::directory_iterator(album_dir, e)) {
       if (std::atoi(f.path().filename().c_str()) == track_no) {
-        log_write("Track %s -> ALBUM DIR: %s\n", track.title(), f.path());
+        log_write("Track %s -> ALBUM DIR: %s\n", track.title(), f);
         return f.path().string();
       }
     }

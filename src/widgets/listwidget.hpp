@@ -30,7 +30,7 @@ public:
   using value_type    = typename TContainer::value_type;
   using size_type     = typename TContainer::size_type;
 
-  std::function<void(WINDOW*, int, int, const value_type&, int, unsigned)> itemRenderer;
+  std::function<void(WINDOW*, int, int, const value_type&, int, unsigned)> item_renderer;
 
   ListWidget()
   : m_cursor(0)
@@ -88,7 +88,7 @@ public:
   }
 
   /// Only if cursor_index() != -1
-  value_type cursor_item() const {
+  value_type& cursor_item() const {
     return (*m_list)[size_type(cursor_index())];
   }
 
@@ -97,7 +97,7 @@ public:
   void active_index(int idx)        noexcept { m_active = idx; draw(); }
 
   /// Only if active_index() != -1
-  value_type active_item() const {
+  value_type& active_item() const {
     return (*m_list)[size_type(m_active)];
   }
 
@@ -200,13 +200,13 @@ private:
   }
 
   inline void render_item(int item_idx, int line, bool item_under_cursor) {
-    if (! itemRenderer)
+    if (! item_renderer)
       return;
     move(line, 0);
     unsigned flags =
       (item_under_cursor    ? ITEM_UNDER_CURSOR : 0u) |
       (item_idx == m_active ? ITEM_ACTIVE       : 0u);
-    itemRenderer(win, line, size.width, (*m_list)[size_t(item_idx)], item_idx, flags);
+    item_renderer(win, line, size.width, (*m_list)[size_t(item_idx)], item_idx, flags);
   }
 
   inline void render_unselected() { render_item(m_top_list_idx + m_cursor, m_cursor, false); }
