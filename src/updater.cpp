@@ -228,7 +228,8 @@ int main() {
   string src;
   for (auto& f : Filesystem::directory_iterator(TESTDATA_DIR)) {
     read_file_into_string(f.path(), src);
-    updater.insert_browsepage(src);
+    BrowsePageParser parser(src);
+    updater.insert_browsepage(parser);
   }
 #else
   printf("Updating using network ...\n");
