@@ -24,7 +24,7 @@
 int main() {
   {
     auto bs = StringPack::make_bitset_t<0,0,0,0>::value();
-    for (int i = 0; i < 255; ++i)
+    for (unsigned i = 0; i < 255; ++i)
       assert(!bs[i]);
   }
 

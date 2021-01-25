@@ -44,6 +44,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <limits>
 
 namespace StringPack {
 
@@ -112,12 +113,12 @@ private:
  */
 template<
   conv_func conv,
-  unsigned N,
-  unsigned bit_shift     = conv_info<conv>::max_bitlength(),
-  unsigned max_length    = conv_info<conv>::max_strlen(),
-  bool     has_skip_char = conv_info<conv>::has_skip_char()
+  size_t N,
+  size_t bit_shift     = conv_info<conv>::max_bitlength(),
+  size_t max_length    = conv_info<conv>::max_strlen(),
+  bool   has_skip_char = conv_info<conv>::has_skip_char()
 >
-constexpr uint64_t pack_compiletime(const char (&s)[N], unsigned i, unsigned shift = 0, uint64_t return_ = 0) {
+constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i, size_t shift = 0, uint64_t return_ = 0) {
   static_assert(bit_shift  == conv_info<conv>::max_bitlength(), "DO NOT SET THIS TEMPLATE PARAMETER");
   static_assert(max_length == conv_info<conv>::max_strlen(),  "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
@@ -140,7 +141,7 @@ constexpr uint64_t pack_compiletime(const char (&s)[N], unsigned i, unsigned shi
  */
 template<conv_func conv>
 uint64_t pack_runtime(const char* s) noexcept {
-  enum : unsigned {
+  enum : size_t {
     bit_shift     = conv_info<conv>::max_bitlength(),
     max_length    = conv_info<conv>::max_strlen(),
     has_skip_char = conv_info<conv>::has_skip_char()
@@ -149,25 +150,26 @@ uint64_t pack_runtime(const char* s) noexcept {
   uint64_t result = 0;
 
   if (has_skip_char) {
-    unsigned shift = 0;
-    for (; *s; ++s)
-      if (conv(unsigned(*s)) == skip_char)
-        continue;
-      else
-        result |= uint64_t(conv(unsigned(*s))) << (shift++ * bit_shift);
-
+    size_t shift = 0;
+    for (; *s; ++s) {
+      const uint64_t x = conv(unsigned(*s));
+      if (x != skip_char)
+        result |= x << (shift++ * bit_shift);
+    }
     return shift > max_length ? overflow : result;
   }
-  else {
-    for (unsigned i = 0; i < max_length && *s; ++s)
-      result |= uint64_t(conv(unsigned(*s))) << (i++ * bit_shift);
-    return *s ? overflow : result;
+  else
+  {
+    size_t i = std::numeric_limits<size_t>::max(); // TODO
+    for (; ++i < max_length + 1 && s[i];)
+      result |= uint64_t(conv(unsigned(s[i]))) << (i * bit_shift);
+    return i > max_length ? overflow : result;
   }
 }
 
 template<conv_func conv>
-uint64_t pack_runtime(const char* s, unsigned len) noexcept {
-  enum : unsigned {
+uint64_t pack_runtime(const char* s, size_t len) noexcept {
+  enum : size_t {
     bit_shift     = conv_info<conv>::max_bitlength(),
     max_length    = conv_info<conv>::max_strlen(),
     has_skip_char = conv_info<conv>::has_skip_char()
@@ -176,22 +178,22 @@ uint64_t pack_runtime(const char* s, unsigned len) noexcept {
   uint64_t result = 0;
 
   if (has_skip_char) {
-    unsigned shift = 0;
-    for (unsigned i = 0; i < len; ++i) {
-      if (conv(unsigned(s[i])) == skip_char)
-        continue;
-      result |= uint64_t(conv(unsigned(s[i]))) << (shift++ * bit_shift);
+    size_t shift = 0;
+    for (size_t i = 0; i < len; ++i) {
+      const uint64_t x = conv(unsigned(s[i]));
+      if (x != skip_char)
+        result |= x << (shift++ * bit_shift);
     }
 
     return shift > max_length ? overflow : result;
   }
-  else {
+  else
+  {
     if (len > max_length)
       return overflow;
 
-    unsigned shift = 0;
-    for (unsigned i = 0; i < len; ++i)
-      result |= uint64_t(conv(unsigned(s[i]))) << (shift++ * bit_shift);
+    for (size_t i = 0; i < len; ++i)
+      result |= uint64_t(conv(unsigned(s[i]))) << (i * bit_shift);
 
     return result;
   }
@@ -202,7 +204,7 @@ uint64_t pack_runtime(const char* s, unsigned len) noexcept {
 // ============================================================================
 
 template<unsigned base>
-inline constexpr unsigned combine(unsigned c) {
+inline constexpr unsigned combine(unsigned) {
   return base; // Unhandeled TODO
 }
 
@@ -353,7 +355,7 @@ inline constexpr unsigned alpha_nocase(unsigned c) noexcept {
 template<conv_func conv>
 struct packer {
   // packer::pack() --- compile time ==========================================
-  template<unsigned N>
+  template<size_t N>
   static inline constexpr uint64_t pack(const char (&s)[N]) noexcept
   { return pack_compiletime<conv, N>(s, 0); }
 
@@ -363,7 +365,7 @@ struct packer {
   { return packer::pack_runtime(args...); }
 
   // packer::packer() --- compile time ========================================
-  template<unsigned N>
+  template<size_t N>
   inline constexpr packer(const char (&s)[N]) noexcept
     : _s(pack_compiletime<conv, N>(s, 0))
   {}
@@ -375,10 +377,10 @@ struct packer {
   {}
 
 
-  static inline uint64_t pack_runtime(const char* s, unsigned len) noexcept
+  static inline uint64_t pack_runtime(const char* s, size_t len) noexcept
   { return StringPack::pack_runtime<conv>(s, len); }
 
-  static inline uint64_t pack_runtime(const unsigned char* s, unsigned len) noexcept
+  static inline uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept
   { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s), len); }
 
   static inline uint64_t pack_runtime(const char* s) noexcept
