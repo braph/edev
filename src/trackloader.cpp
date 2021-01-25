@@ -42,6 +42,7 @@ std::string TrackLoader :: get_file_for_track(Database::Tracks::Track track, boo
 
   auto download = new FileDownload(track_url, file_in_cache.string() + EKTOPLAZM_DOWNLOAD_SUFFIX);
   download->setopt(CURLOPT_TIMEOUT, 60);
+  download->setopt(CURLOPT_FOLLOWLOCATION, 1);
 
   _downloads.add_download(download, [=](Download& _dl, CURLcode e) {
     FileDownload& dl = static_cast<FileDownload&>(_dl);
@@ -72,6 +73,7 @@ void TrackLoader :: download_album(const Database::Tracks::Track& track) {
   Ektoplayer::url_expand(url, EKTOPLAZM_ARCHIVE_BASE_URL, "MP3.zip");
 
   auto download = new FileDownload(url, archive.string() +  EKTOPLAZM_DOWNLOAD_SUFFIX);
+  download->setopt(CURLOPT_FOLLOWLOCATION, 1);
   log_write("Starting download: %s -> %s\n", url, download->filename());
 
   _downloads.add_download(download, [=](Download& dl_, CURLcode e) {

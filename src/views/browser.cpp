@@ -127,9 +127,8 @@ bool Browser :: handle_key(int key) {
 
   Item* item;
 
-  // TODO: bindings::browser
-  if (Bindings::playlist[key]) {
-    switch (Bindings::playlist[key]) {
+  if (Bindings::browser[key]) {
+    switch (Bindings::browser[key]) {
     case Actions::TOP:       top();        break;
     case Actions::BOTTOM:    bottom();     break;
     case Actions::UP:        up();         break;
@@ -137,9 +136,8 @@ bool Browser :: handle_key(int key) {
     case Actions::PAGE_UP:   page_up();    break;
     case Actions::PAGE_DOWN: page_down();  break;
     case Actions::BACK:                    goto GO_BACK;
-    case Actions::BROWSER_ENTER:           break;
-    case Actions::BROWSER_ENQUEUE:         break;
-    case Actions::PLAYLIST_PLAY: {
+    case Actions::BROWSER_ENQUEUE:
+    case Actions::BROWSER_ENTER: {
       item = &cursor_item();
       switch (item->type) {
       case Item::ITEM_PATH:

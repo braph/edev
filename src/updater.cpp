@@ -52,6 +52,7 @@ Updater :: Updater(Database::Database &db) noexcept
 
 void Updater :: fetch_page(int page, std::string&& recycle_buffer) noexcept {
   auto dl = new BufferDownload(Ektoplayer::browse_url(page));
+  dl->setopt(CURLOPT_FOLLOWLOCATION, 1);
   dl->buffer() = std::move(recycle_buffer);
   dl->buffer().reserve(BROWSEPAGE_HTML_SIZE);
   dl->buffer().clear();

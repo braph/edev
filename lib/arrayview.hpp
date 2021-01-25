@@ -1,5 +1,5 @@
-#ifndef ARRAYVIEW_HPP
-#define ARRAYVIEW_HPP
+#ifndef LIB_ARRAYVIEW_HPP
+#define LIB_ARRAYVIEW_HPP
 
 #include <cstddef>
 #include <iterator>

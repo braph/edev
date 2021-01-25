@@ -148,13 +148,21 @@ uint64_t pack_runtime(const char* s) noexcept {
 
   uint64_t result = 0;
 
-  for (unsigned i = 0; i < max_length && *s; ++s)
-    if (has_skip_char && conv(unsigned(*s)) == skip_char)
-      continue;
-    else
-      result |= uint64_t(conv(unsigned(*s))) << (i++ * bit_shift);
+  if (has_skip_char) {
+    unsigned shift = 0;
+    for (; *s; ++s)
+      if (conv(unsigned(*s)) == skip_char)
+        continue;
+      else
+        result |= uint64_t(conv(unsigned(*s))) << (shift++ * bit_shift);
 
-  return *s ? overflow : result;
+    return shift > max_length ? overflow : result;
+  }
+  else {
+    for (unsigned i = 0; i < max_length && *s; ++s)
+      result |= uint64_t(conv(unsigned(*s))) << (i++ * bit_shift);
+    return *s ? overflow : result;
+  }
 }
 
 template<conv_func conv>
@@ -165,18 +173,28 @@ uint64_t pack_runtime(const char* s, unsigned len) noexcept {
     has_skip_char = conv_info<conv>::has_skip_char()
   };
 
-  if (!has_skip_char && len > max_length)
-    return overflow;
-
   uint64_t result = 0;
-  unsigned shift = 0;
-  for (unsigned i = 0; i < len; ++i) {
-    if (has_skip_char && conv(unsigned(s[i])) == skip_char)
-      continue;
-    result |= uint64_t(conv(unsigned(s[i]))) << (shift++ * bit_shift);
-  }
 
-  return result;
+  if (has_skip_char) {
+    unsigned shift = 0;
+    for (unsigned i = 0; i < len; ++i) {
+      if (conv(unsigned(s[i])) == skip_char)
+        continue;
+      result |= uint64_t(conv(unsigned(s[i]))) << (shift++ * bit_shift);
+    }
+
+    return shift > max_length ? overflow : result;
+  }
+  else {
+    if (len > max_length)
+      return overflow;
+
+    unsigned shift = 0;
+    for (unsigned i = 0; i < len; ++i)
+      result |= uint64_t(conv(unsigned(s[i]))) << (shift++ * bit_shift);
+
+    return result;
+  }
 }
 
 // ============================================================================

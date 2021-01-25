@@ -34,7 +34,7 @@ struct Dumper {
     const size_t  size = v.size();
     dump(bits);
     dump(size);
-    write(v.data(), ceil_div(bits * size, BITSOF(char)));
+    write(v.data(), ceil_div(bits * size, size_t(CHAR_BIT)));
     dump(bits);
     dump(size);
   }
@@ -89,7 +89,7 @@ struct Loader {
     const size_t  size = load<size_t>();
     vec.reserve(size, bits);
     vec.resize(size);
-    read(vec.data(), ceil_div(bits * size, BITSOF(char)));
+    read(vec.data(), ceil_div(bits * size, size_t(CHAR_BIT)));
     if (load<uint8_t>() != bits) throw std::runtime_error("bad footer");
     if (load<size_t>() != size)  throw std::runtime_error("bad footer");
   }

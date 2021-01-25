@@ -19,7 +19,7 @@
   assert(SC::pack_runtime(str_1, len(str_1)) == SC::pack(str_2))
 
 #define doc(CLASS, DOC) \
-  printf("%-23s | %-5zu | %s\n", #CLASS, CLASS::max_strlen(), DOC)
+  printf("%-23s | %-5u | %s\n", #CLASS, CLASS::max_strlen(), DOC)
 
 int main() {
   {
@@ -61,7 +61,12 @@ int main() {
 
     test("a");
     test("ab");
-    test_switch_case("1_2_3_4_5_6_7_8", "12345678");
+    test_switch_case("1_2_3_4_5_6_7_8",   "12345678");
+    test_switch_case("1_2_3_4_5_6_7_8__", "12345678");
+    test_switch_case("__1_2_3_4_5_6_7_8", "12345678");
+    test_is_overflow("123456789");
+    test_is_overflow("_123456789");
+    test_is_overflow("123456789_");
   }
 
   {

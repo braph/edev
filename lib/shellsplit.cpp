@@ -3,7 +3,7 @@
 namespace ShellSplit {
 
 static inline void
-readSingleQuoted(const char*& s, std::string& word, Warning& w)
+read_single_quoted(const char*& s, std::string& word, Warning& w)
 {
   while (*++s)
     if (*s == '\'')
@@ -14,7 +14,7 @@ readSingleQuoted(const char*& s, std::string& word, Warning& w)
 }
 
 static inline void
-readDoubleQuoted(const char*& s, std::string& word, Warning& w)
+read_double_quoted(const char*& s, std::string& word, Warning& w)
 {
   bool escaped = false;
   while (*++s)
@@ -34,7 +34,7 @@ void split(const char* s, std::vector<std::string>& result, Warning& w)
 {
   result.clear();
   std::string word;
-  bool havingWord = false;
+  bool having_word = false;
   bool escaped = false;
 
   while (*s) {
@@ -44,12 +44,12 @@ void split(const char* s, std::vector<std::string>& result, Warning& w)
     } else {
       switch (*s) {
         case '\'':
-          havingWord = true;
-          readSingleQuoted(s, word, w);
+          having_word = true;
+          read_single_quoted(s, word, w);
           break;
         case '"':
-          havingWord = true;
-          readDoubleQuoted(s, word, w);
+          having_word = true;
+          read_double_quoted(s, word, w);
           break;
         case ' ':
         case '\t':
@@ -57,8 +57,8 @@ void split(const char* s, std::vector<std::string>& result, Warning& w)
         case '\r':
         case '\v':
         case '\f':
-          if (havingWord) {
-            havingWord = false;
+          if (having_word) {
+            having_word = false;
             result.push_back(std::move(word));
             word.clear();
           }
@@ -69,7 +69,7 @@ void split(const char* s, std::vector<std::string>& result, Warning& w)
           break;
 
         default:
-          havingWord = true;
+          having_word = true;
           word.push_back(*s);
       }
     }
@@ -77,7 +77,7 @@ void split(const char* s, std::vector<std::string>& result, Warning& w)
     ++s;
   }
 
-  if (havingWord)
+  if (having_word)
     result.push_back(std::move(word));
 
   if (escaped)

@@ -10,8 +10,6 @@
 Download :: Download(const std::string &url_) {
   if ((curl_easy = curl_easy_init())) {
     url(url_.c_str());
-    setopt(CURLOPT_PRIVATE, this);
-    setopt(CURLOPT_FOLLOWLOCATION, 1);
     return;
   }
 #ifdef __cpp_exceptions
@@ -48,7 +46,7 @@ void Download :: cleanup() noexcept {
 
 static size_t write_buffer_cb(char *data, size_t size, size_t nmemb, void *buffer) {
   static_cast<std::string*>(buffer)->append(data, size * nmemb);
-  return size*nmemb;
+  return size * nmemb;
 }
 
 BufferDownload :: BufferDownload(const std::string &url)
@@ -63,7 +61,7 @@ BufferDownload :: BufferDownload(const std::string &url)
  * ==========================================================================*/
 
 FileDownload :: FileDownload(const std::string &url, std::string file)
-: Download(url), _filename(std::move(file)), _fh(fopen(_filename.c_str(), "w"))
+: Download(url), _filename(std::move(file)), _fh(std::fopen(_filename.c_str(), "w"))
 {
   if (! _fh) {
 #ifdef __cpp_exceptions
@@ -75,7 +73,7 @@ FileDownload :: FileDownload(const std::string &url, std::string file)
 
 FileDownload :: ~FileDownload() {
   if (_fh)
-    fclose(_fh);
+    std::fclose(_fh);
 }
 
 /* ============================================================================
@@ -114,6 +112,7 @@ void Downloads :: add_download(Download* dl, onFinished_t cb) {
 int Downloads :: work() noexcept {
   curl_multi_perform(_curl_multi, &_running_handles);
 
+  // Add queued downlaods
   for (auto& dl : _downloads) {
     if (_queued_handles && _running_handles < _parallel) {
       if (dl.state == DL::State::Waiting) {
@@ -127,6 +126,7 @@ int Downloads :: work() noexcept {
     else break;
   }
 
+  // Process finished downloads
   CURLMsg *msg;
   int msgs_left;
   while ((msg = curl_multi_info_read(_curl_multi, &msgs_left))) {

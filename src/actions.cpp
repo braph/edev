@@ -122,6 +122,7 @@ int Actions :: call(ActionID id) {
       break;
 
     // Silence warnings
+    case BACK:
     case UP:          case DOWN:
     case TOP:         case BOTTOM:
     case PAGE_UP:     case PAGE_DOWN:

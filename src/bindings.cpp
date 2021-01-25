@@ -83,6 +83,11 @@ bind2(pad,      'G',               KEY_END,        BOTTOM                );
 
 Actions::ActionID (&global)[KEY_MAX]   = generate_array<Actions::ActionID, KEY_MAX, global_keys_>::data::value;
 Actions::ActionID (&playlist)[KEY_MAX] = generate_array<Actions::ActionID, KEY_MAX, playlist_keys_>::data::value;
+Actions::ActionID (&browser)[KEY_MAX]  = generate_array<Actions::ActionID, KEY_MAX, browser_keys_>::data::value;
 Actions::ActionID (&pad)[KEY_MAX]      = generate_array<Actions::ActionID, KEY_MAX, pad_keys_>::data::value;
+
+#undef bind1
+#undef bind2
+#undef bind3
 
 }
