@@ -127,6 +127,7 @@ bool Browser :: handle_key(int key) {
 
   Item* item;
 
+  // TODO: bindings::browser
   if (Bindings::playlist[key]) {
     switch (Bindings::playlist[key]) {
     case Actions::TOP:       top();        break;
