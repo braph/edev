@@ -1,5 +1,5 @@
-#ifndef LIB_FORMAT_SPECIFIERS
-#define LIB_FORMAT_SPECIFIERS
+#ifndef LIB_FORMAT_SPECIFIERS_HPP
+#define LIB_FORMAT_SPECIFIERS_HPP
 
 #include <cinttypes>
 

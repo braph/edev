@@ -116,12 +116,12 @@ public:
     LIB_PACKEDVECTOR_TRACE(n);
 
     if (n > _capacity) {
-      const size_t needed_blocks = ceil_div(_bits * n, BITSOF(data_type));
+      const size_t needed_blocks = ceil_div(_bits * n, bitsof<data_type>());
       data_type* new_data = new data_type[needed_blocks];
-      std::memcpy(new_data, _data, ceil_div(_bits * _size, BITSOF(char)));
+      std::memcpy(new_data, _data, ceil_div(_bits * _size, size_t(CHAR_BIT)));
       delete[] _data;
       _data = new_data;
-      _capacity = needed_blocks * BITSOF(data_type) / _bits;
+      _capacity = needed_blocks * bitsof<data_type>() / _bits;
     }
   }
 
@@ -170,7 +170,7 @@ protected:
   }
 
   static constexpr inline int clamp_bits(int bits) {
-    return (bits < 1) ? 1 : (bits > int(BITSOF(data_type))) ? int(BITSOF(data_type)) : bits;
+    return (bits < 1) ? 1 : (bits > int(bitsof<data_type>())) ? int(bitsof<data_type>()) : bits;
   }
 };
 

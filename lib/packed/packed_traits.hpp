@@ -1,5 +1,5 @@
-#ifndef LIB_PACKED_TRAITS
-#define LIB_PACKED_TRAITS
+#ifndef LIB_PACKED_TRAITS_HPP
+#define LIB_PACKED_TRAITS_HPP
 
 #include "../bit_tools.hpp"
 
@@ -15,7 +15,7 @@ struct packed_traits {
 
   static_assert(!std::is_void<Doubled>::value, "packed_traits<int64_t> not yet implented!");
 
-  enum { TBits      = BITSOF(T) };
+  enum { TBits      = bitsof<T>() };
   enum { OxFFFF     = std::numeric_limits<Unsigned>::max() };
   enum { OxFFFFFFFF = std::numeric_limits<Doubled>::max()  };
 

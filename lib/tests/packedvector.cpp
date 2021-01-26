@@ -117,8 +117,8 @@ int main() {
     v.check_contents_by_iterator();
   }
 
-#define MAX_VEC_SIZE 16000
-#define MAX_VEC_VALUE UINT_MAX
+  const int MAX_VEC_SIZE  = 16000;
+  const int MAX_VEC_VALUE = UINT_MAX;
 
 #define case break;case
   for (RANGE(10)) {
@@ -150,29 +150,7 @@ int main() {
     for (i = USHRT_MAX; i < USHRT_MAX + 1024; ++i) v.emplace_back(i);
 
     v.check_contents_by_iterator();
-
-#if 0
-    for (int i = 0; i <= INT_MAX; i *= 2)
-      v.push_back(i);
-    v.check_all();
-    v.clear();
-#endif
   }
-
-#if 0
-#define SZ 1048576
-  {
-    std::cerr << "*iterator =\n";
-    for (DynamicPackedVector::iterator it = v.begin(); it != v.end(); ++it) {
-      *it = 33;
-    }
-
-    std::cerr << "get[33]\n";
-    for (size_t i = 0; i < SZ; ++i) {
-      assert(v[i] == 33);
-    }
-  }
-#endif
 
   TEST_END();
 }

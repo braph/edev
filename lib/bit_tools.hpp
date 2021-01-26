@@ -9,7 +9,8 @@
 
 #include "types.hpp"
 
-#define BITSOF(T) (CHAR_BIT * sizeof(T))
+template<class T>
+static inline constexpr size_t bitsof() { return CHAR_BIT * sizeof(T); };
 
 #if (defined(__GNUC__) || defined(__clang__))
 static inline int find_first_set(int i)                { return __builtin_ffs(i);   }
@@ -32,13 +33,13 @@ struct BitIterator {
   unsigned i;
   inline BitIterator(T value, unsigned ii = 0) noexcept : val(value), i(ii) { seek(); }
   inline iterator  begin()                   const noexcept { return {val, 0};           }
-  inline iterator  end()                     const noexcept { return {0, BITSOF(T)};     }
+  inline iterator  end()                     const noexcept { return {0, bitsof<T>()};   }
   inline bool operator==(const iterator& it) const noexcept { return i == it.i;          }
   inline bool operator!=(const iterator& it) const noexcept { return i != it.i;          }
   inline unsigned  operator*()               const noexcept { return i;                  }
   inline iterator& operator++()                    noexcept { ++i; seek(); return *this; }
 private:
-  inline void  seek() noexcept { while ((!!(val & (1<<i))) != BitState && i < BITSOF(T)) ++i; }
+  inline void  seek() noexcept { while ((!!(val & (1<<i))) != BitState && i < bitsof<T>()) ++i; }
 };
 
 #if (defined(__GNUC__) || defined(__clang__))
@@ -59,7 +60,7 @@ struct BitIterator<T, 1> {
   inline bool operator!=(const iterator& it) const noexcept { return i != it.i; }
   inline int       operator*()               const noexcept { return i - 1;     }
   inline iterator& operator++()                    noexcept {
-    i = ((i < int(BITSOF(T))) ? find_first_set((val >> i) << i) : 0);
+    i = ((i < int(bitsof<T>())) ? find_first_set((val >> i) << i) : 0);
     return *this;
   }
 };

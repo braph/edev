@@ -48,8 +48,6 @@
 
 namespace StringPack {
 
-using std::size_t;
-using std::uint64_t;
 using conv_func = unsigned(*)(unsigned);
 enum : uint64_t { overflow  = ~uint64_t(0) };
 enum : unsigned { skip_char = 0xFF00       };
@@ -67,7 +65,7 @@ template<class T> constexpr int bitlength(T n)
 template<conv_func conv>
 struct conv_info {
   static constexpr unsigned max_bitlength() {
-    return bitlength(bitmask() & 0xFF); // TODO...
+    return bitlength(bitmask() & 0xFF /* remove skip_char */);
   }
 
   static constexpr unsigned max_strlen() {
@@ -120,7 +118,7 @@ template<
 >
 constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i, size_t shift = 0, uint64_t return_ = 0) {
   static_assert(bit_shift  == conv_info<conv>::max_bitlength(), "DO NOT SET THIS TEMPLATE PARAMETER");
-  static_assert(max_length == conv_info<conv>::max_strlen(),  "DO NET SET THIS TEMPLATE PARAMETER");
+  static_assert(max_length == conv_info<conv>::max_strlen(),    "DO NET SET THIS TEMPLATE PARAMETER");
   static_assert(N - 1 <= max_length, "String exceeds maximum length holdable by the integer type");
 
   return i >= N - 1 ? return_ : (
@@ -140,7 +138,7 @@ constexpr uint64_t pack_compiletime(const char (&s)[N], size_t i, size_t shift =
  * input string exceeded the maximum length.
  */
 template<conv_func conv>
-uint64_t pack_runtime(const char* s) noexcept {
+uint64_t pack_runtime(const unsigned char* s) noexcept {
   enum : size_t {
     bit_shift     = conv_info<conv>::max_bitlength(),
     max_length    = conv_info<conv>::max_strlen(),
@@ -152,23 +150,23 @@ uint64_t pack_runtime(const char* s) noexcept {
   if (has_skip_char) {
     size_t shift = 0;
     for (; *s; ++s) {
-      const uint64_t x = conv(unsigned(*s));
-      if (x != skip_char)
-        result |= x << (shift++ * bit_shift);
+      const uint64_t converted = conv(*s);
+      if (converted != skip_char)
+        result |= converted << (shift++ * bit_shift);
     }
     return shift > max_length ? overflow : result;
   }
   else
   {
-    size_t i = std::numeric_limits<size_t>::max(); // TODO
-    for (; ++i < max_length + 1 && s[i];)
-      result |= uint64_t(conv(unsigned(s[i]))) << (i * bit_shift);
+    size_t i;
+    for (i = 0; s[i]; ++i)
+      result |= uint64_t(conv(s[i])) << (i * bit_shift);
     return i > max_length ? overflow : result;
   }
 }
 
 template<conv_func conv>
-uint64_t pack_runtime(const char* s, size_t len) noexcept {
+uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept {
   enum : size_t {
     bit_shift     = conv_info<conv>::max_bitlength(),
     max_length    = conv_info<conv>::max_strlen(),
@@ -180,9 +178,9 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
   if (has_skip_char) {
     size_t shift = 0;
     for (size_t i = 0; i < len; ++i) {
-      const uint64_t x = conv(unsigned(s[i]));
-      if (x != skip_char)
-        result |= x << (shift++ * bit_shift);
+      const uint64_t converted = conv(s[i]);
+      if (converted != skip_char)
+        result |= converted << (shift++ * bit_shift);
     }
 
     return shift > max_length ? overflow : result;
@@ -192,8 +190,9 @@ uint64_t pack_runtime(const char* s, size_t len) noexcept {
     if (len > max_length)
       return overflow;
 
-    for (size_t i = 0; i < len; ++i)
-      result |= uint64_t(conv(unsigned(s[i]))) << (i * bit_shift);
+    size_t shift = bit_shift * len;
+    while (len)
+      result |= uint64_t(conv(s[--len])) << (shift -= bit_shift);
 
     return result;
   }
@@ -378,16 +377,16 @@ struct packer {
 
 
   static inline uint64_t pack_runtime(const char* s, size_t len) noexcept
-  { return StringPack::pack_runtime<conv>(s, len); }
+  { return StringPack::pack_runtime<conv>(reinterpret_cast<const unsigned char*>(s), len); }
 
   static inline uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept
-  { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s), len); }
+  { return StringPack::pack_runtime<conv>(reinterpret_cast<const unsigned char*>(s), len); }
 
   static inline uint64_t pack_runtime(const char* s) noexcept
-  { return StringPack::pack_runtime<conv>(s); }
+  { return StringPack::pack_runtime<conv>(reinterpret_cast<const unsigned char*>(s)); }
 
   static inline uint64_t pack_runtime(const unsigned char* s) noexcept
-  { return StringPack::pack_runtime<conv>(reinterpret_cast<const char*>(s)); }
+  { return StringPack::pack_runtime<conv>(s); }
 
   static inline uint64_t pack_runtime(const std::string& s) noexcept
   { return StringPack::pack_runtime<conv>(s.c_str(), s.size()); }
