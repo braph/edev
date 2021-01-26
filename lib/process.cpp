@@ -21,29 +21,17 @@ Process :: ~Process() {
 pid_t Process :: open(function_t&& function, bool pipe_stdin, bool pipe_stdout, bool pipe_stderr, const char* cwd) noexcept {
   assert(function && "No function passed");
 
-  int stdin_p[2], stdout_p[2], stderr_p[2];
+  int stdin_p[2]  = {-1, -1};
+  int stdout_p[2] = {-1, -1};
+  int stderr_p[2] = {-1, -1};
+  pid_t pid = -1;
 
-  if (pipe_stdin && pipe(stdin_p) != 0)
-    return -1;
-  if (pipe_stdout && pipe(stdout_p) != 0) {
-    if (pipe_stdin) {close(stdin_p[0]); close(stdin_p[1]);}
-    return -1;
-  }
-  if (pipe_stderr && pipe(stderr_p) != 0) {
-    if (pipe_stdin)  {close(stdin_p[0]);  close(stdin_p[1]);}
-    if (pipe_stdout) {close(stdout_p[0]); close(stdout_p[1]);}
-    return -1;
-  }
+  if (pipe_stdin  && pipe(stdin_p)  != 0) goto early_error;
+  if (pipe_stdout && pipe(stdout_p) != 0) goto early_error;
+  if (pipe_stderr && pipe(stderr_p) != 0) goto early_error;
+  if ((pid = fork()) < 0)                 goto early_error;
 
-  pid_t pid = fork();
-
-  if (pid < 0) {
-    if (pipe_stdin)  {close(stdin_p[0]);  close(stdin_p[1]);}
-    if (pipe_stdout) {close(stdout_p[0]); close(stdout_p[1]);}
-    if (pipe_stderr) {close(stderr_p[0]); close(stderr_p[1]);}
-    return pid;
-  }
-  else if (pid == 0) {
+  if (pid == 0) {
     if (pipe_stdin)  dup2(stdin_p[0], 0);
     if (pipe_stdout) dup2(stdout_p[1], 1);
     if (pipe_stderr) dup2(stderr_p[1], 2);
@@ -76,6 +64,12 @@ pid_t Process :: open(function_t&& function, bool pipe_stdin, bool pipe_stdout, 
 
   _closed = false;
   this->_pid = pid;
+  return pid;
+
+early_error:
+  if (stdin_p[0]  >= 0) {close(stdin_p[0]);  close(stdin_p[1]);}
+  if (stdout_p[0] >= 0) {close(stdout_p[0]); close(stdout_p[1]);}
+  if (stderr_p[0] >= 0) {close(stderr_p[0]); close(stderr_p[1]);}
   return pid;
 }
 
@@ -125,15 +119,7 @@ void Process :: close_fds() noexcept {
 }
 
 void Process :: kill(bool force) noexcept {
-  if (_pid > 0 && !_closed) {
-    if (force)
-      ::kill(-_pid, SIGTERM);
-    else
-      ::kill(-_pid, SIGINT);
-  }
-}
-
-void Process :: detach() noexcept {
-  _pid = -1;
+  if (_pid > 0 && !_closed)
+    ::kill(-_pid, force ? SIGKILL : SIGTERM);
 }
 

@@ -1,4 +1,4 @@
-// Guess what: this is incomplete....
+#error "This code is not (yet) complete..."
 
 #include<iostream>
 #include<bitset>

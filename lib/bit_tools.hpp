@@ -4,13 +4,13 @@
 #include <limits>
 #include <climits>
 #include <cstddef>
-#include <type_traits>
 #include <iterator>
+#include <type_traits>
 
 #include "types.hpp"
 
 template<class T>
-static inline constexpr size_t bitsof() { return CHAR_BIT * sizeof(T); };
+static inline constexpr size_t bitsof() { return CHAR_BIT * sizeof(T); }
 
 #if (defined(__GNUC__) || defined(__clang__))
 static inline int find_first_set(int i)                { return __builtin_ffs(i);   }

@@ -61,14 +61,16 @@ BufferDownload :: BufferDownload(const std::string &url)
  * ==========================================================================*/
 
 FileDownload :: FileDownload(const std::string &url, std::string file)
-: Download(url), _filename(std::move(file)), _fh(std::fopen(_filename.c_str(), "w"))
+: Download(url)
+, _filename(std::move(file))
+, _fh(std::fopen(_filename.c_str(), "w"))
 {
-  if (! _fh) {
+  if (_fh)
+    setopt(CURLOPT_WRITEDATA, _fh);
 #ifdef __cpp_exceptions
-    throw std::runtime_error(strerror(errno));
+  else
+    throw std::runtime_error(std::strerror(errno));
 #endif
-  }
-  setopt(CURLOPT_WRITEDATA, _fh);
 }
 
 FileDownload :: ~FileDownload() {

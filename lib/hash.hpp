@@ -1,5 +1,5 @@
-#ifndef LIB_HASH
-#define LIB_HASH
+#ifndef LIB_HASH_HPP
+#define LIB_HASH_HPP
 
 #include <cstdint>
 

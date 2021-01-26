@@ -1,5 +1,5 @@
-#ifndef SPANVIEW_HPP
-#define SPANVIEW_HPP
+#ifndef LIB_SPANVIEW_HPP
+#define LIB_SPANVIEW_HPP
 
 #include <cstddef>
 

@@ -6,10 +6,7 @@
 
 // wide-char functions missing...
 
-class CFile {
-  FILE* _fh;
-
-public:
+struct CFile {
   struct String {
     const char *s;
     template<class T>
@@ -48,8 +45,8 @@ public:
       throw std::system_error(errno, std::generic_category());
   }
 
-  inline operator FILE*() const noexcept { return _fh; }
-  inline operator bool()  const noexcept { return _fh; }
+  inline operator FILE*()     const noexcept { return _fh; }
+  inline operator bool()      const noexcept { return _fh; }
 
   inline size_t read(void *ptr, size_t size, size_t nmemb)        { return std::fread(ptr, size, nmemb, _fh);  }
   inline size_t write(const void *ptr, size_t size, size_t nmemb) { return std::fwrite(ptr, size, nmemb, _fh); }
@@ -143,5 +140,8 @@ public:
   static CFile& stdin()  { return reinterpret_cast<CFile&>(::stdin);  };
   static CFile& stdout() { return reinterpret_cast<CFile&>(::stdout); };
   static CFile& stderr() { return reinterpret_cast<CFile&>(::stderr); };
+
+private:
+  FILE* _fh;
 };
 #endif

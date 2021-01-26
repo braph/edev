@@ -3,6 +3,7 @@
 
 // Copied from:
 // https://stackoverflow.com/questions/257288/templated-check-for-the-existence-of-a-class-member-function
+// And it does not work. Really.
 
 #define HAS_MEM_FUNC(func, name)                                             \
   template<typename T, typename Sign>                                        \

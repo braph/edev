@@ -1,3 +1,6 @@
+#ifndef LIB_TEST_HPP
+#define LIB_TEST_HPP
+
 // Stuff used for testing
 #include <iostream>
 #include <stdexcept>
@@ -19,6 +22,7 @@
 
 #define TEST_BEGIN() \
   try { (void)0
+
 #define TEST_END() \
   } catch (const std::exception &e) { \
     std::cout << "Error: " << e.what() << std::endl; \
@@ -33,3 +37,4 @@
   noecho(); \
   curs_set(0)
 
+#endif

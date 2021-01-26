@@ -5,7 +5,7 @@
 
 namespace base64 {
 
-static const char B64index_[256] = {
+static const unsigned char B64index_[256] = {
   0,    0,    0,    0,    0,    0,    0,    0,
   0,    0,    0,    0,    0,    0,    0,    0,
   0,    0,    0,    0,    0,    0,    0,    0,
@@ -24,8 +24,8 @@ static const char B64index_[256] = {
   49,  50,   51
 };
 
-static inline int B64index(unsigned char i) {
-  return static_cast<int>(B64index_[i]);
+static inline unsigned B64index(unsigned char i) {
+  return B64index_[i];
 }
 
 std::string decode(const char* data, const size_t len)
@@ -37,7 +37,7 @@ std::string decode(const char* data, const size_t len)
 
   for (size_t i = 0, j = 0; i < L; i += 4)
   {
-    int n = B64index(p[i]) << 18 | B64index(p[i + 1]) << 12 | B64index(p[i + 2]) << 6 | B64index(p[i + 3]);
+    unsigned n = B64index(p[i]) << 18 | B64index(p[i + 1]) << 12 | B64index(p[i + 2]) << 6 | B64index(p[i + 3]);
     str[j++] = n >> 16;
     str[j++] = n >> 8 & 0xFF;
     str[j++] = n & 0xFF;
@@ -45,7 +45,7 @@ std::string decode(const char* data, const size_t len)
 
   if (pad)
   {
-    int n = B64index(p[L]) << 18 | B64index(p[L + 1]) << 12;
+    unsigned n = B64index(p[L]) << 18 | B64index(p[L + 1]) << 12;
     str[str.size() - 1] = n >> 16;
 
     if (len > L + 2 && p[L + 2] != '=')

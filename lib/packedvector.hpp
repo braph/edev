@@ -1,5 +1,5 @@
-#ifndef PACKED_VECTOR_HPP
-#define PACKED_VECTOR_HPP
+#ifndef LIB_PACKED_VECTOR_HPP
+#define LIB_PACKED_VECTOR_HPP
 
 #include "bit_tools.hpp"
 #include "genericiterator.hpp"
@@ -11,23 +11,25 @@
 #include <cstring> // memcpy
 #include <type_traits>
 
-//#define LIB_PACKEDVECTOR_DEBUG
-#ifndef LIB_PACKEDVECTOR_DEBUG
-#define LIB_PACKEDVECTOR_TRACE(...) (void)0
-#define debug(...)                  (void)0
-#else
-#include "debug.hpp"
-Debug::Logger packed_logger;
-#define LIB_PACKEDVECTOR_TRACE(...) auto X8f3C3 = packed_logger.enter_function(__PRETTY_FUNCTION__, __VA_ARGS__)
-#define debug(...)                  packed_logger.debug(__VA_ARGS__)
-#endif
+// TODO: Make it also available as vector<type, bits>
 
-#define LIB_PACKEDVECTOR_GROW_FACTOR 2
+#ifdef LIB_PACKED_VECTOR_DEBUG
+#include "debug.hpp"
+#endif
 
 namespace packed {
 
+#ifdef LIB_PACKEDVECTOR_DEBUG
+Debug::Logger logger;
+#define LIB_PACKEDVECTOR_TRACE(...) auto trace{logger.enter_function(__PRETTY_FUNCTION__, __VA_ARGS__)}
+#else
+#define LIB_PACKEDVECTOR_TRACE(...) (void)0
+#endif
+
+const size_t LIB_PACKEDVECTOR_GROW_FACTOR = 2;
+
 /* ============================================================================
- * vector
+ * packed::vector - vector with fixed bit size
  * ==========================================================================*/
 
 template<class T>
@@ -99,7 +101,6 @@ public:
   data_type*      data()            noexcept { return _data;      }
   const data_type*data()      const noexcept { return _data;      }
   size_t          capacity()  const noexcept { return _capacity;  }
-  void            shrink_to_fit()            { /* TODO */         }
   void            emplace_back(value_type v) { push_back(v);      }
   void            pop_back()        noexcept { --_size;           }
 
@@ -162,6 +163,19 @@ public:
       v._size++;
     }
     return v;
+  }
+
+  void shrink_to_fit() {
+    LIB_PACKEDVECTOR_TRACE("void");
+
+    if (_capacity > _size + 32 /* TODO... */) {
+      const size_t needed_blocks = ceil_div(_bits * _size, bitsof<data_type>());
+      data_type* new_data = new data_type[needed_blocks];
+      std::memcpy(new_data, _data, ceil_div(_bits * _size, size_t(CHAR_BIT)));
+      delete[] _data;
+      _data = new_data;
+      _capacity = needed_blocks * bitsof<data_type>() / _bits;
+    }
   }
 
 protected:

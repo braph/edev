@@ -6,25 +6,24 @@
 
 /**
  * Holds a reference to an array + it's size.
- * The reference as well as the size may be changed at runtime,
+ * The reference as well as the size may be changed at runtime.
  */
 template<typename T>
-class ArrayView {
-public:
+struct ArrayView {
 #include "inline/contiguous_container_access.hpp"
 
-  inline ArrayView() noexcept
+  inline constexpr ArrayView() noexcept
     : _data(NULL)
     , _size(0)
   {}
 
-  inline ArrayView(T* array, size_t N) noexcept
+  inline constexpr ArrayView(T* array, size_t N) noexcept
     : _data(array)
     , _size(N)
   {}
 
   template<size_t N>
-  inline ArrayView(T (&array)[N]) noexcept
+  inline constexpr ArrayView(T (&array)[N]) noexcept
     : _data(&array[0])
     , _size(N)
   {}

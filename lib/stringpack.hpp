@@ -376,20 +376,20 @@ struct packer {
   {}
 
 
-  static inline uint64_t pack_runtime(const char* s, size_t len) noexcept
-  { return StringPack::pack_runtime<conv>(reinterpret_cast<const unsigned char*>(s), len); }
-
-  static inline uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept
-  { return StringPack::pack_runtime<conv>(reinterpret_cast<const unsigned char*>(s), len); }
-
-  static inline uint64_t pack_runtime(const char* s) noexcept
-  { return StringPack::pack_runtime<conv>(reinterpret_cast<const unsigned char*>(s)); }
-
   static inline uint64_t pack_runtime(const unsigned char* s) noexcept
   { return StringPack::pack_runtime<conv>(s); }
 
+  static inline uint64_t pack_runtime(const unsigned char* s, size_t len) noexcept
+  { return StringPack::pack_runtime<conv>(s, len); }
+
+  static inline uint64_t pack_runtime(const char* s, size_t len) noexcept
+  { return pack_runtime(reinterpret_cast<const unsigned char*>(s), len); }
+
+  static inline uint64_t pack_runtime(const char* s) noexcept
+  { return pack_runtime(reinterpret_cast<const unsigned char*>(s)); }
+
   static inline uint64_t pack_runtime(const std::string& s) noexcept
-  { return StringPack::pack_runtime<conv>(s.c_str(), s.size()); }
+  { return pack_runtime(s.c_str(), s.size()); }
 
 
   // Information ==============================================================

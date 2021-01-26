@@ -1,41 +1,31 @@
-#ifndef LIB_GENERICITERATOR_HPP
-#define LIB_GENERICITERATOR_HPP
-
-#include <iterator>
-#include <type_traits>
-
+#if 0
 /**
  * Make anything iterable that provides operator[].
  * - Returns TContainer::reference
  */
-template<typename T, bool IS_CONST>
-class GenericIterator_Impl
+template<typename TContainer>
+class GenericIterator
+//: public std::iterator<std::random_access_iterator_tag, typename TContainer::reference>
 {
 public:
   using iterator_category = std::random_access_iterator_tag;
+  using value_type        = typename TContainer::reference;
   using difference_type   = std::ptrdiff_t;
-  //using reference         = typename TContainer::reference;
-  //using const_reference   = typename TContainer::const_reference;
-  using iterator          = GenericIterator_Impl;
-  //using pointer           = typename TContainer::reference;
-  //using value_type        = typename TContainer::reference;
+  using pointer           = typename TContainer::reference;//*;
+  using reference         = typename TContainer::reference;//&;
+  using iterator          = GenericIterator;
 
-  using pointer    = void;
-  using value_type = typename std::conditional<IS_CONST, typename T::const_reference, typename T::reference>::type ;
-  using reference  = typename std::conditional<IS_CONST, typename T::const_reference, typename T::reference>::type ;
-  using TContainer = typename std::conditional<IS_CONST, const T, T>::type;
-
-  inline GenericIterator_Impl() noexcept
+  inline GenericIterator() noexcept
     : container(NULL)
     , idx(0)
   {}
 
-  inline GenericIterator_Impl(TContainer* container, size_t idx) noexcept
+  inline GenericIterator(TContainer* container, size_t idx) noexcept
     : container(container)
     , idx(idx)
   {}
 
-  inline GenericIterator_Impl(const GenericIterator_Impl& rhs) noexcept
+  inline GenericIterator(const GenericIterator& rhs) noexcept
     : container(rhs.container)
     , idx(rhs.idx)
   {}
@@ -79,10 +69,5 @@ private:
   size_t idx;
 };
 
-template<typename TContainer>
-using GenericIterator = GenericIterator_Impl<TContainer, false>;
-
-template<typename TContainer>
-using GenericConstIterator = GenericIterator_Impl<TContainer, true>;
-
 #endif
+
