@@ -17,8 +17,6 @@ int Actions :: call(ActionID id) {
 
   try {
     switch (id) {
-    case NONE:
-      break;
     case QUIT:
       std::raise(SIGTERM);
       break;
@@ -122,6 +120,7 @@ int Actions :: call(ActionID id) {
       break;
 
     // Silence warnings
+    case NONE:
     case BACK:
     case UP:          case DOWN:
     case TOP:         case BOTTOM:
