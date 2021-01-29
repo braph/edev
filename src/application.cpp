@@ -254,7 +254,7 @@ void Application :: print_db_stats() {
   }
 }
 
-int main() {
+int main() try {
   LIBXML_TEST_VERSION;
   std::signal(SIGINT, on_signal);
   std::signal(SIGTERM, on_signal);
@@ -264,15 +264,10 @@ int main() {
   log_write("Running a DEBUG build!\n");
 #endif
 
-  try {
-    Application().run();
-  }
-  catch (const std::exception &e) {
-    ::endwin();
-    pprintf("%s\n", e);
-    return 1;
-  }
-
-  return 0;
+  Application().run();
 }
-
+catch (const std::exception &e) {
+  ::endwin();
+  pprintf("%s\n", e);
+  return 1;
+}
