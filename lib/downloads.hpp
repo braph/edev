@@ -20,8 +20,7 @@ public:
   Download(const std::string&);
   virtual ~Download();
 
-  void cleanup()               noexcept;
-  int http_code()        const noexcept;
+  int http_code()             const noexcept;
   const char* effective_url() const noexcept;
 
   void reset() noexcept {

@@ -18,7 +18,10 @@ Download :: Download(const std::string &url_) {
 }
 
 Download :: ~Download() {
-  cleanup();
+#ifndef __cpp_exceptions
+  if (curl_easy)
+#endif
+  curl_easy_cleanup(curl_easy);
 }
 
 int Download :: http_code() const noexcept {
@@ -32,12 +35,6 @@ const char* Download :: effective_url() const noexcept {
   if (CURLE_OK != getinfo(CURLINFO_EFFECTIVE_URL, url))
     return "<UNKNOWN URL>";
   return url;
-}
-
-void Download :: cleanup() noexcept {
-  if (curl_easy)
-    curl_easy_cleanup(curl_easy);
-  curl_easy = NULL;
 }
 
 /* ============================================================================
